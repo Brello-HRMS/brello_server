@@ -3,8 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 
 export class PostgresConfiguration implements TypeOrmOptionsFactory {
-  @Inject(ConfigService)
-  private readonly config: ConfigService;
+  constructor(@Inject(ConfigService) private readonly config: ConfigService) {}
 
   createTypeOrmOptions(
     connectionName?: string,
