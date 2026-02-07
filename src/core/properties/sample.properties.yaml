@@ -1,0 +1,15 @@
+http:
+  port: nest_server_port
+auth:
+  JWT_SECRET: jwtsecretstring
+  ENC_KEY: enc_key
+  IV: enc_iv
+brello:
+  environment: 'dev' # dev, uat, prod
+db:
+  postgres:
+    HOST: 'host'
+    PORT: port
+    DB_USER: 'username'
+    DB_PASSWORD: 'password'
+    DB_NAME: 'dbname'
