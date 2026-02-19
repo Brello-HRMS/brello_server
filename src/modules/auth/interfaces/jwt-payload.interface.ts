@@ -1,43 +1,34 @@
 /**
  * JWT Payload Interface
- * 
- * Defines the structure of the JWT token payload.
- * This interface ensures type safety when working with JWT tokens.
- * 
- * Design Pattern: Interface Segregation Principle
- * - Defines a focused contract for JWT payload
- * - Used by both JWT generation and validation
- * 
- * Payload Contents:
- * - userId: Identifies the authenticated user
- * - sessionId: Links token to a specific session
- * - refreshToken: Included in refresh token payload only
+ *
+ * Defines the structure of the access token JWT payload.
+ *
+ * Security note: No roles are stored inside the JWT.
+ * Roles are resolved at runtime by PermissionResolverService using
+ * userId + organizationId + appId as lookup keys.
  */
 export interface JwtPayload {
-    /**
-     * User's unique identifier
-     */
+    /** User's unique identifier (maps to users.id) */
     userId: string;
 
-    /**
-     * Session's unique identifier
-     * Used to validate and manage sessions
-     */
+    /** Session identifier for session management & refresh token validation */
     sessionId: string;
 
-    /**
-     * Refresh token identifier (only in refresh token payload)
-     * Used for token rotation
-     */
+    /** Organization the user is acting within */
+    organizationId: string;
+
+    /** Enterprise the user belongs to */
+    enterpriseId: string;
+
+    /** Currently active application (determines which roles/modules to resolve) */
+    appId: string;
+
+    /** Refresh token value — included only in refresh token payload */
     refreshToken?: string;
 
-    /**
-     * Issued at timestamp (standard JWT claim)
-     */
+    /** Issued-at timestamp (standard JWT claim, auto-set) */
     iat?: number;
 
-    /**
-     * Expiration timestamp (standard JWT claim)
-     */
+    /** Expiration timestamp (standard JWT claim, auto-set) */
     exp?: number;
 }

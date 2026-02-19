@@ -1,14 +1,14 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
+
+/** Summary of an available app returned on login/switch-app */
+export class AvailableAppDto {
+    @Expose() id: string;
+    @Expose() name: string;
+    @Expose() priority: number;
+}
 
 /**
- * Auth Response DTO
- * 
- * Data Transfer Object for authentication responses.
- * Contains access token, refresh token, and user information.
- * 
- * Design Pattern: DTO Pattern
- * - Standardizes authentication response structure
- * - Provides type safety for API consumers
+ * Auth Response DTO — returned on login & switch-app
  */
 @Exclude()
 export class AuthResponseDto {
@@ -29,13 +29,20 @@ export class AuthResponseDto {
     };
 
     @Expose()
-    expires_in: number; // Access token expiration in seconds
+    expires_in: number;
+
+    /** The app the JWT is currently scoped to */
+    @Expose()
+    defaultAppId: string;
+
+    /** All apps the user has at least one role in */
+    @Expose()
+    @Type(() => AvailableAppDto)
+    availableApps: AvailableAppDto[];
 }
 
 /**
  * Refresh Token Response DTO
- * 
- * Response for token refresh endpoint.
  */
 @Exclude()
 export class RefreshTokenResponseDto {
@@ -44,6 +51,21 @@ export class RefreshTokenResponseDto {
 
     @Expose()
     refresh_token: string;
+
+    @Expose()
+    expires_in: number;
+}
+
+/**
+ * Switch App Response DTO
+ */
+@Exclude()
+export class SwitchAppResponseDto {
+    @Expose()
+    access_token: string;
+
+    @Expose()
+    appId: string;
 
     @Expose()
     expires_in: number;

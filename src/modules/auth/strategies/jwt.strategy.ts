@@ -40,11 +40,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
      * @returns Payload to be attached to request
      */
     async validate(payload: JwtPayload): Promise<JwtPayload> {
-        // Additional validation can be added here
-        // For example: check if user still exists, check if user is active, etc.
-
         if (!payload.userId || !payload.sessionId) {
             throw new UnauthorizedException('Invalid token payload');
+        }
+
+        if (!payload.appId || !payload.organizationId) {
+            throw new UnauthorizedException('Token missing app or organization context');
         }
 
         return payload;

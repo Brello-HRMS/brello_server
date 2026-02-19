@@ -2,24 +2,35 @@ import {
     Injectable,
     UnauthorizedException,
     BadRequestException,
+    ForbiddenException,
     Logger,
     NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../../user/services/user.service';
 import { SessionRepository } from '../repositories/session.repository';
 import { OtpRepository } from '../repositories/otp.repository';
 import { LoginDto } from '../dto/login.dto';
+import { SwitchAppDto } from '../dto/switch-app.dto';
 import { UpdatePasswordDto } from '../dto/update-password.dto';
 import {
     ForgotPasswordRequestDto,
     VerifyOtpAndResetPasswordDto,
 } from '../dto/forgot-password.dto';
-import { AuthResponseDto, RefreshTokenResponseDto } from '../dto/auth-response.dto';
+import {
+    AuthResponseDto,
+    RefreshTokenResponseDto,
+    SwitchAppResponseDto,
+} from '../dto/auth-response.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { OtpPurpose } from '../../../common/enums';
+import { UserRoleMap } from '../../rbac/entities/user-role-map.entity';
+import { App } from '../../app/entities/app.entity';
+import { Status } from '../../../common/enums';
 
 // Auth Service - Implements comprehensive authentication and authorization logic
 @Injectable()
@@ -34,6 +45,8 @@ export class AuthService {
         private readonly otpRepository: OtpRepository,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
+        @InjectRepository(UserRoleMap)
+        private readonly userRoleMapRepository: Repository<UserRoleMap>,
     ) { }
 
     // Generate access token
@@ -93,13 +106,16 @@ export class AuthService {
     async login(loginDto: LoginDto): Promise<AuthResponseDto> {
         this.logger.log(`Login attempt for email: ${loginDto.email}`);
 
-        // Find user by email
+        // ── 1. Validate credentials ──────────────────────────────────────────
         const user = await this.userService.findByEmail(loginDto.email);
         if (!user) {
             throw new UnauthorizedException('Invalid email or password');
         }
 
-        // Verify password
+        if (user.status !== Status.ACTIVE) {
+            throw new UnauthorizedException('Account is inactive. Contact your administrator.');
+        }
+
         const isPasswordValid = await this.userService.verifyPassword(
             loginDto.password,
             user.password_hash,
@@ -108,11 +124,46 @@ export class AuthService {
             throw new UnauthorizedException('Invalid email or password');
         }
 
-        // Generate refresh token
+        // ── 2. Determine available apps via roles ────────────────────────────
+        // Fetch all role assignments for this user in their organization
+        const userRoleMaps = await this.userRoleMapRepository
+            .createQueryBuilder('urm')
+            .innerJoinAndSelect('urm.role', 'role')
+            .innerJoinAndSelect('role.app', 'app')
+            .where('urm.user_id = :userId', { userId: user.id })
+            .andWhere('urm.organization_id = :orgId', { orgId: user.organization_id })
+            .andWhere('role.status = :status', { status: Status.ACTIVE })
+            .andWhere('app.status = :status', { status: Status.ACTIVE })
+            .getMany();
+
+        if (!userRoleMaps.length) {
+            throw new ForbiddenException('No active roles assigned. Contact your administrator.');
+        }
+
+        // Deduplicate available apps, pick lowest priority first
+        const appMap = new Map<string, { id: string; name: string; priority: number }>();
+        for (const urm of userRoleMaps) {
+            const app = urm.role.app;
+            if (!appMap.has(app.id)) {
+                appMap.set(app.id, { id: app.id, name: app.name, priority: app.priority });
+            }
+        }
+        const availableApps = [...appMap.values()].sort((a, b) => a.priority - b.priority);
+
+        // ── 3. Determine default app ─────────────────────────────────────────
+        let defaultAppId: string;
+        if (user.last_access_app_id && appMap.has(user.last_access_app_id)) {
+            // Use the last app the user accessed (if still valid)
+            defaultAppId = user.last_access_app_id;
+        } else {
+            // Fallback: lowest priority (first in sorted list)
+            defaultAppId = availableApps[0].id;
+        }
+
+        // ── 4. Create session & tokens ───────────────────────────────────────
         const refreshToken = Math.random().toString(36).substring(2);
         const refreshTokenHash = await this.hash(refreshToken);
 
-        // Create session
         const session = await this.sessionRepository.create({
             user_id: user.id,
             refresh_token_hash: refreshTokenHash,
@@ -120,21 +171,21 @@ export class AuthService {
             login_time: new Date(),
             last_activity: new Date(),
             expires_at: this.calculateSessionExpiration(),
+            app_id: defaultAppId,
         });
 
-        // Generate JWT tokens
         const payload: JwtPayload = {
             userId: user.id,
             sessionId: session.id,
+            organizationId: user.organization_id,
+            enterpriseId: user.enterprise_id,
+            appId: defaultAppId,
         };
 
         const accessToken = this.generateAccessToken(payload);
-        const refreshTokenJwt = this.generateRefreshToken({
-            ...payload,
-            refreshToken,
-        });
+        const refreshTokenJwt = this.generateRefreshToken({ ...payload, refreshToken });
 
-        this.logger.log(`User logged in successfully: ${user.id}`);
+        this.logger.log(`User ${user.id} logged in. Default app: ${defaultAppId}`);
 
         return {
             access_token: accessToken,
@@ -147,7 +198,54 @@ export class AuthService {
                 enterprise_id: user.enterprise_id,
                 organization_id: user.organization_id,
             },
-            expires_in: 900, // 15 minutes in seconds
+            expires_in: 900,
+            defaultAppId,
+            availableApps,
+        };
+    }
+
+    // Switch active application
+    async switchApp(
+        currentUser: JwtPayload,
+        switchAppDto: SwitchAppDto,
+    ): Promise<SwitchAppResponseDto> {
+        this.logger.log(`App switch: user ${currentUser.userId} → app ${switchAppDto.appId}`);
+
+        // Validate the user has at least one active role in the requested app
+        const hasRole = await this.userRoleMapRepository
+            .createQueryBuilder('urm')
+            .innerJoin('urm.role', 'role')
+            .innerJoin('role.app', 'app')
+            .where('urm.user_id = :userId', { userId: currentUser.userId })
+            .andWhere('urm.organization_id = :orgId', { orgId: currentUser.organizationId })
+            .andWhere('app.id = :appId', { appId: switchAppDto.appId })
+            .andWhere('role.status = :status', { status: Status.ACTIVE })
+            .andWhere('app.status = :status', { status: Status.ACTIVE })
+            .getCount();
+
+        if (!hasRole) {
+            throw new ForbiddenException('You do not have access to the requested application.');
+        }
+
+        // Persist the last accessed app
+        await this.userService.update(currentUser.userId, {
+            last_access_app_id: switchAppDto.appId,
+        } as any);
+
+        // Issue a fresh access token scoped to the new app
+        const newPayload: JwtPayload = {
+            ...currentUser,
+            appId: switchAppDto.appId,
+        };
+
+        const accessToken = this.generateAccessToken(newPayload);
+
+        this.logger.log(`App switched successfully: ${currentUser.userId} → ${switchAppDto.appId}`);
+
+        return {
+            access_token: accessToken,
+            appId: switchAppDto.appId,
+            expires_in: 900,
         };
     }
 
@@ -210,6 +308,9 @@ export class AuthService {
         const newPayload: JwtPayload = {
             userId: payload.userId,
             sessionId: payload.sessionId,
+            organizationId: payload.organizationId,
+            enterpriseId: payload.enterpriseId,
+            appId: payload.appId,
         };
 
         const accessToken = this.generateAccessToken(newPayload);

@@ -14,33 +14,33 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { OtpCleanupTask } from './tasks/otp-cleanup.task';
 import { UserModule } from '../user/user.module';
+import { UserRoleMap } from '../rbac/entities/user-role-map.entity';
+import { Role } from '../rbac/entities/role.entity';
+import { App } from '../app/entities/app.entity';
 
 /**
  * Auth Module
- * 
- * Encapsulates all authentication and authorization functionality.
- * Follows the Module pattern for organizing related components.
- * 
- * Design Pattern: Module Pattern
- * - Groups related components together
- * - Provides clear boundaries and dependencies
- * - Configures JWT and Passport
- * 
- * Features:
- * - JWT-based authentication
- * - Refresh token rotation
- * - Session management
- * - OTP for password reset
- * - Scheduled cleanup tasks
+ *
+ * Encapsulates all authentication functionality.
+ * Now extended with multi-app support:
+ * - Login resolves available apps & default app from user roles
+ * - JWT payload includes appId, organizationId, enterpriseId
+ * - switch-app endpoint issues app-scoped tokens
  */
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Session, Otp]),
-        UserModule, // Import to access UserService
+        TypeOrmModule.forFeature([
+            Session,
+            Otp,
+            UserRoleMap, // For login: resolving available apps from user roles
+            Role,        // Joined via UserRoleMap
+            App,         // For fetching app priority/name
+        ]),
+        UserModule,
         PassportModule,
-        JwtModule.register({}), // Empty config, we'll use ConfigService in strategies
+        JwtModule.register({}),
         ConfigModule,
-        ScheduleModule.forRoot(), // Enable scheduling
+        ScheduleModule.forRoot(),
     ],
     controllers: [AuthController],
     providers: [
@@ -51,6 +51,6 @@ import { UserModule } from '../user/user.module';
         JwtRefreshStrategy,
         OtpCleanupTask,
     ],
-    exports: [AuthService], // Export for potential use in other modules
+    exports: [AuthService],
 })
 export class AuthModule { }

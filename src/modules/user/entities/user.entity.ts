@@ -30,6 +30,14 @@ export class User extends BaseEntity {
     @Column({ type: 'varchar', length: 255 })
     password_hash: string;
 
+    /**
+     * Last app the user accessed.
+     * Used to auto-redirect user to their preferred app on next login.
+     * If null → login will choose the highest-priority app.
+     */
+    @Column({ type: 'uuid', nullable: true })
+    last_access_app_id: string;
+
     // Computed full name
     get fullName(): string {
         const names = [this.first_name, this.middle_name, this.last_name].filter(

@@ -2,12 +2,14 @@ import {
     Controller,
     Post,
     Body,
+    Get,
     HttpCode,
     HttpStatus,
     UseGuards,
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
+import { SwitchAppDto } from '../dto/switch-app.dto';
 import { UpdatePasswordDto } from '../dto/update-password.dto';
 import { ForgotPasswordRequestDto, VerifyOtpAndResetPasswordDto } from '../dto/forgot-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -20,11 +22,22 @@ import type { JwtPayload } from '../interfaces/jwt-payload.interface';
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
-    // User login
+    // User login — returns access token, defaultAppId, availableApps
     @Post('login')
     @HttpCode(HttpStatus.OK)
     login(@Body() loginDto: LoginDto) {
         return this.authService.login(loginDto);
+    }
+
+    // Switch active application — issues new access token scoped to the requested app
+    @Post('switch-app')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    switchApp(
+        @CurrentUser() user: JwtPayload,
+        @Body() switchAppDto: SwitchAppDto,
+    ) {
+        return this.authService.switchApp(user, switchAppDto);
     }
 
     // User logout (requires authentication)
