@@ -27,12 +27,21 @@ export enum ModuleType {
  * Named AppModule to avoid conflict with NestJS's Module decorator.
  */
 @Entity('modules')
+@Index(['app_id', 'code'], { unique: true })
 @Index(['app_id', 'wbs_code'])
 @Index(['app_id', 'parent_id'])
 export class AppModule extends BaseEntity {
     /** Module display name (e.g., Leave Management, Attendance) */
     @Column({ type: 'varchar', length: 150 })
     name: string;
+
+    /**
+     * Stable module code used for permission lookups (e.g. LEAVE_MGMT, ATTENDANCE).
+     * Unique per app. WBS code is used only for hierarchy display/ordering.
+     * Overrides BaseEntity.code to enforce non-nullable and longer length.
+     */
+    @Column({ type: 'varchar', length: 100, nullable: false })
+    declare code: string;
 
     /** The app this module belongs to */
     @Column({ type: 'uuid' })

@@ -16,6 +16,9 @@ export type PermissionMap = Map<string, Map<string, boolean>>;
 export interface ResolvedModule {
     id: string;
     name: string;
+    /** Stable code used for permission lookups (e.g. LEAVE_MGMT) */
+    code: string;
+    /** WBS code — used only for hierarchy/ordering */
     wbs_code: string;
     parent_id: string | null;
     app_id: string;
@@ -44,17 +47,10 @@ export interface PermissionResult {
  * 5. WBS hierarchy propagation (child access ⟹ parent view)
  * 6. Strip modules with no effective actions
  * 7. Return PermissionResult
- *
- * In-memory caching with key: perm:{userId}:{orgId}:{appId}:{planId}
- * Cache is invalidated by calling invalidate*() methods when roles/plan/access changes.
  */
 @Injectable()
 export class PermissionResolverService {
     private readonly logger = new Logger(PermissionResolverService.name);
-
-    /** In-memory cache — replace with Redis for production clustering */
-    private readonly cache = new Map<string, { result: PermissionResult; cachedAt: number }>();
-    private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
     constructor(
         @InjectRepository(UserRoleMap)
@@ -80,25 +76,13 @@ export class PermissionResolverService {
 
     /**
      * Resolve effective permissions for a user within a specific app.
-     * Results are cached for CACHE_TTL_MS.
      */
     async resolve(
         userId: string,
         organizationId: string,
         appId: string,
     ): Promise<PermissionResult> {
-        // Determine plan for cache key
         const planId = await this.getActivePlanId(organizationId);
-        const cacheKey = `perm:${userId}:${organizationId}:${appId}:${planId ?? 'no-plan'}`;
-
-        // Return cached result if valid
-        const cached = this.cache.get(cacheKey);
-        if (cached && Date.now() - cached.cachedAt < this.CACHE_TTL_MS) {
-            this.logger.debug(`Cache hit: ${cacheKey}`);
-            return cached.result;
-        }
-
-        this.logger.debug(`Cache miss: resolving permissions for ${cacheKey}`);
 
         // Step 1: Get role IDs for this user in this app
         const roleIds = await this.getRoleIdsForUser(userId, organizationId, appId);
@@ -121,61 +105,28 @@ export class PermissionResolverService {
             order: { wbs_code: 'ASC' },
         });
 
-        const result = this.buildModuleResult(allModules, planRestricted);
-
-        // Cache and return
-        this.cache.set(cacheKey, { result, cachedAt: Date.now() });
-        return result;
+        return this.buildModuleResult(allModules, planRestricted);
     }
 
     /**
-     * Check if a user has a specific action on a module (by WBS code).
+     * Check if a user has a specific action on a module (by module code).
      */
     async hasPermission(
         userId: string,
         organizationId: string,
         appId: string,
-        moduleWbsCode: string,
+        moduleCode: string,
         actionName: string,
     ): Promise<boolean> {
         const resolved = await this.resolve(userId, organizationId, appId);
         for (const mod of resolved.modules) {
-            if (mod.wbs_code === moduleWbsCode) {
+            if (mod.code === moduleCode) {
                 return mod.actions.has(actionName);
             }
         }
         return false;
     }
 
-    // ─── Cache Invalidation ──────────────────────────────────────────────────────
-
-    /** Invalidate all permissions for a specific user in an org */
-    invalidateUser(userId: string, organizationId: string): void {
-        const prefix = `perm:${userId}:${organizationId}:`;
-        for (const key of this.cache.keys()) {
-            if (key.startsWith(prefix)) {
-                this.cache.delete(key);
-                this.logger.debug(`Invalidated cache: ${key}`);
-            }
-        }
-    }
-
-    /** Invalidate all permissions for an organization (e.g., plan change) */
-    invalidateOrganization(organizationId: string): void {
-        const segment = `:${organizationId}:`;
-        for (const key of this.cache.keys()) {
-            if (key.includes(segment)) {
-                this.cache.delete(key);
-                this.logger.debug(`Invalidated cache: ${key}`);
-            }
-        }
-    }
-
-    /** Flush entire cache */
-    invalidateAll(): void {
-        this.cache.clear();
-        this.logger.log('Permission cache fully flushed');
-    }
 
     // ─── Private Helpers ─────────────────────────────────────────────────────────
 
@@ -360,6 +311,7 @@ export class PermissionResolverService {
                 resolvedModules.push({
                     id: mod.id,
                     name: mod.name,
+                    code: mod.code,
                     wbs_code: mod.wbs_code,
                     parent_id: mod.parent_id ?? null,
                     app_id: mod.app_id,

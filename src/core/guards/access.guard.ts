@@ -25,7 +25,7 @@ import type { JwtPayload } from '../../modules/auth/interfaces/jwt-payload.inter
  *   @RequirePermission('1.2', 'create')
  *
  * Flow:
- *   1. Read module WBS code + action name from route metadata
+ *   1. Read module code + action name from route metadata
  *   2. Extract userId, organizationId, appId from request.user (JWT payload)
  *   3. Call PermissionResolverService.hasPermission(...)
  *   4. Throw 403 Forbidden if permission is denied
@@ -57,19 +57,19 @@ export class AccessGuard implements CanActivate {
             throw new ForbiddenException('Authentication context is missing.');
         }
 
-        const { moduleWbsCode, actionName } = requirement;
+        const { moduleCode, actionName } = requirement;
 
         const allowed = await this.permissionResolver.hasPermission(
             user.userId,
             user.organizationId,
             user.appId,
-            moduleWbsCode,
+            moduleCode,
             actionName,
         );
 
         if (!allowed) {
             this.logger.warn(
-                `Access denied: user ${user.userId} cannot perform [${actionName}] on module [${moduleWbsCode}]`,
+                `Access denied: user ${user.userId} cannot perform [${actionName}] on module [${moduleCode}]`,
             );
             throw new ForbiddenException(
                 `You do not have permission to perform [${actionName}] on this resource.`,
