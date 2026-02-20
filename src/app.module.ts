@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { PlanModule } from './modules/plan/plan.module';
 import { AppManagementModule } from './modules/app/app-management.module';
+import { PropertiesModule } from './core/properties/properties.module';
 
 /**
  * App Module — Root module
@@ -41,6 +42,7 @@ import { AppManagementModule } from './modules/app/app-management.module';
     // New RBAC + multi-app modules
     AppManagementModule,
     PlanModule,
+    PropertiesModule,
     RbacModule,
   ],
 })
