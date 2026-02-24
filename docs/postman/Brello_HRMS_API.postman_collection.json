@@ -40,6 +40,16 @@
             "key": "default_app_id",
             "value": "",
             "type": "string"
+        },
+        {
+            "key": "app_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "role_id",
+            "value": "",
+            "type": "string"
         }
     ],
     "item": [
@@ -738,9 +748,371 @@
             ]
         },
         {
-            "name": "RBAC",
-            "description": "Role-Based Access Control — menu and permission endpoints",
+            "name": "App",
+            "description": "Application management — register apps in the multi-app architecture",
             "item": [
+                {
+                    "name": "Create App",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('app_id', response.data.id);",
+                                    "    console.log('✅ App created:', response.data.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"HRMS\",\n    \"priority\": 1,\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/apps",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "apps"
+                            ]
+                        },
+                        "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Apps",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/apps",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "apps"
+                            ]
+                        },
+                        "description": "List all registered applications, sorted by priority."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get App by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/apps/{{app_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "apps",
+                                "{{app_id}}"
+                            ]
+                        },
+                        "description": "Get a single app by UUID."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update App",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"HRMS Pro\",\n    \"priority\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/apps/{{app_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "apps",
+                                "{{app_id}}"
+                            ]
+                        },
+                        "description": "Partially update an app."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete App",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/apps/{{app_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "apps",
+                                "{{app_id}}"
+                            ]
+                        },
+                        "description": "Delete an app. Returns 204 No Content."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "RBAC",
+            "description": "Role-Based Access Control — roles, user-role assignments, and menu",
+            "item": [
+                {
+                    "name": "Create Role",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    pm.collectionVariables.set('role_id', response.data.id);",
+                                    "    console.log('✅ Role created:', response.data.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Admin\",\n    \"app_id\": \"{{app_id}}\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/roles",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "roles"
+                            ]
+                        },
+                        "description": "Create a new role scoped to an app.\n\n**Auto-saves:** `role_id` to collection variables."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Roles",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/roles",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "roles"
+                            ]
+                        },
+                        "description": "List all roles with their associated app."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Role by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/roles/{{role_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "roles",
+                                "{{role_id}}"
+                            ]
+                        },
+                        "description": "Get a single role by UUID."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Roles by App",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/roles/app/{{app_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "roles",
+                                "app",
+                                "{{app_id}}"
+                            ]
+                        },
+                        "description": "Get all roles belonging to a specific app."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Role",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Super Admin\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/roles/{{role_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "roles",
+                                "{{role_id}}"
+                            ]
+                        },
+                        "description": "Partially update a role."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Role",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/roles/{{role_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "roles",
+                                "{{role_id}}"
+                            ]
+                        },
+                        "description": "Delete a role. Returns 204 No Content."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Assign Role to User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": \"{{user_id}}\",\n    \"role_id\": \"{{role_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/user-role-maps",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user-role-maps"
+                            ]
+                        },
+                        "description": "Assign a role to a user in a specific organization.\n\n**This is required before the user can login!**"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All User-Role Assignments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/user-role-maps",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user-role-maps"
+                            ]
+                        },
+                        "description": "List all user-role assignments."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Roles by User",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/user-role-maps/user/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user-role-maps",
+                                "user",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Get all role assignments for a specific user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Remove Role from User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/user-role-maps/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "user-role-maps",
+                                "{{user_id}}"
+                            ]
+                        },
+                        "description": "Remove a role assignment. Returns 204 No Content."
+                    },
+                    "response": []
+                },
                 {
                     "name": "Get Menu (Resolved Permissions)",
                     "request": {

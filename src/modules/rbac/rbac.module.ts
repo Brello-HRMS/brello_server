@@ -9,7 +9,11 @@ import { OrganizationSubscription } from '../plan/entities/organization-subscrip
 import { PlanModule as PlanModuleEntity } from '../plan/entities/plan-module.entity';
 import { PlanModuleAction } from '../plan/entities/plan-module-action.entity';
 import { PermissionResolverService } from './services/permission-resolver.service';
+import { RoleService } from './services/role.service';
+import { UserRoleMapService } from './services/user-role-map.service';
 import { MenuController } from './controllers/menu.controller';
+import { RoleController } from './controllers/role.controller';
+import { UserRoleMapController } from './controllers/user-role-map.controller';
 
 /**
  * RbacModule
@@ -18,6 +22,8 @@ import { MenuController } from './controllers/menu.controller';
  * - Role / UserRoleMap / ModuleAccess entities
  * - PermissionResolverService (the core engine)
  * - MenuController (GET /menu)
+ * - RoleController (CRUD /roles)
+ * - UserRoleMapController (CRUD /user-role-maps)
  *
  * Exports PermissionResolverService so AccessGuard and other modules can use it.
  */
@@ -34,8 +40,8 @@ import { MenuController } from './controllers/menu.controller';
             PlanModuleAction,
         ]),
     ],
-    controllers: [MenuController],
-    providers: [PermissionResolverService],
-    exports: [PermissionResolverService, TypeOrmModule],
+    controllers: [MenuController, RoleController, UserRoleMapController],
+    providers: [PermissionResolverService, RoleService, UserRoleMapService],
+    exports: [PermissionResolverService, RoleService, UserRoleMapService, TypeOrmModule],
 })
 export class RbacModule { }
