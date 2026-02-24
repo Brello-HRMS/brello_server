@@ -27,3 +27,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Re-include the sample file
 !/src/core/properties/sample.properties.yaml
+
+#ignore certs
+/certs
+
