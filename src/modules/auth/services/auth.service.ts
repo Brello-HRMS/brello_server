@@ -52,18 +52,20 @@ export class AuthService {
     // Generate access token
     private generateAccessToken(payload: JwtPayload): string {
         const plainPayload = { ...payload };
+        const expiresIn = this.configService.get<string>('auth.JWT_ACCESS_EXPIRATION') ?? '15m';
         return this.jwtService.sign(plainPayload, {
-            secret: this.configService.get<string>('JWT_ACCESS_SECRET') || 'default-secret',
-            expiresIn: '15m',
+            secret: this.configService.get<string>('auth.JWT_SECRET') || 'default-secret',
+            expiresIn: expiresIn as any,
         });
     }
 
     // Generate refresh token
     private generateRefreshToken(payload: JwtPayload): string {
         const plainPayload = { ...payload };
+        const expiresIn = this.configService.get<string>('auth.JWT_REFRESH_EXPIRATION') ?? '7d';
         return this.jwtService.sign(plainPayload, {
-            secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'default-refresh-secret',
-            expiresIn: '7d',
+            secret: this.configService.get<string>('auth.JWT_REFRESH_SECRET') || 'default-refresh-secret',
+            expiresIn: expiresIn as any,
         });
     }
 
@@ -84,9 +86,7 @@ export class AuthService {
 
     // Calculate session expiration date
     private calculateSessionExpiration(): Date {
-        const days = parseInt(
-            this.configService.get<string>('SESSION_EXPIRATION_DAYS') || '7',
-        );
+        const days = this.configService.get<number>('session.expirationDays', 7);
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + days);
         return expiresAt;
@@ -94,9 +94,7 @@ export class AuthService {
 
     // Calculate OTP expiration date
     private calculateOtpExpiration(): Date {
-        const minutes = parseInt(
-            this.configService.get<string>('OTP_EXPIRATION_MINUTES') || '10',
-        );
+        const minutes = this.configService.get<number>('otp.expirationMinutes', 10);
         const expiresAt = new Date();
         expiresAt.setMinutes(expiresAt.getMinutes() + minutes);
         return expiresAt;
@@ -426,10 +424,7 @@ export class AuthService {
         }
 
         // Check attempts
-        const maxAttempts = parseInt(
-            this.configService.get<string>('OTP_MAX_ATTEMPTS') ?? '5',
-            10,
-        );
+        const maxAttempts = this.configService.get<number>('otp.maxAttempts', 5);
         if (otpRecord.attempts_count >= maxAttempts) {
             await this.otpRepository.delete(otpRecord.id);
             throw new BadRequestException('Maximum OTP attempts exceeded');

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 
 export class PostgresConfiguration implements TypeOrmOptionsFactory {
-  constructor(@Inject(ConfigService) private readonly config: ConfigService) {}
+  constructor(@Inject(ConfigService) private readonly config: ConfigService) { }
 
   createTypeOrmOptions(
     connectionName?: string,
@@ -15,7 +15,7 @@ export class PostgresConfiguration implements TypeOrmOptionsFactory {
       username: this.config.get('db.postgres.DB_USER'),
       password: this.config.get('db.postgres.DB_PASSWORD'),
       database: this.config.get('db.postgres.DB_NAME'),
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
       migrations: ['./dist/migrations/*.{ts,js}'],
       migrationsTableName: 'typeorm_migrations',
       synchronize: this.config.get('DB_SYNC'),

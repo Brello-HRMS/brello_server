@@ -1,11 +1,25 @@
 http:
   port: nest_server_port
-auth:
-  JWT_SECRET: jwtsecretstring
-  ENC_KEY: enc_key
-  IV: enc_iv
+  apiPrefix: 'api/v1'
+
 brello:
   environment: 'dev' # dev, uat, prod
+
+auth:
+  JWT_SECRET: jwtsecretstring
+  JWT_REFRESH_SECRET: jwtrefreshsecretstring
+  JWT_ACCESS_EXPIRATION: '15m'
+  JWT_REFRESH_EXPIRATION: '7d'
+  ENC_KEY: enc_key
+  IV: enc_iv
+
+session:
+  expirationDays: 7
+
+otp:
+  expirationMinutes: 10
+  maxAttempts: 5
+
 db:
   postgres:
     HOST: 'host'
@@ -13,3 +27,12 @@ db:
     DB_USER: 'username'
     DB_PASSWORD: 'password'
     DB_NAME: 'dbname'
+    DB_SCHEMA: 'brello'
+
+smtp:
+  host: 'smtp.gmail.com'
+  port: 587
+  secure: false
+  user: 'your-email@gmail.com'
+  password: 'your-app-password'
+  from: 'noreply@brello.com'

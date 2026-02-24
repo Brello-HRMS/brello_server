@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import databaseConfig from './config/database.config';
+import { databaseConfigFactory } from './config/database.config';
 import { EnterpriseModule } from './modules/enterprise/enterprise.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { UserModule } from './modules/user/user.module';
@@ -14,6 +14,9 @@ import { PropertiesModule } from './core/properties/properties.module';
 /**
  * App Module — Root module
  *
+ * All configuration is loaded from YAML properties files via PropertiesModule.
+ * No .env files are used — everything comes from dev.properties.yaml.
+ *
  * Imports:
  *  - EnterpriseModule, OrganizationModule, UserModule (existing)
  *  - AuthModule (updated for multi-app JWT)
@@ -23,14 +26,14 @@ import { PropertiesModule } from './core/properties/properties.module';
  */
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [databaseConfig],
-      envFilePath: '.env',
-    }),
+    // Load YAML properties first (makes ConfigService available globally)
+    PropertiesModule,
 
+    // TypeORM uses ConfigService to read db.postgres.* from YAML
     TypeOrmModule.forRootAsync({
-      useFactory: databaseConfig,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: databaseConfigFactory,
     }),
 
     // Existing modules
@@ -42,7 +45,6 @@ import { PropertiesModule } from './core/properties/properties.module';
     // New RBAC + multi-app modules
     AppManagementModule,
     PlanModule,
-    PropertiesModule,
     RbacModule,
   ],
 })

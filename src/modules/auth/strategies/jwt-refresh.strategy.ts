@@ -29,7 +29,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: configService.get<string>('JWT_REFRESH_SECRET') || 'default-refresh-secret-change-me',
+            secretOrKey: configService.get<string>('auth.JWT_REFRESH_SECRET') || 'default-refresh-secret-change-me',
         });
     }
 

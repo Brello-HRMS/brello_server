@@ -33,13 +33,11 @@ async function bootstrap() {
   // Global transform interceptor for consistent success responses
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Set global API prefix
-  const apiPrefix = process.env.API_PREFIX || 'api/v1';
+  // Set global API prefix from YAML properties
+  const config: ConfigService = app.get(ConfigService);
+  const apiPrefix = config.get<string>('http.apiPrefix', 'api/v1');
   app.setGlobalPrefix(apiPrefix);
 
-
-
-  const config: ConfigService = app.get(ConfigService);
   const PORT: number | undefined = config.get<number>('http.port');
 
   await app.listen(PORT ?? 8000);
