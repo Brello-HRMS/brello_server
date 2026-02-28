@@ -25,6 +25,21 @@ export class OrganizationProfile extends BaseEntity {
   @Column({ type: 'varchar', length: 100, unique: true })
   registration_no: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  address: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  city: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  state: string;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  zip_code: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  country: string;
+
   // Relations
   @Column({ type: 'uuid', nullable: true })
   logo_id: string;
