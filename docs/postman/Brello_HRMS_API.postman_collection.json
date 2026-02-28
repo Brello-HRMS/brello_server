@@ -612,12 +612,58 @@
                         "description": "Delete an organization. Returns 204 No Content."
                     },
                     "response": []
+                },
+                {
+                    "name": "Create Organization Profile",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Acme India Legal\",\n    \"email\": \"legal@acme.in\",\n    \"phone\": \"+919876543210\",\n    \"gst_no\": \"27AAAAA0000A1Z5\",\n    \"registration_no\": \"CIN-1234\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"enterprise_id\": \"{{enterprise_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/organizations/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "organizations",
+                                "profile"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Organization Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/organizations/profile/{{organization_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "organizations",
+                                "profile",
+                                "{{organization_id}}"
+                            ]
+                        }
+                    },
+                    "response": []
                 }
             ]
         },
         {
-            "name": "User",
-            "description": "User management — users belong to an enterprise and organization",
+            "name": "User & Employee",
+            "description": "User authentication records and full Employee Aggregate Management",
             "item": [
                 {
                     "name": "Create User",
@@ -742,6 +788,78 @@
                             ]
                         },
                         "description": "Soft-delete a user (sets status to DELETED). Returns 204 No Content."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Employee Aggregate",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/employees",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "employees"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Employee Aggregate",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/employees/{{user_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "employees",
+                                "{{user_id}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Employee Education",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"degree\": \"B.Tech\",\n    \"school_name\": \"MIT\",\n    \"completion_date\": \"2020-05-01\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/employees/{{user_id}}/education",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "employees",
+                                "{{user_id}}",
+                                "education"
+                            ]
+                        }
                     },
                     "response": []
                 }
@@ -1138,6 +1256,147 @@
                             ]
                         },
                         "description": "Returns the authenticated user's accessible module tree for the current app.\n\nThe response is a hierarchical tree where:\n- Each node has `id`, `name`, `wbs_code`, `actions[]`, and `children[]`\n- Only modules the user has permission to access are included\n- Actions are filtered by both role permissions AND plan restrictions\n- Tree is sorted by WBS code at each level"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Document Storage",
+            "description": "S3 Pre-signed URL operations for file uploads",
+            "item": [
+                {
+                    "name": "Generate Upload URL",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"originalName\": \"photo.jpg\",\n    \"mimeType\": \"image/jpeg\",\n    \"size\": 1048576,\n    \"folderType\": \"EMPLOYEE_IMAGE\",\n    \"enterpriseId\": \"{{enterprise_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/documents/upload-url",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "upload-url"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Confirm Upload",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/documents/{{document_id}}/confirm",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "documents",
+                                "{{document_id}}",
+                                "confirm"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Industry Type",
+            "description": "Global industry categorizations",
+            "item": [
+                {
+                    "name": "Create Industry Type",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Software & IT\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/industry-types",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "industry-types"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Industry Types",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/industry-types",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "industry-types"
+                            ]
+                        }
                     },
                     "response": []
                 }

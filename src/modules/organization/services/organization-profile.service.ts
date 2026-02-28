@@ -3,6 +3,8 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { OrganizationProfileRepository } from '../repositories/organization-profile.repository';
 import { CreateOrganizationProfileDto } from '../dto/create-organization-profile.dto';
@@ -21,6 +23,7 @@ export class OrganizationProfileService {
     private readonly profileRepository: OrganizationProfileRepository,
     private readonly organizationService: OrganizationService,
     private readonly enterpriseService: EnterpriseService,
+    @Inject(forwardRef(() => DocumentService))
     private readonly documentService: DocumentService,
     private readonly industryTypeService: IndustryTypeService,
   ) {}

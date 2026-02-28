@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 
@@ -15,7 +15,7 @@ import { OrganizationModule } from '../organization/organization.module';
     TypeOrmModule.forFeature([Document]),
     ConfigModule,
     EnterpriseModule,
-    OrganizationModule,
+    forwardRef(() => OrganizationModule),
   ],
   controllers: [DocumentController],
   providers: [DocumentRepository, StorageService, DocumentService],

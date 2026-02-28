@@ -36,19 +36,19 @@ The project follows a **modular monolith** architecture — each business domain
 
 ## Tech Stack
 
-| Technology | Version | Purpose |
-|---|---|---|
-| **NestJS** | v11 | Backend framework |
-| **TypeScript** | v5.7+ | Language (ES2023 target) |
-| **TypeORM** | v0.3 | ORM / Database access |
-| **PostgreSQL** | v14+ | Primary database |
-| **Passport.js** | v0.7 | Authentication strategies |
-| **JWT** (`@nestjs/jwt`) | v11 | Access & refresh tokens |
-| **bcrypt** | v6 | Password hashing |
-| **class-validator** | v0.14 | DTO validation |
-| **class-transformer** | v0.5 | DTO transformation |
-| **js-yaml** | — | YAML config file loading |
-| **Node.js** | v24+ | Runtime (**required**) |
+| Technology              | Version | Purpose                   |
+| ----------------------- | ------- | ------------------------- |
+| **NestJS**              | v11     | Backend framework         |
+| **TypeScript**          | v5.7+   | Language (ES2023 target)  |
+| **TypeORM**             | v0.3    | ORM / Database access     |
+| **PostgreSQL**          | v14+    | Primary database          |
+| **Passport.js**         | v0.7    | Authentication strategies |
+| **JWT** (`@nestjs/jwt`) | v11     | Access & refresh tokens   |
+| **bcrypt**              | v6      | Password hashing          |
+| **class-validator**     | v0.14   | DTO validation            |
+| **class-transformer**   | v0.5    | DTO transformation        |
+| **js-yaml**             | —       | YAML config file loading  |
+| **Node.js**             | v24+    | Runtime (**required**)    |
 
 ---
 
@@ -93,7 +93,9 @@ brello_server/
 │   └── modules/                         ← Feature modules (business logic)
 │       ├── enterprise/                  ← Top-level tenant
 │       ├── organization/                ← Second-level tenant (under Enterprise)
-│       ├── user/                        ← User management
+│       ├── user/                        ← User & Employee Aggregate Management
+│       ├── document/                    ← S3-based Storage & Document pre-signed URLs
+│       ├── industry-type/               ← System master lookup for industries
 │       ├── auth/                        ← Authentication (JWT, sessions, OTP, passwords)
 │       ├── app/                         ← Multi-app registry (HRMS, CRM, LMS, etc.)
 │       ├── rbac/                        ← Role-Based Access Control engine
@@ -148,17 +150,17 @@ Enterprise (top-level tenant / company)
 
 Most entities extend `BaseEntity` (`src/common/entities/base.entity.ts`) which provides:
 
-| Field | Type | Purpose |
-|---|---|---|
-| `id` | UUID v4 | Primary key (auto-generated) |
-| `enterprise_id` | UUID | Multi-tenant: which enterprise owns this record |
-| `organization_id` | UUID | Multi-tenant: which organization owns this record |
-| `status` | Enum | Lifecycle management: `ACTIVE`, `INACTIVE`, `DELETED`, `PENDING`, `ARCHIVED` |
-| `code` | varchar(50) | Human-readable code / alternative identifier |
-| `description` | text | Free-text description |
-| `created_at` | timestamp | Auto-set by TypeORM |
-| `updated_at` | timestamp | Auto-updated by TypeORM |
-| `modified_by` | UUID | Audit trail: who last modified |
+| Field             | Type        | Purpose                                                                      |
+| ----------------- | ----------- | ---------------------------------------------------------------------------- |
+| `id`              | UUID v4     | Primary key (auto-generated)                                                 |
+| `enterprise_id`   | UUID        | Multi-tenant: which enterprise owns this record                              |
+| `organization_id` | UUID        | Multi-tenant: which organization owns this record                            |
+| `status`          | Enum        | Lifecycle management: `ACTIVE`, `INACTIVE`, `DELETED`, `PENDING`, `ARCHIVED` |
+| `code`            | varchar(50) | Human-readable code / alternative identifier                                 |
+| `description`     | text        | Free-text description                                                        |
+| `created_at`      | timestamp   | Auto-set by TypeORM                                                          |
+| `updated_at`      | timestamp   | Auto-updated by TypeORM                                                      |
+| `modified_by`     | UUID        | Audit trail: who last modified                                               |
 
 > **Note:** The system uses **soft deletion** (setting `status = 'DELETED'`) — records are never physically removed from the database.
 
@@ -188,18 +190,20 @@ The database connection is configured in `src/config/database.config.ts` as a fa
 
 ```typescript
 // src/config/database.config.ts
-export const databaseConfigFactory = (config: ConfigService): TypeOrmModuleOptions => ({
-    type: 'postgres',
-    host: config.get<string>('db.postgres.HOST', 'localhost'),
-    port: config.get<number>('db.postgres.PORT', 5432),
-    username: config.get<string>('db.postgres.DB_USER', 'postgres'),
-    password: config.get<string>('db.postgres.DB_PASSWORD'),
-    database: config.get<string>('db.postgres.DB_NAME', 'brello'),
-    schema: config.get<string>('db.postgres.DB_SCHEMA', 'brello'),
-    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-    synchronize: config.get<string>('brello.environment') === 'dev',
-    logging: config.get<string>('brello.environment') === 'dev',
-    // ...
+export const databaseConfigFactory = (
+  config: ConfigService,
+): TypeOrmModuleOptions => ({
+  type: 'postgres',
+  host: config.get<string>('db.postgres.HOST', 'localhost'),
+  port: config.get<number>('db.postgres.PORT', 5432),
+  username: config.get<string>('db.postgres.DB_USER', 'postgres'),
+  password: config.get<string>('db.postgres.DB_PASSWORD'),
+  database: config.get<string>('db.postgres.DB_NAME', 'brello'),
+  schema: config.get<string>('db.postgres.DB_SCHEMA', 'brello'),
+  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  synchronize: config.get<string>('brello.environment') === 'dev',
+  logging: config.get<string>('brello.environment') === 'dev',
+  // ...
 });
 ```
 
@@ -207,10 +211,10 @@ export const databaseConfigFactory = (config: ConfigService): TypeOrmModuleOptio
 
 ```typescript
 TypeOrmModule.forRootAsync({
-    imports: [ConfigModule],
-    inject: [ConfigService],
-    useFactory: databaseConfigFactory,
-})
+  imports: [ConfigModule],
+  inject: [ConfigService],
+  useFactory: databaseConfigFactory,
+});
 ```
 
 ### Entity auto-discovery
@@ -234,35 +238,35 @@ All application configuration is managed through **YAML property files**, not `.
 
 ### Files
 
-| File | Purpose |
-|---|---|
-| `src/core/properties/dev.properties.yaml` | **Development config** — contains all settings for local development |
-| `src/core/properties/sample.properties.yaml` | **Template** — copy this to create new environment configs |
+| File                                         | Purpose                                                              |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `src/core/properties/dev.properties.yaml`    | **Development config** — contains all settings for local development |
+| `src/core/properties/sample.properties.yaml` | **Template** — copy this to create new environment configs           |
 
 ### Structure
 
 ```yaml
 http:
-  port: 8000                    # Server port
-  apiPrefix: 'api/v1'           # Global API prefix
+  port: 8000 # Server port
+  apiPrefix: 'api/v1' # Global API prefix
 
 brello:
-  environment: 'dev'            # dev | uat | prod
+  environment: 'dev' # dev | uat | prod
 
 auth:
-  JWT_SECRET: <secret>          # Access token signing secret
-  JWT_REFRESH_SECRET: <secret>  # Refresh token signing secret
-  JWT_ACCESS_EXPIRATION: '15m'  # Access token TTL
-  JWT_REFRESH_EXPIRATION: '7d'  # Refresh token TTL
-  ENC_KEY: <key>                # Encryption key
-  IV: <iv>                      # Initialization vector
+  JWT_SECRET: <secret> # Access token signing secret
+  JWT_REFRESH_SECRET: <secret> # Refresh token signing secret
+  JWT_ACCESS_EXPIRATION: '15m' # Access token TTL
+  JWT_REFRESH_EXPIRATION: '7d' # Refresh token TTL
+  ENC_KEY: <key> # Encryption key
+  IV: <iv> # Initialization vector
 
 session:
-  expirationDays: 7             # Session TTL in days
+  expirationDays: 7 # Session TTL in days
 
 otp:
-  expirationMinutes: 10         # OTP validity period
-  maxAttempts: 5                # Max failed OTP attempts
+  expirationMinutes: 10 # OTP validity period
+  maxAttempts: 5 # Max failed OTP attempts
 
 db:
   postgres:
@@ -308,29 +312,29 @@ Located in `src/modules/auth/`.
 
 ### Features
 
-| Feature | Implementation |
-|---|---|
-| **Login** | Email/password → validates → resolves available apps → creates session → JWT tokens |
-| **Access Token** | Short-lived (15m), contains `userId, sessionId, orgId, enterpriseId, appId` |
-| **Refresh Token** | Long-lived (7d), separate Passport strategy (`jwt-refresh`) |
-| **Token Rotation** | On refresh, old token is invalidated and new one is issued |
-| **Session Management** | `Session` entity tracks active sessions with expiration |
-| **Switch App** | `POST /auth/switch-app` — issues new JWT scoped to a different app |
-| **Password Update** | Requires current password, invalidates all sessions |
-| **Forgot Password** | OTP-based flow: generate OTP → verify OTP → reset password |
-| **OTP Cleanup** | Cron job runs hourly to purge expired OTPs |
-| **Session Cleanup** | Cron job runs daily at midnight to purge expired sessions |
+| Feature                | Implementation                                                                      |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| **Login**              | Email/password → validates → resolves available apps → creates session → JWT tokens |
+| **Access Token**       | Short-lived (15m), contains `userId, sessionId, orgId, enterpriseId, appId`         |
+| **Refresh Token**      | Long-lived (7d), separate Passport strategy (`jwt-refresh`)                         |
+| **Token Rotation**     | On refresh, old token is invalidated and new one is issued                          |
+| **Session Management** | `Session` entity tracks active sessions with expiration                             |
+| **Switch App**         | `POST /auth/switch-app` — issues new JWT scoped to a different app                  |
+| **Password Update**    | Requires current password, invalidates all sessions                                 |
+| **Forgot Password**    | OTP-based flow: generate OTP → verify OTP → reset password                          |
+| **OTP Cleanup**        | Cron job runs hourly to purge expired OTPs                                          |
+| **Session Cleanup**    | Cron job runs daily at midnight to purge expired sessions                           |
 
 ### JWT Payload Structure
 
 ```typescript
 interface JwtPayload {
-    userId: string;           // maps to users.id
-    sessionId: string;        // for session management
-    organizationId: string;   // which org the user is acting within
-    enterpriseId: string;     // which enterprise they belong to
-    appId: string;            // which app is currently active
-    refreshToken?: string;    // only in refresh tokens
+  userId: string; // maps to users.id
+  sessionId: string; // for session management
+  organizationId: string; // which org the user is acting within
+  enterpriseId: string; // which enterprise they belong to
+  appId: string; // which app is currently active
+  refreshToken?: string; // only in refresh tokens
 }
 ```
 
@@ -408,12 +412,12 @@ effective_access = role_grants_access AND plan_allows_action
 
 Located in `src/modules/plan/`. Controls feature gating at the organizational level.
 
-| Entity | Purpose |
-|---|---|
-| `Plan` | Subscription tiers (Free, Starter, Professional, Enterprise) with pricing |
-| `OrganizationSubscription` | Tracks which plan an org subscribes to (active/expired/trial/cancelled) |
-| `PlanModule` | Which modules are enabled per plan |
-| `PlanModuleAction` | Fine-grained: which actions per module per plan |
+| Entity                     | Purpose                                                                   |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `Plan`                     | Subscription tiers (Free, Starter, Professional, Enterprise) with pricing |
+| `OrganizationSubscription` | Tracks which plan an org subscribes to (active/expired/trial/cancelled)   |
+| `PlanModule`               | Which modules are enabled per plan                                        |
+| `PlanModuleAction`         | Fine-grained: which actions per module per plan                           |
 
 **Example:** The "Free" plan might enable the Leave module with `view` action only, while the "Enterprise" plan enables all modules with all actions.
 
@@ -423,17 +427,18 @@ Located in `src/modules/plan/`. Controls feature gating at the organizational le
 
 Applied in `main.ts` before any route handler executes:
 
-| Order | Middleware | Purpose |
-|---|---|---|
-| 1 | **CORS** | `origin: true, credentials: true` |
-| 2 | **ValidationPipe** | Whitelist DTOs, transform types, forbid unknown properties |
-| 3 | **HttpExceptionFilter** | Standardize error responses: `{statusCode, timestamp, path, message, error}` |
-| 4 | **TransformInterceptor** | Wrap success responses: `{success: true, data, timestamp}` |
-| 5 | **Global Prefix** | All routes prefixed with `api/v1` |
+| Order | Middleware               | Purpose                                                                      |
+| ----- | ------------------------ | ---------------------------------------------------------------------------- |
+| 1     | **CORS**                 | `origin: true, credentials: true`                                            |
+| 2     | **ValidationPipe**       | Whitelist DTOs, transform types, forbid unknown properties                   |
+| 3     | **HttpExceptionFilter**  | Standardize error responses: `{statusCode, timestamp, path, message, error}` |
+| 4     | **TransformInterceptor** | Wrap success responses: `{success: true, data, timestamp}`                   |
+| 5     | **Global Prefix**        | All routes prefixed with `api/v1`                                            |
 
 ### Standardized Response Formats
 
 **Success:**
+
 ```json
 {
   "success": true,
@@ -443,6 +448,7 @@ Applied in `main.ts` before any route handler executes:
 ```
 
 **Error:**
+
 ```json
 {
   "statusCode": 400,
@@ -458,48 +464,95 @@ Applied in `main.ts` before any route handler executes:
 ## API Endpoints
 
 ### Auth (`/api/v1/auth`)
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/login` | ✗ | Login with email/password |
-| POST | `/switch-app` | JWT | Switch active application |
-| POST | `/logout` | JWT | Invalidate session |
-| POST | `/refresh` | Refresh JWT | Get new access token |
-| POST | `/update-password` | JWT | Change password |
-| POST | `/forgot-password` | ✗ | Send password reset OTP |
-| POST | `/verify-otp` | ✗ | Verify OTP & set new password |
+
+| Method | Endpoint           | Auth        | Description                   |
+| ------ | ------------------ | ----------- | ----------------------------- |
+| POST   | `/login`           | ✗           | Login with email/password     |
+| POST   | `/switch-app`      | JWT         | Switch active application     |
+| POST   | `/logout`          | JWT         | Invalidate session            |
+| POST   | `/refresh`         | Refresh JWT | Get new access token          |
+| POST   | `/update-password` | JWT         | Change password               |
+| POST   | `/forgot-password` | ✗           | Send password reset OTP       |
+| POST   | `/verify-otp`      | ✗           | Verify OTP & set new password |
 
 ### Enterprise (`/api/v1/enterprises`)
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/` | Create enterprise |
-| GET | `/` | List all enterprises |
-| GET | `/:id` | Get enterprise by ID |
-| PATCH | `/:id` | Update enterprise |
-| DELETE | `/:id` | Delete enterprise |
+
+| Method | Endpoint | Description          |
+| ------ | -------- | -------------------- |
+| POST   | `/`      | Create enterprise    |
+| GET    | `/`      | List all enterprises |
+| GET    | `/:id`   | Get enterprise by ID |
+| PATCH  | `/:id`   | Update enterprise    |
+| DELETE | `/:id`   | Delete enterprise    |
 
 ### Organization (`/api/v1/organizations`)
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/` | Create organization |
-| GET | `/` | List all organizations |
-| GET | `/:id` | Get organization by ID |
-| GET | `/enterprise/:enterpriseId` | Get orgs by enterprise |
-| PATCH | `/:id` | Update organization |
-| DELETE | `/:id` | Delete organization |
+
+| Method | Endpoint                    | Description            |
+| ------ | --------------------------- | ---------------------- |
+| POST   | `/`                         | Create organization    |
+| GET    | `/`                         | List all organizations |
+| GET    | `/:id`                      | Get organization by ID |
+| GET    | `/enterprise/:enterpriseId` | Get orgs by enterprise |
+| PATCH  | `/:id`                      | Update organization    |
+| DELETE | `/:id`                      | Delete organization    |
+
+### Organization Profile (`/api/v1/organizations/profile`)
+
+| Method | Endpoint               | Description                      |
+| ------ | ---------------------- | -------------------------------- |
+| POST   | `/`                    | Create organization profile      |
+| GET    | `/:id`                 | Get organization profile by ID   |
+| GET    | `/organization/:orgId` | Get profile by org ID            |
+| PATCH  | `/:id`                 | Update organization profile      |
+| DELETE | `/:id`                 | Soft delete organization profile |
 
 ### User (`/api/v1/users`)
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/` | Create user |
-| GET | `/` | List all users |
-| GET | `/:id` | Get user by ID |
-| PATCH | `/:id` | Update user |
-| DELETE | `/:id` | Delete user |
+
+| Method | Endpoint | Description        |
+| ------ | -------- | ------------------ |
+| POST   | `/`      | Create simple user |
+| GET    | `/`      | List all users     |
+| GET    | `/:id`   | Get user by ID     |
+| PATCH  | `/:id`   | Update user        |
+| DELETE | `/:id`   | Delete user        |
+
+### Employee (`/api/v1/employees`)
+
+| Method | Endpoint            | Description                                             |
+| ------ | ------------------- | ------------------------------------------------------- |
+| POST   | `/`                 | Create Full Employee Aggregate (User + Profile)         |
+| GET    | `/`                 | List all employees                                      |
+| GET    | `/:id`              | Get aggregate employee profile                          |
+| PATCH  | `/:id`              | Update employee basic info                              |
+| PATCH  | `/:id/profile`      | Update employee profile data                            |
+| POST   | `/:id/[collection]` | Add child generic records (education, experience, etc.) |
+| DELETE | `/:id`              | Soft delete entire employee aggregate                   |
+
+### Document (`/api/v1/documents`)
+
+| Method | Endpoint          | Auth | Description                       |
+| ------ | ----------------- | ---- | --------------------------------- |
+| POST   | `/upload-url`     | JWT  | Generate S3 Pre-signed upload URL |
+| POST   | `/:id/confirm`    | JWT  | Confirm successful upload         |
+| GET    | `/:id/signed-url` | JWT  | Generate short-lived download URL |
+| GET    | `/:id`            | JWT  | Get document metadata             |
+| DELETE | `/:id`            | JWT  | Soft delete document              |
+
+### Industry Type (`/api/v1/industry-types`)
+
+| Method | Endpoint | Auth | Description             |
+| ------ | -------- | ---- | ----------------------- |
+| POST   | `/`      | JWT  | Create industry type    |
+| GET    | `/`      | JWT  | List industry types     |
+| GET    | `/:id`   | JWT  | Get industry type by ID |
+| PATCH  | `/:id`   | JWT  | Update industry type    |
+| DELETE | `/:id`   | JWT  | Delete industry type    |
 
 ### Menu (`/api/v1/menu`)
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/` | JWT | Get RBAC-resolved menu tree for current user |
+
+| Method | Endpoint | Auth | Description                                  |
+| ------ | -------- | ---- | -------------------------------------------- |
+| GET    | `/`      | JWT  | Get RBAC-resolved menu tree for current user |
 
 ---
 
@@ -546,6 +599,7 @@ npm run start:dev
 ```
 
 The app will:
+
 - Start on **port 8000** (configurable in `dev.properties.yaml`)
 - Auto-sync database tables (in dev mode)
 - Log SQL queries (in dev mode)
@@ -553,30 +607,30 @@ The app will:
 
 ### Available Scripts
 
-| Script | Command | Purpose |
-|---|---|---|
-| Dev server | `npm run start:dev` | Watch mode with hot reload |
-| Production build | `npm run build` | Compile to `dist/` |
-| Production start | `npm run start:prod` | Run compiled JS |
-| Lint | `npm run lint` | ESLint + Prettier |
-| Format | `npm run format` | Auto-format code |
-| Unit tests | `npm run test` | Run Jest tests |
-| E2E tests | `npm run test:e2e` | Run end-to-end tests |
+| Script           | Command              | Purpose                    |
+| ---------------- | -------------------- | -------------------------- |
+| Dev server       | `npm run start:dev`  | Watch mode with hot reload |
+| Production build | `npm run build`      | Compile to `dist/`         |
+| Production start | `npm run start:prod` | Run compiled JS            |
+| Lint             | `npm run lint`       | ESLint + Prettier          |
+| Format           | `npm run format`     | Auto-format code           |
+| Unit tests       | `npm run test`       | Run Jest tests             |
+| E2E tests        | `npm run test:e2e`   | Run end-to-end tests       |
 
 ---
 
 ## Key Design Patterns
 
-| Pattern | Where Used |
-|---|---|
-| **Module Pattern** | Every feature is a self-contained NestJS module |
-| **Repository Pattern** | Data access abstracted from business logic |
-| **Strategy Pattern** | Passport JWT strategies (access + refresh) |
-| **Factory Pattern** | Database config factory |
-| **Decorator Pattern** | `@CurrentUser()`, `@RequirePermission()` |
-| **Interceptor Pattern** | Global response transformation, exception filtering |
-| **Guard Pattern** | `JwtAuthGuard`, `AccessGuard` for route protection |
-| **Template Method** | `BaseEntity` — abstract class inherited by all entities |
+| Pattern                 | Where Used                                              |
+| ----------------------- | ------------------------------------------------------- |
+| **Module Pattern**      | Every feature is a self-contained NestJS module         |
+| **Repository Pattern**  | Data access abstracted from business logic              |
+| **Strategy Pattern**    | Passport JWT strategies (access + refresh)              |
+| **Factory Pattern**     | Database config factory                                 |
+| **Decorator Pattern**   | `@CurrentUser()`, `@RequirePermission()`                |
+| **Interceptor Pattern** | Global response transformation, exception filtering     |
+| **Guard Pattern**       | `JwtAuthGuard`, `AccessGuard` for route protection      |
+| **Template Method**     | `BaseEntity` — abstract class inherited by all entities |
 
 ---
 

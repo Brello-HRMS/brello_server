@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrganizationService } from './services/organization.service';
 import { OrganizationController } from './controllers/organization.controller';
@@ -16,7 +16,7 @@ import { IndustryTypeModule } from '../industry-type/industry-type.module';
   imports: [
     TypeOrmModule.forFeature([Organization, OrganizationProfile]),
     EnterpriseModule,
-    DocumentModule,
+    forwardRef(() => DocumentModule),
     IndustryTypeModule,
   ],
   controllers: [OrganizationController, OrganizationProfileController],

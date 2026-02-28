@@ -3,6 +3,8 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentRepository } from '../repositories/document.repository';
@@ -23,6 +25,7 @@ export class DocumentService {
     private readonly documentRepository: DocumentRepository,
     private readonly storageService: StorageService,
     private readonly enterpriseService: EnterpriseService,
+    @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
   ) {}
 
