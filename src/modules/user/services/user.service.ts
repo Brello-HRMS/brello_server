@@ -74,7 +74,7 @@ export class UserService {
         const user = await this.userRepository.create({
             ...userData,
             password_hash,
-            status: Status.ACTIVE,
+            base_status: Status.ACTIVE,
         });
 
         this.logger.log(`User created successfully: ${user.id}`);

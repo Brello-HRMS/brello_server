@@ -1,3 +1,7 @@
+---
+trigger: manual
+---
+
 # Backend Engineering Specification – Mohd Samir
 
 ## Identity

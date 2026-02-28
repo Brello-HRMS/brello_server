@@ -10,20 +10,9 @@ import { RbacModule } from './modules/rbac/rbac.module';
 import { PlanModule } from './modules/plan/plan.module';
 import { AppManagementModule } from './modules/app/app-management.module';
 import { PropertiesModule } from './core/properties/properties.module';
+import { IndustryTypeModule } from './modules/industry-type/industry-type.module';
+import { DocumentModule } from './modules/document/document.module';
 
-/**
- * App Module — Root module
- *
- * All configuration is loaded from YAML properties files via PropertiesModule.
- * No .env files are used — everything comes from dev.properties.yaml.
- *
- * Imports:
- *  - EnterpriseModule, OrganizationModule, UserModule (existing)
- *  - AuthModule (updated for multi-app JWT)
- *  - RbacModule (PermissionResolver, roles, module-access, menu API)
- *  - PlanModule (plan definitions and subscription management)
- *  - AppManagementModule (multi-app registry)
- */
 @Module({
   imports: [
     // Load YAML properties first (makes ConfigService available globally)
@@ -46,6 +35,8 @@ import { PropertiesModule } from './core/properties/properties.module';
     AppManagementModule,
     PlanModule,
     RbacModule,
+    IndustryTypeModule,
+    DocumentModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
