@@ -25,18 +25,17 @@ import { DocumentModule } from './modules/document/document.module';
       useFactory: databaseConfigFactory,
     }),
 
-    // Existing modules
     EnterpriseModule,
     OrganizationModule,
     UserModule,
     AuthModule,
+    DocumentModule,
+    IndustryTypeModule,
 
     // New RBAC + multi-app modules
     AppManagementModule,
     PlanModule,
     RbacModule,
-    IndustryTypeModule,
-    DocumentModule,
   ],
 })
 export class AppModule {}
