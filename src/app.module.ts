@@ -6,6 +6,8 @@ import { EnterpriseModule } from './modules/enterprise/enterprise.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DepartmentModule } from './modules/departments/department.module';
+
 
 /**
  * App Module
@@ -37,11 +39,14 @@ import { AuthModule } from './modules/auth/auth.module';
       useFactory: databaseConfig,
     }),
 
-    // Feature modules
+    // Feature modules — loaded in dependency order
+    // (EnterpriseModule first because OrganizationModule depends on it)
     EnterpriseModule,
     OrganizationModule,
     UserModule,
     AuthModule,
+    DepartmentModule,
+
   ],
 })
 export class AppModule { }
