@@ -41,9 +41,4 @@ export class EnterpriseRepository {
     const result = await this.repository.delete(id);
     return (result.affected ?? 0) > 0;
   }
-
-  async exists(id: string): Promise<boolean> {
-    const count = await this.repository.count({ where: { id } });
-    return count > 0;
-  }
 }

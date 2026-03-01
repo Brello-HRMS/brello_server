@@ -4,16 +4,12 @@ import { App } from './entities/app.entity';
 import { AppService } from './services/app.service';
 import { AppController } from './controllers/app.controller';
 
-/**
- * AppManagementModule
- *
- * Manages app definitions in the multi-app architecture.
- * Provides CRUD APIs for application registration.
- */
+import { AppRepository } from './repositories/app.repository';
+
 @Module({
-    imports: [TypeOrmModule.forFeature([App])],
-    controllers: [AppController],
-    providers: [AppService],
-    exports: [AppService, TypeOrmModule],
+  imports: [TypeOrmModule.forFeature([App])],
+  controllers: [AppController],
+  providers: [AppService, AppRepository],
+  exports: [AppService, AppRepository, TypeOrmModule],
 })
-export class AppManagementModule { }
+export class AppManagementModule {}

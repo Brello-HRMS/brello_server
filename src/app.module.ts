@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { PlanModule } from './modules/plan/plan.module';
 import { AppManagementModule } from './modules/app/app-management.module';
+import { AppModuleModule } from './modules/app-module/app-module.module';
 import { PropertiesModule } from './core/properties/properties.module';
 import { IndustryTypeModule } from './modules/industry-type/industry-type.module';
 import { DocumentModule } from './modules/document/document.module';
@@ -35,6 +36,7 @@ import { DocumentModule } from './modules/document/document.module';
     // New RBAC + multi-app modules
     AppManagementModule,
     PlanModule,
+    AppModuleModule,
     RbacModule,
   ],
 })
