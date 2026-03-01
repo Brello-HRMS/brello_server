@@ -8,21 +8,21 @@ Manages application definitions in the multi-app architecture (e.g., HRMS, CRM, 
 
 ## 1. Create App
 
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `/api/v1/apps` |
-| **Auth** | None |
-| **Status** | `201 Created` |
+|            |                               |
+| ---------- | ----------------------------- |
+| **Method** | `POST`                        |
+| **URL**    | `/api/v1/apps`                |
+| **Auth**   | Bearer Token (Platform Admin) |
+| **Status** | `201 Created`                 |
 
 **Request Body:**
 
-| Field | Type | Required | Validation | Description |
-|---|---|---|---|---|
-| `name` | string | ✅ | 2–100 characters | App name (must be unique) |
-| `priority` | integer | ❌ | ≥ 1, default: 999 | Lower = higher priority (determines default app on login) |
-| `enterprise_id` | string (UUID) | ✅ | Valid UUID v4 | Enterprise this app belongs to |
-| `organization_id` | string (UUID) | ✅ | Valid UUID v4 | Organization this app belongs to |
+| Field             | Type          | Required | Validation        | Description                                               |
+| ----------------- | ------------- | -------- | ----------------- | --------------------------------------------------------- |
+| `name`            | string        | ✅       | 2–100 characters  | App name (must be unique)                                 |
+| `priority`        | integer       | ❌       | ≥ 1, default: 999 | Lower = higher priority (determines default app on login) |
+| `enterprise_id`   | string (UUID) | ✅       | Valid UUID v4     | Enterprise this app belongs to                            |
+| `organization_id` | string (UUID) | ✅       | Valid UUID v4     | Organization this app belongs to                          |
 
 ```json
 {
@@ -54,20 +54,20 @@ Manages application definitions in the multi-app architecture (e.g., HRMS, CRM, 
 
 **Error Responses:**
 
-| Status | Condition |
-|---|---|
+| Status         | Condition                             |
+| -------------- | ------------------------------------- |
 | `409 Conflict` | App with the same name already exists |
 
 ---
 
 ## 2. Get All Apps
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `/api/v1/apps` |
-| **Auth** | None |
-| **Status** | `200 OK` |
+|            |                               |
+| ---------- | ----------------------------- |
+| **Method** | `GET`                         |
+| **URL**    | `/api/v1/apps`                |
+| **Auth**   | Bearer Token (Platform Admin) |
+| **Status** | `200 OK`                      |
 
 Returns all apps, sorted by `priority` ascending.
 
@@ -75,42 +75,42 @@ Returns all apps, sorted by `priority` ascending.
 
 ## 3. Get App by ID
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `/api/v1/apps/:id` |
-| **Auth** | None |
-| **Status** | `200 OK` |
+|            |                               |
+| ---------- | ----------------------------- |
+| **Method** | `GET`                         |
+| **URL**    | `/api/v1/apps/:id`            |
+| **Auth**   | Bearer Token (Platform Admin) |
+| **Status** | `200 OK`                      |
 
 **Path Parameters:**
 
 | Parameter | Type | Description |
-|---|---|---|
-| `id` | UUID | App ID |
+| --------- | ---- | ----------- |
+| `id`      | UUID | App ID      |
 
 **Error Responses:**
 
-| Status | Condition |
-|---|---|
+| Status          | Condition     |
+| --------------- | ------------- |
 | `404 Not Found` | App not found |
 
 ---
 
 ## 4. Update App
 
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **URL** | `/api/v1/apps/:id` |
-| **Auth** | None |
-| **Status** | `200 OK` |
+|            |                               |
+| ---------- | ----------------------------- |
+| **Method** | `PATCH`                       |
+| **URL**    | `/api/v1/apps/:id`            |
+| **Auth**   | Bearer Token (Platform Admin) |
+| **Status** | `200 OK`                      |
 
 **Request Body:** (all fields optional)
 
-| Field | Type | Validation | Description |
-|---|---|---|---|
-| `name` | string | 2–100 characters | Updated app name |
-| `priority` | integer | ≥ 1 | Updated priority |
+| Field      | Type    | Validation       | Description      |
+| ---------- | ------- | ---------------- | ---------------- |
+| `name`     | string  | 2–100 characters | Updated app name |
+| `priority` | integer | ≥ 1              | Updated priority |
 
 ```json
 {
@@ -123,11 +123,11 @@ Returns all apps, sorted by `priority` ascending.
 
 ## 5. Delete App
 
-| | |
-|---|---|
-| **Method** | `DELETE` |
-| **URL** | `/api/v1/apps/:id` |
-| **Auth** | None |
-| **Status** | `204 No Content` |
+|            |                               |
+| ---------- | ----------------------------- |
+| **Method** | `DELETE`                      |
+| **URL**    | `/api/v1/apps/:id`            |
+| **Auth**   | Bearer Token (Platform Admin) |
+| **Status** | `204 No Content`              |
 
 > ⚠️ Deleting an app cascades to its roles and user-role-maps.

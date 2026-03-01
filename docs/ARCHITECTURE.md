@@ -32,6 +32,16 @@
 
 The project follows a **modular monolith** architecture — each business domain is encapsulated in its own NestJS module with clear boundaries and dependencies.
 
+### Code Philosophy & Engineering Mindset
+
+The backend is built for **long-term maintainability (2–5+ years lifespan)**. We strictly adhere to the following principles:
+
+- **Prioritize readability over cleverness.** Clarity > speed of writing code.
+- **Prefer explicit logic over implicit behavior.** Avoid multi-responsibility functions and hidden side-effects.
+- **Avoid over-engineering and premature abstraction.** Simplicity scales.
+- **Fail fast and fail clearly.** Never swallow exceptions.
+- **Defensive Programming.** Always validate input at the boundary and never trust external data.
+
 ---
 
 ## Tech Stack
@@ -127,12 +137,25 @@ modules/<feature>/
 └── tasks/                     ← Scheduled/cron tasks (auth module only)
 ```
 
-### Key principle
+### Key principle: Strict Layered Responsibility
 
-- **Controllers** should be thin — only handle HTTP concerns (status codes, decorators).
-- **Services** contain all business logic, validations, and orchestration.
-- **Repositories** abstract TypeORM queries — services never directly use `Repository<Entity>`.
-- **Entities** define the database schema and relationships.
+- **Controllers** contain zero business logic. They handle HTTP concerns (request routing, status codes, decorators, and response shaping) only.
+- **Services** contain business rules only. Validate assumptions here and prevent null/undefined propagation.
+- **Repositories** handle database communication exclusively. Services never directly use `Repository<Entity>`.
+- **Entities** represent persistence models.
+- **DTOs** define strict API contracts and handle input validation at the boundary.
+- **Cross-layer leakage is strictly forbidden.**
+
+---
+
+## Anti-Patterns Strictly Avoided
+
+- **Fat controllers** or **God services**.
+- Overuse of decorators or deeply nested conditionals (use guard clauses).
+- Massive unstructured utility files ("dumping grounds").
+- Blind ORM usage (avoid excessive eager loading and N+1 queries).
+- Premature microservices or over-abstracted repositories.
+- Catch-all empty `try/catch` blocks (never swallow exceptions).
 
 ---
 
@@ -350,17 +373,35 @@ interface JwtPayload {
 @UseGuards(JwtAuthGuard, AccessGuard)
 @RequirePermission('LEAVE_MGMT', 'create')
 
+// Protect root tenant APIs for Super Users only
+@UseGuards(JwtAuthGuard, PlatformAdminGuard)
+
 // Access the current user
 @CurrentUser() user: JwtPayload
 ```
+
+### Platform Admin
+
+A **Platform Admin** is a super-user concept (`is_platform_admin: true` on the `User` entity) used to bootstrap and manage the multi-tenant architecture.
+
+- They bypass standard RBAC role checks during App login and switching.
+- They are the only users permitted to access the `/apps` and `/enterprises` controllers.
+- Because these controllers are secured, the very first Enterprise, Organization, and Platform Admin must typically be seeded directly into the database to resolve the chicken-and-egg bootstrapping cycle.
+- **Structural Extraction**: The authentication logic for Platform Admins is strictly compartmentalized inside `PlatformAdminAuthController` and `PlatformAdminAuthService` (separated from the mainline `auth.controller` and `auth.service`). This ensures that complex root-level OTP flows (like intercepting registrations with `PENDING` states) do not leak into standard multi-tenant app user endpoints.
 
 ---
 
 ## RBAC (Role-Based Access Control)
 
-Located in `src/modules/rbac/`. This is the core permission engine.
+Located in `src/modules/rbac/`.
 
-### Entity Relationships
+Permissions are resolved **dynamically at runtime** by the `PermissionResolverService`.
+
+Roles, Apps, and UserRoleMaps are managed via their respective Feature Modules.
+
+> **Important:** The hierarchical data structures mapping Roles to permissions (`AppModule`, `Action`, and `ModuleAccess`) have been decoupled from `rbac/` and extracted into their own standalone module: `src/modules/app-module/`. This layer provides full REST CRUD APIs for defining the permission taxonomy.
+
+### The Resolution Pipelines
 
 ```
 App
@@ -412,6 +453,10 @@ effective_access = role_grants_access AND plan_allows_action
 
 Located in `src/modules/plan/`. Controls feature gating at the organizational level.
 
+- This is a fully standalone Feature Module with its own REST APIs containing `Plan`, `OrganizationSubscription`, `PlanModule`, and `PlanModuleAction`.
+- All entities inherit from `BaseEntity` and have explicit Repositories, Services, and REST Controllers.
+- `PermissionResolver` queries the active subscription and intersects it with role-based module access to determine the final effective access.
+
 | Entity                     | Purpose                                                                   |
 | -------------------------- | ------------------------------------------------------------------------- |
 | `Plan`                     | Subscription tiers (Free, Starter, Professional, Enterprise) with pricing |
@@ -427,13 +472,13 @@ Located in `src/modules/plan/`. Controls feature gating at the organizational le
 
 Applied in `main.ts` before any route handler executes:
 
-| Order | Middleware               | Purpose                                                                      |
-| ----- | ------------------------ | ---------------------------------------------------------------------------- |
-| 1     | **CORS**                 | `origin: true, credentials: true`                                            |
-| 2     | **ValidationPipe**       | Whitelist DTOs, transform types, forbid unknown properties                   |
-| 3     | **HttpExceptionFilter**  | Standardize error responses: `{statusCode, timestamp, path, message, error}` |
-| 4     | **TransformInterceptor** | Wrap success responses: `{success: true, data, timestamp}`                   |
-| 5     | **Global Prefix**        | All routes prefixed with `api/v1`                                            |
+| Order | Middleware               | Purpose                                                                          |
+| ----- | ------------------------ | -------------------------------------------------------------------------------- |
+| 1     | **CORS**                 | `origin: true, credentials: true`                                                |
+| 2     | **ValidationPipe**       | Whitelist DTOs, transform types, forbid unknown properties                       |
+| 3     | **HttpExceptionFilter**  | Standardize error responses: `{statusCode, timestamp, path, message, errorCode}` |
+| 4     | **TransformInterceptor** | Wrap success responses: `{success: true, data, timestamp}`                       |
+| 5     | **Global Prefix**        | All routes prefixed with `api/v1`                                                |
 
 ### Standardized Response Formats
 
@@ -455,7 +500,7 @@ Applied in `main.ts` before any route handler executes:
   "timestamp": "2026-02-24T10:00:00.000Z",
   "path": "/api/v1/users",
   "message": "Validation failed",
-  "error": "Bad Request"
+  "errorCode": "Bad Request"
 }
 ```
 

@@ -141,7 +141,7 @@ export class AuthService {
       .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
       .getMany();
 
-    if (!userRoleMaps.length) {
+    if (!userRoleMaps.length && !user.is_platform_admin) {
       throw new ForbiddenException(
         'No active roles assigned. Contact your administrator.',
       );
@@ -190,17 +190,23 @@ export class AuthService {
       app_id: defaultAppId,
     });
 
-    const payload: JwtPayload = {
+    // ── 5. Generate Response ─────────────────────────────────────────────
+    // For Platform Admins with absolutely 0 roles, we can default the appId to the requested, last, or an empty string,
+    // since their JWT simply grants route-level controller bypass, not specific RBAC tree permissions.
+    // The `defaultAppId` is already determined above, so we'll use that.
+    const sessionId = session.id; // Use the ID from the created session
+    const tokenPayload: JwtPayload = {
       userId: user.id,
-      sessionId: session.id,
+      sessionId,
       organizationId: user.organization_id,
       enterpriseId: user.enterprise_id,
       appId: defaultAppId,
+      isPlatformAdmin: user.is_platform_admin,
     };
 
-    const accessToken = this.generateAccessToken(payload);
+    const accessToken = this.generateAccessToken(tokenPayload);
     const refreshTokenJwt = this.generateRefreshToken({
-      ...payload,
+      ...tokenPayload,
       refreshToken,
     });
 
@@ -246,7 +252,7 @@ export class AuthService {
       .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
       .getCount();
 
-    if (!hasRole) {
+    if (!hasRole && !currentUser.isPlatformAdmin) {
       throw new ForbiddenException(
         'You do not have access to the requested application.',
       );
@@ -338,6 +344,7 @@ export class AuthService {
       organizationId: payload.organizationId,
       enterpriseId: payload.enterpriseId,
       appId: payload.appId,
+      isPlatformAdmin: payload.isPlatformAdmin,
     };
 
     const accessToken = this.generateAccessToken(newPayload);

@@ -2,9 +2,9 @@ import { Exclude, Expose, Type } from 'class-transformer';
 
 /** Summary of an available app returned on login/switch-app */
 export class AvailableAppDto {
-    @Expose() id: string;
-    @Expose() name: string;
-    @Expose() priority: number;
+  @Expose() id: string;
+  @Expose() name: string;
+  @Expose() priority: number;
 }
 
 /**
@@ -12,33 +12,34 @@ export class AvailableAppDto {
  */
 @Exclude()
 export class AuthResponseDto {
-    @Expose()
-    access_token: string;
+  @Expose()
+  access_token: string;
 
-    @Expose()
-    refresh_token: string;
+  @Expose()
+  refresh_token: string;
 
-    @Expose()
-    user: {
-        id: string;
-        email: string;
-        first_name: string;
-        last_name: string;
-        enterprise_id: string;
-        organization_id: string;
-    };
+  @Expose()
+  user: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    enterprise_id?: string;
+    organization_id?: string;
+    is_platform_admin?: boolean;
+  };
 
-    @Expose()
-    expires_in: number;
+  @Expose()
+  expires_in: number;
 
-    /** The app the JWT is currently scoped to */
-    @Expose()
-    defaultAppId: string;
+  /** The app the JWT is currently scoped to */
+  @Expose()
+  defaultAppId: string;
 
-    /** All apps the user has at least one role in */
-    @Expose()
-    @Type(() => AvailableAppDto)
-    availableApps: AvailableAppDto[];
+  /** All apps the user has at least one role in */
+  @Expose()
+  @Type(() => AvailableAppDto)
+  availableApps: AvailableAppDto[];
 }
 
 /**
@@ -46,14 +47,14 @@ export class AuthResponseDto {
  */
 @Exclude()
 export class RefreshTokenResponseDto {
-    @Expose()
-    access_token: string;
+  @Expose()
+  access_token: string;
 
-    @Expose()
-    refresh_token: string;
+  @Expose()
+  refresh_token: string;
 
-    @Expose()
-    expires_in: number;
+  @Expose()
+  expires_in: number;
 }
 
 /**
@@ -61,12 +62,12 @@ export class RefreshTokenResponseDto {
  */
 @Exclude()
 export class SwitchAppResponseDto {
-    @Expose()
-    access_token: string;
+  @Expose()
+  access_token: string;
 
-    @Expose()
-    appId: string;
+  @Expose()
+  appId: string;
 
-    @Expose()
-    expires_in: number;
+  @Expose()
+  expires_in: number;
 }

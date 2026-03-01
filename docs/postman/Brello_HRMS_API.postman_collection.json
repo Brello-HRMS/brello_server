@@ -328,6 +328,142 @@
                         "description": "Verify the OTP received via email and set a new password.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
                     },
                     "response": []
+                },
+                {
+                    "name": "Platform Admin Register (Request OTP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"first_name\": \"Admin\",\n    \"last_name\": \"Root\",\n    \"email\": \"admin@brello.com\",\n    \"phone_number\": \"+10000000000\",\n    \"password\": \"SecurePass@123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/platform-admin/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "platform-admin",
+                                "register"
+                            ]
+                        },
+                        "description": "Initiates the registration flow for a new Platform Admin by securely masking their initial creation and sending an OTP to tech@brello.co.in."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Platform Admin Verify Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"otp\": \"123456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/platform-admin/verify-register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "platform-admin",
+                                "verify-register"
+                            ]
+                        },
+                        "description": "Verifies the OTP and activates the Platform Admin account."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Platform Admin Login (Request OTP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"password\": \"SecurePass@123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/platform-admin/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "platform-admin",
+                                "login"
+                            ]
+                        },
+                        "description": "Initiates the login flow for an existing Platform Admin by validating credentials and sending an OTP to their email."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Platform Admin Verify Login (Returns Token)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    const data = response.data;",
+                                    "    pm.collectionVariables.set('access_token', data.access_token);",
+                                    "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                                    "    pm.collectionVariables.set('user_id', data.user.id);",
+                                    "    if (data.user.enterprise_id) pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
+                                    "    if (data.user.organization_id) pm.collectionVariables.set('organization_id', data.user.organization_id);",
+                                    "    console.log('✅ Tokens saved for Platform Admin.');",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"otp\": \"123456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/platform-admin/verify-login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "platform-admin",
+                                "verify-login"
+                            ]
+                        },
+                        "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id` to collection variables."
+                    },
+                    "response": []
                 }
             ]
         },
@@ -373,7 +509,17 @@
                                 "enterprises"
                             ]
                         },
-                        "description": "Create a new enterprise.\n\n**Auto-saves:** `enterprise_id` to collection variables."
+                        "description": "Create a new enterprise.\n\n**Auto-saves:** `enterprise_id` to collection variables.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -391,7 +537,17 @@
                                 "enterprises"
                             ]
                         },
-                        "description": "List all enterprises in the system."
+                        "description": "List all enterprises in the system.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -410,7 +566,17 @@
                                 "{{enterprise_id}}"
                             ]
                         },
-                        "description": "Get a single enterprise by its UUID."
+                        "description": "Get a single enterprise by its UUID.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -438,7 +604,17 @@
                                 "{{enterprise_id}}"
                             ]
                         },
-                        "description": "Partially update an enterprise. All fields are optional."
+                        "description": "Partially update an enterprise. All fields are optional.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -457,7 +633,17 @@
                                 "{{enterprise_id}}"
                             ]
                         },
-                        "description": "Delete an enterprise. Returns 204 No Content."
+                        "description": "Delete an enterprise. Returns 204 No Content.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 }
@@ -907,7 +1093,17 @@
                                 "apps"
                             ]
                         },
-                        "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority)."
+                        "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority).",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -925,7 +1121,17 @@
                                 "apps"
                             ]
                         },
-                        "description": "List all registered applications, sorted by priority."
+                        "description": "List all registered applications, sorted by priority.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -944,7 +1150,17 @@
                                 "{{app_id}}"
                             ]
                         },
-                        "description": "Get a single app by UUID."
+                        "description": "Get a single app by UUID.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -972,7 +1188,17 @@
                                 "{{app_id}}"
                             ]
                         },
-                        "description": "Partially update an app."
+                        "description": "Partially update an app.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 },
@@ -991,7 +1217,17 @@
                                 "{{app_id}}"
                             ]
                         },
-                        "description": "Delete an app. Returns 204 No Content."
+                        "description": "Delete an app. Returns 204 No Content.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
                     },
                     "response": []
                 }
@@ -1399,6 +1635,223 @@
                         }
                     },
                     "response": []
+                }
+            ]
+        },
+        {
+            "name": "App Module (Permissions)",
+            "description": "Manage system permissions taxonomy: Modules, Actions, and Module Access lists.",
+            "item": [
+                {
+                    "name": "Get All App Modules",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{base_url}}/app-modules",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "app-modules"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create App Module",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Leave Management\",\n  \"wbs_code\": \"1.0\",\n  \"type\": \"module\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/app-modules",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "app-modules"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Action",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"approve\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/actions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "actions"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Module Access",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"role_id\": \"{{role_id}}\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"action_id\": \"<ACTION_ID>\",\n  \"access_flag\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/module-accesses",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "module-accesses"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Plan & Subscription",
+            "description": "Manage subscription plans and tier limits.",
+            "item": [
+                {
+                    "name": "Get All Plans",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{base_url}}/plans",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "plans"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Plan",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Starter\",\n  \"price\": 500.00,\n  \"description\": \"Starter plan\",\n  \"feature\": [\"Leave\", \"Attendance\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/plans",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "plans"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Organization Subscription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"organization_id\": \"{{organization_id}}\",\n  \"plan_id\": \"<PLAN_ID>\",\n  \"start_date\": \"2026-01-01T00:00:00.000Z\",\n  \"status\": \"Active\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/organization-subscriptions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "organization-subscriptions"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Plan Module",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"plan_id\": \"<PLAN_ID>\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"enabled\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/plan-modules",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "plan-modules"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Plan Module Action",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"plan_id\": \"<PLAN_ID>\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"action_id\": \"<ACTION_ID>\",\n  \"enabled\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/plan-module-actions",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "plan-module-actions"
+                            ]
+                        }
+                    }
                 }
             ]
         }

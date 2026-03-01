@@ -144,7 +144,7 @@ export class EmployeeService {
     } catch (err) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Failed to create employee: ${(err as Error).message}`);
-      if ((err as any).code === '23505') {
+      if (err.code === '23505') {
         throw new ConflictException(
           'A unique constraint failed. Check employeeId or other unique fields.',
         );

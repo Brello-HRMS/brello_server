@@ -1,5 +1,5 @@
 ---
-trigger: manual
+trigger: always_on
 ---
 
 # Backend Engineering Specification – Mohd Samir

@@ -1,11 +1,11 @@
 import {
-    Entity,
-    Column,
-    ManyToOne,
-    JoinColumn,
-    Index,
-    CreateDateColumn,
-    PrimaryGeneratedColumn,
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  CreateDateColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
 
@@ -20,25 +20,25 @@ import { Role } from './role.entity';
 @Index(['user_id', 'role_id', 'organization_id'], { unique: true })
 @Index(['user_id', 'organization_id'])
 export class UserRoleMap {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    /** The user being assigned the role */
-    @Column({ type: 'uuid' })
-    user_id: string;
+  /** The user being assigned the role */
+  @Column({ type: 'uuid' })
+  user_id: string;
 
-    /** The role being assigned */
-    @Column({ type: 'uuid' })
-    role_id: string;
+  /** The role being assigned */
+  @Column({ type: 'uuid' })
+  role_id: string;
 
-    @ManyToOne(() => Role, { eager: false, onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'role_id' })
-    role: Role;
+  @ManyToOne(() => Role, { eager: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'role_id' })
+  role: Role;
 
-    /** Organization scope for this role assignment */
-    @Column({ type: 'uuid' })
-    organization_id: string;
+  /** Organization scope for this role assignment */
+  @Column({ type: 'uuid' })
+  organization_id: string;
 
-    @CreateDateColumn({ type: 'timestamp' })
-    created_at: Date;
+  @CreateDateColumn({ type: 'timestamp' })
+  created_at: Date;
 }

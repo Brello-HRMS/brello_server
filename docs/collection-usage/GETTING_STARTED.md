@@ -16,18 +16,24 @@
 ## Flow Overview
 
 ```
- PHASE 1: Setup Tenant Structure
+ PHASE 1: DB Bootstrap & First User
  ┌──────────────────────────────────────────────────────┐
- │  Step 1:  Create Enterprise           → enterprise_id │
- │  Step 2:  Create Organization         → organization_id│
- │  Step 3:  Create User (with password) → user_id       │
+ │  (Seed 1 Enterprise & 1 Org into the DB manually)    │
+ │  Step 1:  Create User (is_platform_admin: true)      │
  └───────────────────────┬──────────────────────────────┘
                          │
- PHASE 2: Setup RBAC (NEW APIs!)
+ PHASE 1.5: Platform Admin Architecture Setup
  ┌───────────────────────▼──────────────────────────────┐
- │  Step 4:  Create App (e.g., "HRMS")   → app_id       │
- │  Step 5:  Create Role (e.g., "Admin") → role_id       │
- │  Step 6:  Assign Role to User         → user can login│
+ │  Step 2:  Login as Platform Admin     → tokens 🔑     │
+ │  Step 3:  Create Enterprise (via API) → enterprise_id │
+ │  Step 4:  Create Organization         → organization_id│
+ │  Step 5:  Create App (e.g., "HRMS")   → app_id       │
+ └───────────────────────┬──────────────────────────────┘
+                         │
+ PHASE 2: Setup RBAC
+ ┌───────────────────────▼──────────────────────────────┐
+ │  Step 6:  Create Role (e.g., "Admin") → role_id       │
+ │  Step 7:  Assign Role to normal User  → user can login│
  └───────────────────────┬──────────────────────────────┘
                          │
  PHASE 3: Authentication
@@ -49,14 +55,18 @@
 
 ---
 
-## Phase 1: Setup Tenant Structure
+## Phase 1: DB Bootstrap & First User
 
-### Step 1 — Create Enterprise
+> **⚠️ CRITICAL BOOTSTRAP:** Because creating an Enterprise or App requires a **Platform Admin** JWT, and creating a User requires an existing Enterprise, **you must seed the first Enterprise and Organization directly into the database** when starting from a completely empty environment.
 
-> **Folder:** Enterprise → Create Enterprise
+Once you have a single `enterprise_id` and `organization_id` in your DB, use them below to create your very first Platform Admin user.
+
+### Step 1 — Create Platform Admin User
+
+> **Folder:** User → Create User
 
 ```
-POST /api/v1/enterprises
+POST /api/v1/users
 ```
 
 ```json
@@ -101,13 +111,14 @@ POST /api/v1/users
 
 ```json
 {
-  "first_name": "John",
-  "last_name": "Doe",
-  "email": "john.doe@example.com",
-  "phone": "+919876543210",
+  "first_name": "Admin",
+  "last_name": "Root",
+  "email": "admin@brello.com",
+  "phone": "+10000000000",
   "password": "SecurePass@123",
   "enterprise_id": "{{enterprise_id}}",
-  "organization_id": "{{organization_id}}"
+  "organization_id": "{{organization_id}}",
+  "is_platform_admin": true
 }
 ```
 
@@ -117,16 +128,51 @@ POST /api/v1/users
 
 ---
 
-## Phase 2: Setup RBAC
+## Phase 1.5: Platform Admin Architecture Setup
 
-> ⚠️ **Login will fail without these steps!** The login API checks that the user has at least one active role linked to an active app.
+> **⚠️ NOTE:** Now that you have a Platform Admin user, you must log in to get a JWT token before creating the actual App and assigning Roles.
 
-### Step 4 — Create App
+### Step 2 — Login as Platform Admin (Request OTP)
+
+> **Folder:** Auth → Platform Admin Login (Request OTP)
+
+```
+POST /api/v1/auth/platform-admin/login
+```
+
+```json
+{
+  "email": "admin@brello.com",
+  "password": "SecurePass@123"
+}
+```
+
+✅ Check the **server console** for the 6-digit OTP (in dev mode).
+
+### Step 2.5 — Verify Login (Get Token)
+
+> **Folder:** Auth → Platform Admin Verify Login (Returns Token)
+
+```
+POST /api/v1/auth/platform-admin/verify-login
+```
+
+```json
+{
+  "email": "admin@brello.com",
+  "otp": "123456"
+}
+```
+
+✅ **Save the `access_token`**
+
+### Step 3 — Create App
 
 > **Folder:** App → Create App
 
 ```
 POST /api/v1/apps
+Authorization: Bearer {{access_token}}
 ```
 
 ```json
@@ -140,11 +186,17 @@ POST /api/v1/apps
 
 ✅ **Save the `id`** — this is your `app_id`.
 
+> 💡 **Optional Module & Plan Configuration:** If you wish to test RBAC at the module/action level or test plan limits, you can now define `App Modules`, `Actions`, and `Plans` using their respective folders.
+
+---
+
+## Phase 2: User Roles & Access
+
 > `priority` determines the default app on login (lower = higher priority). If a user has roles in multiple apps, the lowest priority number becomes the default.
 
 ---
 
-### Step 5 — Create Role
+### Step 4 — Create Role
 
 > **Folder:** RBAC → Create Role
 
@@ -165,7 +217,7 @@ POST /api/v1/roles
 
 ---
 
-### Step 6 — Assign Role to User
+### Step 5 — Assign Role to User
 
 > **Folder:** RBAC → Assign Role to User
 
@@ -187,7 +239,7 @@ POST /api/v1/user-role-maps
 
 ## Phase 3: Authentication
 
-### Step 7 — Login
+### Step 6 — Login Normal User
 
 > **Folder:** Auth → Login
 
@@ -204,6 +256,7 @@ POST /api/v1/auth/login
 ```
 
 ✅ **Response includes:**
+
 - `access_token` — short-lived (15 min), used for authenticated requests
 - `refresh_token` — long-lived (7 days), used to get new access tokens
 - `defaultAppId` — the app the JWT is scoped to
@@ -213,7 +266,7 @@ POST /api/v1/auth/login
 
 ---
 
-### Step 8 — Get Menu (RBAC-resolved module tree)
+### Step 7 — Get Menu (RBAC-resolved module tree)
 
 > **Folder:** RBAC → Get Menu
 
@@ -228,7 +281,7 @@ Returns the hierarchical module tree the user can access in the current app.
 
 ---
 
-### Step 9 — Refresh Token
+### Step 8 — Refresh Token
 
 > **Folder:** Auth → Refresh Token
 
@@ -241,7 +294,7 @@ Authorization: Bearer {{refresh_token}}   ← NOTE: uses refresh_token, not acce
 
 ---
 
-### Step 10 — Switch App (optional)
+### Step 9 — Switch App (optional)
 
 > Only applicable if you created **multiple apps** (e.g., HRMS + CRM) and the user has roles in both.
 
@@ -260,7 +313,7 @@ Authorization: Bearer {{access_token}}
 
 ---
 
-### Step 11 — Logout
+### Step 10 — Logout
 
 > **Folder:** Auth → Logout
 
@@ -275,7 +328,7 @@ Authorization: Bearer {{access_token}}
 
 ## Phase 4: Password Flows (Optional Testing)
 
-### Step 12 — Update Password
+### Step 11 — Update Password
 
 Requires the user to be logged in.
 
@@ -295,7 +348,7 @@ Authorization: Bearer {{access_token}}
 
 ---
 
-### Step 13 — Forgot Password (Request OTP)
+### Step 12 — Forgot Password (Request OTP)
 
 No authentication needed.
 
@@ -313,7 +366,7 @@ POST /api/v1/auth/forgot-password
 
 ---
 
-### Step 14 — Verify OTP & Reset Password
+### Step 13 — Verify OTP & Reset Password
 
 ```
 POST /api/v1/auth/verify-otp
@@ -347,32 +400,53 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 
 ## Quick Reference Table
 
-| Step | Method | Endpoint | Prerequisite |
-|---|---|---|---|
-| 1 | POST | `/enterprises` | — |
-| 2 | POST | `/organizations` | enterprise_id |
-| 3 | POST | `/users` | enterprise_id, organization_id |
-| 4 | POST | `/apps` | enterprise_id, organization_id |
-| 5 | POST | `/roles` | app_id, enterprise_id, organization_id |
-| 6 | POST | `/user-role-maps` | user_id, role_id, organization_id |
-| 7 | POST | `/auth/login` | User + Role + App exist |
-| 8 | GET | `/menu` | access_token |
-| 9 | POST | `/auth/refresh` | refresh_token |
-| 10 | POST | `/auth/switch-app` | access_token + multiple apps |
-| 11 | POST | `/auth/logout` | access_token |
-| 12 | POST | `/auth/update-password` | access_token |
-| 13 | POST | `/auth/forgot-password` | — |
-| 14 | POST | `/auth/verify-otp` | OTP from step 13 |
+| Step | Method | Endpoint                            | Prerequisite                           |
+| ---- | ------ | ----------------------------------- | -------------------------------------- |
+| 1    | POST   | `/users`                            | enterprise_id, organization_id         |
+| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists             |
+| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                        |
+| 3    | POST   | `/apps`                             | access_token (Platform Admin)          |
+| 4    | POST   | `/roles`                            | app_id, enterprise_id, organization_id |
+| 5    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id      |
+| 6    | POST   | `/auth/login`                       | User + Role + App exist                |
+| 7    | GET    | `/menu`                             | access_token                           |
+| 8    | POST   | `/auth/refresh`                     | refresh_token                          |
+| 9    | POST   | `/auth/switch-app`                  | access_token + multiple apps           |
+| 10   | POST   | `/auth/logout`                      | access_token                           |
+| 11   | POST   | `/auth/update-password`             | access_token                           |
+| 12   | POST   | `/auth/forgot-password`             | —                                      |
+| 13   | POST   | `/auth/verify-otp`                  | OTP from step 12                       |
 
 ---
 
 ## Troubleshooting
 
-| Error | Cause | Fix |
-|---|---|---|
-| `403: No active roles assigned` | Login without Steps 4–6 | Create app, role, and assign to user |
-| `401: Invalid email or password` | Wrong credentials | Check email/password in Step 3 |
-| `401: Account is inactive` | User status ≠ ACTIVE | Check user status |
-| `409: App with name "X" already exists` | Duplicate app name | Use a unique name |
-| `409: This role is already assigned` | Duplicate user-role-map | Already assigned, skip |
-| `400: Validation failed` | Missing/invalid fields | Check DTO requirements |
+| Error                                   | Cause                   | Fix                                  |
+| --------------------------------------- | ----------------------- | ------------------------------------ |
+| `403: No active roles assigned`         | Login without Steps 3–5 | Create app, role, and assign to user |
+| `401: Invalid email or password`        | Wrong credentials       | Check email/password                 |
+| `401: Account is inactive`              | User status ≠ ACTIVE    | Check user status                    |
+| `409: App with name "X" already exists` | Duplicate app name      | Use a unique name                    |
+| `409: This role is already assigned`    | Duplicate user-role-map | Already assigned, skip               |
+| `400: Validation failed`                | Missing/invalid fields  | Check DTO requirements               |
+
+---
+
+## Defensive Programming & Testing Guidelines
+
+When using this Postman collection to verify backend behavior or build new features, adhere to the project's **Backend Engineering Specification**:
+
+1. **Test for Failure, Not Just Success:** Do not only test happy paths. Intentionally send invalid data (nulls, missing fields, wrong types) to verify the DTOs fail fast at the boundary.
+2. **Verify Error Structures:** Ensure all errors returned match the standard format exactly:
+   ```json
+   {
+     "statusCode": 400,
+     "timestamp": "...",
+     "path": "...",
+     "message": "...",
+     "errorCode": "..."
+   }
+   ```
+   _Note specifically the presence of `errorCode` (not `error`)._
+3. **No Silent Failures:** If an endpoint returns 200/201 but fails to persist data or sends back a generic 500 without a clear structural error, report it. The system is designed to have no silent failures.
+4. **Naming Intent:** When adding new endpoints or examples to the collection, avoid vague variable names like `data`, `obj`, or `temp` in request bodies. Use intent-based names (`isActive`, `userProfileData`).

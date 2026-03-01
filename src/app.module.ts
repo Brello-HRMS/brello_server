@@ -8,6 +8,7 @@ import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { PlanModule } from './modules/plan/plan.module';
+import { NotificationModule } from './modules/notification/notification.module';
 import { AppManagementModule } from './modules/app/app-management.module';
 import { AppModuleModule } from './modules/app-module/app-module.module';
 import { PropertiesModule } from './core/properties/properties.module';
@@ -38,6 +39,7 @@ import { DocumentModule } from './modules/document/document.module';
     PlanModule,
     AppModuleModule,
     RbacModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}

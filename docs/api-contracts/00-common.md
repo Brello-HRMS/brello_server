@@ -38,7 +38,7 @@ All errors are formatted by the `HttpExceptionFilter`:
   "timestamp": "2026-02-24T10:00:00.000Z",
   "path": "/api/v1/users",
   "message": "Validation failed",
-  "error": "Bad Request"
+  "errorCode": "Bad Request"
 }
 ```
 
@@ -53,7 +53,7 @@ Validation errors return an array of messages:
     "First name is required",
     "Email must be a valid email address"
   ],
-  "error": "Bad Request"
+  "errorCode": "Bad Request"
 }
 ```
 
@@ -95,7 +95,7 @@ All `:id` path parameters are validated as UUID v4. Providing a non-UUID string 
 {
   "statusCode": 400,
   "message": "Validation failed (uuid is expected)",
-  "error": "Bad Request"
+  "errorCode": "Bad Request"
 }
 ```
 

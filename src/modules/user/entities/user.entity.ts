@@ -31,6 +31,9 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   password_hash: string;
 
+  @Column({ type: 'boolean', default: false })
+  is_platform_admin: boolean;
+
   @Column({ type: 'uuid', nullable: true })
   reports_to_id: string;
 
