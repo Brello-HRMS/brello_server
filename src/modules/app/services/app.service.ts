@@ -42,7 +42,11 @@ export class AppService {
   }
 
   async findOne(id: string): Promise<App> {
-    return this.appRepository.findOneById(id);
+    const app = await this.appRepository.findOneById(id);
+    if (!app) {
+      throw new NotFoundException(`App with ID "${id}" not found`);
+    }
+    return app;
   }
 
   async findOneForEnterprise(id: string, enterpriseId: string): Promise<App> {
@@ -54,6 +58,20 @@ export class AppService {
       );
     }
     return app;
+  }
+
+  async findAllForUser(user: any): Promise<App[]> {
+    if (user.isPlatformAdmin) {
+      return this.findAll();
+    }
+    return this.findAllForEnterprise(user.enterpriseId);
+  }
+
+  async findOneForUser(id: string, user: any): Promise<App> {
+    if (user.isPlatformAdmin) {
+      return this.findOne(id);
+    }
+    return this.findOneForEnterprise(id, user.enterpriseId);
   }
 
   async update(id: string, dto: UpdateAppDto): Promise<App> {

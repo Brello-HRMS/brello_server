@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AppModule } from '../entities/app-module.entity';
@@ -27,12 +27,8 @@ export class AppModuleRepository {
     });
   }
 
-  async findOneById(id: string): Promise<AppModule> {
-    const module = await this.repository.findOne({ where: { id } });
-    if (!module) {
-      throw new NotFoundException(`AppModule with ID "${id}" not found`);
-    }
-    return module;
+  async findOneById(id: string): Promise<AppModule | null> {
+    return this.repository.findOne({ where: { id } });
   }
 
   async softDelete(id: string): Promise<boolean> {
