@@ -3,7 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EnterpriseService } from './services/enterprise.service';
 import { EnterpriseController } from './controllers/enterprise.controller';
 import { Enterprise } from './entities/enterprise.entity';
+import { EnterpriseApp } from './entities/enterprise-app.entity';
 import { EnterpriseRepository } from './repositories/enterprise.repository';
+import { EnterpriseAppRepository } from './repositories/enterprise-app.repository';
 
 /**
  * Enterprise Module
@@ -20,9 +22,9 @@ import { EnterpriseRepository } from './repositories/enterprise.repository';
  * - EnterpriseService: For use in other modules (e.g., Organization module)
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Enterprise])],
+  imports: [TypeOrmModule.forFeature([Enterprise, EnterpriseApp])],
   controllers: [EnterpriseController],
-  providers: [EnterpriseService, EnterpriseRepository],
-  exports: [EnterpriseService], // Export for use in other modules
+  providers: [EnterpriseService, EnterpriseRepository, EnterpriseAppRepository],
+  exports: [EnterpriseService, EnterpriseAppRepository], // Export for use in other modules
 })
 export class EnterpriseModule {}

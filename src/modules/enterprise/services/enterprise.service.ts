@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import * as dns from 'dns/promises';
 import { EnterpriseRepository } from '../repositories/enterprise.repository';
+import { EnterpriseAppRepository } from '../repositories/enterprise-app.repository';
 import { CreateEnterpriseDto } from '../dto/create-enterprise.dto';
 import { UpdateEnterpriseDto } from '../dto/update-enterprise.dto';
 import { Enterprise } from '../entities/enterprise.entity';
@@ -15,7 +16,10 @@ import { Enterprise } from '../entities/enterprise.entity';
 export class EnterpriseService {
   private readonly logger = new Logger(EnterpriseService.name);
 
-  constructor(private readonly enterpriseRepository: EnterpriseRepository) {}
+  constructor(
+    private readonly enterpriseRepository: EnterpriseRepository,
+    private readonly enterpriseAppRepository: EnterpriseAppRepository,
+  ) {}
 
   private async verifyDomainExists(domain: string): Promise<void> {
     try {
@@ -117,5 +121,18 @@ export class EnterpriseService {
     }
 
     this.logger.log(`Enterprise deleted successfully: ${id}`);
+  }
+
+  async assignAppsToEnterprise(
+    enterpriseId: string,
+    appIds: string[],
+  ): Promise<void> {
+    this.logger.log(`Assigning apps to enterprise: ${enterpriseId}`);
+
+    // Validate enterprise exists
+    await this.findOne(enterpriseId);
+
+    // Create assignments
+    await this.enterpriseAppRepository.assignApps(enterpriseId, appIds);
   }
 }

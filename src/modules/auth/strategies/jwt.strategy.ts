@@ -27,8 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey:
-        configService.get<string>('auth.JWT_SECRET') ||
-        'default-secret-change-me',
+        configService.get<string>('auth.JWT_SECRET') || 'default-secret',
     });
   }
 
@@ -46,7 +45,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Invalid token payload');
     }
 
-    if (!payload.appId || !payload.organizationId) {
+    if (
+      !payload.isPlatformAdmin &&
+      (!payload.appId || !payload.organizationId)
+    ) {
       throw new UnauthorizedException(
         'Token missing app or organization context',
       );

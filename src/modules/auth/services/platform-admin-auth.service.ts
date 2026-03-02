@@ -209,9 +209,6 @@ export class PlatformAdminAuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    console.log(loginDto.password);
-    console.log(user.password_hash);
-
     const isPasswordValid = await this.verify(
       loginDto.password,
       user.password_hash,

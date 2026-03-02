@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { App } from '../entities/app.entity';
 import { Status } from 'src/common/enums';
 
@@ -21,6 +21,17 @@ export class AppRepository {
 
   async findAll(): Promise<App[]> {
     return this.repository.find({
+      order: { priority: 'ASC' },
+    });
+  }
+
+  async findByIds(ids: string[]): Promise<App[]> {
+    if (!ids || ids.length === 0) return [];
+
+    return this.repository.find({
+      where: {
+        id: In(ids),
+      },
       order: { priority: 'ASC' },
     });
   }

@@ -10,6 +10,7 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AppService } from '../services/app.service';
 import { CreateAppDto } from '../dto/create-app.dto';
@@ -30,14 +31,20 @@ export class AppController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll() {
-    return this.appService.findAll();
+  findAll(@Request() req: any) {
+    if (req.user.isPlatformAdmin) {
+      return this.appService.findAll();
+    }
+    return this.appService.findAllForEnterprise(req.user.enterpriseId);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.appService.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    if (req.user.isPlatformAdmin) {
+      return this.appService.findOne(id);
+    }
+    return this.appService.findOneForEnterprise(id, req.user.enterpriseId);
   }
 
   @Patch(':id')

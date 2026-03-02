@@ -42,4 +42,12 @@ export class PlanController {
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.planService.remove(id);
   }
+
+  @Post(':id/apps')
+  assignApps(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('appIds') appIds: string[],
+  ) {
+    return this.planService.assignAppsToPlan(id, appIds);
+  }
 }
