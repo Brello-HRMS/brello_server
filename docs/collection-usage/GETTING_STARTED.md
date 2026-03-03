@@ -27,6 +27,7 @@
  │  Step 2:  Login as Platform Admin     → tokens 🔑     │
  │  Step 3:  Create Enterprise (via API) → enterprise_id │
  │  Step 4:  Create Organization         → organization_id│
+ │  Step 4b: Create Organization Profile → profile data  │
  │  Step 5:  Create App (e.g., "HRMS")   → app_id       │
  └───────────────────────┬──────────────────────────────┘
                          │
@@ -50,6 +51,13 @@
  │  Step 12: Update Password                             │
  │  Step 13: Forgot Password (get OTP)                   │
  │  Step 14: Verify OTP & Reset Password                 │
+ └───────────────────────┬──────────────────────────────┘
+                         │
+ PHASE 5: Notifications (optional)
+ ┌───────────────────────▼──────────────────────────────┐
+ │  Step 15: Get All Notifications                       │
+ │  Step 16: Get Unread Notifications                    │
+ │  Step 17: Mark as Read / Mark All as Read             │
  └──────────────────────────────────────────────────────┘
 ```
 
@@ -384,6 +392,38 @@ POST /api/v1/auth/verify-otp
 
 ---
 
+## Phase 5: Notifications (Optional)
+
+Once authenticated, you can manage in-app notifications.
+
+### Step 15 — Get All Notifications
+
+> **Folder:** Notifications → Get All Notifications
+
+```
+GET /api/v1/notifications
+Authorization: Bearer {{access_token}}
+```
+
+✅ Returns all active notifications for the current user.
+
+### Step 16 — Get Unread Notifications
+
+```
+GET /api/v1/notifications/unread
+```
+
+✅ Filtered to `is_read: false` only.
+
+### Step 17 — Mark Notifications as Read
+
+```
+PATCH /api/v1/notifications/<id>/read     ← single notification
+PATCH /api/v1/notifications/read-all      ← mark all as read
+```
+
+---
+
 ## Multi-App Setup (Advanced)
 
 To test the multi-app flow, repeat Phase 2 for a second app:
@@ -405,17 +445,22 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 | 1    | POST   | `/users`                            | enterprise_id, organization_id         |
 | 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists             |
 | 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                        |
-| 3    | POST   | `/apps`                             | access_token (Platform Admin)          |
-| 4    | POST   | `/roles`                            | app_id, enterprise_id, organization_id |
-| 5    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id      |
-| 6    | POST   | `/auth/login`                       | User + Role + App exist                |
-| 7    | GET    | `/menu`                             | access_token                           |
-| 8    | POST   | `/auth/refresh`                     | refresh_token                          |
-| 9    | POST   | `/auth/switch-app`                  | access_token + multiple apps           |
-| 10   | POST   | `/auth/logout`                      | access_token                           |
-| 11   | POST   | `/auth/update-password`             | access_token                           |
-| 12   | POST   | `/auth/forgot-password`             | —                                      |
-| 13   | POST   | `/auth/verify-otp`                  | OTP from step 12                       |
+| 3    | POST   | `/enterprises`                      | access_token (Platform Admin)          |
+| 4    | POST   | `/organizations`                    | enterprise_id                          |
+| 4b   | POST   | `/organization-profiles`            | organization_id, enterprise_id         |
+| 5    | POST   | `/apps`                             | access_token (Platform Admin)          |
+| 6    | POST   | `/roles`                            | app_id, enterprise_id, organization_id |
+| 7    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id      |
+| 8    | POST   | `/auth/login`                       | User + Role + App exist                |
+| 9    | GET    | `/menu`                             | access_token                           |
+| 10   | POST   | `/auth/refresh`                     | refresh_token                          |
+| 11   | POST   | `/auth/switch-app`                  | access_token + multiple apps           |
+| 12   | POST   | `/auth/logout`                      | access_token                           |
+| 13   | POST   | `/auth/update-password`             | access_token                           |
+| 14   | POST   | `/auth/forgot-password`             | —                                      |
+| 15   | POST   | `/auth/verify-otp`                  | OTP from step 14                       |
+| 16   | GET    | `/notifications`                    | access_token                           |
+| 17   | PATCH  | `/notifications/read-all`           | access_token                           |
 
 ---
 

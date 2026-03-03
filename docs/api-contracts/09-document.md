@@ -4,6 +4,8 @@ Base path: `/api/v1/documents`
 
 Manages secure asset uploading directly to S3 via pre-signed URLs.
 
+> All endpoints require Bearer JWT authentication.
+
 ---
 
 ## 1. Generate Upload URL
@@ -14,7 +16,7 @@ Generates a short-lived S3 pre-signed upload URL for direct-to-S3 client uploadi
 | ---------- | ------------------------------ |
 | **Method** | `POST`                         |
 | **URL**    | `/api/v1/documents/upload-url` |
-| **Auth**   | Required                       |
+| **Auth**   | Bearer `<access_token>`        |
 | **Status** | `201 Created`                  |
 
 **Request Body:**
@@ -53,8 +55,14 @@ Validates that the upload completed and activates the Document tracking entity s
 | ---------- | ------------------------------- |
 | **Method** | `POST`                          |
 | **URL**    | `/api/v1/documents/:id/confirm` |
-| **Auth**   | Required                        |
+| **Auth**   | Bearer `<access_token>`         |
 | **Status** | `200 OK`                        |
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `id`      | UUID | Document ID |
 
 **Response:**
 
@@ -71,7 +79,33 @@ Validates that the upload completed and activates the Document tracking entity s
 
 ---
 
-## 3. Generate Signed Download URL
+## 3. Get Document by ID
+
+Retrieves document metadata by its UUID.
+
+|            |                         |
+| ---------- | ----------------------- |
+| **Method** | `GET`                   |
+| **URL**    | `/api/v1/documents/:id` |
+| **Auth**   | Bearer `<access_token>` |
+| **Status** | `200 OK`                |
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `id`      | UUID | Document ID |
+
+**Error Responses:**
+
+| Status            | Condition           |
+| ----------------- | ------------------- |
+| `400 Bad Request` | Invalid UUID format |
+| `404 Not Found`   | Document not found  |
+
+---
+
+## 4. Generate Signed Download URL
 
 Retrieves a short-lived URL for downloading a protected enterprise file. Only succeeds if status is `ACTIVE`.
 
@@ -79,8 +113,14 @@ Retrieves a short-lived URL for downloading a protected enterprise file. Only su
 | ---------- | ---------------------------------- |
 | **Method** | `GET`                              |
 | **URL**    | `/api/v1/documents/:id/signed-url` |
-| **Auth**   | Required                           |
+| **Auth**   | Bearer `<access_token>`            |
 | **Status** | `200 OK`                           |
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `id`      | UUID | Document ID |
 
 **Response:**
 
@@ -92,3 +132,29 @@ Retrieves a short-lived URL for downloading a protected enterprise file. Only su
   }
 }
 ```
+
+---
+
+## 5. Delete Document
+
+Removes a document record. Only the uploading user can delete a document.
+
+|            |                         |
+| ---------- | ----------------------- |
+| **Method** | `DELETE`                |
+| **URL**    | `/api/v1/documents/:id` |
+| **Auth**   | Bearer `<access_token>` |
+| **Status** | `200 OK`                |
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `id`      | UUID | Document ID |
+
+**Error Responses:**
+
+| Status            | Condition           |
+| ----------------- | ------------------- |
+| `400 Bad Request` | Invalid UUID format |
+| `404 Not Found`   | Document not found  |

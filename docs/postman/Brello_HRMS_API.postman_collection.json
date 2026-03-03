@@ -1,1859 +1,1907 @@
 {
-    "info": {
-        "_postman_id": "brello-hrms-collection-v1",
-        "name": "Brello HRMS API",
-        "description": "Complete API collection for the Brello HRMS multi-tenant, multi-app backend.\n\n## Setup\n1. Set the `base_url` variable to your server address (default: `http://localhost:8000`)\n2. Start with the **Login** request to get tokens\n3. Tokens are auto-saved to collection variables for authenticated requests\n\n## Authentication Flow\n1. Login → saves `access_token` and `refresh_token`\n2. Use authenticated endpoints (token is auto-injected)\n3. Switch App → saves new `access_token`\n4. Refresh → rotates both tokens",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  "info": {
+    "_postman_id": "brello-hrms-collection-v1",
+    "name": "Brello HRMS API",
+    "description": "Complete API collection for the Brello HRMS multi-tenant, multi-app backend.\n\n## Setup\n1. Set the `base_url` variable to your server address (default: `http://localhost:8000`)\n2. Start with the **Login** request to get tokens\n3. Tokens are auto-saved to collection variables for authenticated requests\n\n## Authentication Flow\n1. Login → saves `access_token` and `refresh_token`\n2. Use authenticated endpoints (token is auto-injected)\n3. Switch App → saves new `access_token`\n4. Refresh → rotates both tokens",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
     },
-    "variable": [
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "enterprise_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "organization_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "default_app_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "app_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "role_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "organization_profile_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication and authorization endpoints",
+      "item": [
         {
-            "key": "base_url",
-            "value": "http://localhost:8000/api/v1",
-            "type": "string"
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    const data = response.data;",
+                  "    pm.collectionVariables.set('access_token', data.access_token);",
+                  "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                  "    pm.collectionVariables.set('user_id', data.user.id);",
+                  "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
+                  "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
+                  "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
+                  "    console.log('✅ Tokens saved. Default app:', data.defaultAppId);",
+                  "    console.log('Available apps:', JSON.stringify(data.availableApps));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass@123\",\n    \"device_fingerprint\": \"postman-dev\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables."
+          },
+          "response": []
         },
         {
-            "key": "access_token",
-            "value": "",
-            "type": "string"
+          "name": "Switch App",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', response.data.access_token);",
+                  "    pm.collectionVariables.set('default_app_id', response.data.appId);",
+                  "    console.log('✅ Switched to app:', response.data.appId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"appId\": \"{{default_app_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/switch-app",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "switch-app"]
+            },
+            "description": "Switch to a different application. Provide the target `appId` (get available apps from the Login response).\n\n**Auto-saves:** New `access_token` scoped to the target app."
+          },
+          "response": []
         },
         {
-            "key": "refresh_token",
-            "value": "",
-            "type": "string"
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', response.data.access_token);",
+                  "    pm.collectionVariables.set('refresh_token', response.data.refresh_token);",
+                  "    console.log('✅ Tokens rotated successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{refresh_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Refresh the access token using the refresh token.\n\n**Important:** Uses the `refresh_token` (not access_token) as the Bearer token.\n\n**Auto-saves:** New `access_token` and `refresh_token` (token rotation)."
+          },
+          "response": []
         },
         {
-            "key": "enterprise_id",
-            "value": "",
-            "type": "string"
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Invalidate the current session. Returns 204 No Content."
+          },
+          "response": []
         },
         {
-            "key": "organization_id",
-            "value": "",
-            "type": "string"
+          "name": "Update Password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"old_password\": \"SecurePass@123\",\n    \"new_password\": \"NewSecurePass@456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/update-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "update-password"]
+            },
+            "description": "Change the authenticated user's password.\n\n**Side effect:** All active sessions are invalidated (user must re-login).\n\n**Password rules:** Min 8 chars, must contain: uppercase, lowercase, digit, special character."
+          },
+          "response": []
         },
         {
-            "key": "user_id",
-            "value": "",
-            "type": "string"
+          "name": "Forgot Password (Request OTP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "forgot-password"]
+            },
+            "description": "Request a password reset OTP. Always returns 204 (even if email doesn't exist, for security).\n\n**In dev mode:** Check the server console for the OTP log."
+          },
+          "response": []
         },
         {
-            "key": "default_app_id",
-            "value": "",
-            "type": "string"
+          "name": "Verify OTP & Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"otp\": \"123456\",\n    \"new_password\": \"NewSecurePass@789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "verify-otp"]
+            },
+            "description": "Verify the OTP received via email and set a new password.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
+          },
+          "response": []
         },
         {
-            "key": "app_id",
-            "value": "",
-            "type": "string"
+          "name": "Platform Admin Register (Request OTP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Admin\",\n    \"last_name\": \"Root\",\n    \"email\": \"admin@brello.com\",\n    \"phone_number\": \"+10000000000\",\n    \"password\": \"SecurePass@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/platform-admin/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "platform-admin", "register"]
+            },
+            "description": "Initiates the registration flow for a new Platform Admin by securely masking their initial creation and sending an OTP to tech@brello.co.in."
+          },
+          "response": []
         },
         {
-            "key": "role_id",
-            "value": "",
-            "type": "string"
+          "name": "Platform Admin Verify Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/platform-admin/verify-register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "platform-admin", "verify-register"]
+            },
+            "description": "Verifies the OTP and activates the Platform Admin account."
+          },
+          "response": []
+        },
+        {
+          "name": "Platform Admin Login (Request OTP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"password\": \"SecurePass@123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/platform-admin/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "platform-admin", "login"]
+            },
+            "description": "Initiates the login flow for an existing Platform Admin by validating credentials and sending an OTP to their email."
+          },
+          "response": []
+        },
+        {
+          "name": "Platform Admin Verify Login (Returns Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    const data = response.data;",
+                  "    pm.collectionVariables.set('access_token', data.access_token);",
+                  "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
+                  "    pm.collectionVariables.set('user_id', data.user.id);",
+                  "    if (data.user.enterprise_id) pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
+                  "    if (data.user.organization_id) pm.collectionVariables.set('organization_id', data.user.organization_id);",
+                  "    console.log('✅ Tokens saved for Platform Admin.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/platform-admin/verify-login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "platform-admin", "verify-login"]
+            },
+            "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id` to collection variables."
+          },
+          "response": []
         }
-    ],
-    "item": [
+      ]
+    },
+    {
+      "name": "Enterprise",
+      "description": "Enterprise (top-level tenant) management",
+      "item": [
         {
-            "name": "Auth",
-            "description": "Authentication and authorization endpoints",
-            "item": [
+          "name": "Create Enterprise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('enterprise_id', response.data.id);",
+                  "    console.log('✅ Enterprise created:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Acme Corporation\",\n    \"domain\": \"acme.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/enterprises",
+              "host": ["{{base_url}}"],
+              "path": ["enterprises"]
+            },
+            "description": "Create a new enterprise.\n\n**Auto-saves:** `enterprise_id` to collection variables.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                    "name": "Login",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 200) {",
-                                    "    const response = pm.response.json();",
-                                    "    const data = response.data;",
-                                    "    pm.collectionVariables.set('access_token', data.access_token);",
-                                    "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
-                                    "    pm.collectionVariables.set('user_id', data.user.id);",
-                                    "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
-                                    "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
-                                    "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
-                                    "    console.log('✅ Tokens saved. Default app:', data.defaultAppId);",
-                                    "    console.log('Available apps:', JSON.stringify(data.availableApps));",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass@123\",\n    \"device_fingerprint\": \"postman-dev\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/login",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "login"
-                            ]
-                        },
-                        "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Switch App",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 200) {",
-                                    "    const response = pm.response.json();",
-                                    "    pm.collectionVariables.set('access_token', response.data.access_token);",
-                                    "    pm.collectionVariables.set('default_app_id', response.data.appId);",
-                                    "    console.log('✅ Switched to app:', response.data.appId);",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"appId\": \"{{default_app_id}}\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/switch-app",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "switch-app"
-                            ]
-                        },
-                        "description": "Switch to a different application. Provide the target `appId` (get available apps from the Login response).\n\n**Auto-saves:** New `access_token` scoped to the target app."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Refresh Token",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 200) {",
-                                    "    const response = pm.response.json();",
-                                    "    pm.collectionVariables.set('access_token', response.data.access_token);",
-                                    "    pm.collectionVariables.set('refresh_token', response.data.refresh_token);",
-                                    "    console.log('✅ Tokens rotated successfully');",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{refresh_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/auth/refresh",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "refresh"
-                            ]
-                        },
-                        "description": "Refresh the access token using the refresh token.\n\n**Important:** Uses the `refresh_token` (not access_token) as the Bearer token.\n\n**Auto-saves:** New `access_token` and `refresh_token` (token rotation)."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Logout",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/auth/logout",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "logout"
-                            ]
-                        },
-                        "description": "Invalidate the current session. Returns 204 No Content."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Update Password",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"old_password\": \"SecurePass@123\",\n    \"new_password\": \"NewSecurePass@456\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/update-password",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "update-password"
-                            ]
-                        },
-                        "description": "Change the authenticated user's password.\n\n**Side effect:** All active sessions are invalidated (user must re-login).\n\n**Password rules:** Min 8 chars, must contain: uppercase, lowercase, digit, special character."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Forgot Password (Request OTP)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"john.doe@example.com\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/forgot-password",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "forgot-password"
-                            ]
-                        },
-                        "description": "Request a password reset OTP. Always returns 204 (even if email doesn't exist, for security).\n\n**In dev mode:** Check the server console for the OTP log."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Verify OTP & Reset Password",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"otp\": \"123456\",\n    \"new_password\": \"NewSecurePass@789\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/verify-otp",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "verify-otp"
-                            ]
-                        },
-                        "description": "Verify the OTP received via email and set a new password.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Platform Admin Register (Request OTP)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"first_name\": \"Admin\",\n    \"last_name\": \"Root\",\n    \"email\": \"admin@brello.com\",\n    \"phone_number\": \"+10000000000\",\n    \"password\": \"SecurePass@123\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/platform-admin/register",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "platform-admin",
-                                "register"
-                            ]
-                        },
-                        "description": "Initiates the registration flow for a new Platform Admin by securely masking their initial creation and sending an OTP to tech@brello.co.in."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Platform Admin Verify Register",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"otp\": \"123456\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/platform-admin/verify-register",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "platform-admin",
-                                "verify-register"
-                            ]
-                        },
-                        "description": "Verifies the OTP and activates the Platform Admin account."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Platform Admin Login (Request OTP)",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"password\": \"SecurePass@123\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/platform-admin/login",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "platform-admin",
-                                "login"
-                            ]
-                        },
-                        "description": "Initiates the login flow for an existing Platform Admin by validating credentials and sending an OTP to their email."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Platform Admin Verify Login (Returns Token)",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 200) {",
-                                    "    const response = pm.response.json();",
-                                    "    const data = response.data;",
-                                    "    pm.collectionVariables.set('access_token', data.access_token);",
-                                    "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
-                                    "    pm.collectionVariables.set('user_id', data.user.id);",
-                                    "    if (data.user.enterprise_id) pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
-                                    "    if (data.user.organization_id) pm.collectionVariables.set('organization_id', data.user.organization_id);",
-                                    "    console.log('✅ Tokens saved for Platform Admin.');",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"email\": \"admin@brello.com\",\n    \"otp\": \"123456\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/auth/platform-admin/verify-login",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "auth",
-                                "platform-admin",
-                                "verify-login"
-                            ]
-                        },
-                        "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id` to collection variables."
-                    },
-                    "response": []
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
                 }
-            ]
+              ]
+            }
+          },
+          "response": []
         },
         {
-            "name": "Enterprise",
-            "description": "Enterprise (top-level tenant) management",
-            "item": [
+          "name": "Get All Enterprises",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/enterprises",
+              "host": ["{{base_url}}"],
+              "path": ["enterprises"]
+            },
+            "description": "List all enterprises in the system.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                    "name": "Create Enterprise",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 201) {",
-                                    "    const response = pm.response.json();",
-                                    "    pm.collectionVariables.set('enterprise_id', response.data.id);",
-                                    "    console.log('✅ Enterprise created:', response.data.id);",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Acme Corporation\",\n    \"domain\": \"acme.com\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/enterprises",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "enterprises"
-                            ]
-                        },
-                        "description": "Create a new enterprise.\n\n**Auto-saves:** `enterprise_id` to collection variables.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get All Enterprises",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/enterprises",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "enterprises"
-                            ]
-                        },
-                        "description": "List all enterprises in the system.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Enterprise by ID",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "enterprises",
-                                "{{enterprise_id}}"
-                            ]
-                        },
-                        "description": "Get a single enterprise by its UUID.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Update Enterprise",
-                    "request": {
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Acme Corp International\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "enterprises",
-                                "{{enterprise_id}}"
-                            ]
-                        },
-                        "description": "Partially update an enterprise. All fields are optional.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Delete Enterprise",
-                    "request": {
-                        "method": "DELETE",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "enterprises",
-                                "{{enterprise_id}}"
-                            ]
-                        },
-                        "description": "Delete an enterprise. Returns 204 No Content.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
                 }
-            ]
+              ]
+            }
+          },
+          "response": []
         },
         {
-            "name": "Organization",
-            "description": "Organization (business unit within enterprise) management",
-            "item": [
+          "name": "Get Enterprise by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["enterprises", "{{enterprise_id}}"]
+            },
+            "description": "Get a single enterprise by its UUID.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                    "name": "Create Organization",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 201) {",
-                                    "    const response = pm.response.json();",
-                                    "    pm.collectionVariables.set('organization_id', response.data.id);",
-                                    "    console.log('✅ Organization created:', response.data.id);",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Acme India Branch\",\n    \"enterprise_id\": \"{{enterprise_id}}\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/organizations",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organizations"
-                            ]
-                        },
-                        "description": "Create a new organization under an enterprise.\n\n**Auto-saves:** `organization_id` to collection variables."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get All Organizations",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/organizations",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organizations"
-                            ]
-                        },
-                        "description": "List all organizations."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Organization by ID",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/organizations/{{organization_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organizations",
-                                "{{organization_id}}"
-                            ]
-                        },
-                        "description": "Get a single organization by its UUID."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Organizations by Enterprise",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/organizations/enterprise/{{enterprise_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organizations",
-                                "enterprise",
-                                "{{enterprise_id}}"
-                            ]
-                        },
-                        "description": "Get all organizations that belong to a specific enterprise."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Update Organization",
-                    "request": {
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Acme Mumbai HQ\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/organizations/{{organization_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organizations",
-                                "{{organization_id}}"
-                            ]
-                        },
-                        "description": "Partially update an organization. All fields are optional."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Delete Organization",
-                    "request": {
-                        "method": "DELETE",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/organizations/{{organization_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organizations",
-                                "{{organization_id}}"
-                            ]
-                        },
-                        "description": "Delete an organization. Returns 204 No Content."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Create Organization Profile",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Acme India Legal\",\n    \"email\": \"legal@acme.in\",\n    \"phone\": \"+919876543210\",\n    \"gst_no\": \"27AAAAA0000A1Z5\",\n    \"registration_no\": \"CIN-1234\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"enterprise_id\": \"{{enterprise_id}}\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/organizations/profile",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organizations",
-                                "profile"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Organization Profile",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/organizations/profile/{{organization_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organizations",
-                                "profile",
-                                "{{organization_id}}"
-                            ]
-                        }
-                    },
-                    "response": []
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
                 }
-            ]
+              ]
+            }
+          },
+          "response": []
         },
         {
-            "name": "User & Employee",
-            "description": "User authentication records and full Employee Aggregate Management",
-            "item": [
+          "name": "Update Enterprise",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Acme Corp International\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["enterprises", "{{enterprise_id}}"]
+            },
+            "description": "Partially update an enterprise. All fields are optional.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                    "name": "Create User",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 201) {",
-                                    "    const response = pm.response.json();",
-                                    "    pm.collectionVariables.set('user_id', response.data.id);",
-                                    "    console.log('✅ User created:', response.data.id);",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"first_name\": \"John\",\n    \"middle_name\": \"Michael\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+919876543210\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/users",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "users"
-                            ]
-                        },
-                        "description": "Create a new user. Password is hashed server-side.\n\n**Auto-saves:** `user_id` to collection variables.\n\n**Password rules:**\n- Minimum 8 characters\n- At least one uppercase letter\n- At least one lowercase letter\n- At least one digit\n- At least one special character (@$!%*?&)\n\n**Phone format:** E.164 (e.g., +919876543210)"
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get All Users",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/users",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "users"
-                            ]
-                        },
-                        "description": "List all users. Password hash is never exposed."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get User by ID",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/users/{{user_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "users",
-                                "{{user_id}}"
-                            ]
-                        },
-                        "description": "Get a single user by UUID."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Update User",
-                    "request": {
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"first_name\": \"Jonathan\",\n    \"phone\": \"+919876543211\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/users/{{user_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "users",
-                                "{{user_id}}"
-                            ]
-                        },
-                        "description": "Partially update a user. All fields are optional. Password cannot be changed here (use auth endpoints)."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Delete User",
-                    "request": {
-                        "method": "DELETE",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/users/{{user_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "users",
-                                "{{user_id}}"
-                            ]
-                        },
-                        "description": "Soft-delete a user (sets status to DELETED). Returns 204 No Content."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Create Employee Aggregate",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/employees",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "employees"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Employee Aggregate",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/employees/{{user_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "employees",
-                                "{{user_id}}"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Add Employee Education",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"degree\": \"B.Tech\",\n    \"school_name\": \"MIT\",\n    \"completion_date\": \"2020-05-01\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/employees/{{user_id}}/education",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "employees",
-                                "{{user_id}}",
-                                "education"
-                            ]
-                        }
-                    },
-                    "response": []
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
                 }
-            ]
+              ]
+            }
+          },
+          "response": []
         },
         {
-            "name": "App",
-            "description": "Application management — register apps in the multi-app architecture",
-            "item": [
+          "name": "Delete Enterprise",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["enterprises", "{{enterprise_id}}"]
+            },
+            "description": "Delete an enterprise. Returns 204 No Content.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                    "name": "Create App",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 201) {",
-                                    "    const response = pm.response.json();",
-                                    "    pm.collectionVariables.set('app_id', response.data.id);",
-                                    "    console.log('✅ App created:', response.data.id);",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"HRMS\",\n    \"priority\": 1,\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/apps",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "apps"
-                            ]
-                        },
-                        "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority).",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get All Apps",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/apps",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "apps"
-                            ]
-                        },
-                        "description": "List all registered applications, sorted by priority.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get App by ID",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/apps/{{app_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "apps",
-                                "{{app_id}}"
-                            ]
-                        },
-                        "description": "Get a single app by UUID.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Update App",
-                    "request": {
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"HRMS Pro\",\n    \"priority\": 1\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/apps/{{app_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "apps",
-                                "{{app_id}}"
-                            ]
-                        },
-                        "description": "Partially update an app.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Delete App",
-                    "request": {
-                        "method": "DELETE",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/apps/{{app_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "apps",
-                                "{{app_id}}"
-                            ]
-                        },
-                        "description": "Delete an app. Returns 204 No Content.",
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    },
-                    "response": []
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
                 }
-            ]
-        },
-        {
-            "name": "RBAC",
-            "description": "Role-Based Access Control — roles, user-role assignments, and menu",
-            "item": [
-                {
-                    "name": "Create Role",
-                    "event": [
-                        {
-                            "listen": "test",
-                            "script": {
-                                "exec": [
-                                    "if (pm.response.code === 201) {",
-                                    "    const response = pm.response.json();",
-                                    "    pm.collectionVariables.set('role_id', response.data.id);",
-                                    "    console.log('✅ Role created:', response.data.id);",
-                                    "}"
-                                ],
-                                "type": "text/javascript"
-                            }
-                        }
-                    ],
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Admin\",\n    \"app_id\": \"{{app_id}}\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/roles",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "roles"
-                            ]
-                        },
-                        "description": "Create a new role scoped to an app.\n\n**Auto-saves:** `role_id` to collection variables."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get All Roles",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/roles",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "roles"
-                            ]
-                        },
-                        "description": "List all roles with their associated app."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Role by ID",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/roles/{{role_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "roles",
-                                "{{role_id}}"
-                            ]
-                        },
-                        "description": "Get a single role by UUID."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Roles by App",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/roles/app/{{app_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "roles",
-                                "app",
-                                "{{app_id}}"
-                            ]
-                        },
-                        "description": "Get all roles belonging to a specific app."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Update Role",
-                    "request": {
-                        "method": "PATCH",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Super Admin\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/roles/{{role_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "roles",
-                                "{{role_id}}"
-                            ]
-                        },
-                        "description": "Partially update a role."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Delete Role",
-                    "request": {
-                        "method": "DELETE",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/roles/{{role_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "roles",
-                                "{{role_id}}"
-                            ]
-                        },
-                        "description": "Delete a role. Returns 204 No Content."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Assign Role to User",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"user_id\": \"{{user_id}}\",\n    \"role_id\": \"{{role_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/user-role-maps",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "user-role-maps"
-                            ]
-                        },
-                        "description": "Assign a role to a user in a specific organization.\n\n**This is required before the user can login!**"
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get All User-Role Assignments",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/user-role-maps",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "user-role-maps"
-                            ]
-                        },
-                        "description": "List all user-role assignments."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Roles by User",
-                    "request": {
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/user-role-maps/user/{{user_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "user-role-maps",
-                                "user",
-                                "{{user_id}}"
-                            ]
-                        },
-                        "description": "Get all role assignments for a specific user."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Remove Role from User",
-                    "request": {
-                        "method": "DELETE",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/user-role-maps/{{user_id}}",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "user-role-maps",
-                                "{{user_id}}"
-                            ]
-                        },
-                        "description": "Remove a role assignment. Returns 204 No Content."
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get Menu (Resolved Permissions)",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/menu",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "menu"
-                            ]
-                        },
-                        "description": "Returns the authenticated user's accessible module tree for the current app.\n\nThe response is a hierarchical tree where:\n- Each node has `id`, `name`, `wbs_code`, `actions[]`, and `children[]`\n- Only modules the user has permission to access are included\n- Actions are filtered by both role permissions AND plan restrictions\n- Tree is sorted by WBS code at each level"
-                    },
-                    "response": []
-                }
-            ]
-        },
-        {
-            "name": "Document Storage",
-            "description": "S3 Pre-signed URL operations for file uploads",
-            "item": [
-                {
-                    "name": "Generate Upload URL",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"originalName\": \"photo.jpg\",\n    \"mimeType\": \"image/jpeg\",\n    \"size\": 1048576,\n    \"folderType\": \"EMPLOYEE_IMAGE\",\n    \"enterpriseId\": \"{{enterprise_id}}\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/documents/upload-url",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "documents",
-                                "upload-url"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Confirm Upload",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/documents/{{document_id}}/confirm",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "documents",
-                                "{{document_id}}",
-                                "confirm"
-                            ]
-                        }
-                    },
-                    "response": []
-                }
-            ]
-        },
-        {
-            "name": "Industry Type",
-            "description": "Global industry categorizations",
-            "item": [
-                {
-                    "name": "Create Industry Type",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"name\": \"Software & IT\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/industry-types",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "industry-types"
-                            ]
-                        }
-                    },
-                    "response": []
-                },
-                {
-                    "name": "Get All Industry Types",
-                    "request": {
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{access_token}}",
-                                    "type": "string"
-                                }
-                            ]
-                        },
-                        "method": "GET",
-                        "header": [],
-                        "url": {
-                            "raw": "{{base_url}}/industry-types",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "industry-types"
-                            ]
-                        }
-                    },
-                    "response": []
-                }
-            ]
-        },
-        {
-            "name": "App Module (Permissions)",
-            "description": "Manage system permissions taxonomy: Modules, Actions, and Module Access lists.",
-            "item": [
-                {
-                    "name": "Get All App Modules",
-                    "request": {
-                        "method": "GET",
-                        "url": {
-                            "raw": "{{base_url}}/app-modules",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "app-modules"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Create App Module",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"Leave Management\",\n  \"wbs_code\": \"1.0\",\n  \"type\": \"module\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/app-modules",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "app-modules"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Create Action",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"approve\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/actions",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "actions"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Create Module Access",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"role_id\": \"{{role_id}}\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"action_id\": \"<ACTION_ID>\",\n  \"access_flag\": true\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/module-accesses",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "module-accesses"
-                            ]
-                        }
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Plan & Subscription",
-            "description": "Manage subscription plans and tier limits.",
-            "item": [
-                {
-                    "name": "Get All Plans",
-                    "request": {
-                        "method": "GET",
-                        "url": {
-                            "raw": "{{base_url}}/plans",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "plans"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Create Plan",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"Starter\",\n  \"price\": 500.00,\n  \"description\": \"Starter plan\",\n  \"feature\": [\"Leave\", \"Attendance\"]\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/plans",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "plans"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Create Organization Subscription",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"organization_id\": \"{{organization_id}}\",\n  \"plan_id\": \"<PLAN_ID>\",\n  \"start_date\": \"2026-01-01T00:00:00.000Z\",\n  \"status\": \"Active\"\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/organization-subscriptions",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "organization-subscriptions"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Create Plan Module",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"plan_id\": \"<PLAN_ID>\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"enabled\": true\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/plan-modules",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "plan-modules"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "name": "Create Plan Module Action",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"plan_id\": \"<PLAN_ID>\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"action_id\": \"<ACTION_ID>\",\n  \"enabled\": true\n}"
-                        },
-                        "url": {
-                            "raw": "{{base_url}}/plan-module-actions",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "plan-module-actions"
-                            ]
-                        }
-                    }
-                }
-            ]
+              ]
+            }
+          },
+          "response": []
         }
-    ]
+      ]
+    },
+    {
+      "name": "Organization",
+      "description": "Organization (business unit within enterprise) management",
+      "item": [
+        {
+          "name": "Create Organization",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('organization_id', response.data.id);",
+                  "    console.log('✅ Organization created:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Acme India Branch\",\n    \"enterprise_id\": \"{{enterprise_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/organizations",
+              "host": ["{{base_url}}"],
+              "path": ["organizations"]
+            },
+            "description": "Create a new organization under an enterprise.\n\n**Auto-saves:** `organization_id` to collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Organizations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/organizations",
+              "host": ["{{base_url}}"],
+              "path": ["organizations"]
+            },
+            "description": "List all organizations."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organization by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/organizations/{{organization_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "{{organization_id}}"]
+            },
+            "description": "Get a single organization by its UUID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organizations by Enterprise",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/organizations/enterprise/{{enterprise_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "enterprise", "{{enterprise_id}}"]
+            },
+            "description": "Get all organizations that belong to a specific enterprise."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Organization",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Acme Mumbai HQ\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/organizations/{{organization_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "{{organization_id}}"]
+            },
+            "description": "Partially update an organization. All fields are optional."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Organization",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/organizations/{{organization_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "{{organization_id}}"]
+            },
+            "description": "Delete an organization. Returns 204 No Content."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Organization Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Acme India Legal\",\n    \"email\": \"legal@acme.in\",\n    \"phone\": \"+919876543210\",\n    \"gst_no\": \"27AAAAA0000A1Z5\",\n    \"registration_no\": \"CIN-1234\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"enterprise_id\": \"{{enterprise_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/organization-profiles",
+              "host": ["{{base_url}}"],
+              "path": ["organization-profiles"]
+            },
+            "description": "Create a new organization profile with legal name, GST, and registration details."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organization Profile by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["organization-profiles", "{{organization_profile_id}}"]
+            },
+            "description": "Get an organization profile by its UUID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organization Profile by Organization",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/organization-profiles/organization/{{organization_id}}",
+              "host": ["{{base_url}}"],
+              "path": [
+                "organization-profiles",
+                "organization",
+                "{{organization_id}}"
+              ]
+            },
+            "description": "Get the profile belonging to a specific organization."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Organization Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Acme India Pvt Ltd (Updated)\",\n    \"domain\": \"https://acme.in\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["organization-profiles", "{{organization_profile_id}}"]
+            },
+            "description": "Partially update an organization profile."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Organization Profile",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["organization-profiles", "{{organization_profile_id}}"]
+            },
+            "description": "Delete an organization profile. Returns 204 No Content."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User & Employee",
+      "description": "User authentication records and full Employee Aggregate Management",
+      "item": [
+        {
+          "name": "Create User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('user_id', response.data.id);",
+                  "    console.log('✅ User created:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"John\",\n    \"middle_name\": \"Michael\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+919876543210\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "Create a new user. Password is hashed server-side.\n\n**Auto-saves:** `user_id` to collection variables.\n\n**Password rules:**\n- Minimum 8 characters\n- At least one uppercase letter\n- At least one lowercase letter\n- At least one digit\n- At least one special character (@$!%*?&)\n\n**Phone format:** E.164 (e.g., +919876543210)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            },
+            "description": "List all users. Password hash is never exposed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "Get a single user by UUID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"first_name\": \"Jonathan\",\n    \"phone\": \"+919876543211\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "Partially update a user. All fields are optional. Password cannot be changed here (use auth endpoints)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "Soft-delete a user (sets status to DELETED). Returns 204 No Content."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Employee Aggregate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees",
+              "host": ["{{base_url}}"],
+              "path": ["employees"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employee Aggregate",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/employees/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "{{user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/employees",
+              "host": ["{{base_url}}"],
+              "path": ["employees"]
+            },
+            "description": "List all employees with optional query filtering."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employee Basic Info",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "{{user_id}}"]
+            },
+            "description": "Update basic identity fields of an employee."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employee Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employmentType\": \"FULL_TIME\",\n    \"workLocation\": \"HYBRID\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees/{{user_id}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "{{user_id}}", "profile"]
+            },
+            "description": "Update HR-specific profile fields of an employee."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Employee Education",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"degree\": \"B.Tech\",\n    \"school_name\": \"MIT\",\n    \"completion_date\": \"2020-05-01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees/{{user_id}}/education",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "{{user_id}}", "education"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert Emergency Contact",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"relationship\": \"Spouse\",\n    \"phone\": \"+919876543000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees/{{user_id}}/emergency-contact",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "{{user_id}}", "emergency-contact"]
+            },
+            "description": "Upsert emergency contact details for an employee."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/employees/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "{{user_id}}"]
+            },
+            "description": "Soft-delete both identity and profile layers of an employee."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "App",
+      "description": "Application management — register apps in the multi-app architecture",
+      "item": [
+        {
+          "name": "Create App",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('app_id', response.data.id);",
+                  "    console.log('✅ App created:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"HRMS\",\n    \"priority\": 1,\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/apps",
+              "host": ["{{base_url}}"],
+              "path": ["apps"]
+            },
+            "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Apps",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps",
+              "host": ["{{base_url}}"],
+              "path": ["apps"]
+            },
+            "description": "List all registered applications, sorted by priority.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get App by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/{{app_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["apps", "{{app_id}}"]
+            },
+            "description": "Get a single app by UUID.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update App",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"HRMS Pro\",\n    \"priority\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/apps/{{app_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["apps", "{{app_id}}"]
+            },
+            "description": "Partially update an app.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete App",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/apps/{{app_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["apps", "{{app_id}}"]
+            },
+            "description": "Delete an app. Returns 204 No Content.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RBAC",
+      "description": "Role-Based Access Control — roles, user-role assignments, and menu",
+      "item": [
+        {
+          "name": "Create Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('role_id', response.data.id);",
+                  "    console.log('✅ Role created:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Admin\",\n    \"app_id\": \"{{app_id}}\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/roles",
+              "host": ["{{base_url}}"],
+              "path": ["roles"]
+            },
+            "description": "Create a new role scoped to an app.\n\n**Auto-saves:** `role_id` to collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/roles",
+              "host": ["{{base_url}}"],
+              "path": ["roles"]
+            },
+            "description": "List all roles with their associated app."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "Get a single role by UUID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Roles by App",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/roles/app/{{app_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "app", "{{app_id}}"]
+            },
+            "description": "Get all roles belonging to a specific app."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Super Admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "Partially update a role."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Role",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "Delete a role. Returns 204 No Content."
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Role to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\",\n    \"role_id\": \"{{role_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-role-maps",
+              "host": ["{{base_url}}"],
+              "path": ["user-role-maps"]
+            },
+            "description": "Assign a role to a user in a specific organization.\n\n**This is required before the user can login!**"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All User-Role Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/user-role-maps",
+              "host": ["{{base_url}}"],
+              "path": ["user-role-maps"]
+            },
+            "description": "List all user-role assignments."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Roles by User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/user-role-maps/user/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["user-role-maps", "user", "{{user_id}}"]
+            },
+            "description": "Get all role assignments for a specific user."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Role from User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/user-role-maps/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["user-role-maps", "{{user_id}}"]
+            },
+            "description": "Remove a role assignment. Returns 204 No Content."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Menu (Resolved Permissions)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/menu",
+              "host": ["{{base_url}}"],
+              "path": ["menu"]
+            },
+            "description": "Returns the authenticated user's accessible module tree for the current app.\n\nThe response is a hierarchical tree where:\n- Each node has `id`, `name`, `wbs_code`, `actions[]`, and `children[]`\n- Only modules the user has permission to access are included\n- Actions are filtered by both role permissions AND plan restrictions\n- Tree is sorted by WBS code at each level"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Document Storage",
+      "description": "S3 Pre-signed URL operations for file uploads",
+      "item": [
+        {
+          "name": "Generate Upload URL",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"originalName\": \"photo.jpg\",\n    \"mimeType\": \"image/jpeg\",\n    \"size\": 1048576,\n    \"folderType\": \"EMPLOYEE_IMAGE\",\n    \"enterpriseId\": \"{{enterprise_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/documents/upload-url",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "upload-url"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Upload",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/documents/{{document_id}}/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "confirm"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Document by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/documents/{{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}"]
+            },
+            "description": "Get document metadata by UUID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Signed Download URL",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/documents/{{document_id}}/signed-url",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "signed-url"]
+            },
+            "description": "Get a short-lived signed URL for downloading a document."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/documents/{{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}"]
+            },
+            "description": "Delete a document record."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Industry Type",
+      "description": "Global industry categorizations",
+      "item": [
+        {
+          "name": "Create Industry Type",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Software & IT\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/industry-types",
+              "host": ["{{base_url}}"],
+              "path": ["industry-types"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Industry Types",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/industry-types",
+              "host": ["{{base_url}}"],
+              "path": ["industry-types"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "App Module (Permissions)",
+      "description": "Manage system permissions taxonomy: Modules, Actions, and Module Access lists.",
+      "item": [
+        {
+          "name": "Get All App Modules",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/app-modules",
+              "host": ["{{base_url}}"],
+              "path": ["app-modules"]
+            }
+          }
+        },
+        {
+          "name": "Create App Module",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Leave Management\",\n  \"wbs_code\": \"1.0\",\n  \"type\": \"module\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/app-modules",
+              "host": ["{{base_url}}"],
+              "path": ["app-modules"]
+            }
+          }
+        },
+        {
+          "name": "Create Action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"approve\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/actions",
+              "host": ["{{base_url}}"],
+              "path": ["actions"]
+            }
+          }
+        },
+        {
+          "name": "Create Module Access",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role_id\": \"{{role_id}}\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"action_id\": \"<ACTION_ID>\",\n  \"access_flag\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/module-access",
+              "host": ["{{base_url}}"],
+              "path": ["module-access"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Plan & Subscription",
+      "description": "Manage subscription plans and tier limits.",
+      "item": [
+        {
+          "name": "Get All Plans",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/plans",
+              "host": ["{{base_url}}"],
+              "path": ["plans"]
+            }
+          }
+        },
+        {
+          "name": "Create Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Starter\",\n  \"price\": 500.00,\n  \"description\": \"Starter plan\",\n  \"feature\": [\"Leave\", \"Attendance\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/plans",
+              "host": ["{{base_url}}"],
+              "path": ["plans"]
+            }
+          }
+        },
+        {
+          "name": "Create Organization Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"organization_id\": \"{{organization_id}}\",\n  \"plan_id\": \"<PLAN_ID>\",\n  \"start_date\": \"2026-01-01T00:00:00.000Z\",\n  \"status\": \"Active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/organization-subscriptions",
+              "host": ["{{base_url}}"],
+              "path": ["organization-subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "Create Plan Module",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": \"<PLAN_ID>\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/plan-modules",
+              "host": ["{{base_url}}"],
+              "path": ["plan-modules"]
+            }
+          }
+        },
+        {
+          "name": "Create Plan Module Action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": \"<PLAN_ID>\",\n  \"module_id\": \"<MODULE_ID>\",\n  \"action_id\": \"<ACTION_ID>\",\n  \"enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/plan-module-actions",
+              "host": ["{{base_url}}"],
+              "path": ["plan-module-actions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "In-app notification management for the authenticated user.",
+      "item": [
+        {
+          "name": "Get All Notifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications",
+              "host": ["{{base_url}}"],
+              "path": ["notifications"]
+            },
+            "description": "Get all active in-app notifications for the current user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Notifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/unread",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "unread"]
+            },
+            "description": "Get only unread in-app notifications for the current user."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/<NOTIFICATION_ID>/read",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "<NOTIFICATION_ID>", "read"]
+            },
+            "description": "Mark a specific notification as read."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Notifications as Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/read-all",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read for the current user."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
 }
