@@ -39,7 +39,7 @@ export class OrganizationProfileService {
     await this.organizationService.findOne(createDto.organization_id);
 
     // Check if enterprise exists
-    await this.enterpriseService.findOne(createDto.enterprise_id);
+    await this.enterpriseService.findOneById(createDto.enterprise_id);
 
     // Check if logo exists (if provided)
     if (createDto.logo_id) {
@@ -151,7 +151,7 @@ export class OrganizationProfileService {
     if (updateDto.organization_id)
       await this.organizationService.findOne(updateDto.organization_id);
     if (updateDto.enterprise_id)
-      await this.enterpriseService.findOne(updateDto.enterprise_id);
+      await this.enterpriseService.findOneById(updateDto.enterprise_id);
 
     // Map fields
     const updateData: Partial<OrganizationProfile> = {

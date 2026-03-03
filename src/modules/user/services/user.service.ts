@@ -41,7 +41,7 @@ export class UserService {
     this.logger.log(`Creating user: ${createUserDto.email}`);
 
     // Validate enterprise exists
-    await this.enterpriseService.findOne(createUserDto.enterprise_id);
+    await this.enterpriseService.findOneById(createUserDto.enterprise_id);
 
     // Validate organization exists
     await this.organizationService.findOne(createUserDto.organization_id);
@@ -155,7 +155,7 @@ export class UserService {
 
     // Validate enterprise if being updated
     if (updateUserDto.enterprise_id) {
-      await this.enterpriseService.findOne(updateUserDto.enterprise_id);
+      await this.enterpriseService.findOneById(updateUserDto.enterprise_id);
     }
 
     // Validate organization if being updated

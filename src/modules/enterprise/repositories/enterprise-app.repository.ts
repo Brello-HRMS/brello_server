@@ -11,39 +11,46 @@ export class EnterpriseAppRepository {
     private readonly repository: Repository<EnterpriseApp>,
   ) {}
 
-  async assignApps(enterpriseId: string, appIds: string[]): Promise<void> {
-    if (!appIds || appIds.length === 0) return;
-
-    const existing = await this.repository.find({
-      where: {
+  async bulkCreate(
+    enterpriseId: string,
+    appIds: string[],
+  ): Promise<EnterpriseApp[]> {
+    const mappings = appIds.map((appId) =>
+      this.repository.create({
         enterprise_id: enterpriseId,
-        app_id: In(appIds),
-      },
-    });
-
-    const existingAppIds = new Set(existing.map((e) => e.app_id));
-    const toCreate = appIds
-      .filter((id) => !existingAppIds.has(id))
-      .map((appId) =>
-        this.repository.create({
-          enterprise_id: enterpriseId,
-          app_id: appId,
-          is_active: true,
-        }),
-      );
-
-    if (toCreate.length > 0) {
-      await this.repository.save(toCreate);
-    }
+        app_id: appId,
+      }),
+    );
+    return this.repository.save(mappings);
   }
 
   async getAppsForEnterprise(enterpriseId: string): Promise<EnterpriseApp[]> {
     return this.repository.find({
       where: {
         enterprise_id: enterpriseId,
-        is_active: true,
         base_status: Status.ACTIVE,
       },
     });
+  }
+
+  async getAppsForEnterpriseIds(
+    enterpriseIds: string[],
+  ): Promise<EnterpriseApp[]> {
+    if (!enterpriseIds.length) return [];
+
+    return this.repository.find({
+      where: {
+        enterprise_id: In(enterpriseIds),
+        base_status: Status.ACTIVE,
+      },
+    });
+  }
+
+  async softDeleteByEnterpriseId(enterpriseId: string): Promise<boolean> {
+    const result = await this.repository.update(
+      { enterprise_id: enterpriseId, base_status: Status.ACTIVE },
+      { base_status: Status.DELETED, deleted_at: new Date() },
+    );
+    return (result.affected ?? 0) > 0;
   }
 }

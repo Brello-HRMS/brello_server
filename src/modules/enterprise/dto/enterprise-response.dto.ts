@@ -12,6 +12,12 @@ export class EnterpriseResponseDto {
   domain: string;
 
   @Expose()
+  logo: string;
+
+  @Expose()
+  favicon: string;
+
+  @Expose()
   created_at: Date;
 
   @Expose()

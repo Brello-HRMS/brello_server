@@ -95,7 +95,9 @@ export class DocumentService {
     );
 
     // Validate Enterprise (and get code for slug)
-    const enterprise = await this.enterpriseService.findOne(dto.enterpriseId);
+    const enterprise = await this.enterpriseService.findOneById(
+      dto.enterpriseId,
+    );
 
     // Validate Organization (if provided)
     let organization: Organization | null = null;
