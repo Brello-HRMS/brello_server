@@ -39,11 +39,11 @@
                          │
  PHASE 3: Authentication
  ┌───────────────────────▼──────────────────────────────┐
- │  Step 7:  Login                       → tokens 🔑     │
- │  Step 8:  Get Menu (RBAC tree)                        │
- │  Step 9:  Refresh Token               → new tokens    │
- │  Step 10: Switch App (if multiple)                    │
- │  Step 11: Logout                                      │
+ │  Step 8:  Login                       → tokens 🔑     │
+ │  Step 9:  Get Menu (RBAC tree)                        │
+ │  Step 10: Refresh Token               → new tokens    │
+ │  Step 11: Switch App (if multiple)                    │
+ │  Step 12: Logout                                      │
  └───────────────────────┬──────────────────────────────┘
                          │
  PHASE 4: Password Flows (optional)
@@ -51,13 +51,6 @@
  │  Step 12: Update Password                             │
  │  Step 13: Forgot Password (get OTP)                   │
  │  Step 14: Verify OTP & Reset Password                 │
- └───────────────────────┬──────────────────────────────┘
-                         │
- PHASE 5: Notifications (optional)
- ┌───────────────────────▼──────────────────────────────┐
- │  Step 15: Get All Notifications                       │
- │  Step 16: Get Unread Notifications                    │
- │  Step 17: Mark as Read / Mark All as Read             │
  └──────────────────────────────────────────────────────┘
 ```
 
@@ -70,46 +63,6 @@
 Once you have a single `enterprise_id` and `organization_id` in your DB, use them below to create your very first Platform Admin user.
 
 ### Step 1 — Create Platform Admin User
-
-> **Folder:** User → Create User
-
-```
-POST /api/v1/users
-```
-
-```json
-{
-  "name": "Acme Corporation",
-  "domain": "acme.com"
-}
-```
-
-✅ **Save the `id` from the response** — this is your `enterprise_id`.
-
-> The Postman script auto-saves this to `{{enterprise_id}}`.
-
----
-
-### Step 2 — Create Organization
-
-> **Folder:** Organization → Create Organization
-
-```
-POST /api/v1/organizations
-```
-
-```json
-{
-  "name": "Acme India Branch",
-  "enterprise_id": "{{enterprise_id}}"
-}
-```
-
-✅ **Save the `id`** — this is your `organization_id`.
-
----
-
-### Step 3 — Create User
 
 > **Folder:** User → Create User
 
@@ -174,7 +127,44 @@ POST /api/v1/auth/platform-admin/verify-login
 
 ✅ **Save the `access_token`**
 
-### Step 3 — Create App
+### Step 3 — Create Enterprise
+
+> **Folder:** Enterprise → Create Enterprise
+
+```
+POST /api/v1/enterprises
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Acme Corporation",
+  "domain": "acme.com"
+}
+```
+
+✅ **Save the `id`** — this is your `enterprise_id`.
+
+> The Postman script auto-saves this to `{{enterprise_id}}`.
+
+### Step 4 — Create Organization
+
+> **Folder:** Organization → Create Organization
+
+```
+POST /api/v1/organizations
+```
+
+```json
+{
+  "name": "Acme India Branch",
+  "enterprise_id": "{{enterprise_id}}"
+}
+```
+
+✅ **Save the `id`** — this is your `organization_id`.
+
+### Step 5 — Create App
 
 > **Folder:** App → Create App
 
@@ -194,17 +184,13 @@ Authorization: Bearer {{access_token}}
 
 ✅ **Save the `id`** — this is your `app_id`.
 
-> 💡 **Optional Module & Plan Configuration:** If you wish to test RBAC at the module/action level or test plan limits, you can now define `App Modules`, `Actions`, and `Plans` using their respective folders.
+> 💡 `priority` determines the default app on login (lower = higher priority).
 
 ---
 
 ## Phase 2: User Roles & Access
 
-> `priority` determines the default app on login (lower = higher priority). If a user has roles in multiple apps, the lowest priority number becomes the default.
-
----
-
-### Step 4 — Create Role
+### Step 6 — Create Role
 
 > **Folder:** RBAC → Create Role
 
@@ -215,6 +201,7 @@ POST /api/v1/roles
 ```json
 {
   "name": "Admin",
+  "context": "Admin",
   "app_id": "{{app_id}}",
   "enterprise_id": "{{enterprise_id}}",
   "organization_id": "{{organization_id}}"
@@ -225,7 +212,7 @@ POST /api/v1/roles
 
 ---
 
-### Step 5 — Assign Role to User
+### Step 7 — Assign Role to User
 
 > **Folder:** RBAC → Assign Role to User
 
@@ -247,7 +234,7 @@ POST /api/v1/user-role-maps
 
 ## Phase 3: Authentication
 
-### Step 6 — Login Normal User
+### Step 8 — Login Normal User
 
 > **Folder:** Auth → Login
 
@@ -257,7 +244,7 @@ POST /api/v1/auth/login
 
 ```json
 {
-  "email": "john.doe@example.com",
+  "email": "admin@brello.com",
   "password": "SecurePass@123",
   "device_fingerprint": "postman-dev"
 }
@@ -274,7 +261,7 @@ POST /api/v1/auth/login
 
 ---
 
-### Step 7 — Get Menu (RBAC-resolved module tree)
+### Step 9 — Get Menu (RBAC-resolved module tree)
 
 > **Folder:** RBAC → Get Menu
 
@@ -285,11 +272,11 @@ Authorization: Bearer {{access_token}}
 
 Returns the hierarchical module tree the user can access in the current app.
 
-> **Note:** With a fresh setup (no modules/actions seeded), this will return an empty array `[]`. That's expected — modules and actions need to be configured for the RBAC tree to have content.
+> **Note:** With a fresh setup (no modules/actions seeded), this will return an empty array `[]`. That's expected — modules and actions need to be configured in Phase 5.
 
 ---
 
-### Step 8 — Refresh Token
+### Step 10 — Refresh Token
 
 > **Folder:** Auth → Refresh Token
 
@@ -302,7 +289,7 @@ Authorization: Bearer {{refresh_token}}   ← NOTE: uses refresh_token, not acce
 
 ---
 
-### Step 9 — Switch App (optional)
+### Step 11 — Switch App (optional)
 
 > Only applicable if you created **multiple apps** (e.g., HRMS + CRM) and the user has roles in both.
 
@@ -321,7 +308,7 @@ Authorization: Bearer {{access_token}}
 
 ---
 
-### Step 10 — Logout
+### Step 12 — Logout
 
 > **Folder:** Auth → Logout
 
@@ -336,7 +323,7 @@ Authorization: Bearer {{access_token}}
 
 ## Phase 4: Password Flows (Optional Testing)
 
-### Step 11 — Update Password
+### Step 13 — Update Password
 
 Requires the user to be logged in.
 
@@ -356,7 +343,7 @@ Authorization: Bearer {{access_token}}
 
 ---
 
-### Step 12 — Forgot Password (Request OTP)
+### Step 14 — Forgot Password (Request OTP)
 
 No authentication needed.
 
@@ -366,7 +353,7 @@ POST /api/v1/auth/forgot-password
 
 ```json
 {
-  "email": "john.doe@example.com"
+  "email": "admin@brello.com"
 }
 ```
 
@@ -374,7 +361,7 @@ POST /api/v1/auth/forgot-password
 
 ---
 
-### Step 13 — Verify OTP & Reset Password
+### Step 15 — Verify OTP & Reset Password
 
 ```
 POST /api/v1/auth/verify-otp
@@ -382,45 +369,13 @@ POST /api/v1/auth/verify-otp
 
 ```json
 {
-  "email": "john.doe@example.com",
+  "email": "admin@brello.com",
   "otp": "123456",
   "new_password": "ResetPass@789"
 }
 ```
 
 ⚠️ **Side effect:** All active sessions are invalidated.
-
----
-
-## Phase 5: Notifications (Optional)
-
-Once authenticated, you can manage in-app notifications.
-
-### Step 15 — Get All Notifications
-
-> **Folder:** Notifications → Get All Notifications
-
-```
-GET /api/v1/notifications
-Authorization: Bearer {{access_token}}
-```
-
-✅ Returns all active notifications for the current user.
-
-### Step 16 — Get Unread Notifications
-
-```
-GET /api/v1/notifications/unread
-```
-
-✅ Filtered to `is_read: false` only.
-
-### Step 17 — Mark Notifications as Read
-
-```
-PATCH /api/v1/notifications/<id>/read     ← single notification
-PATCH /api/v1/notifications/read-all      ← mark all as read
-```
 
 ---
 
@@ -440,27 +395,22 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 
 ## Quick Reference Table
 
-| Step | Method | Endpoint                            | Prerequisite                           |
-| ---- | ------ | ----------------------------------- | -------------------------------------- |
-| 1    | POST   | `/users`                            | enterprise_id, organization_id         |
-| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists             |
-| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                        |
-| 3    | POST   | `/enterprises`                      | access_token (Platform Admin)          |
-| 4    | POST   | `/organizations`                    | enterprise_id                          |
-| 4b   | POST   | `/organization-profiles`            | organization_id, enterprise_id         |
-| 5    | POST   | `/apps`                             | access_token (Platform Admin)          |
-| 6    | POST   | `/roles`                            | app_id, enterprise_id, organization_id |
-| 7    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id      |
-| 8    | POST   | `/auth/login`                       | User + Role + App exist                |
-| 9    | GET    | `/menu`                             | access_token                           |
-| 10   | POST   | `/auth/refresh`                     | refresh_token                          |
-| 11   | POST   | `/auth/switch-app`                  | access_token + multiple apps           |
-| 12   | POST   | `/auth/logout`                      | access_token                           |
-| 13   | POST   | `/auth/update-password`             | access_token                           |
-| 14   | POST   | `/auth/forgot-password`             | —                                      |
-| 15   | POST   | `/auth/verify-otp`                  | OTP from step 14                       |
-| 16   | GET    | `/notifications`                    | access_token                           |
-| 17   | PATCH  | `/notifications/read-all`           | access_token                           |
+| Step | Method | Endpoint                            | Prerequisite                            |
+| ---- | ------ | ----------------------------------- | --------------------------------------- |
+| 1    | POST   | `/users`                            | enterprise_id, organization_id (seeded) |
+| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists              |
+| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                         |
+| 3    | POST   | `/apps`                             | access_token (Platform Admin)           |
+| 4    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  |
+| 5    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       |
+| 6    | POST   | `/auth/login`                       | User + Role + App exist                 |
+| 7    | GET    | `/menu`                             | access_token                            |
+| 8    | POST   | `/auth/refresh`                     | refresh_token                           |
+| 9    | POST   | `/auth/switch-app`                  | access_token + multiple apps            |
+| 10   | POST   | `/auth/logout`                      | access_token                            |
+| 11   | POST   | `/auth/update-password`             | access_token                            |
+| 12   | POST   | `/auth/forgot-password`             | —                                       |
+| 13   | POST   | `/auth/verify-otp`                  | OTP from step 12                        |
 
 ---
 
@@ -468,12 +418,14 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 
 | Error                                   | Cause                   | Fix                                  |
 | --------------------------------------- | ----------------------- | ------------------------------------ |
-| `403: No active roles assigned`         | Login without Steps 3–5 | Create app, role, and assign to user |
+| `403: No active roles assigned`         | Login without Steps 6–7 | Create app, role, and assign to user |
 | `401: Invalid email or password`        | Wrong credentials       | Check email/password                 |
 | `401: Account is inactive`              | User status ≠ ACTIVE    | Check user status                    |
 | `409: App with name "X" already exists` | Duplicate app name      | Use a unique name                    |
 | `409: This role is already assigned`    | Duplicate user-role-map | Already assigned, skip               |
 | `400: Validation failed`                | Missing/invalid fields  | Check DTO requirements               |
+| Empty `[]` from `/menu`                 | No modules configured   | Complete Phase 5 first               |
+| `404` on document endpoints             | Document not confirmed  | Run Confirm Upload after S3 PUT      |
 
 ---
 
