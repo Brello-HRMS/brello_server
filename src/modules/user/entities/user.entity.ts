@@ -65,6 +65,9 @@ export class User extends BaseEntity {
   @JoinColumn({ name: 'user_profile_id' })
   user_profile: UserProfile;
 
+  @Column({ type: 'uuid', nullable: true })
+  plan_id: string;
+
   /**
    * Last app the user accessed.
    * Used to auto-redirect user to their preferred app on next login.
