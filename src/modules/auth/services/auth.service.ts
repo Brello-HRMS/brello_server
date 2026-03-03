@@ -109,8 +109,51 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     this.logger.log(`Login attempt for email: ${loginDto.email}`);
 
-    // ── 1. Validate credentials ──────────────────────────────────────────
-    const user = await this.userService.findByEmail(loginDto.email);
+    const user = await this.validateCredentials(
+      loginDto.email,
+      loginDto.password,
+    );
+    const availableApps = await this.getUserAvailableApps(
+      user.id,
+      user.organization_id,
+      user.is_platform_admin,
+    );
+    const defaultAppId = this.determineDefaultApp(
+      user.last_access_app_id,
+      availableApps,
+    );
+
+    const tokens = await this.createSessionAndTokens({
+      userId: user.id,
+      organizationId: user.organization_id,
+      enterpriseId: user.enterprise_id,
+      isPlatformAdmin: user.is_platform_admin,
+      deviceFingerprint: loginDto.device_fingerprint,
+      appId: defaultAppId,
+    });
+
+    this.logger.log(`User ${user.id} logged in. Default app: ${defaultAppId}`);
+
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      user: {
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        enterprise_id: user.enterprise_id,
+        organization_id: user.organization_id,
+      },
+      expires_in: tokens.expires_in,
+      defaultAppId,
+      availableApps,
+    };
+  }
+
+  // Helper methodologies for login
+  private async validateCredentials(email: string, password: string) {
+    const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -122,32 +165,37 @@ export class AuthService {
     }
 
     const isPasswordValid = await this.userService.verifyPassword(
-      loginDto.password,
+      password,
       user.password_hash,
     );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // ── 2. Determine available apps via roles ────────────────────────────
-    // Fetch all role assignments for this user in their organization
+    return user;
+  }
+
+  private async getUserAvailableApps(
+    userId: string,
+    organizationId: string,
+    isPlatformAdmin: boolean,
+  ) {
     const userRoleMaps = await this.userRoleMapRepository
       .createQueryBuilder('urm')
       .innerJoinAndSelect('urm.role', 'role')
       .innerJoinAndSelect('role.app', 'app')
-      .where('urm.user_id = :userId', { userId: user.id })
-      .andWhere('urm.organization_id = :orgId', { orgId: user.organization_id })
+      .where('urm.user_id = :userId', { userId })
+      .andWhere('urm.organization_id = :orgId', { orgId: organizationId })
       .andWhere('role.status = :roleStatus', { roleStatus: Status.ACTIVE })
       .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
       .getMany();
 
-    if (!userRoleMaps.length && !user.is_platform_admin) {
+    if (!userRoleMaps.length && !isPlatformAdmin) {
       throw new ForbiddenException(
         'No active roles assigned. Contact your administrator.',
       );
     }
 
-    // Deduplicate available apps, pick lowest priority first
     const appMap = new Map<
       string,
       { id: string; name: string; priority: number }
@@ -162,70 +210,59 @@ export class AuthService {
         });
       }
     }
-    const availableApps = [...appMap.values()].sort(
-      (a, b) => a.priority - b.priority,
-    );
+    return [...appMap.values()].sort((a, b) => a.priority - b.priority);
+  }
 
-    // ── 3. Determine default app ─────────────────────────────────────────
-    let defaultAppId: string;
-    if (user.last_access_app_id && appMap.has(user.last_access_app_id)) {
-      // Use the last app the user accessed (if still valid)
-      defaultAppId = user.last_access_app_id;
-    } else {
-      // Fallback: lowest priority (first in sorted list)
-      defaultAppId = availableApps[0].id;
+  private determineDefaultApp(
+    lastAccessAppId: string | null,
+    availableApps: { id: string; name: string; priority: number }[],
+  ) {
+    if (
+      lastAccessAppId &&
+      availableApps.some((app) => app.id === lastAccessAppId)
+    ) {
+      return lastAccessAppId;
     }
+    return availableApps.length > 0 ? availableApps[0].id : '';
+  }
 
-    // ── 4. Create session & tokens ───────────────────────────────────────
+  private async createSessionAndTokens(params: {
+    userId: string;
+    organizationId: string;
+    enterpriseId: string;
+    isPlatformAdmin: boolean;
+    deviceFingerprint?: string;
+    appId: string;
+  }) {
     const refreshToken = Math.random().toString(36).substring(2);
     const refreshTokenHash = await this.hash(refreshToken);
 
     const session = await this.sessionRepository.create({
-      user_id: user.id,
+      user_id: params.userId,
       refresh_token_hash: refreshTokenHash,
-      device_fingerprint: loginDto.device_fingerprint || 'unknown',
+      device_fingerprint: params.deviceFingerprint || 'unknown',
       login_time: new Date(),
       last_activity: new Date(),
       expires_at: this.calculateSessionExpiration(),
-      app_id: defaultAppId,
+      app_id: params.appId,
     });
 
-    // ── 5. Generate Response ─────────────────────────────────────────────
-    // For Platform Admins with absolutely 0 roles, we can default the appId to the requested, last, or an empty string,
-    // since their JWT simply grants route-level controller bypass, not specific RBAC tree permissions.
-    // The `defaultAppId` is already determined above, so we'll use that.
-    const sessionId = session.id; // Use the ID from the created session
     const tokenPayload: JwtPayload = {
-      userId: user.id,
-      sessionId,
-      organizationId: user.organization_id,
-      enterpriseId: user.enterprise_id,
-      appId: defaultAppId,
-      isPlatformAdmin: user.is_platform_admin,
+      userId: params.userId,
+      sessionId: session.id,
+      organizationId: params.organizationId,
+      enterpriseId: params.enterpriseId,
+      appId: params.appId,
+      isPlatformAdmin: params.isPlatformAdmin,
     };
 
-    const accessToken = this.generateAccessToken(tokenPayload);
-    const refreshTokenJwt = this.generateRefreshToken({
-      ...tokenPayload,
-      refreshToken,
-    });
-
-    this.logger.log(`User ${user.id} logged in. Default app: ${defaultAppId}`);
-
     return {
-      access_token: accessToken,
-      refresh_token: refreshTokenJwt,
-      user: {
-        id: user.id,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        enterprise_id: user.enterprise_id,
-        organization_id: user.organization_id,
-      },
+      access_token: this.generateAccessToken(tokenPayload),
+      refresh_token: this.generateRefreshToken({
+        ...tokenPayload,
+        refreshToken,
+      }),
       expires_in: 900,
-      defaultAppId,
-      availableApps,
     };
   }
 

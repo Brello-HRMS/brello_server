@@ -1,11 +1,15 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { Plan } from '../entities/plan.entity';
 import { PlanRepository } from '../repositories/plan.repository';
+import { PlanAppRepository } from '../repositories/plan-app.repository';
 import { CreatePlanDto, UpdatePlanDto } from '../dto/plan.dto';
 
 @Injectable()
 export class PlanService {
-  constructor(private readonly planRepository: PlanRepository) {}
+  constructor(
+    private readonly planRepository: PlanRepository,
+    private readonly planAppRepository: PlanAppRepository,
+  ) {}
 
   async create(dto: CreatePlanDto): Promise<Plan> {
     const plan = this.planRepository.create(dto);
@@ -42,5 +46,10 @@ export class PlanService {
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.planRepository.softDelete(id);
+  }
+
+  async assignAppsToPlan(planId: string, appIds: string[]): Promise<void> {
+    await this.findOne(planId);
+    await this.planAppRepository.assignAppsToPlan(planId, appIds);
   }
 }

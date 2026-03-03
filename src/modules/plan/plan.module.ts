@@ -1,15 +1,19 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EnterpriseModule } from '../enterprise/enterprise.module';
+import { OrganizationModule } from '../organization/organization.module';
 import { Plan } from './entities/plan.entity';
 import { OrganizationSubscription } from './entities/organization-subscription.entity';
 import { PlanModule as PlanModuleEntity } from './entities/plan-module.entity';
 import { PlanModuleAction } from './entities/plan-module-action.entity';
+import { PlanApp } from './entities/plan-app.entity';
 
 // Repositories
 import { PlanRepository } from './repositories/plan.repository';
 import { OrganizationSubscriptionRepository } from './repositories/organization-subscription.repository';
 import { PlanModuleRepository } from './repositories/plan-module.repository';
 import { PlanModuleActionRepository } from './repositories/plan-module-action.repository';
+import { PlanAppRepository } from './repositories/plan-app.repository';
 
 // Services
 import { PlanService } from './services/plan.service';
@@ -38,7 +42,10 @@ import { PlanModuleActionController } from './controllers/plan-module-action.con
       OrganizationSubscription,
       PlanModuleEntity,
       PlanModuleAction,
+      PlanApp,
     ]),
+    EnterpriseModule,
+    OrganizationModule,
   ],
   controllers: [
     PlanController,
@@ -55,6 +62,7 @@ import { PlanModuleActionController } from './controllers/plan-module-action.con
     OrganizationSubscriptionService,
     PlanModuleService,
     PlanModuleActionService,
+    PlanAppRepository,
   ],
   exports: [
     PlanRepository,
@@ -65,6 +73,7 @@ import { PlanModuleActionController } from './controllers/plan-module-action.con
     OrganizationSubscriptionService,
     PlanModuleService,
     PlanModuleActionService,
+    PlanAppRepository,
     TypeOrmModule,
   ],
 })

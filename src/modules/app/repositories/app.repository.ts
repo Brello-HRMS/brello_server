@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { App } from '../entities/app.entity';
 import { Status } from 'src/common/enums';
 
@@ -25,16 +25,21 @@ export class AppRepository {
     });
   }
 
-  async findOneById(id: string): Promise<App> {
-    const app = await this.repository.findOne({
+  async findByIds(ids: string[]): Promise<App[]> {
+    if (!ids || ids.length === 0) return [];
+
+    return this.repository.find({
+      where: {
+        id: In(ids),
+      },
+      order: { priority: 'ASC' },
+    });
+  }
+
+  async findOneById(id: string): Promise<App | null> {
+    return this.repository.findOne({
       where: { id },
     });
-
-    if (!app) {
-      throw new NotFoundException(`App with ID "${id}" not found`);
-    }
-
-    return app;
   }
 
   async findByName(name: string): Promise<App | null> {

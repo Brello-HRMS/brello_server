@@ -41,7 +41,10 @@ import { NotificationModule } from '../notification/notification.module';
     ]),
     UserModule,
     PassportModule,
-    JwtModule.register({}),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1d' },
+    }),
     ConfigModule,
     ScheduleModule.forRoot(),
     NotificationModule,

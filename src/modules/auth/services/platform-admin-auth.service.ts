@@ -161,36 +161,18 @@ export class PlatformAdminAuthService {
   ): Promise<void> {
     this.logger.log(`Verifying registration OTP for: ${verifyDto.email}`);
 
-    // Find OTP
-    const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
+    await this.validateAndConsumeOtp(
       verifyDto.email,
+      verifyDto.otp,
       OtpPurpose.PLATFORM_ADMIN_REGISTER,
     );
 
-    if (!otpRecord) throw new BadRequestException('Invalid or expired OTP');
-    if (new Date() > otpRecord.expires_at) {
-      await this.otpRepository.delete(otpRecord.id);
-      throw new BadRequestException('OTP has expired');
-    }
-
-    // Verify OTP
-    const isOtpValid = await this.verify(verifyDto.otp, otpRecord.otp_hash);
-    if (!isOtpValid) {
-      await this.otpRepository.incrementAttempts(otpRecord.id);
-      throw new BadRequestException('Invalid OTP');
-    }
-
-    // Find user
     const user = await this.userService.findByEmail(verifyDto.email);
     if (!user) throw new NotFoundException('User not found');
 
-    // Activate User by updating status to ACTIVE (using TypeORM repository bypass in userService if necessary, or DTO)
     await this.userService.update(user.id, {
       base_status: Status.ACTIVE,
     } as any);
-
-    // Delete OTP
-    await this.otpRepository.delete(otpRecord.id);
 
     this.logger.log(`Platform admin ${user.email} successfully activated.`);
   }
@@ -208,9 +190,6 @@ export class PlatformAdminAuthService {
     ) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
-    console.log(loginDto.password);
-    console.log(user.password_hash);
 
     const isPasswordValid = await this.verify(
       loginDto.password,
@@ -252,26 +231,12 @@ export class PlatformAdminAuthService {
   ): Promise<AuthResponseDto> {
     this.logger.log(`Verifying login OTP for: ${verifyDto.email}`);
 
-    // Find OTP
-    const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
+    await this.validateAndConsumeOtp(
       verifyDto.email,
+      verifyDto.otp,
       OtpPurpose.PLATFORM_ADMIN_LOGIN,
     );
 
-    if (!otpRecord) throw new BadRequestException('Invalid or expired OTP');
-    if (new Date() > otpRecord.expires_at) {
-      await this.otpRepository.delete(otpRecord.id);
-      throw new BadRequestException('OTP has expired');
-    }
-
-    // Verify OTP
-    const isOtpValid = await this.verify(verifyDto.otp, otpRecord.otp_hash);
-    if (!isOtpValid) {
-      await this.otpRepository.incrementAttempts(otpRecord.id);
-      throw new BadRequestException('Invalid OTP');
-    }
-
-    // Find and validate User
     const user = await this.userService.findByEmail(verifyDto.email);
     if (
       !user ||
@@ -281,45 +246,14 @@ export class PlatformAdminAuthService {
       throw new UnauthorizedException('Invalid user state');
     }
 
-    // ── Generate Refresh Token & Hash ──
-    const refreshToken = Math.random().toString(36).substring(2);
-    const refreshTokenHash = await this.hash(refreshToken);
-
-    // Process Login (Session, JWT)
-    const session = await this.sessionRepository.create({
-      user_id: user.id,
-      refresh_token_hash: refreshTokenHash,
-      device_fingerprint: 'Platform Admin Session', // Mock standard request data
-      login_time: new Date(),
-      last_activity: new Date(),
-      expires_at: this.calculateSessionExpiration(),
-    });
-
-    // Generate tokens
-    const jwtPayload: JwtPayload = {
-      userId: user.id,
-      sessionId: session.id,
-      organizationId: user.organization_id as any,
-      enterpriseId: user.enterprise_id as any,
-      isPlatformAdmin: true,
-      appId: null as any,
-    };
-
-    const access_token = this.generateAccessToken(jwtPayload);
-    const refresh_token = this.generateRefreshToken({
-      ...jwtPayload,
-      refreshToken,
-    });
-
-    // Delete OTP
-    await this.otpRepository.delete(otpRecord.id);
+    const tokens = await this.createSessionAndTokens(user);
 
     this.logger.log(`Platform Admin logged in successfully: ${user.email}`);
 
     return {
-      access_token,
-      refresh_token,
-      expires_in: 900, // 15 minutes in seconds
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expires_in: tokens.expires_in,
       user: {
         id: user.id,
         email: user.email,
@@ -329,6 +263,64 @@ export class PlatformAdminAuthService {
       },
       availableApps: [],
       defaultAppId: null as any,
+    };
+  }
+
+  // Helper methodologies
+  private async validateAndConsumeOtp(
+    email: string,
+    otp: string,
+    purpose: OtpPurpose,
+  ) {
+    const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
+      email,
+      purpose,
+    );
+
+    if (!otpRecord) throw new BadRequestException('Invalid or expired OTP');
+    if (new Date() > otpRecord.expires_at) {
+      await this.otpRepository.delete(otpRecord.id);
+      throw new BadRequestException('OTP has expired');
+    }
+
+    const isOtpValid = await this.verify(otp, otpRecord.otp_hash);
+    if (!isOtpValid) {
+      await this.otpRepository.incrementAttempts(otpRecord.id);
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    await this.otpRepository.delete(otpRecord.id);
+  }
+
+  private async createSessionAndTokens(user: any) {
+    const refreshToken = Math.random().toString(36).substring(2);
+    const refreshTokenHash = await this.hash(refreshToken);
+
+    const session = await this.sessionRepository.create({
+      user_id: user.id,
+      refresh_token_hash: refreshTokenHash,
+      device_fingerprint: 'Platform Admin Session',
+      login_time: new Date(),
+      last_activity: new Date(),
+      expires_at: this.calculateSessionExpiration(),
+    });
+
+    const jwtPayload: JwtPayload = {
+      userId: user.id,
+      sessionId: session.id,
+      organizationId: user.organization_id,
+      enterpriseId: user.enterprise_id,
+      isPlatformAdmin: true,
+      appId: null as any,
+    };
+
+    return {
+      access_token: this.generateAccessToken(jwtPayload),
+      refresh_token: this.generateRefreshToken({
+        ...jwtPayload,
+        refreshToken,
+      }),
+      expires_in: 900,
     };
   }
 }

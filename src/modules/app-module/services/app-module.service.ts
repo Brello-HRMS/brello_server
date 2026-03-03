@@ -1,4 +1,8 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AppModule } from '../entities/app-module.entity';
 import { AppModuleRepository } from '../repositories/app-module.repository';
 import { CreateAppModuleDto, UpdateAppModuleDto } from '../dto/app-module.dto';
@@ -11,9 +15,11 @@ export class AppModuleService {
     const module = this.appModuleRepository.create(dto);
     try {
       return await this.appModuleRepository.save(module);
-    } catch (error) {
-      // Primitive way to catch unique constraint violations on app_id/code
-      throw new ConflictException('Module code already exists for this app');
+    } catch (error: any) {
+      if (error.code === '23505') {
+        throw new ConflictException('Module code already exists for this app');
+      }
+      throw error;
     }
   }
 
@@ -22,7 +28,11 @@ export class AppModuleService {
   }
 
   async findOne(id: string): Promise<AppModule> {
-    return this.appModuleRepository.findOneById(id);
+    const module = await this.appModuleRepository.findOneById(id);
+    if (!module) {
+      throw new NotFoundException(`AppModule with ID "${id}" not found`);
+    }
+    return module;
   }
 
   async update(id: string, dto: UpdateAppModuleDto): Promise<AppModule> {

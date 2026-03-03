@@ -27,7 +27,9 @@ export class OrganizationService {
     this.logger.log(`Creating organization: ${createOrganizationDto.name}`);
 
     // Validate that the enterprise exists
-    await this.enterpriseService.findOne(createOrganizationDto.enterprise_id);
+    await this.enterpriseService.findOneById(
+      createOrganizationDto.enterprise_id,
+    );
 
     const organization = await this.organizationRepository.create(
       createOrganizationDto,
@@ -61,7 +63,7 @@ export class OrganizationService {
     this.logger.log(`Fetching organizations for enterprise: ${enterpriseId}`);
 
     // Validate that the enterprise exists
-    await this.enterpriseService.findOne(enterpriseId);
+    await this.enterpriseService.findOneById(enterpriseId);
 
     return this.organizationRepository.findByEnterpriseId(enterpriseId);
   }
@@ -78,7 +80,9 @@ export class OrganizationService {
 
     // If enterprise_id is being updated, validate the new enterprise exists
     if (updateOrganizationDto.enterprise_id) {
-      await this.enterpriseService.findOne(updateOrganizationDto.enterprise_id);
+      await this.enterpriseService.findOneById(
+        updateOrganizationDto.enterprise_id,
+      );
     }
 
     const updatedOrganization = await this.organizationRepository.update(

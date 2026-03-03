@@ -11,7 +11,7 @@ import {
 import { AppModuleService } from '../services/app-module.service';
 import { CreateAppModuleDto, UpdateAppModuleDto } from '../dto/app-module.dto';
 
-@Controller('modules')
+@Controller('app-modules')
 export class AppModuleController {
   constructor(private readonly appModuleService: AppModuleService) {}
 

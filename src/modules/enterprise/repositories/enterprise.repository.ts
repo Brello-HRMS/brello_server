@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Enterprise } from '../entities/enterprise.entity';
+import { Status } from '../../../common/enums';
 
 @Injectable()
 export class EnterpriseRepository {
@@ -10,35 +11,38 @@ export class EnterpriseRepository {
     private readonly repository: Repository<Enterprise>,
   ) {}
 
-  async create(enterprise: Partial<Enterprise>): Promise<Enterprise> {
-    const newEnterprise = this.repository.create(enterprise);
-    return this.repository.save(newEnterprise);
+  create(data: Partial<Enterprise>): Enterprise {
+    return this.repository.create(data);
+  }
+
+  async save(enterprise: Enterprise): Promise<Enterprise> {
+    return this.repository.save(enterprise);
   }
 
   async findAll(): Promise<Enterprise[]> {
     return this.repository.find({
+      where: { base_status: Status.ACTIVE },
       order: { created_at: 'DESC' },
     });
   }
 
-  async findById(id: string): Promise<Enterprise | null> {
-    return this.repository.findOne({ where: { id } });
+  async findOneById(id: string): Promise<Enterprise | null> {
+    return this.repository.findOne({
+      where: { id, base_status: Status.ACTIVE },
+    });
   }
 
   async findByDomain(domain: string): Promise<Enterprise | null> {
-    return this.repository.findOne({ where: { domain } });
+    return this.repository.findOne({
+      where: { domain, base_status: Status.ACTIVE },
+    });
   }
 
-  async update(
-    id: string,
-    updateData: Partial<Enterprise>,
-  ): Promise<Enterprise | null> {
-    await this.repository.update(id, updateData);
-    return this.findById(id);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const result = await this.repository.delete(id);
+  async softDelete(id: string): Promise<boolean> {
+    const result = await this.repository.update(id, {
+      base_status: Status.DELETED,
+      deleted_at: new Date(),
+    });
     return (result.affected ?? 0) > 0;
   }
 }

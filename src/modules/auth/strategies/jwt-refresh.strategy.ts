@@ -31,7 +31,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       ignoreExpiration: false,
       secretOrKey:
         configService.get<string>('auth.JWT_REFRESH_SECRET') ||
-        'default-refresh-secret-change-me',
+        'default-refresh-secret',
     });
   }
 

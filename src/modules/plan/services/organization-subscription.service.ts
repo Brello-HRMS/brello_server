@@ -5,11 +5,17 @@ import {
   CreateOrganizationSubscriptionDto,
   UpdateOrganizationSubscriptionDto,
 } from '../dto/organization-subscription.dto';
+import { OrganizationService } from '../../organization/services/organization.service';
+import { EnterpriseService } from '../../enterprise/services/enterprise.service';
+import { PlanAppRepository } from '../repositories/plan-app.repository';
 
 @Injectable()
 export class OrganizationSubscriptionService {
   constructor(
     private readonly orgSubRepository: OrganizationSubscriptionRepository,
+    private readonly organizationService: OrganizationService,
+    private readonly enterpriseService: EnterpriseService,
+    private readonly planAppRepository: PlanAppRepository,
   ) {}
 
   async create(
@@ -32,7 +38,27 @@ export class OrganizationSubscriptionService {
       start_date: new Date(dto.start_date),
       end_date: dto.end_date ? new Date(dto.end_date) : undefined,
     });
-    return this.orgSubRepository.save(subscription);
+    const savedSubscription = await this.orgSubRepository.save(subscription);
+
+    // Business Logic: Assign Apps to Enterprise
+    const organization = await this.organizationService.findOne(
+      dto.organization_id,
+    );
+    const enterpriseId = organization.enterprise_id;
+
+    if (enterpriseId) {
+      const planApps = await this.planAppRepository.getAppsForPlan(dto.plan_id);
+      const appIds = planApps.map((pa) => pa.app_id);
+
+      if (appIds.length > 0) {
+        await this.enterpriseService.assignAppsToEnterprise(
+          enterpriseId,
+          appIds,
+        );
+      }
+    }
+
+    return savedSubscription;
   }
 
   async findAll(): Promise<OrganizationSubscription[]> {
