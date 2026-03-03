@@ -14,6 +14,7 @@ import { AppModuleModule } from './modules/app-module/app-module.module';
 import { PropertiesModule } from './core/properties/properties.module';
 import { IndustryTypeModule } from './modules/industry-type/industry-type.module';
 import { DocumentModule } from './modules/document/document.module';
+import { LeadModule } from './modules/lead/lead.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { DocumentModule } from './modules/document/document.module';
     AppModuleModule,
     RbacModule,
     NotificationModule,
+    LeadModule,
   ],
 })
 export class AppModule {}

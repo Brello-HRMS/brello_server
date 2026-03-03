@@ -56,6 +56,52 @@
 
 ---
 
+## Phase 0: Lead Registration (Public)
+
+> This is the public-facing registration flow. No authentication required.
+
+### Step 0.1 — Register Lead
+
+> **Folder:** Lead → Register Lead
+
+```
+POST /api/v1/leads/register
+```
+
+```json
+{
+  "email": "samir@company.com",
+  "first_name": "Mohd",
+  "last_name": "Samir",
+  "phone": "9876543210",
+  "password": "StrongPass@123",
+  "location": "India",
+  "device": "MacOS - Chrome",
+  "source": "website"
+}
+```
+
+✅ Check the **server console** for the 6-digit OTP (in dev mode).
+
+### Step 0.2 — Verify Lead OTP
+
+> **Folder:** Lead → Verify Lead OTP
+
+```
+POST /api/v1/leads/verify-otp
+```
+
+```json
+{
+  "email": "samir@company.com",
+  "otp": "123456"
+}
+```
+
+✅ On success, the lead is marked as **verified** and a **User** record is automatically created from the lead details (first_name, last_name, email, phone, password_hash). Both operations are transactional — if anything fails, everything is rolled back.
+
+---
+
 ## Phase 1: DB Bootstrap & First User
 
 > **⚠️ CRITICAL BOOTSTRAP:** Because creating an Enterprise or App requires a **Platform Admin** JWT, and creating a User requires an existing Enterprise, **you must seed the first Enterprise and Organization directly into the database** when starting from a completely empty environment.

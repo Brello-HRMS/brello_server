@@ -25,6 +25,7 @@ This folder contains the API contract documentation for the Brello HRMS backend,
 | [11-app-module.md](./11-app-module.md)                         | App Module          | Modules, Actions & Module Access CRUD                              |
 | [12-plan.md](./12-plan.md)                                     | Plan & Subscription | Plans, Org Subscriptions, Plan Modules & Actions                   |
 | [13-notification.md](./13-notification.md)                     | Notification        | In-app notifications (read, unread, mark read)                     |
+| [14-lead.md](./14-lead.md)                                     | Lead                | Public registration, OTP verification, user creation               |
 
 ## Postman Collection
 

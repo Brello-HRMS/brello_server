@@ -25,4 +25,7 @@ export enum OtpPurpose {
 
   /** OTP for Platform Admin login */
   PLATFORM_ADMIN_LOGIN = 'PLATFORM_ADMIN_LOGIN',
+
+  /** OTP for Lead email verification */
+  LEAD_VERIFICATION = 'LEAD_VERIFICATION',
 }

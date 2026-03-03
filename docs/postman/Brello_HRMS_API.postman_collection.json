@@ -1902,6 +1902,58 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Lead",
+      "description": "Public lead registration and OTP verification",
+      "item": [
+        {
+          "name": "Register Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"samir@company.com\",\n    \"first_name\": \"Mohd\",\n    \"last_name\": \"Samir\",\n    \"phone\": \"9876543210\",\n    \"password\": \"StrongPass@123\",\n    \"location\": \"India\",\n    \"device\": \"MacOS - Chrome\",\n    \"source\": \"website\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads/register",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "register"]
+            },
+            "description": "Register a new lead. Sends a verification OTP to the provided email.\n\n**No authentication required.**\n\n**In dev mode:** Check the server console for the OTP log.\n\n**Validation:** email (unique), first_name (min 2), last_name (min 2), phone (E.164), password (strong), source (must be 'website')."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Lead OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"samir@company.com\",\n    \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "verify-otp"]
+            },
+            "description": "Verify the OTP sent during lead registration.\n\n**On success:**\n- Lead is marked as verified\n- A User record is created from the lead details (first_name, last_name, email, phone, password_hash)\n- Both operations are wrapped in a transaction — if anything fails, everything rolls back.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
