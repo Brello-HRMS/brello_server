@@ -18,7 +18,7 @@ This folder contains the API contract documentation for the Brello HRMS backend,
 | [04-user.md](./04-user.md)                                     | User                | CRUD for system users                                              |
 | [05-menu.md](./05-menu.md)                                     | Menu (RBAC)         | Permission-resolved module tree                                    |
 | [06-app.md](./06-app.md)                                       | App                 | CRUD for application definitions                                   |
-| [07-role-and-user-role-map.md](./07-role-and-user-role-map.md) | Role & UserRoleMap  | Role CRUD + user-role assignments                                  |
+| [07-role-and-user-role-map.md](./07-role-and-user-role-map.md) | Role & UserRoleMap  | Role CRUD + filter by org/enterprise + user-role assignments       |
 | [08-employee.md](./08-employee.md)                             | Employee            | Aggregate employee create/read + child collections                 |
 | [09-document.md](./09-document.md)                             | Document            | S3 upload URLs, confirm, download, delete                          |
 | [10-industry-type.md](./10-industry-type.md)                   | Industry Type       | Master lookup CRUD                                                 |

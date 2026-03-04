@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Role } from './entities/role.entity';
 import { UserRoleMap } from './entities/user-role-map.entity';
 import { AppModule as AppEntity } from '../app-module/entities/app-module.entity';
 import { Action } from '../app-module/entities/action.entity';
@@ -9,13 +8,14 @@ import { OrganizationSubscription } from '../plan/entities/organization-subscrip
 import { PlanModule as PlanModuleEntity } from '../plan/entities/plan-module.entity';
 import { PlanModuleAction } from '../plan/entities/plan-module-action.entity';
 import { PermissionResolverService } from './services/permission-resolver.service';
-import { RoleService } from './services/role.service';
+import { RoleService } from '../role/services/role.service';
 import { UserRoleMapService } from './services/user-role-map.service';
 import { MenuController } from './controllers/menu.controller';
-import { RoleController } from './controllers/role.controller';
+import { RoleController } from '../role/controllers/role.controller';
 import { UserRoleMapController } from './controllers/user-role-map.controller';
-import { RoleRepository } from './repositories/role.repository';
+import { RoleRepository } from '../role/repositories/role.repository';
 import { UserRoleMapRepository } from './repositories/user-role-map.repository';
+import { Role } from '../role/entities/role.entity';
 
 /**
  * RbacModule
