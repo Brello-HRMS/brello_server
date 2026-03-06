@@ -6,6 +6,7 @@ import { EnterpriseModule } from './modules/enterprise/enterprise.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DesignationModule } from './modules/designations/designation.module';
 
 /**
  * App Module
@@ -42,6 +43,7 @@ import { AuthModule } from './modules/auth/auth.module';
     OrganizationModule,
     UserModule,
     AuthModule,
+    DesignationModule,
   ],
 })
 export class AppModule { }
