@@ -16,7 +16,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { OtpCleanupTask } from './tasks/otp-cleanup.task';
 import { UserModule } from '../user/user.module';
 import { UserRoleMap } from '../rbac/entities/user-role-map.entity';
-import { Role } from '../rbac/entities/role.entity';
+import { Role } from '../role/entities/role.entity';
 import { App } from '../app/entities/app.entity';
 import { SessionRepository } from './repositories/session.repository';
 import { NotificationModule } from '../notification/notification.module';

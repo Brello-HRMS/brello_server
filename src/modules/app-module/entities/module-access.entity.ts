@@ -8,20 +8,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Role } from '../../rbac/entities/role.entity';
+import { Role } from '../../role/entities/role.entity';
 import { AppModule } from './app-module.entity';
 import { Action } from './action.entity';
 
-/**
- * ModuleAccess Entity
- *
- * Defines the permission matrix: which role can perform which action on which module.
- * access_flag = true  → permission GRANTED
- * access_flag = false → permission EXPLICITLY DENIED (can be used for overrides)
- *
- * Multiple roles can grant access to the same module+action combination.
- * PermissionResolver aggregates using OR logic across roles.
- */
 @Entity('module_access')
 @Index(['role_id', 'module_id', 'action_id'], { unique: true })
 @Index(['role_id', 'module_id'])

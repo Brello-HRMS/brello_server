@@ -1,13 +1,12 @@
 import {
   IsString,
   IsNotEmpty,
+  IsOptional,
+  MaxLength,
   Length,
   IsUUID,
-  IsOptional,
   IsBoolean,
-  IsEnum,
 } from 'class-validator';
-import { RoleContext } from '../enums/role-context.enum';
 
 export class CreateRoleDto {
   @IsString()
@@ -15,23 +14,28 @@ export class CreateRoleDto {
   @Length(2, 100, { message: 'Role name must be between 2 and 100 characters' })
   name: string;
 
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  code?: string;
+
   @IsUUID('4', { message: 'App ID must be a valid UUID' })
   @IsNotEmpty({ message: 'App ID is required' })
   app_id: string;
 
   @IsUUID('4', { message: 'Enterprise ID must be a valid UUID' })
-  @IsNotEmpty({ message: 'Enterprise ID is required' })
-  enterprise_id: string;
+  @IsOptional()
+  enterprise_id?: string;
 
   @IsUUID('4', { message: 'Organization ID must be a valid UUID' })
-  @IsNotEmpty({ message: 'Organization ID is required' })
-  organization_id: string;
+  @IsOptional()
+  organization_id?: string;
 
   @IsBoolean()
   @IsOptional()
   is_system_defined?: boolean;
-
-  @IsEnum(RoleContext, { message: 'Context must be a valid RoleContext value' })
-  @IsNotEmpty({ message: 'Role context is required' })
-  context: RoleContext;
 }
