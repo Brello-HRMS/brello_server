@@ -8,27 +8,30 @@
  * userId + organizationId + appId as lookup keys.
  */
 export interface JwtPayload {
-    /** User's unique identifier (maps to users.id) */
-    userId: string;
+  /** User's unique identifier (maps to users.id) */
+  userId: string;
 
-    /** Session identifier for session management & refresh token validation */
-    sessionId: string;
+  /** Session identifier for session management & refresh token validation */
+  sessionId: string;
 
-    /** Organization the user is acting within */
-    organizationId: string;
+  /** Organization the user is acting within */
+  organizationId: string;
 
-    /** Enterprise the user belongs to */
-    enterpriseId: string;
+  /** Enterprise the user belongs to */
+  enterpriseId: string;
 
-    /** Currently active application (determines which roles/modules to resolve) */
-    appId: string;
+  /** Currently active application (determines which roles/modules to resolve) */
+  appId: string;
 
-    /** Refresh token value — included only in refresh token payload */
-    refreshToken?: string;
+  /** Identifies if the user is a Platform Admin */
+  isPlatformAdmin: boolean;
 
-    /** Issued-at timestamp (standard JWT claim, auto-set) */
-    iat?: number;
+  /** Refresh token value — included only in refresh token payload */
+  refreshToken?: string;
 
-    /** Expiration timestamp (standard JWT claim, auto-set) */
-    exp?: number;
+  /** Issued-at timestamp (standard JWT claim, auto-set) */
+  iat?: number;
+
+  /** Expiration timestamp (standard JWT claim, auto-set) */
+  exp?: number;
 }

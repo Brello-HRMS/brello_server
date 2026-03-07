@@ -10,11 +10,20 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 @Entity('plan')
 @Index(['name'], { unique: true })
 export class Plan extends BaseEntity {
-    /** Plan name (e.g., Free, Starter, Professional, Enterprise) */
-    @Column({ type: 'varchar', length: 100, unique: true })
-    name: string;
+  /** Plan name (e.g., Free, Starter, Professional, Enterprise) */
+  @Column({ type: 'varchar', length: 100, unique: true })
+  name: string;
 
-    /** Monthly/annual pricing in smallest currency unit (e.g., paise/cents) */
-    @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
-    price: number;
+  /** Monthly/annual pricing in smallest currency unit (e.g., paise/cents) */
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  price: number;
+
+  @Column({ type: 'text', nullable: true })
+  declare description: string;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  discount: number;
+
+  @Column({ type: 'varchar', array: true, default: [] })
+  feature: string[];
 }

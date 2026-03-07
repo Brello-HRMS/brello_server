@@ -1,0 +1,44 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Action } from '../entities/action.entity';
+
+@Injectable()
+export class ActionRepository {
+  constructor(
+    @InjectRepository(Action)
+    private readonly repository: Repository<Action>,
+  ) {}
+
+  create(data: Partial<Action>): Action {
+    return this.repository.create(data);
+  }
+
+  async save(action: Action): Promise<Action> {
+    return this.repository.save(action);
+  }
+
+  async findAll(): Promise<Action[]> {
+    return this.repository.find({
+      order: { name: 'ASC' },
+      where: { base_status: 'ACTIVE' as any },
+    });
+  }
+
+  async findOneById(id: string): Promise<Action> {
+    const action = await this.repository.findOne({
+      where: { id, base_status: 'ACTIVE' as any },
+    });
+    if (!action) {
+      throw new NotFoundException(`Action with ID "${id}" not found`);
+    }
+    return action;
+  }
+
+  async softDelete(id: string): Promise<boolean> {
+    const result = await this.repository.update(id, {
+      base_status: 'DELETED' as any,
+    });
+    return (result.affected ?? 0) > 0;
+  }
+}

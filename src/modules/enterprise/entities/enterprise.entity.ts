@@ -1,29 +1,18 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
+import { BaseEntity } from '../../../common/entities/base.entity';
 
-// Enterprise Entity - Represents the top-level tenant in the multi-tenant architecture
-@Entity('enterprises')
-export class Enterprise {
-    // Unique identifier for the enterprise
-    @Column({ primary: true, type: 'uuid', generated: 'uuid' })
-    id: string;
+@Entity('enterprise')
+@Index(['domain'], { unique: true })
+export class Enterprise extends BaseEntity {
+  @Column({ type: 'varchar', length: 255 })
+  name: string;
 
-    // Name of the enterprise
-    @Column({ type: 'varchar', length: 255 })
-    name: string;
+  @Column({ type: 'varchar', length: 255 })
+  domain: string;
 
-    // Domain name associated with the enterprise
-    @Column({ type: 'varchar', length: 255 })
-    domain: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  logo: string;
 
-    // Timestamp when the enterprise was created
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    created_at: Date;
-
-    // Timestamp when the enterprise was last updated
-    @Column({
-        type: 'timestamp',
-        default: () => 'CURRENT_TIMESTAMP',
-        onUpdate: 'CURRENT_TIMESTAMP',
-    })
-    updated_at: Date;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  favicon: string;
 }

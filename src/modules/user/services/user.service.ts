@@ -1,9 +1,9 @@
 import {
-    Injectable,
-    NotFoundException,
-    ConflictException,
-    BadRequestException,
-    Logger,
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository';
@@ -17,156 +17,199 @@ import { Status } from '../../../common/enums';
 // User Service - Implements business logic for user management
 @Injectable()
 export class UserService {
-    private readonly logger = new Logger(UserService.name);
-    private readonly SALT_ROUNDS = 10;
+  private readonly logger = new Logger(UserService.name);
+  private readonly SALT_ROUNDS = 10;
 
-    constructor(
-        private readonly userRepository: UserRepository,
-        private readonly enterpriseService: EnterpriseService,
-        private readonly organizationService: OrganizationService,
-    ) { }
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly enterpriseService: EnterpriseService,
+    private readonly organizationService: OrganizationService,
+  ) {}
 
-    // Hash password using bcrypt
-    private async hashPassword(password: string): Promise<string> {
-        return bcrypt.hash(password, this.SALT_ROUNDS);
+  // Hash password using bcrypt
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, this.SALT_ROUNDS);
+  }
+
+  // Verify password against hash
+  async verifyPassword(password: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(password, hash);
+  }
+
+  // Create a new user
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    this.logger.log(`Creating user: ${createUserDto.email}`);
+
+    // Validate enterprise exists
+    await this.enterpriseService.findOneById(createUserDto.enterprise_id);
+
+    // Validate organization exists
+    await this.organizationService.findOne(createUserDto.organization_id);
+
+    // Check email uniqueness
+    const emailExists = await this.userRepository.emailExists(
+      createUserDto.email,
+    );
+    if (emailExists) {
+      throw new ConflictException(
+        `User with email '${createUserDto.email}' already exists`,
+      );
     }
 
-    // Verify password against hash
-    async verifyPassword(password: string, hash: string): Promise<boolean> {
-        return bcrypt.compare(password, hash);
+    // Check phone uniqueness
+    const phoneExists = await this.userRepository.phoneExists(
+      createUserDto.phone,
+    );
+    if (phoneExists) {
+      throw new ConflictException(
+        `User with phone '${createUserDto.phone}' already exists`,
+      );
     }
 
-    // Create a new user
-    async create(createUserDto: CreateUserDto): Promise<User> {
-        this.logger.log(`Creating user: ${createUserDto.email}`);
+    // Hash password
+    const password_hash = await this.hashPassword(createUserDto.password);
 
-        // Validate enterprise exists
-        await this.enterpriseService.findOne(createUserDto.enterprise_id);
+    // Create user
+    const { password, ...userData } = createUserDto;
+    const user = await this.userRepository.create({
+      ...userData,
+      password_hash,
+      base_status: Status.ACTIVE,
+    });
 
-        // Validate organization exists
-        await this.organizationService.findOne(createUserDto.organization_id);
+    this.logger.log(`User created successfully: ${user.id}`);
+    return user;
+  }
 
-        // Check email uniqueness
-        const emailExists = await this.userRepository.emailExists(
-            createUserDto.email,
+  // Create a new platform admin user (No enterprise required, starts PENDING)
+  async createPlatformAdmin(
+    registerDto: any,
+    password_hash: string,
+  ): Promise<User> {
+    this.logger.log(`Creating platform admin: ${registerDto.email}`);
+
+    // Check email uniqueness
+    const emailExists = await this.userRepository.emailExists(
+      registerDto.email,
+    );
+    if (emailExists) {
+      throw new ConflictException(
+        `User with email '${registerDto.email}' already exists`,
+      );
+    }
+
+    // Check phone uniqueness
+    const phoneExists = await this.userRepository.phoneExists(
+      registerDto.phone_number,
+    );
+    if (phoneExists) {
+      throw new ConflictException(
+        `User with phone '${registerDto.phone_number}' already exists`,
+      );
+    }
+
+    // Create user
+    const { password, ...userData } = registerDto;
+    const user = await this.userRepository.create({
+      ...userData,
+      phone: registerDto.phone_number,
+      password_hash,
+      is_platform_admin: true,
+      base_status: Status.PENDING, // Will be activated via OTP
+    });
+
+    this.logger.log(`Platform admin created successfully: ${user.id}`);
+    return user;
+  }
+
+  // Get all users
+  async findAll(): Promise<User[]> {
+    this.logger.log('Fetching all users');
+    return this.userRepository.findAll();
+  }
+
+  // Get user by ID
+  async findOne(id: string): Promise<User> {
+    this.logger.log(`Fetching user: ${id}`);
+
+    const user = await this.userRepository.findById(id);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID '${id}' not found`);
+    }
+
+    return user;
+  }
+
+  // Get user by email
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findByEmail(email);
+  }
+
+  // Update a user
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    this.logger.log(`Updating user: ${id}`);
+
+    // Verify user exists
+    await this.findOne(id);
+
+    // Validate enterprise if being updated
+    if (updateUserDto.enterprise_id) {
+      await this.enterpriseService.findOneById(updateUserDto.enterprise_id);
+    }
+
+    // Validate organization if being updated
+    if (updateUserDto.organization_id) {
+      await this.organizationService.findOne(updateUserDto.organization_id);
+    }
+
+    // Check email uniqueness if being updated
+    if (updateUserDto.email) {
+      const emailExists = await this.userRepository.emailExists(
+        updateUserDto.email,
+        id,
+      );
+      if (emailExists) {
+        throw new ConflictException(
+          `User with email '${updateUserDto.email}' already exists`,
         );
-        if (emailExists) {
-            throw new ConflictException(
-                `User with email '${createUserDto.email}' already exists`,
-            );
-        }
+      }
+    }
 
-        // Check phone uniqueness
-        const phoneExists = await this.userRepository.phoneExists(
-            createUserDto.phone,
+    // Check phone uniqueness if being updated
+    if (updateUserDto.phone) {
+      const phoneExists = await this.userRepository.phoneExists(
+        updateUserDto.phone,
+        id,
+      );
+      if (phoneExists) {
+        throw new ConflictException(
+          `User with phone '${updateUserDto.phone}' already exists`,
         );
-        if (phoneExists) {
-            throw new ConflictException(
-                `User with phone '${createUserDto.phone}' already exists`,
-            );
-        }
-
-        // Hash password
-        const password_hash = await this.hashPassword(createUserDto.password);
-
-        // Create user
-        const { password, ...userData } = createUserDto;
-        const user = await this.userRepository.create({
-            ...userData,
-            password_hash,
-            status: Status.ACTIVE,
-        });
-
-        this.logger.log(`User created successfully: ${user.id}`);
-        return user;
+      }
     }
 
-    // Get all users
-    async findAll(): Promise<User[]> {
-        this.logger.log('Fetching all users');
-        return this.userRepository.findAll();
+    const updatedUser = await this.userRepository.update(id, updateUserDto);
+
+    if (!updatedUser) {
+      throw new NotFoundException(
+        `User with ID '${id}' not found after update`,
+      );
     }
 
-    // Get user by ID
-    async findOne(id: string): Promise<User> {
-        this.logger.log(`Fetching user: ${id}`);
+    this.logger.log(`User updated successfully: ${id}`);
+    return updatedUser;
+  }
 
-        const user = await this.userRepository.findById(id);
+  // Delete a user (soft delete)
+  async remove(id: string): Promise<void> {
+    this.logger.log(`Deleting user: ${id}`);
 
-        if (!user) {
-            throw new NotFoundException(`User with ID '${id}' not found`);
-        }
+    // Verify user exists
+    await this.findOne(id);
 
-        return user;
-    }
+    await this.userRepository.softDelete(id);
 
-    // Get user by email
-    async findByEmail(email: string): Promise<User | null> {
-        return this.userRepository.findByEmail(email);
-    }
-
-    // Update a user
-    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-        this.logger.log(`Updating user: ${id}`);
-
-        // Verify user exists
-        await this.findOne(id);
-
-        // Validate enterprise if being updated
-        if (updateUserDto.enterprise_id) {
-            await this.enterpriseService.findOne(updateUserDto.enterprise_id);
-        }
-
-        // Validate organization if being updated
-        if (updateUserDto.organization_id) {
-            await this.organizationService.findOne(updateUserDto.organization_id);
-        }
-
-        // Check email uniqueness if being updated
-        if (updateUserDto.email) {
-            const emailExists = await this.userRepository.emailExists(
-                updateUserDto.email,
-                id,
-            );
-            if (emailExists) {
-                throw new ConflictException(
-                    `User with email '${updateUserDto.email}' already exists`,
-                );
-            }
-        }
-
-        // Check phone uniqueness if being updated
-        if (updateUserDto.phone) {
-            const phoneExists = await this.userRepository.phoneExists(
-                updateUserDto.phone,
-                id,
-            );
-            if (phoneExists) {
-                throw new ConflictException(
-                    `User with phone '${updateUserDto.phone}' already exists`,
-                );
-            }
-        }
-
-        const updatedUser = await this.userRepository.update(id, updateUserDto);
-
-        if (!updatedUser) {
-            throw new NotFoundException(`User with ID '${id}' not found after update`);
-        }
-
-        this.logger.log(`User updated successfully: ${id}`);
-        return updatedUser;
-    }
-
-    // Delete a user (soft delete)
-    async remove(id: string): Promise<void> {
-        this.logger.log(`Deleting user: ${id}`);
-
-        // Verify user exists
-        await this.findOne(id);
-
-        await this.userRepository.softDelete(id);
-
-        this.logger.log(`User deleted successfully: ${id}`);
-    }
+    this.logger.log(`User deleted successfully: ${id}`);
+  }
 }

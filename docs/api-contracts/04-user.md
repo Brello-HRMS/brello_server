@@ -8,27 +8,29 @@ Manages system users. Users belong to an enterprise and organization.
 
 ## 1. Create User
 
-| | |
-|---|---|
-| **Method** | `POST` |
-| **URL** | `/api/v1/users` |
-| **Auth** | None |
-| **Status** | `201 Created` |
+|            |                 |
+| ---------- | --------------- |
+| **Method** | `POST`          |
+| **URL**    | `/api/v1/users` |
+| **Auth**   | None            |
+| **Status** | `201 Created`   |
 
 **Request Body:**
 
-| Field | Type | Required | Validation | Description |
-|---|---|---|---|---|
-| `first_name` | string | ✅ | 2–100 characters | First name |
-| `middle_name` | string | ❌ | 2–100 characters | Middle name |
-| `last_name` | string | ✅ | 2–100 characters | Last name |
-| `email` | string | ✅ | Valid email format | Email (must be unique) |
-| `phone` | string | ✅ | E.164 format (e.g., `+919876543210`) | Phone (must be unique) |
-| `password` | string | ✅ | Min 8 chars; must have uppercase, lowercase, digit, special char | Password |
-| `enterprise_id` | string (UUID) | ✅ | Valid UUID v4 | Enterprise the user belongs to |
-| `organization_id` | string (UUID) | ✅ | Valid UUID v4 | Organization the user belongs to |
+| Field               | Type          | Required | Validation                                                       | Description                               |
+| ------------------- | ------------- | -------- | ---------------------------------------------------------------- | ----------------------------------------- |
+| `first_name`        | string        | ✅       | 2–100 characters                                                 | First name                                |
+| `middle_name`       | string        | ❌       | 2–100 characters                                                 | Middle name                               |
+| `last_name`         | string        | ✅       | 2–100 characters                                                 | Last name                                 |
+| `email`             | string        | ✅       | Valid email format                                               | Email (must be unique)                    |
+| `phone`             | string        | ✅       | E.164 format (e.g., `+919876543210`)                             | Phone (must be unique)                    |
+| `password`          | string        | ✅       | Min 8 chars; must have uppercase, lowercase, digit, special char | Password                                  |
+| `enterprise_id`     | string (UUID) | ✅       | Valid UUID v4                                                    | Enterprise the user belongs to            |
+| `organization_id`   | string (UUID) | ✅       | Valid UUID v4                                                    | Organization the user belongs to          |
+| `is_platform_admin` | boolean       | ❌       | Default: false                                                   | Set to true to bypass regular role checks |
 
 **Password Rules:**
+
 - Minimum 8 characters
 - At least one uppercase letter (`A-Z`)
 - At least one lowercase letter (`a-z`)
@@ -46,7 +48,8 @@ Manages system users. Users belong to an enterprise and organization.
   "phone": "+919876543210",
   "password": "SecurePass@123",
   "enterprise_id": "550e8400-e29b-41d4-a716-446655440000",
-  "organization_id": "770e8400-e29b-41d4-a716-446655440002"
+  "organization_id": "770e8400-e29b-41d4-a716-446655440002",
+  "is_platform_admin": true
 }
 ```
 
@@ -79,22 +82,22 @@ Manages system users. Users belong to an enterprise and organization.
 
 **Error Responses:**
 
-| Status | Condition |
-|---|---|
+| Status            | Condition                                              |
+| ----------------- | ------------------------------------------------------ |
 | `400 Bad Request` | Validation errors (invalid email, weak password, etc.) |
-| `409 Conflict` | Email or phone already exists |
-| `404 Not Found` | Enterprise or Organization ID doesn't exist |
+| `409 Conflict`    | Email or phone already exists                          |
+| `404 Not Found`   | Enterprise or Organization ID doesn't exist            |
 
 ---
 
 ## 2. Get All Users
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `/api/v1/users` |
-| **Auth** | None |
-| **Status** | `200 OK` |
+|            |                 |
+| ---------- | --------------- |
+| **Method** | `GET`           |
+| **URL**    | `/api/v1/users` |
+| **Auth**   | None            |
+| **Status** | `200 OK`        |
 
 **Response:**
 
@@ -127,56 +130,56 @@ Manages system users. Users belong to an enterprise and organization.
 
 ## 3. Get User by ID
 
-| | |
-|---|---|
-| **Method** | `GET` |
-| **URL** | `/api/v1/users/:id` |
-| **Auth** | None |
-| **Status** | `200 OK` |
+|            |                     |
+| ---------- | ------------------- |
+| **Method** | `GET`               |
+| **URL**    | `/api/v1/users/:id` |
+| **Auth**   | None                |
+| **Status** | `200 OK`            |
 
 **Path Parameters:**
 
 | Parameter | Type | Description |
-|---|---|---|
-| `id` | UUID | User ID |
+| --------- | ---- | ----------- |
+| `id`      | UUID | User ID     |
 
 **Response:** Same shape as a single item from Create User response.
 
 **Error Responses:**
 
-| Status | Condition |
-|---|---|
+| Status            | Condition           |
+| ----------------- | ------------------- |
 | `400 Bad Request` | Invalid UUID format |
-| `404 Not Found` | User not found |
+| `404 Not Found`   | User not found      |
 
 ---
 
 ## 4. Update User
 
-| | |
-|---|---|
-| **Method** | `PATCH` |
-| **URL** | `/api/v1/users/:id` |
-| **Auth** | None |
-| **Status** | `200 OK` |
+|            |                     |
+| ---------- | ------------------- |
+| **Method** | `PATCH`             |
+| **URL**    | `/api/v1/users/:id` |
+| **Auth**   | None                |
+| **Status** | `200 OK`            |
 
 **Path Parameters:**
 
 | Parameter | Type | Description |
-|---|---|---|
-| `id` | UUID | User ID |
+| --------- | ---- | ----------- |
+| `id`      | UUID | User ID     |
 
 **Request Body:** (all fields optional, **password excluded** — use auth endpoints)
 
-| Field | Type | Validation | Description |
-|---|---|---|---|
-| `first_name` | string | 2–100 characters | Updated first name |
-| `middle_name` | string | 2–100 characters | Updated middle name |
-| `last_name` | string | 2–100 characters | Updated last name |
-| `email` | string | Valid email format | Updated email |
-| `phone` | string | E.164 format | Updated phone |
-| `enterprise_id` | string (UUID) | Valid UUID v4 | Move to different enterprise |
-| `organization_id` | string (UUID) | Valid UUID v4 | Move to different organization |
+| Field             | Type          | Validation         | Description                    |
+| ----------------- | ------------- | ------------------ | ------------------------------ |
+| `first_name`      | string        | 2–100 characters   | Updated first name             |
+| `middle_name`     | string        | 2–100 characters   | Updated middle name            |
+| `last_name`       | string        | 2–100 characters   | Updated last name              |
+| `email`           | string        | Valid email format | Updated email                  |
+| `phone`           | string        | E.164 format       | Updated phone                  |
+| `enterprise_id`   | string (UUID) | Valid UUID v4      | Move to different enterprise   |
+| `organization_id` | string (UUID) | Valid UUID v4      | Move to different organization |
 
 ```json
 {
@@ -189,11 +192,11 @@ Manages system users. Users belong to an enterprise and organization.
 
 **Error Responses:**
 
-| Status | Condition |
-|---|---|
+| Status            | Condition                                |
+| ----------------- | ---------------------------------------- |
 | `400 Bad Request` | Invalid UUID format or validation errors |
-| `404 Not Found` | User not found |
-| `409 Conflict` | Updated email or phone already exists |
+| `404 Not Found`   | User not found                           |
+| `409 Conflict`    | Updated email or phone already exists    |
 
 ---
 
@@ -201,24 +204,24 @@ Manages system users. Users belong to an enterprise and organization.
 
 Sets the user's status to `DELETED`. The record is not physically removed.
 
-| | |
-|---|---|
-| **Method** | `DELETE` |
-| **URL** | `/api/v1/users/:id` |
-| **Auth** | None |
-| **Status** | `204 No Content` |
+|            |                     |
+| ---------- | ------------------- |
+| **Method** | `DELETE`            |
+| **URL**    | `/api/v1/users/:id` |
+| **Auth**   | None                |
+| **Status** | `204 No Content`    |
 
 **Path Parameters:**
 
 | Parameter | Type | Description |
-|---|---|---|
-| `id` | UUID | User ID |
+| --------- | ---- | ----------- |
+| `id`      | UUID | User ID     |
 
 **Response:** No body (204)
 
 **Error Responses:**
 
-| Status | Condition |
-|---|---|
+| Status            | Condition           |
+| ----------------- | ------------------- |
 | `400 Bad Request` | Invalid UUID format |
-| `404 Not Found` | User not found |
+| `404 Not Found`   | User not found      |

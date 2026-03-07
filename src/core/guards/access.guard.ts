@@ -1,14 +1,14 @@
 import {
-    Injectable,
-    CanActivate,
-    ExecutionContext,
-    ForbiddenException,
-    Logger,
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
-    PERMISSION_KEY,
-    PermissionRequirement,
+  PERMISSION_KEY,
+  PermissionRequirement,
 } from './require-permission.decorator';
 import { PermissionResolverService } from '../../modules/rbac/services/permission-resolver.service';
 import type { JwtPayload } from '../../modules/auth/interfaces/jwt-payload.interface';
@@ -32,50 +32,50 @@ import type { JwtPayload } from '../../modules/auth/interfaces/jwt-payload.inter
  */
 @Injectable()
 export class AccessGuard implements CanActivate {
-    private readonly logger = new Logger(AccessGuard.name);
+  private readonly logger = new Logger(AccessGuard.name);
 
-    constructor(
-        private readonly reflector: Reflector,
-        private readonly permissionResolver: PermissionResolverService,
-    ) { }
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly permissionResolver: PermissionResolverService,
+  ) {}
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-        const requirement = this.reflector.getAllAndOverride<PermissionRequirement>(
-            PERMISSION_KEY,
-            [context.getHandler(), context.getClass()],
-        );
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const requirement = this.reflector.getAllAndOverride<PermissionRequirement>(
+      PERMISSION_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
-        // No @RequirePermission → allow (guard is a no-op)
-        if (!requirement) {
-            return true;
-        }
-
-        const request = context.switchToHttp().getRequest<{ user: JwtPayload }>();
-        const user = request.user;
-
-        if (!user?.userId || !user?.organizationId || !user?.appId) {
-            throw new ForbiddenException('Authentication context is missing.');
-        }
-
-        const { moduleCode, actionName } = requirement;
-
-        const allowed = await this.permissionResolver.hasPermission(
-            user.userId,
-            user.organizationId,
-            user.appId,
-            moduleCode,
-            actionName,
-        );
-
-        if (!allowed) {
-            this.logger.warn(
-                `Access denied: user ${user.userId} cannot perform [${actionName}] on module [${moduleCode}]`,
-            );
-            throw new ForbiddenException(
-                `You do not have permission to perform [${actionName}] on this resource.`,
-            );
-        }
-
-        return true;
+    // No @RequirePermission → allow (guard is a no-op)
+    if (!requirement) {
+      return true;
     }
+
+    const request = context.switchToHttp().getRequest<{ user: JwtPayload }>();
+    const user = request.user;
+
+    if (!user?.userId || !user?.organizationId || !user?.appId) {
+      throw new ForbiddenException('Authentication context is missing.');
+    }
+
+    const { moduleCode, actionName } = requirement;
+
+    const allowed = await this.permissionResolver.hasPermission(
+      user.userId,
+      user.organizationId,
+      user.appId,
+      moduleCode,
+      actionName,
+    );
+
+    if (!allowed) {
+      this.logger.warn(
+        `Access denied: user ${user.userId} cannot perform [${actionName}] on module [${moduleCode}]`,
+      );
+      throw new ForbiddenException(
+        `You do not have permission to perform [${actionName}] on this resource.`,
+      );
+    }
+
+    return true;
+  }
 }

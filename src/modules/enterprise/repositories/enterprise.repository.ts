@@ -1,57 +1,48 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Enterprise } from '../entities/enterprise.entity';
+import { Status } from '../../../common/enums';
 
-// Enterprise Repository - Implements the Repository Pattern to encapsulate data access logic
 @Injectable()
 export class EnterpriseRepository {
-    constructor(
-        @InjectRepository(Enterprise)
-        private readonly repository: Repository<Enterprise>,
-    ) { }
+  constructor(
+    @InjectRepository(Enterprise)
+    private readonly repository: Repository<Enterprise>,
+  ) {}
 
-    // Create a new enterprise
-    async create(enterprise: Partial<Enterprise>): Promise<Enterprise> {
-        const newEnterprise = this.repository.create(enterprise);
-        return this.repository.save(newEnterprise);
-    }
+  create(data: Partial<Enterprise>): Enterprise {
+    return this.repository.create(data);
+  }
 
-    // Find all enterprises
-    async findAll(): Promise<Enterprise[]> {
-        return this.repository.find({
-            order: { created_at: 'DESC' },
-        });
-    }
+  async save(enterprise: Enterprise): Promise<Enterprise> {
+    return this.repository.save(enterprise);
+  }
 
-    // Find enterprise by ID
-    async findById(id: string): Promise<Enterprise | null> {
-        return this.repository.findOne({ where: { id } });
-    }
+  async findAll(): Promise<Enterprise[]> {
+    return this.repository.find({
+      where: { base_status: Status.ACTIVE },
+      order: { created_at: 'DESC' },
+    });
+  }
 
-    // Find enterprise by domain
-    async findByDomain(domain: string): Promise<Enterprise | null> {
-        return this.repository.findOne({ where: { domain } });
-    }
+  async findOneById(id: string): Promise<Enterprise | null> {
+    return this.repository.findOne({
+      where: { id, base_status: Status.ACTIVE },
+    });
+  }
 
-    // Update an enterprise
-    async update(
-        id: string,
-        updateData: Partial<Enterprise>,
-    ): Promise<Enterprise | null> {
-        await this.repository.update(id, updateData);
-        return this.findById(id);
-    }
+  async findByDomain(domain: string): Promise<Enterprise | null> {
+    return this.repository.findOne({
+      where: { domain, base_status: Status.ACTIVE },
+    });
+  }
 
-    // Delete an enterprise
-    async delete(id: string): Promise<boolean> {
-        const result = await this.repository.delete(id);
-        return (result.affected ?? 0) > 0;
-    }
-
-    // Check if enterprise exists by ID
-    async exists(id: string): Promise<boolean> {
-        const count = await this.repository.count({ where: { id } });
-        return count > 0;
-    }
+  async softDelete(id: string): Promise<boolean> {
+    const result = await this.repository.update(id, {
+      base_status: Status.DELETED,
+      deleted_at: new Date(),
+    });
+    return (result.affected ?? 0) > 0;
+  }
 }
