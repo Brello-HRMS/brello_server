@@ -21,13 +21,7 @@ export class OrganizationController {
   @Post('setup')
   @HttpCode(HttpStatus.OK)
   async setupCompany(@Body() dto: SetupCompanyDto) {
-    await this.organizationService.setupCompany(dto);
-
-    return {
-      success: true,
-      message: 'Company setup completed successfully',
-      setup_required: false,
-    };
+    return this.organizationService.setupCompany(dto);
   }
 
   @Get()

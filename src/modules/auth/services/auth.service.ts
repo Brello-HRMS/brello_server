@@ -223,7 +223,7 @@ export class AuthService {
     }
   }
 
-  private async buildAuthResponse(
+  async buildAuthResponse(
     user: any,
     deviceFingerprint?: string,
   ): Promise<AuthResponseDto> {
