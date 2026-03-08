@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
@@ -42,7 +42,7 @@ import { OrganizationModule } from '../organization/organization.module';
       UserDocument,
     ]),
     EnterpriseModule,
-    OrganizationModule,
+    forwardRef(() => OrganizationModule),
   ],
   controllers: [UserController, EmployeeController],
   providers: [

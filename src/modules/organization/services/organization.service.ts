@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { OrganizationRepository } from '../repositories/organization.repository';
 import { EnterpriseService } from '../../enterprise/services/enterprise.service';
@@ -30,9 +32,9 @@ export class OrganizationService {
   constructor(
     private readonly organizationRepository: OrganizationRepository,
     private readonly enterpriseService: EnterpriseService,
-    private readonly organizationProfileRepository: OrganizationProfileRepository,
     private readonly dataSource: DataSource,
     private readonly userRepository: UserRepository,
+    @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
   ) {}
 

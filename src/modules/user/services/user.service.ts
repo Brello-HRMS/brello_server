@@ -4,6 +4,8 @@ import {
   ConflictException,
   BadRequestException,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository';
@@ -23,6 +25,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly enterpriseService: EnterpriseService,
+    @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
   ) {}
 
