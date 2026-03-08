@@ -16,13 +16,13 @@ export class OrganizationProfile extends BaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
   phone: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
   gst_no: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   domain: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   registration_no: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

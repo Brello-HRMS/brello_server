@@ -5,9 +5,14 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
+import {
+  hashValue,
+  verifyHash,
+  generateOtp,
+  calculateOtpExpiration,
+} from '../utils';
+import { TokenService } from './token.service';
 import { UserService } from '../../user/services/user.service';
 import { SessionRepository } from '../repositories/session.repository';
 import { OtpRepository } from '../repositories/otp.repository';
@@ -18,7 +23,6 @@ import {
   VerifyLoginPlatformAdminDto,
 } from '../dto/platform-admin.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
-import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { OtpPurpose } from '../../../common/enums';
 import { Status } from '../../../common/enums';
 import { NotificationService } from '../../notification/services/notification.service';
@@ -28,76 +32,15 @@ import { NotificationType } from '../../../common/enums/notification-type.enum';
 @Injectable()
 export class PlatformAdminAuthService {
   private readonly logger = new Logger(PlatformAdminAuthService.name);
-  private readonly SALT_ROUNDS = 10;
 
   constructor(
     private readonly userService: UserService,
     private readonly sessionRepository: SessionRepository,
     private readonly otpRepository: OtpRepository,
-    private readonly jwtService: JwtService,
+    private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
     private readonly notificationService: NotificationService,
   ) {}
-
-  // Generate access token
-  private generateAccessToken(payload: JwtPayload): string {
-    const plainPayload = { ...payload };
-    const expiresIn =
-      this.configService.get<string>('auth.JWT_ACCESS_EXPIRATION') ?? '15m';
-    return this.jwtService.sign(plainPayload, {
-      secret:
-        this.configService.get<string>('auth.JWT_SECRET') || 'default-secret',
-      expiresIn: expiresIn as any,
-    });
-  }
-
-  // Generate refresh token
-  private generateRefreshToken(payload: JwtPayload): string {
-    const plainPayload = { ...payload };
-    const expiresIn =
-      this.configService.get<string>('auth.JWT_REFRESH_EXPIRATION') ?? '7d';
-    return this.jwtService.sign(plainPayload, {
-      secret:
-        this.configService.get<string>('auth.JWT_REFRESH_SECRET') ||
-        'default-refresh-secret',
-      expiresIn: expiresIn as any,
-    });
-  }
-
-  // Hash a value using bcrypt
-  private async hash(value: string): Promise<string> {
-    return bcrypt.hash(value, this.SALT_ROUNDS);
-  }
-
-  // Verify a value against a hash
-  private async verify(value: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(value, hash);
-  }
-
-  // Generate random OTP
-  private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  // Calculate session expiration date
-  private calculateSessionExpiration(): Date {
-    const days = this.configService.get<number>('session.expirationDays', 7);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + days);
-    return expiresAt;
-  }
-
-  // Calculate OTP expiration date
-  private calculateOtpExpiration(): Date {
-    const defaultMinutes = 10;
-    const minutes = this.configService.get<number>(
-      'otp.expirationMinutes',
-      defaultMinutes,
-    );
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + minutes);
-    return expiresAt;
-  }
 
   async registerPlatformAdmin(
     registerDto: RegisterPlatformAdminDto,
@@ -119,7 +62,7 @@ export class PlatformAdminAuthService {
     let user = existingUser;
     if (!user) {
       // Hash password
-      const password_hash = await this.hash(registerDto.password);
+      const password_hash = await hashValue(registerDto.password);
 
       // Create user
       user = await this.userService.createPlatformAdmin(
@@ -135,8 +78,8 @@ export class PlatformAdminAuthService {
     );
 
     // Generate OTP
-    const otp = this.generateOtp();
-    const otpHash = await this.hash(otp);
+    const otp = generateOtp();
+    const otpHash = await hashValue(otp);
 
     // Store OTP
     await this.otpRepository.create({
@@ -144,7 +87,7 @@ export class PlatformAdminAuthService {
       otp_hash: otpHash,
       user_id: user.id,
       purpose: OtpPurpose.PLATFORM_ADMIN_REGISTER,
-      expires_at: this.calculateOtpExpiration(),
+      expires_at: calculateOtpExpiration(this.configService),
       attempts_count: 0,
     });
 
@@ -191,7 +134,7 @@ export class PlatformAdminAuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await this.verify(
+    const isPasswordValid = await verifyHash(
       loginDto.password,
       user.password_hash,
     );
@@ -205,8 +148,8 @@ export class PlatformAdminAuthService {
     );
 
     // Generate new OTP
-    const otp = this.generateOtp();
-    const otpHash = await this.hash(otp);
+    const otp = generateOtp();
+    const otpHash = await hashValue(otp);
 
     // Store OTP
     await this.otpRepository.create({
@@ -214,7 +157,7 @@ export class PlatformAdminAuthService {
       otp_hash: otpHash,
       user_id: user.id,
       purpose: OtpPurpose.PLATFORM_ADMIN_LOGIN,
-      expires_at: this.calculateOtpExpiration(),
+      expires_at: calculateOtpExpiration(this.configService),
       attempts_count: 0,
     });
 
@@ -283,7 +226,7 @@ export class PlatformAdminAuthService {
       throw new BadRequestException('OTP has expired');
     }
 
-    const isOtpValid = await this.verify(otp, otpRecord.otp_hash);
+    const isOtpValid = await verifyHash(otp, otpRecord.otp_hash);
     if (!isOtpValid) {
       await this.otpRepository.incrementAttempts(otpRecord.id);
       throw new BadRequestException('Invalid OTP');
@@ -293,34 +236,12 @@ export class PlatformAdminAuthService {
   }
 
   private async createSessionAndTokens(user: any) {
-    const refreshToken = Math.random().toString(36).substring(2);
-    const refreshTokenHash = await this.hash(refreshToken);
-
-    const session = await this.sessionRepository.create({
-      user_id: user.id,
-      refresh_token_hash: refreshTokenHash,
-      device_fingerprint: 'Platform Admin Session',
-      login_time: new Date(),
-      last_activity: new Date(),
-      expires_at: this.calculateSessionExpiration(),
-    });
-
-    const jwtPayload: JwtPayload = {
+    return this.tokenService.createSessionAndTokens({
       userId: user.id,
-      sessionId: session.id,
       organizationId: user.organization_id,
       enterpriseId: user.enterprise_id,
       isPlatformAdmin: true,
-      appId: null as any,
-    };
-
-    return {
-      access_token: this.generateAccessToken(jwtPayload),
-      refresh_token: this.generateRefreshToken({
-        ...jwtPayload,
-        refreshToken,
-      }),
-      expires_in: 900,
-    };
+      deviceFingerprint: 'Platform Admin Session',
+    });
   }
 }

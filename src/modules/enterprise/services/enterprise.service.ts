@@ -114,6 +114,7 @@ export class EnterpriseService {
     const enterprise = await this.findOneById(id);
 
     if (dto.domain && dto.domain !== enterprise.domain) {
+      await this.validateDomainExists(dto.domain);
       await this.validateDomainUniqueness(dto.domain);
     }
 

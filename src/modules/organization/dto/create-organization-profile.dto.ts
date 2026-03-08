@@ -24,11 +24,6 @@ export class CreateOrganizationProfileDto {
   @MaxLength(50)
   phone: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  gst_no: string;
-
   @IsUUID()
   @IsOptional()
   logo_id?: string;

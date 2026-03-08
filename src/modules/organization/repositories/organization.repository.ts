@@ -42,6 +42,14 @@ export class OrganizationRepository {
     });
   }
 
+  // Find organization by subdomain
+  async findBySubdomain(subdomain: string): Promise<Organization[]> {
+    return this.repository.find({
+      where: { subdomain },
+      order: { created_at: 'DESC' },
+    });
+  }
+
   // Update an organization
   async update(
     id: string,

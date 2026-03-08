@@ -5,8 +5,11 @@ import { OrganizationProfile } from './organization-profile.entity';
 
 @Entity('organizations')
 export class Organization extends BaseEntity {
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
+
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
+  subdomain: string;
 
   @ManyToOne(() => Enterprise, { eager: false })
   @JoinColumn({ name: 'enterprise_id' })
