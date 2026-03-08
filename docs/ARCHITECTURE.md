@@ -650,6 +650,26 @@ The app will:
 - Log SQL queries (in dev mode)
 - Be available at `http://localhost:8000/api/v1/`
 
+### Step 5: Platform Initialization Sequence
+
+Because of the strict multi-tenant constraints, your first setup steps **must** follow this exact order:
+
+1. **Seed DB Manually**: Create 1 active Enterprise and 1 active Organization in the database manually.
+2. **Create Platform Admin**: Use the seeded IDs to create a user with `is_platform_admin: true` via `POST /api/v1/users`.
+3. **Login**: Login as the Platform Admin to obtain a JWT token.
+4. **Create Global Masters**:
+   - Create an Industry Type (`POST /api/v1/industry-types`)
+   - Create a Plan (`POST /api/v1/plans`)
+5. **Create System Records**:
+   - Create the actual Platform Enterprise (`POST /api/v1/enterprises`)
+   - Create the Organization & Profile (`POST /api/v1/organizations` and `POST /api/v1/organizations/profile`)
+   - Create an App (e.g., HRMS) (`POST /api/v1/apps`)
+6. **Set up RBAC**: Create roles and assign them to users so they can log in normally.
+
+> **Why?** An `Organization Profile` requires an `industry_type_id`. An `App` requires an `enterprise_id` and `organization_id`. A normal user requires a `role` assigned to an `app`.
+
+See `docs/collection-usage/GETTING_STARTED.md` or the provided Postman collection for detailed API payloads.
+
 ### Available Scripts
 
 | Script           | Command              | Purpose                    |

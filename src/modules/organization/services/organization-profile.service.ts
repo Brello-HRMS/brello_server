@@ -71,7 +71,6 @@ export class OrganizationProfileService {
       name: createDto.name,
       email: createDto.email,
       phone: createDto.phone,
-      gst_no: createDto.gst_no,
       domain: createDto.domain,
       registration_no: createDto.registration_no,
       organization: { id: createDto.organization_id } as any,
@@ -158,7 +157,6 @@ export class OrganizationProfileService {
       name: updateDto.name,
       email: updateDto.email,
       phone: updateDto.phone,
-      gst_no: updateDto.gst_no,
       domain: updateDto.domain,
       registration_no: updateDto.registration_no,
     };

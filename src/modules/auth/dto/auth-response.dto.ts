@@ -40,6 +40,10 @@ export class AuthResponseDto {
   @Expose()
   @Type(() => AvailableAppDto)
   availableApps: AvailableAppDto[];
+
+  /** Indicates if the user must complete company setup before proceeding */
+  @Expose()
+  setup_required?: boolean;
 }
 
 /**

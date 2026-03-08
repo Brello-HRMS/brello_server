@@ -25,10 +25,12 @@
  PHASE 1.5: Platform Admin Architecture Setup
  ┌───────────────────────▼──────────────────────────────┐
  │  Step 2:  Login as Platform Admin     → tokens 🔑     │
- │  Step 3:  Create Enterprise (via API) → enterprise_id │
- │  Step 4:  Create Organization         → organization_id│
- │  Step 4b: Create Organization Profile → profile data  │
- │  Step 5:  Create App (e.g., "HRMS")   → app_id       │
+ │  Step 3:  Create Industry Type        → industry_type_id│
+ │  Step 4:  Create Plan                 → plan_id      │
+ │  Step 5:  Create Enterprise (via API) → enterprise_id │
+ │  Step 6:  Create Organization         → organization_id│
+ │  Step 6b: Create Organization Profile → profile data  │
+ │  Step 7:  Create App (e.g., "HRMS")   → app_id       │
  └───────────────────────┬──────────────────────────────┘
                          │
  PHASE 2: Setup RBAC
@@ -173,7 +175,45 @@ POST /api/v1/auth/platform-admin/verify-login
 
 ✅ **Save the `access_token`**
 
-### Step 3 — Create Enterprise
+### Step 3 — Create Industry Type
+
+> **Folder:** Industry Type → Create Industry Type
+
+```
+POST /api/v1/industry-types
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Technology"
+}
+```
+
+✅ **Save the `id`** — this is your `industry_type_id`.
+
+### Step 4 — Create Plan
+
+> **Folder:** Plan → Create Plan
+
+```
+POST /api/v1/plans
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Enterprise Pro",
+  "price": 99.99,
+  "description": "Premium tier plan with all features",
+  "discount": 0,
+  "feature": ["HRMS", "CRM", "Payroll"]
+}
+```
+
+✅ **Save the `id`** — this is your `plan_id`.
+
+### Step 5 — Create Enterprise
 
 > **Folder:** Enterprise → Create Enterprise
 
@@ -193,7 +233,7 @@ Authorization: Bearer {{access_token}}
 
 > The Postman script auto-saves this to `{{enterprise_id}}`.
 
-### Step 4 — Create Organization
+### Step 6 — Create Organization
 
 > **Folder:** Organization → Create Organization
 
@@ -210,7 +250,28 @@ POST /api/v1/organizations
 
 ✅ **Save the `id`** — this is your `organization_id`.
 
-### Step 5 — Create App
+### Step 6b — Create Organization Profile
+
+> **Folder:** Organization → Create Organization Profile
+
+```
+POST /api/v1/organizations/profile
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Acme India Profile",
+  "email": "contact@acme.com",
+  "phone": "+919876543210",
+  "registration_no": "REG12345",
+  "industry_type_id": "{{industry_type_id}}",
+  "organization_id": "{{organization_id}}",
+  "enterprise_id": "{{enterprise_id}}"
+}
+```
+
+### Step 7 — Create App
 
 > **Folder:** App → Create App
 
@@ -446,17 +507,22 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 | 1    | POST   | `/users`                            | enterprise_id, organization_id (seeded) |
 | 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists              |
 | 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                         |
-| 3    | POST   | `/apps`                             | access_token (Platform Admin)           |
-| 4    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  |
-| 5    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       |
-| 6    | POST   | `/auth/login`                       | User + Role + App exist                 |
-| 7    | GET    | `/menu`                             | access_token                            |
-| 8    | POST   | `/auth/refresh`                     | refresh_token                           |
-| 9    | POST   | `/auth/switch-app`                  | access_token + multiple apps            |
-| 10   | POST   | `/auth/logout`                      | access_token                            |
-| 11   | POST   | `/auth/update-password`             | access_token                            |
-| 12   | POST   | `/auth/forgot-password`             | —                                       |
-| 13   | POST   | `/auth/verify-otp`                  | OTP from step 12                        |
+| 3    | POST   | `/industry-types`                   | access_token (Platform Admin)           |
+| 4    | POST   | `/plans`                            | access_token (Platform Admin)           |
+| 5    | POST   | `/enterprises`                      | access_token (Platform Admin)           |
+| 6    | POST   | `/organizations`                    | enterprise_id                           |
+| 6b   | POST   | `/organizations/profile`            | organization_id, industry_type_id       |
+| 7    | POST   | `/apps`                             | access_token (Platform Admin)           |
+| 8    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  |
+| 9    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       |
+| 10   | POST   | `/auth/login`                       | User + Role + App exist                 |
+| 11   | GET    | `/menu`                             | access_token                            |
+| 12   | POST   | `/auth/refresh`                     | refresh_token                           |
+| 13   | POST   | `/auth/switch-app`                  | access_token + multiple apps            |
+| 14   | POST   | `/auth/logout`                      | access_token                            |
+| 15   | POST   | `/auth/update-password`             | access_token                            |
+| 16   | POST   | `/auth/forgot-password`             | —                                       |
+| 17   | POST   | `/auth/verify-otp`                  | OTP from step 16                        |
 
 ---
 

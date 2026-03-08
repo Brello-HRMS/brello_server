@@ -2,20 +2,29 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  ForbiddenException,
   Logger,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import {
+  hashValue,
+  verifyHash,
+  generateOtp,
+  calculateOtpExpiration,
+  determineDefaultApp,
+} from '../utils';
+import { TokenService } from './token.service';
 import { UserService } from '../../user/services/user.service';
 import { SessionRepository } from '../repositories/session.repository';
 import { OtpRepository } from '../repositories/otp.repository';
-import { LoginDto } from '../dto/login.dto';
-import { SwitchAppDto } from '../dto/switch-app.dto';
+import {
+  LoginPasswordDto,
+  LoginOtpDto,
+  VerifyLoginOtpDto,
+} from '../dto/login.dto';
 import { UpdatePasswordDto } from '../dto/update-password.dto';
 import {
   ForgotPasswordRequestDto,
@@ -31,104 +40,207 @@ import { OtpPurpose } from '../../../common/enums';
 import { UserRoleMap } from '../../rbac/entities/user-role-map.entity';
 import { App } from '../../app/entities/app.entity';
 import { Status } from '../../../common/enums';
+import { NotificationService } from '../../notification/services/notification.service';
+import { NotificationType } from '../../../common/enums/notification-type.enum';
+import { getUserAvailableApps } from '../utils/app.util';
+import { SwitchAppDto } from '../dto/switch-app.dto';
 
 // Auth Service - Implements comprehensive authentication and authorization logic
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly SALT_ROUNDS = 10;
-  private readonly OTP_LENGTH = 6;
 
   constructor(
     private readonly userService: UserService,
     private readonly sessionRepository: SessionRepository,
     private readonly otpRepository: OtpRepository,
-    private readonly jwtService: JwtService,
+    private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
     @InjectRepository(UserRoleMap)
     private readonly userRoleMapRepository: Repository<UserRoleMap>,
+    private readonly notificationService: NotificationService,
   ) {}
 
-  // Generate access token
-  private generateAccessToken(payload: JwtPayload): string {
-    const plainPayload = { ...payload };
-    const expiresIn =
-      this.configService.get<string>('auth.JWT_ACCESS_EXPIRATION') ?? '15m';
-    return this.jwtService.sign(plainPayload, {
-      secret:
-        this.configService.get<string>('auth.JWT_SECRET') || 'default-secret',
-      expiresIn: expiresIn as any,
-    });
+  // ---------- Password Login Flow ----------
+
+  async loginWithPassword(
+    loginDto: LoginPasswordDto,
+  ): Promise<AuthResponseDto> {
+    this.logger.log(`Password login attempt for email: ${loginDto.email}`);
+
+    const user = await this.findActiveUserByEmail(loginDto.email);
+    await this.validatePassword(loginDto.password, user.password_hash);
+
+    const isSetupRequired = !user.organization_id && !user.is_platform_admin;
+
+    if (isSetupRequired) {
+      return {
+        access_token: '',
+        refresh_token: '',
+        user: {
+          id: user.id,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          enterprise_id: user.enterprise_id,
+          organization_id: user.organization_id,
+        },
+        expires_in: 0,
+        defaultAppId: '',
+        availableApps: [],
+        setup_required: true,
+      };
+    }
+
+    return this.buildAuthResponse(user, loginDto.device_fingerprint);
   }
 
-  // Generate refresh token
-  private generateRefreshToken(payload: JwtPayload): string {
-    const plainPayload = { ...payload };
-    const expiresIn =
-      this.configService.get<string>('auth.JWT_REFRESH_EXPIRATION') ?? '7d';
-    return this.jwtService.sign(plainPayload, {
-      secret:
-        this.configService.get<string>('auth.JWT_REFRESH_SECRET') ||
-        'default-refresh-secret',
-      expiresIn: expiresIn as any,
-    });
-  }
+  // ---------- OTP Login Flow ----------
 
-  // Hash a value using bcrypt
-  private async hash(value: string): Promise<string> {
-    return bcrypt.hash(value, this.SALT_ROUNDS);
-  }
+  async loginSendOtp(dto: LoginOtpDto): Promise<void> {
+    this.logger.log(`OTP login request for email: ${dto.email}`);
 
-  // Verify a value against a hash
-  private async verify(value: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(value, hash);
-  }
+    const user = await this.findActiveUserByEmail(dto.email);
 
-  // Generate random OTP
-  private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  // Calculate session expiration date
-  private calculateSessionExpiration(): Date {
-    const days = this.configService.get<number>('session.expirationDays', 7);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + days);
-    return expiresAt;
-  }
-
-  // Calculate OTP expiration date
-  private calculateOtpExpiration(): Date {
-    const minutes = this.configService.get<number>('otp.expirationMinutes', 10);
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + minutes);
-    return expiresAt;
-  }
-
-  // Login user
-  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    this.logger.log(`Login attempt for email: ${loginDto.email}`);
-
-    const user = await this.validateCredentials(
-      loginDto.email,
-      loginDto.password,
+    await this.otpRepository.deleteByIdentifierAndPurpose(
+      dto.email,
+      OtpPurpose.LOGIN,
     );
-    const availableApps = await this.getUserAvailableApps(
+
+    const otp = generateOtp();
+    const otpHash = await hashValue(otp);
+
+    await this.otpRepository.create({
+      identifier: dto.email,
+      otp_hash: otpHash,
+      user_id: user.id,
+      purpose: OtpPurpose.LOGIN,
+      expires_at: calculateOtpExpiration(this.configService),
+      attempts_count: 0,
+    });
+
+    await this.notificationService.send({
+      user_id: user.id,
+      target_email: dto.email,
+      title: 'Your Login OTP',
+      message: `Your one-time password is: ${otp}. It will expire in ${this.configService.get<number>('otp.expirationMinutes', 10)} minutes.`,
+      type: NotificationType.EMAIL,
+    });
+
+    this.logger.log(`Login OTP sent to ${dto.email}`);
+  }
+
+  async loginWithOtp(dto: VerifyLoginOtpDto): Promise<AuthResponseDto> {
+    this.logger.log(`OTP verification for login: ${dto.email}`);
+
+    const user = await this.findActiveUserByEmail(dto.email);
+
+    const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
+      dto.email,
+      OtpPurpose.LOGIN,
+    );
+
+    if (!otpRecord) {
+      throw new BadRequestException('No OTP found. Please request a new one.');
+    }
+
+    if (new Date() > otpRecord.expires_at) {
+      await this.otpRepository.delete(otpRecord.id);
+      throw new BadRequestException(
+        'OTP has expired. Please request a new one.',
+      );
+    }
+
+    const maxAttempts = this.configService.get<number>('otp.maxAttempts', 5);
+    if (otpRecord.attempts_count >= maxAttempts) {
+      await this.otpRepository.delete(otpRecord.id);
+      throw new BadRequestException(
+        'Maximum OTP attempts exceeded. Please request a new one.',
+      );
+    }
+
+    const isOtpValid = await verifyHash(dto.otp, otpRecord.otp_hash);
+    if (!isOtpValid) {
+      await this.otpRepository.incrementAttempts(otpRecord.id);
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    await this.otpRepository.delete(otpRecord.id);
+    const isSetupRequired = !user.organization_id && !user.is_platform_admin;
+
+    if (isSetupRequired) {
+      return {
+        access_token: '',
+        refresh_token: '',
+        user: {
+          id: user.id,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          enterprise_id: user.enterprise_id,
+          organization_id: user.organization_id,
+        },
+        expires_in: 0,
+        defaultAppId: '',
+        availableApps: [],
+        setup_required: true,
+      };
+    }
+
+    return this.buildAuthResponse(user, dto.device_fingerprint);
+  }
+
+  // ---------- Shared Auth Helpers ----------
+
+  private async findActiveUserByEmail(email: string) {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (user.base_status !== Status.ACTIVE) {
+      throw new UnauthorizedException(
+        'Account is inactive. Contact your administrator.',
+      );
+    }
+
+    return user;
+  }
+
+  private async validatePassword(
+    plainPassword: string,
+    passwordHash: string,
+  ): Promise<void> {
+    const isValid = await this.userService.verifyPassword(
+      plainPassword,
+      passwordHash,
+    );
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+  }
+
+  private async buildAuthResponse(
+    user: any,
+    deviceFingerprint?: string,
+  ): Promise<AuthResponseDto> {
+    let availableApps: { id: string; name: string; priority: number }[] = [];
+    let defaultAppId = null as any;
+
+    availableApps = await getUserAvailableApps(
       user.id,
       user.organization_id,
       user.is_platform_admin,
+      this.userRoleMapRepository,
     );
-    const defaultAppId = this.determineDefaultApp(
-      user.last_access_app_id,
-      availableApps,
-    );
+    defaultAppId = determineDefaultApp(user.last_access_app_id, availableApps);
 
-    const tokens = await this.createSessionAndTokens({
+    const tokens = await this.tokenService.createSessionAndTokens({
       userId: user.id,
       organizationId: user.organization_id,
       enterpriseId: user.enterprise_id,
       isPlatformAdmin: user.is_platform_admin,
-      deviceFingerprint: loginDto.device_fingerprint,
+      deviceFingerprint,
       appId: defaultAppId,
     });
 
@@ -151,122 +263,6 @@ export class AuthService {
     };
   }
 
-  // Helper methodologies for login
-  private async validateCredentials(email: string, password: string) {
-    const user = await this.userService.findByEmail(email);
-    if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    if (user.base_status !== Status.ACTIVE) {
-      throw new UnauthorizedException(
-        'Account is inactive. Contact your administrator.',
-      );
-    }
-
-    const isPasswordValid = await this.userService.verifyPassword(
-      password,
-      user.password_hash,
-    );
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    return user;
-  }
-
-  private async getUserAvailableApps(
-    userId: string,
-    organizationId: string,
-    isPlatformAdmin: boolean,
-  ) {
-    const userRoleMaps = await this.userRoleMapRepository
-      .createQueryBuilder('urm')
-      .innerJoinAndSelect('urm.role', 'role')
-      .innerJoinAndSelect('role.app', 'app')
-      .where('urm.user_id = :userId', { userId })
-      .andWhere('urm.organization_id = :orgId', { orgId: organizationId })
-      .andWhere('role.status = :roleStatus', { roleStatus: Status.ACTIVE })
-      .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
-      .getMany();
-
-    if (!userRoleMaps.length && !isPlatformAdmin) {
-      throw new ForbiddenException(
-        'No active roles assigned. Contact your administrator.',
-      );
-    }
-
-    const appMap = new Map<
-      string,
-      { id: string; name: string; priority: number }
-    >();
-    for (const urm of userRoleMaps) {
-      const app = urm.role.app;
-      if (!appMap.has(app.id)) {
-        appMap.set(app.id, {
-          id: app.id,
-          name: app.name,
-          priority: app.priority,
-        });
-      }
-    }
-    return [...appMap.values()].sort((a, b) => a.priority - b.priority);
-  }
-
-  private determineDefaultApp(
-    lastAccessAppId: string | null,
-    availableApps: { id: string; name: string; priority: number }[],
-  ) {
-    if (
-      lastAccessAppId &&
-      availableApps.some((app) => app.id === lastAccessAppId)
-    ) {
-      return lastAccessAppId;
-    }
-    return availableApps.length > 0 ? availableApps[0].id : '';
-  }
-
-  private async createSessionAndTokens(params: {
-    userId: string;
-    organizationId: string;
-    enterpriseId: string;
-    isPlatformAdmin: boolean;
-    deviceFingerprint?: string;
-    appId: string;
-  }) {
-    const refreshToken = Math.random().toString(36).substring(2);
-    const refreshTokenHash = await this.hash(refreshToken);
-
-    const session = await this.sessionRepository.create({
-      user_id: params.userId,
-      refresh_token_hash: refreshTokenHash,
-      device_fingerprint: params.deviceFingerprint || 'unknown',
-      login_time: new Date(),
-      last_activity: new Date(),
-      expires_at: this.calculateSessionExpiration(),
-      app_id: params.appId,
-    });
-
-    const tokenPayload: JwtPayload = {
-      userId: params.userId,
-      sessionId: session.id,
-      organizationId: params.organizationId,
-      enterpriseId: params.enterpriseId,
-      appId: params.appId,
-      isPlatformAdmin: params.isPlatformAdmin,
-    };
-
-    return {
-      access_token: this.generateAccessToken(tokenPayload),
-      refresh_token: this.generateRefreshToken({
-        ...tokenPayload,
-        refreshToken,
-      }),
-      expires_in: 900,
-    };
-  }
-
-  // Switch active application
   async switchApp(
     currentUser: JwtPayload,
     switchAppDto: SwitchAppDto,
@@ -295,18 +291,16 @@ export class AuthService {
       );
     }
 
-    // Persist the last accessed app
     await this.userService.update(currentUser.userId, {
       last_access_app_id: switchAppDto.appId,
     } as any);
 
-    // Issue a fresh access token scoped to the new app
     const newPayload: JwtPayload = {
       ...currentUser,
       appId: switchAppDto.appId,
     };
 
-    const accessToken = this.generateAccessToken(newPayload);
+    const accessToken = this.tokenService.generateAccessToken(newPayload);
 
     this.logger.log(
       `App switched successfully: ${currentUser.userId} → ${switchAppDto.appId}`,
@@ -319,7 +313,6 @@ export class AuthService {
     };
   }
 
-  // Logout user
   async logout(sessionId: string): Promise<void> {
     this.logger.log(`Logout for session: ${sessionId}`);
 
@@ -332,31 +325,23 @@ export class AuthService {
     this.logger.log(`User logged out successfully: ${sessionId}`);
   }
 
-  // Refresh access token
   async refreshToken(payload: JwtPayload): Promise<RefreshTokenResponseDto> {
     this.logger.log(`Token refresh for session: ${payload.sessionId}`);
 
-    // Find session
     const session = await this.sessionRepository.findById(payload.sessionId);
     if (!session) {
       throw new UnauthorizedException('Invalid session');
     }
-
-    // Check if session is logged out
     if (session.logout_time) {
       throw new UnauthorizedException('Session has been logged out');
     }
-
-    // Check if session is expired
     if (new Date() > session.expires_at) {
       throw new UnauthorizedException('Session has expired');
     }
-
-    // Verify refresh token
     if (!payload.refreshToken) {
       throw new UnauthorizedException('Invalid refresh token payload');
     }
-    const isRefreshTokenValid = await this.verify(
+    const isRefreshTokenValid = await verifyHash(
       payload.refreshToken,
       session.refresh_token_hash,
     );
@@ -364,17 +349,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // Generate new refresh token (token rotation)
     const newRefreshToken = Math.random().toString(36).substring(2);
-    const newRefreshTokenHash = await this.hash(newRefreshToken);
+    const newRefreshTokenHash = await hashValue(newRefreshToken);
 
-    // Update session
     await this.sessionRepository.update(payload.sessionId, {
       refresh_token_hash: newRefreshTokenHash,
       last_activity: new Date(),
     });
 
-    // Generate new JWT tokens
     const newPayload: JwtPayload = {
       userId: payload.userId,
       sessionId: payload.sessionId,
@@ -384,8 +366,8 @@ export class AuthService {
       isPlatformAdmin: payload.isPlatformAdmin,
     };
 
-    const accessToken = this.generateAccessToken(newPayload);
-    const refreshTokenJwt = this.generateRefreshToken({
+    const accessToken = this.tokenService.generateAccessToken(newPayload);
+    const refreshTokenJwt = this.tokenService.generateRefreshToken({
       ...newPayload,
       refreshToken: newRefreshToken,
     });
@@ -395,7 +377,7 @@ export class AuthService {
     return {
       access_token: accessToken,
       refresh_token: refreshTokenJwt,
-      expires_in: 900, // 15 minutes in seconds
+      expires_in: 900,
     };
   }
 
@@ -419,7 +401,7 @@ export class AuthService {
     }
 
     // Hash new password
-    const newPasswordHash = await this.hash(updatePasswordDto.new_password);
+    const newPasswordHash = await hashValue(updatePasswordDto.new_password);
 
     // Update user
     await this.userService.update(userId, {
@@ -456,8 +438,8 @@ export class AuthService {
     );
 
     // Generate OTP
-    const otp = this.generateOtp();
-    const otpHash = await this.hash(otp);
+    const otp = generateOtp();
+    const otpHash = await hashValue(otp);
 
     // Store OTP
     await this.otpRepository.create({
@@ -465,7 +447,7 @@ export class AuthService {
       otp_hash: otpHash,
       user_id: user.id,
       purpose: OtpPurpose.RESET_PASSWORD,
-      expires_at: this.calculateOtpExpiration(),
+      expires_at: calculateOtpExpiration(this.configService),
       attempts_count: 0,
     });
 
@@ -476,13 +458,11 @@ export class AuthService {
     this.logger.log(`OTP generated for password reset: ${user.id}`);
   }
 
-  // Verify OTP and reset password
   async verifyOtpAndResetPassword(
     verifyOtpDto: VerifyOtpAndResetPasswordDto,
   ): Promise<void> {
     this.logger.log(`OTP verification for email: ${verifyOtpDto.email}`);
 
-    // Find OTP
     const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
       verifyOtpDto.email,
       OtpPurpose.RESET_PASSWORD,
@@ -492,46 +472,37 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
-    // Check expiration
     if (new Date() > otpRecord.expires_at) {
       await this.otpRepository.delete(otpRecord.id);
       throw new BadRequestException('OTP has expired');
     }
 
-    // Check attempts
     const maxAttempts = this.configService.get<number>('otp.maxAttempts', 5);
     if (otpRecord.attempts_count >= maxAttempts) {
       await this.otpRepository.delete(otpRecord.id);
       throw new BadRequestException('Maximum OTP attempts exceeded');
     }
 
-    // Verify OTP
-    const isOtpValid = await this.verify(verifyOtpDto.otp, otpRecord.otp_hash);
+    const isOtpValid = await verifyHash(verifyOtpDto.otp, otpRecord.otp_hash);
     if (!isOtpValid) {
-      // Increment attempts
       await this.otpRepository.incrementAttempts(otpRecord.id);
       throw new BadRequestException('Invalid OTP');
     }
 
-    // Find user
     const user = await this.userService.findByEmail(verifyOtpDto.email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // Hash new password
-    const newPasswordHash = await this.hash(verifyOtpDto.new_password);
+    const newPasswordHash = await hashValue(verifyOtpDto.new_password);
 
-    // Update user
     await this.userService.update(user.id, {
       // @ts-ignore
       password_hash: newPasswordHash,
     });
 
-    // Delete OTP
     await this.otpRepository.delete(otpRecord.id);
 
-    // Invalidate all sessions
     await this.sessionRepository.deleteAllUserSessions(user.id);
 
     this.logger.log(`Password reset successfully: ${user.id}`);

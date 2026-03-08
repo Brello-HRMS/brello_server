@@ -11,10 +11,12 @@ import { OrganizationProfileService } from './services/organization-profile.serv
 import { OrganizationProfileController } from './controllers/organization-profile.controller';
 import { DocumentModule } from '../document/document.module';
 import { IndustryTypeModule } from '../industry-type/industry-type.module';
+import { UserRepository } from '../user/repositories/user.repository';
+import { User } from '../user/entities/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Organization, OrganizationProfile]),
+    TypeOrmModule.forFeature([Organization, OrganizationProfile, User]),
     EnterpriseModule,
     forwardRef(() => DocumentModule),
     IndustryTypeModule,
@@ -25,6 +27,7 @@ import { IndustryTypeModule } from '../industry-type/industry-type.module';
     OrganizationRepository,
     OrganizationProfileService,
     OrganizationProfileRepository,
+    UserRepository,
   ],
   exports: [OrganizationService, OrganizationProfileService],
 })
