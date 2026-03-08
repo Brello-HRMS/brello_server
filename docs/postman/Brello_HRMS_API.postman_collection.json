@@ -60,6 +60,16 @@
       "key": "organization_profile_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "industry_type_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "plan_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -105,8 +115,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables."
           },
@@ -154,8 +169,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/switch-app",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "switch-app"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "switch-app"
+              ]
             },
             "description": "Switch to a different application. Provide the target `appId` (get available apps from the Login response).\n\n**Auto-saves:** New `access_token` scoped to the target app."
           },
@@ -194,8 +214,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/refresh",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Refresh the access token using the refresh token.\n\n**Important:** Uses the `refresh_token` (not access_token) as the Bearer token.\n\n**Auto-saves:** New `access_token` and `refresh_token` (token rotation)."
           },
@@ -218,8 +243,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             },
             "description": "Invalidate the current session. Returns 204 No Content."
           },
@@ -251,8 +281,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/update-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "update-password"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "update-password"
+              ]
             },
             "description": "Change the authenticated user's password.\n\n**Side effect:** All active sessions are invalidated (user must re-login).\n\n**Password rules:** Min 8 chars, must contain: uppercase, lowercase, digit, special character."
           },
@@ -274,8 +309,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/forgot-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "forgot-password"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
             },
             "description": "Request a password reset OTP. Always returns 204 (even if email doesn't exist, for security).\n\n**In dev mode:** Check the server console for the OTP log."
           },
@@ -297,8 +337,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
             },
             "description": "Verify the OTP received via email and set a new password.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -320,8 +365,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "register"
+              ]
             },
             "description": "Initiates the registration flow for a new Platform Admin by securely masking their initial creation and sending an OTP to tech@brello.co.in."
           },
@@ -343,8 +394,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/verify-register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "verify-register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "verify-register"
+              ]
             },
             "description": "Verifies the OTP and activates the Platform Admin account."
           },
@@ -366,8 +423,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "login"
+              ]
             },
             "description": "Initiates the login flow for an existing Platform Admin by validating credentials and sending an OTP to their email."
           },
@@ -409,14 +472,269 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/verify-login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "verify-login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "verify-login"
+              ]
             },
             "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id` to collection variables."
           },
           "response": []
         }
       ]
+    },
+    {
+      "name": "Platform Admin Post-Creation Setup",
+      "description": "Initial steps to set up the architecture right after Platform Admin is created and logged in.",
+      "item": [
+        {
+          "name": "Create Industry Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Technology\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/industry-types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "industry-types"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"industry_type_id\", jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Enterprise Pro\",\n  \"price\": 99.99,\n  \"description\": \"Premium tier plan with all features\",\n  \"discount\": 0,\n  \"feature\": [\"HRMS\", \"CRM\", \"Payroll\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/plans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "plans"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"plan_id\", jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Enterprise",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Corporation\",\n  \"domain\": \"acme.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/enterprises",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "enterprises"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"enterprise_id\", jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Organization",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme India Branch\",\n  \"enterprise_id\": \"{{enterprise_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/organizations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "organizations"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"organization_id\", jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Organization Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme India Profile\",\n  \"email\": \"contact@acme.com\",\n  \"phone\": \"+919876543210\",\n  \"registration_no\": \"REG12345\",\n  \"industry_type_id\": \"{{industry_type_id}}\",\n  \"organization_id\": \"{{organization_id}}\",\n  \"enterprise_id\": \"{{enterprise_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/organizations/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "organizations",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Organization Admin Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Organization Admin\",\n  \"context\": \"Admin\",\n  \"app_id\": \"{{app_id}}\",\n  \"enterprise_id\": \"{{enterprise_id}}\",\n  \"organization_id\": \"{{organization_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/roles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "roles"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"role_id\", jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{access_token}}",
+            "type": "string"
+          }
+        ]
+      }
     },
     {
       "name": "Enterprise",
@@ -453,8 +771,12 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises"
+              ]
             },
             "description": "Create a new enterprise.\n\n**Auto-saves:** `enterprise_id` to collection variables.",
             "auth": {
@@ -477,8 +799,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises"
+              ]
             },
             "description": "List all enterprises in the system.",
             "auth": {
@@ -501,8 +827,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Get a single enterprise by its UUID.",
             "auth": {
@@ -534,8 +865,13 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Partially update an enterprise. All fields are optional.",
             "auth": {
@@ -558,8 +894,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Delete an enterprise. Returns 204 No Content.",
             "auth": {
@@ -612,8 +953,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": ["{{base_url}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             },
             "description": "Create a new organization under an enterprise.\n\n**Auto-saves:** `organization_id` to collection variables."
           },
@@ -626,8 +971,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": ["{{base_url}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             },
             "description": "List all organizations."
           },
@@ -640,8 +989,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Get a single organization by its UUID."
           },
@@ -654,8 +1008,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/enterprise/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "enterprise", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "enterprise",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Get all organizations that belong to a specific enterprise."
           },
@@ -677,8 +1037,13 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Partially update an organization. All fields are optional."
           },
@@ -691,8 +1056,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Delete an organization. Returns 204 No Content."
           },
@@ -714,8 +1084,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-profiles",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles"
+              ]
             },
             "description": "Create a new organization profile with legal name, GST, and registration details."
           },
@@ -728,8 +1102,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Get an organization profile by its UUID."
           },
@@ -742,7 +1121,9 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/organization/{{organization_id}}",
-              "host": ["{{base_url}}"],
+              "host": [
+                "{{base_url}}"
+              ],
               "path": [
                 "organization-profiles",
                 "organization",
@@ -769,8 +1150,13 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Partially update an organization profile."
           },
@@ -783,8 +1169,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Delete an organization profile. Returns 204 No Content."
           },
@@ -827,8 +1218,12 @@
             },
             "url": {
               "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
             },
             "description": "Create a new user. Password is hashed server-side.\n\n**Auto-saves:** `user_id` to collection variables.\n\n**Password rules:**\n- Minimum 8 characters\n- At least one uppercase letter\n- At least one lowercase letter\n- At least one digit\n- At least one special character (@$!%*?&)\n\n**Phone format:** E.164 (e.g., +919876543210)"
           },
@@ -841,8 +1236,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
             },
             "description": "List all users. Password hash is never exposed."
           },
@@ -855,8 +1254,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ]
             },
             "description": "Get a single user by UUID."
           },
@@ -878,8 +1282,13 @@
             },
             "url": {
               "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ]
             },
             "description": "Partially update a user. All fields are optional. Password cannot be changed here (use auth endpoints)."
           },
@@ -892,8 +1301,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "{{user_id}}"
+              ]
             },
             "description": "Soft-delete a user (sets status to DELETED). Returns 204 No Content."
           },
@@ -915,8 +1329,12 @@
             },
             "url": {
               "raw": "{{base_url}}/employees",
-              "host": ["{{base_url}}"],
-              "path": ["employees"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees"
+              ]
             }
           },
           "response": []
@@ -928,8 +1346,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{user_id}}"
+              ]
             }
           },
           "response": []
@@ -941,8 +1364,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/employees",
-              "host": ["{{base_url}}"],
-              "path": ["employees"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees"
+              ]
             },
             "description": "List all employees with optional query filtering."
           },
@@ -964,8 +1391,13 @@
             },
             "url": {
               "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{user_id}}"
+              ]
             },
             "description": "Update basic identity fields of an employee."
           },
@@ -987,8 +1419,14 @@
             },
             "url": {
               "raw": "{{base_url}}/employees/{{user_id}}/profile",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "profile"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{user_id}}",
+                "profile"
+              ]
             },
             "description": "Update HR-specific profile fields of an employee."
           },
@@ -1010,8 +1448,14 @@
             },
             "url": {
               "raw": "{{base_url}}/employees/{{user_id}}/education",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "education"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{user_id}}",
+                "education"
+              ]
             }
           },
           "response": []
@@ -1032,8 +1476,14 @@
             },
             "url": {
               "raw": "{{base_url}}/employees/{{user_id}}/emergency-contact",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "emergency-contact"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{user_id}}",
+                "emergency-contact"
+              ]
             },
             "description": "Upsert emergency contact details for an employee."
           },
@@ -1046,8 +1496,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{user_id}}"
+              ]
             },
             "description": "Soft-delete both identity and profile layers of an employee."
           },
@@ -1090,8 +1545,12 @@
             },
             "url": {
               "raw": "{{base_url}}/apps",
-              "host": ["{{base_url}}"],
-              "path": ["apps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps"
+              ]
             },
             "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority).",
             "auth": {
@@ -1114,8 +1573,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps",
-              "host": ["{{base_url}}"],
-              "path": ["apps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps"
+              ]
             },
             "description": "List all registered applications, sorted by priority.",
             "auth": {
@@ -1138,8 +1601,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Get a single app by UUID.",
             "auth": {
@@ -1171,8 +1639,13 @@
             },
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Partially update an app.",
             "auth": {
@@ -1195,8 +1668,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Delete an app. Returns 204 No Content.",
             "auth": {
@@ -1249,8 +1727,12 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "Create a new role scoped to an app.\n\n**Auto-saves:** `role_id` to collection variables."
           },
@@ -1263,8 +1745,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "List all roles with their associated app."
           },
@@ -1277,8 +1763,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Get a single role by UUID."
           },
@@ -1291,8 +1782,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/app/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "app", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "app",
+                "{{app_id}}"
+              ]
             },
             "description": "Get all roles belonging to a specific app."
           },
@@ -1314,8 +1811,13 @@
             },
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Partially update a role."
           },
@@ -1328,8 +1830,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Delete a role. Returns 204 No Content."
           },
@@ -1351,8 +1858,12 @@
             },
             "url": {
               "raw": "{{base_url}}/user-role-maps",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps"
+              ]
             },
             "description": "Assign a role to a user in a specific organization.\n\n**This is required before the user can login!**"
           },
@@ -1365,8 +1876,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps"
+              ]
             },
             "description": "List all user-role assignments."
           },
@@ -1379,8 +1894,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps/user/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps", "user", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps",
+                "user",
+                "{{user_id}}"
+              ]
             },
             "description": "Get all role assignments for a specific user."
           },
@@ -1393,8 +1914,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps",
+                "{{user_id}}"
+              ]
             },
             "description": "Remove a role assignment. Returns 204 No Content."
           },
@@ -1417,8 +1943,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/menu",
-              "host": ["{{base_url}}"],
-              "path": ["menu"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "menu"
+              ]
             },
             "description": "Returns the authenticated user's accessible module tree for the current app.\n\nThe response is a hierarchical tree where:\n- Each node has `id`, `name`, `wbs_code`, `actions[]`, and `children[]`\n- Only modules the user has permission to access are included\n- Actions are filtered by both role permissions AND plan restrictions\n- Tree is sorted by WBS code at each level"
           },
@@ -1456,8 +1986,13 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/upload-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "upload-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "upload-url"
+              ]
             }
           },
           "response": []
@@ -1479,8 +2014,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/confirm",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "confirm"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "confirm"
+              ]
             }
           },
           "response": []
@@ -1502,8 +2043,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             },
             "description": "Get document metadata by UUID."
           },
@@ -1526,8 +2072,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/signed-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "signed-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "signed-url"
+              ]
             },
             "description": "Get a short-lived signed URL for downloading a document."
           },
@@ -1550,8 +2102,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             },
             "description": "Delete a document record."
           },
@@ -1589,8 +2146,12 @@
             },
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": ["{{base_url}}"],
-              "path": ["industry-types"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry-types"
+              ]
             }
           },
           "response": []
@@ -1612,8 +2173,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": ["{{base_url}}"],
-              "path": ["industry-types"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry-types"
+              ]
             }
           },
           "response": []
@@ -1630,8 +2195,12 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/app-modules",
-              "host": ["{{base_url}}"],
-              "path": ["app-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app-modules"
+              ]
             }
           }
         },
@@ -1651,8 +2220,12 @@
             },
             "url": {
               "raw": "{{base_url}}/app-modules",
-              "host": ["{{base_url}}"],
-              "path": ["app-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app-modules"
+              ]
             }
           }
         },
@@ -1672,8 +2245,12 @@
             },
             "url": {
               "raw": "{{base_url}}/actions",
-              "host": ["{{base_url}}"],
-              "path": ["actions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "actions"
+              ]
             }
           }
         },
@@ -1693,8 +2270,12 @@
             },
             "url": {
               "raw": "{{base_url}}/module-access",
-              "host": ["{{base_url}}"],
-              "path": ["module-access"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "module-access"
+              ]
             }
           }
         }
@@ -1710,8 +2291,12 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": ["{{base_url}}"],
-              "path": ["plans"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans"
+              ]
             }
           }
         },
@@ -1731,8 +2316,12 @@
             },
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": ["{{base_url}}"],
-              "path": ["plans"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans"
+              ]
             }
           }
         },
@@ -1752,8 +2341,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-subscriptions",
-              "host": ["{{base_url}}"],
-              "path": ["organization-subscriptions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-subscriptions"
+              ]
             }
           }
         },
@@ -1773,8 +2366,12 @@
             },
             "url": {
               "raw": "{{base_url}}/plan-modules",
-              "host": ["{{base_url}}"],
-              "path": ["plan-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plan-modules"
+              ]
             }
           }
         },
@@ -1794,8 +2391,12 @@
             },
             "url": {
               "raw": "{{base_url}}/plan-module-actions",
-              "host": ["{{base_url}}"],
-              "path": ["plan-module-actions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plan-module-actions"
+              ]
             }
           }
         }
@@ -1822,8 +2423,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications",
-              "host": ["{{base_url}}"],
-              "path": ["notifications"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications"
+              ]
             },
             "description": "Get all active in-app notifications for the current user."
           },
@@ -1846,8 +2451,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/unread",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "unread"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "unread"
+              ]
             },
             "description": "Get only unread in-app notifications for the current user."
           },
@@ -1870,8 +2480,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/<NOTIFICATION_ID>/read",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "<NOTIFICATION_ID>", "read"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "<NOTIFICATION_ID>",
+                "read"
+              ]
             },
             "description": "Mark a specific notification as read."
           },
@@ -1894,8 +2510,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/read-all",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "read-all"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
             },
             "description": "Mark all notifications as read for the current user."
           },
@@ -1923,8 +2544,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/register",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "register"
+              ]
             },
             "description": "Register a new lead. Sends a verification OTP to the provided email.\n\n**No authentication required.**\n\n**In dev mode:** Check the server console for the OTP log.\n\n**Validation:** email (unique), first_name (min 2), last_name (min 2), phone (E.164), password (strong), source (must be 'website')."
           },
@@ -1946,8 +2572,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "verify-otp"
+              ]
             },
             "description": "Verify the OTP sent during lead registration.\n\n**On success:**\n- Lead is marked as verified\n- A User record is created from the lead details (first_name, last_name, email, phone, password_hash)\n- Both operations are wrapped in a transaction — if anything fails, everything rolls back.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -2000,8 +2631,12 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "Create a new role. Only platform admins can set `is_system_defined: true`.\n\n**Auto-saves:** `role_id` to collection variables."
           },
@@ -2024,8 +2659,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "List all non-deleted roles ordered by name."
           },
@@ -2048,8 +2687,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/filter?organization_id={{organization_id}}&enterprise_id={{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "filter"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "filter"
+              ],
               "query": [
                 {
                   "key": "organization_id",
@@ -2082,8 +2726,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Get a single role by its UUID."
           },
@@ -2115,8 +2764,13 @@
             },
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Partially update a role. All fields are optional. Only platform admins can modify system-defined roles."
           },
@@ -2139,8 +2793,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Soft delete a role. Returns 204 No Content. Only platform admins can delete system-defined roles."
           },
