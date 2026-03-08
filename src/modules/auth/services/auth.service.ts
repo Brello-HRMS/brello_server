@@ -160,7 +160,8 @@ export class AuthService {
     }
 
     const isDevBypass =
-      process.env.NODE_ENV === 'development' && dto.otp === '123456';
+      this.configService.get<string>('brello.environment') === 'dev' &&
+      dto.otp === '123456';
     const isOtpValid = isDevBypass || (await verifyHash(dto.otp, otpRecord.otp_hash));
     if (!isOtpValid) {
       await this.otpRepository.incrementAttempts(otpRecord.id);
@@ -486,7 +487,8 @@ export class AuthService {
     }
 
     const isDevBypass =
-      process.env.NODE_ENV === 'development' && verifyOtpDto.otp === '123456';
+      this.configService.get<string>('brello.environment') === 'dev' &&
+      verifyOtpDto.otp === '123456';
     const isOtpValid =
       isDevBypass || (await verifyHash(verifyOtpDto.otp, otpRecord.otp_hash));
     if (!isOtpValid) {

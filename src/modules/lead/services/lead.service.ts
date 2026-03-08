@@ -170,7 +170,8 @@ export class LeadService {
     }
 
     const isDevBypass =
-      process.env.NODE_ENV === 'development' && otp === '123456';
+      this.configService.get<string>('brello.environment') === 'dev' &&
+      otp === '123456';
     const isOtpValid =
       isDevBypass || (await this.verifyHash(otp, otpRecord.otp_hash));
     if (!isOtpValid) {

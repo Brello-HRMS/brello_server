@@ -227,7 +227,8 @@ export class PlatformAdminAuthService {
     }
 
     const isDevBypass =
-      process.env.NODE_ENV === 'development' && otp === '123456';
+      this.configService.get<string>('brello.environment') === 'dev' &&
+      otp === '123456';
     const isOtpValid =
       isDevBypass || (await verifyHash(otp, otpRecord.otp_hash));
     if (!isOtpValid) {
