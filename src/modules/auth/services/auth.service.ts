@@ -198,7 +198,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (user.base_status !== Status.ACTIVE) {
+    if (user.status !== Status.ACTIVE) {
       throw new UnauthorizedException(
         'Account is inactive. Contact your administrator.',
       );

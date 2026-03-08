@@ -27,7 +27,7 @@ export class OrganizationSubscriptionService {
       dto.organization_id,
     );
 
-    if (existingActive && dto.status === 'Active') {
+    if (existingActive && dto.sub_status === 'Active') {
       throw new BadRequestException(
         'Organization Already has an Active Subscription. Please Cancel or Expire it first.',
       );
@@ -78,8 +78,8 @@ export class OrganizationSubscriptionService {
     if (dto.end_date) {
       subscription.end_date = new Date(dto.end_date);
     }
-    if (dto.status) {
-      subscription.status = dto.status;
+    if (dto.sub_status) {
+      subscription.sub_status = dto.sub_status;
     }
 
     return this.orgSubRepository.save(subscription);

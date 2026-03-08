@@ -42,7 +42,7 @@ export class PlanAppRepository {
       where: {
         plan_id: planId,
         is_active: true,
-        base_status: Status.ACTIVE,
+        status: Status.ACTIVE,
       },
     });
   }

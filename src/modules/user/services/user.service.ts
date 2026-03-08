@@ -74,7 +74,7 @@ export class UserService {
     const user = await this.userRepository.create({
       ...userData,
       password_hash,
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     });
 
     this.logger.log(`User created successfully: ${user.id}`);
@@ -115,7 +115,7 @@ export class UserService {
       phone: registerDto.phone_number,
       password_hash,
       is_platform_admin: true,
-      base_status: Status.PENDING, // Will be activated via OTP
+      status: Status.PENDING, // Will be activated via OTP
     });
 
     this.logger.log(`Platform admin created successfully: ${user.id}`);

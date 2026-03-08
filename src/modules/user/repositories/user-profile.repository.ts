@@ -18,7 +18,7 @@ export class UserProfileRepository {
 
   async findByUserId(userId: string): Promise<UserProfile | null> {
     return this.repository.findOne({
-      where: { user: { id: userId }, base_status: Not(Status.DELETED) },
+      where: { user: { id: userId }, status: Not(Status.DELETED) },
       relations: [
         'educations',
         'experiences',
@@ -40,7 +40,7 @@ export class UserProfileRepository {
       where: {
         employee_id: employeeId,
         enterprise_id: enterpriseId,
-        base_status: Not(Status.DELETED),
+        status: Not(Status.DELETED),
       },
     });
   }

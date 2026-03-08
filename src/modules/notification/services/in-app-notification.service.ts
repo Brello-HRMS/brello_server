@@ -29,7 +29,7 @@ export class InAppNotificationService {
         type: dto.type,
         is_read: false,
         metadata: dto.metadata,
-        base_status: Status.ACTIVE,
+        status: Status.ACTIVE,
       });
 
       const saved = await this.notificationRepository.save(notification);

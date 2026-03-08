@@ -21,13 +21,13 @@ export class ActionRepository {
   async findAll(): Promise<Action[]> {
     return this.repository.find({
       order: { name: 'ASC' },
-      where: { base_status: 'ACTIVE' as any },
+      where: { status: 'ACTIVE' as any },
     });
   }
 
   async findOneById(id: string): Promise<Action> {
     const action = await this.repository.findOne({
-      where: { id, base_status: 'ACTIVE' as any },
+      where: { id, status: 'ACTIVE' as any },
     });
     if (!action) {
       throw new NotFoundException(`Action with ID "${id}" not found`);
@@ -37,7 +37,7 @@ export class ActionRepository {
 
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: 'DELETED' as any,
+      status: 'DELETED' as any,
     });
     return (result.affected ?? 0) > 0;
   }

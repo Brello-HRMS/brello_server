@@ -26,7 +26,7 @@ export class CreateOrganizationSubscriptionDto {
 
   @IsEnum(SubscriptionStatus)
   @IsOptional()
-  status?: SubscriptionStatus;
+  sub_status?: SubscriptionStatus;
 }
 
 export class UpdateOrganizationSubscriptionDto {
@@ -36,5 +36,5 @@ export class UpdateOrganizationSubscriptionDto {
 
   @IsEnum(SubscriptionStatus)
   @IsOptional()
-  status?: SubscriptionStatus;
+  sub_status?: SubscriptionStatus;
 }

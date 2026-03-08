@@ -192,7 +192,7 @@ export class LeadService {
           email: lead.email,
           phone: lead.phone,
           password_hash: lead.password_hash,
-          base_status: Status.ACTIVE,
+          status: Status.ACTIVE,
           plan_id: lead.plan_id,
         });
         await userRepo.save(newUser);

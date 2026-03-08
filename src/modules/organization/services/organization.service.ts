@@ -83,7 +83,7 @@ export class OrganizationService {
 
       // Step 3: Find 'Org Admin' role
       const adminRole = await manager.findOne(Role, {
-        where: { name: 'Organization Admin', base_status: Status.ACTIVE },
+        where: { name: 'Organization Admin', status: Status.ACTIVE },
       });
       if (!adminRole) {
         throw new NotFoundException(
@@ -113,7 +113,7 @@ export class OrganizationService {
       const subscription = manager.create(OrganizationSubscription, {
         organization_id: savedOrg.id,
         plan_id: user.plan_id,
-        status: SubscriptionStatus.ACTIVE,
+        sub_status: SubscriptionStatus.ACTIVE,
         start_date: new Date(),
       });
 

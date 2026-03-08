@@ -20,7 +20,7 @@ export class OrganizationProfileRepository {
 
   async findById(id: string): Promise<OrganizationProfile | null> {
     return this.repository.findOne({
-      where: { id, base_status: Not(Status.DELETED) },
+      where: { id, status: Not(Status.DELETED) },
       relations: [
         'organization',
         'enterprise',
@@ -37,7 +37,7 @@ export class OrganizationProfileRepository {
     return this.repository.findOne({
       where: {
         organization: { id: organizationId },
-        base_status: Not(Status.DELETED),
+        status: Not(Status.DELETED),
       },
       relations: [
         'organization',
@@ -51,7 +51,7 @@ export class OrganizationProfileRepository {
 
   async findByEmail(email: string): Promise<OrganizationProfile | null> {
     return this.repository.findOne({
-      where: { email, base_status: Not(Status.DELETED) },
+      where: { email, status: Not(Status.DELETED) },
     });
   }
 
@@ -65,7 +65,7 @@ export class OrganizationProfileRepository {
 
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: Status.DELETED,
+      status: Status.DELETED,
     });
     return (result.affected ?? 0) > 0;
   }

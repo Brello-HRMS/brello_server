@@ -28,7 +28,7 @@ export class EnterpriseAppRepository {
     return this.repository.find({
       where: {
         enterprise_id: enterpriseId,
-        base_status: Status.ACTIVE,
+        status: Status.ACTIVE,
       },
     });
   }
@@ -41,15 +41,15 @@ export class EnterpriseAppRepository {
     return this.repository.find({
       where: {
         enterprise_id: In(enterpriseIds),
-        base_status: Status.ACTIVE,
+        status: Status.ACTIVE,
       },
     });
   }
 
   async softDeleteByEnterpriseId(enterpriseId: string): Promise<boolean> {
     const result = await this.repository.update(
-      { enterprise_id: enterpriseId, base_status: Status.ACTIVE },
-      { base_status: Status.DELETED, deleted_at: new Date() },
+      { enterprise_id: enterpriseId, status: Status.ACTIVE },
+      { status: Status.DELETED, deleted_at: new Date() },
     );
     return (result.affected ?? 0) > 0;
   }

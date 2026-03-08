@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrganizationSubscription } from '../entities/organization-subscription.entity';
+import { Status } from 'src/common/enums';
 
 @Injectable()
 export class OrganizationSubscriptionRepository {
@@ -24,13 +25,13 @@ export class OrganizationSubscriptionRepository {
     return this.repository.find({
       relations: ['plan'],
       order: { created_at: 'DESC' },
-      where: { base_status: 'ACTIVE' as any },
+      where: { status: 'ACTIVE' as any },
     });
   }
 
   async findOneById(id: string): Promise<OrganizationSubscription> {
     const subscription = await this.repository.findOne({
-      where: { id, base_status: 'ACTIVE' as any },
+      where: { id, status: 'ACTIVE' as any },
       relations: ['plan'],
     });
     if (!subscription) {
@@ -47,8 +48,8 @@ export class OrganizationSubscriptionRepository {
     return this.repository.findOne({
       where: {
         organization_id: organizationId,
-        status: 'Active' as any, // Matches the enum capitalization
-        base_status: 'ACTIVE' as any,
+        status: Status.ACTIVE,
+
       },
       relations: ['plan'],
     });
@@ -56,7 +57,7 @@ export class OrganizationSubscriptionRepository {
 
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: 'DELETED' as any,
+      status: 'DELETED' as any,
     });
     return (result.affected ?? 0) > 0;
   }

@@ -18,13 +18,13 @@ export class UserDocumentRepository {
 
   async findById(id: string): Promise<UserDocument | null> {
     return this.repository.findOne({
-      where: { id, base_status: Not(Status.DELETED) },
+      where: { id, status: Not(Status.DELETED) },
     });
   }
 
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: Status.DELETED,
+      status: Status.DELETED,
     });
     return (result.affected ?? 0) > 0;
   }

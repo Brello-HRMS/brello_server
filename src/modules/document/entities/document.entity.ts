@@ -4,10 +4,10 @@ import { StorageProvider, FolderType } from '../enums/document.enum';
 
 @Entity('document')
 @Index('idx_document_tenant', ['enterprise_id', 'organization_id'], {
-  where: "base_status != 'DELETED'",
+  where: "status != 'DELETED'",
 })
 @Index('idx_document_employee', ['employee_id'], {
-  where: "base_status != 'DELETED'",
+  where: "status != 'DELETED'",
 })
 @Index('idx_document_folder_type', ['folder_type'])
 @Unique(['enterprise_id', 'organization_id', 'object_key'])

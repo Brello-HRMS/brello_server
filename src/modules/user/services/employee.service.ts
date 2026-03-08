@@ -91,7 +91,7 @@ export class EmployeeService {
         reports_to_id: dto.reportsTo,
         department_id: dto.departmentId,
         designation_id: dto.designationId,
-        base_status: Status.ACTIVE,
+        status: Status.ACTIVE,
       });
 
       const savedUser = await queryRunner.manager.save(userInstance);
@@ -115,7 +115,7 @@ export class EmployeeService {
         current_salary: dto.profile.currentSalary,
         enterprise_id: dto.enterprise_id,
         organization_id: dto.organization_id,
-        base_status: Status.ACTIVE,
+        status: Status.ACTIVE,
       });
 
       const savedProfile = await queryRunner.manager.save(profileInstance);
@@ -206,7 +206,7 @@ export class EmployeeService {
         firstName: user.first_name,
         lastName: user.last_name,
         email: user.email,
-        status: user.base_status,
+        status: user.status,
       })),
       meta: {
         page: query.page || 1,
@@ -272,7 +272,7 @@ export class EmployeeService {
       completion_date: new Date(dto.completionDate),
       additional_detail: dto.additionalDetail,
       user_profile_id: profile.id,
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     });
     return { success: true };
   }
@@ -292,7 +292,7 @@ export class EmployeeService {
       summary: dto.summary,
       duration: dto.duration,
       user_profile_id: profile.id,
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     });
     return { success: true };
   }
@@ -309,7 +309,7 @@ export class EmployeeService {
     await this.assetsRepository.create({
       name: dto.name,
       user_profile_id: profile.id,
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     });
     return { success: true };
   }
@@ -331,7 +331,7 @@ export class EmployeeService {
       passport: dto.passport,
       driving_licence: dto.drivingLicence,
       user_profile_id: profile.id,
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     });
     return { success: true };
   }
@@ -344,7 +344,7 @@ export class EmployeeService {
       ifsc_code: dto.ifscCode,
       bank_name: dto.bankName,
       user_profile_id: profile.id,
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     });
     return { success: true };
   }
@@ -356,7 +356,7 @@ export class EmployeeService {
       name: dto.name,
       doc_id: dto.docId,
       user_profile_id: profile.id,
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     });
     return { success: true };
   }
@@ -381,7 +381,7 @@ export class EmployeeService {
       phone: dto.phone,
       relation: dto.relation,
       user_profile_id: profile.id,
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     });
     return { success: true };
   }
@@ -411,7 +411,7 @@ export class EmployeeService {
     // Soft delete the profile layer (prevent cascading manually or rely on ORM hooks, manual is safer for soft deletes)
     if (user.user_profile_id) {
       await this.profileRepository.update(user.user_profile_id, {
-        base_status: Status.DELETED,
+        status: Status.DELETED,
       });
     }
 
