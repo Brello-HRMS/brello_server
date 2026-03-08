@@ -104,7 +104,7 @@ export class PermissionResolverService {
 
     // Step 5 & 6: WBS propagation and load module metadata
     const allModules = await this.appModuleRepo.find({
-      where: { app_id: appId, base_status: Status.ACTIVE },
+      where: { app_id: appId, status: Status.ACTIVE },
       order: { wbs_code: 'ASC' },
     });
 
@@ -149,8 +149,8 @@ export class PermissionResolverService {
       .where('urm.user_id = :userId', { userId })
       .andWhere('urm.organization_id = :organizationId', { organizationId })
       .andWhere('role.app_id = :appId', { appId })
-      .andWhere('role.base_status = :base_status', {
-        base_status: Status.ACTIVE,
+      .andWhere('role.status = :status', {
+        status: Status.ACTIVE,
       })
       .getRawMany<{ roleId: string }>();
 
@@ -186,7 +186,7 @@ export class PermissionResolverService {
     const sub = await this.subscriptionRepo.findOne({
       where: {
         organization_id: organizationId,
-        status: SubscriptionStatus.ACTIVE,
+        sub_status: SubscriptionStatus.ACTIVE,
       },
       order: { start_date: 'DESC' },
     });

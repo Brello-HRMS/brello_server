@@ -33,7 +33,7 @@ export class AppModuleRepository {
 
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: 'DELETED' as any,
+      status: 'DELETED' as any,
     });
     return (result.affected ?? 0) > 0;
   }

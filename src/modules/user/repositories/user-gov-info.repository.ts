@@ -30,7 +30,7 @@ export class UserGovInfoRepository {
 
   async findByProfileId(profileId: string): Promise<UserGovInfo | null> {
     return this.repository.findOne({
-      where: { user_profile_id: profileId, base_status: Not(Status.DELETED) },
+      where: { user_profile_id: profileId, status: Not(Status.DELETED) },
     });
   }
 }

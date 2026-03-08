@@ -18,20 +18,20 @@ export class RoleRepository {
 
   async findAll(): Promise<Role[]> {
     return this.repository.find({
-      where: { base_status: Not(Status.DELETED) },
+      where: { status: Not(Status.DELETED) },
       order: { name: 'ASC' },
     });
   }
 
   async findById(id: string): Promise<Role | null> {
     return this.repository.findOne({
-      where: { id, base_status: Not(Status.DELETED) },
+      where: { id, status: Not(Status.DELETED) },
     });
   }
 
   async findByName(name: string): Promise<Role | null> {
     return this.repository.findOne({
-      where: { name, base_status: Not(Status.DELETED) },
+      where: { name, status: Not(Status.DELETED) },
     });
   }
 
@@ -44,7 +44,7 @@ export class RoleRepository {
         {
           organization_id: organizationId,
           enterprise_id: enterpriseId,
-          base_status: Not(Status.DELETED),
+          status: Not(Status.DELETED),
           is_system_role: true,
         },
       ],
@@ -59,7 +59,7 @@ export class RoleRepository {
 
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: Status.DELETED,
+      status: Status.DELETED,
     });
     return (result.affected ?? 0) > 0;
   }

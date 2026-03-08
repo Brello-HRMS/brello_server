@@ -51,7 +51,7 @@ export class PlatformAdminAuthService {
 
     // Check if a PENDING or ACTIVE user already exists
     const existingUser = await this.userService.findByEmail(registerDto.email);
-    if (existingUser && existingUser.base_status === Status.ACTIVE) {
+    if (existingUser && existingUser.status === Status.ACTIVE) {
       // We can return success or throw an error. Usually we pretend it sent an OTP to not leak emails.
       this.logger.warn(
         `Registration attempt for active platform admin: ${registerDto.email}`,
@@ -114,7 +114,7 @@ export class PlatformAdminAuthService {
     if (!user) throw new NotFoundException('User not found');
 
     await this.userService.update(user.id, {
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
     } as any);
 
     this.logger.log(`Platform admin ${user.email} successfully activated.`);
@@ -128,7 +128,7 @@ export class PlatformAdminAuthService {
     const user = await this.userService.findByEmail(loginDto.email);
     if (
       !user ||
-      user.base_status !== Status.ACTIVE ||
+      user.status !== Status.ACTIVE ||
       !user.is_platform_admin
     ) {
       throw new UnauthorizedException('Invalid credentials');
@@ -183,7 +183,7 @@ export class PlatformAdminAuthService {
     const user = await this.userService.findByEmail(verifyDto.email);
     if (
       !user ||
-      user.base_status !== Status.ACTIVE ||
+      user.status !== Status.ACTIVE ||
       !user.is_platform_admin
     ) {
       throw new UnauthorizedException('Invalid user state');

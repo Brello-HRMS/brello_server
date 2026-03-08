@@ -21,13 +21,13 @@ export class PlanModuleRepository {
   async findAll(): Promise<PlanModule[]> {
     return this.repository.find({
       order: { created_at: 'DESC' },
-      where: { base_status: 'ACTIVE' as any },
+      where: { status: 'ACTIVE' as any },
     });
   }
 
   async findOneById(id: string): Promise<PlanModule> {
     const planModule = await this.repository.findOne({
-      where: { id, base_status: 'ACTIVE' as any },
+      where: { id, status: 'ACTIVE' as any },
     });
     if (!planModule) {
       throw new NotFoundException(`PlanModule with ID "${id}" not found`);
@@ -37,13 +37,13 @@ export class PlanModuleRepository {
 
   async findByPlanId(planId: string): Promise<PlanModule[]> {
     return this.repository.find({
-      where: { plan_id: planId, base_status: 'ACTIVE' as any },
+      where: { plan_id: planId, status: 'ACTIVE' as any },
     });
   }
 
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: 'DELETED' as any,
+      status: 'DELETED' as any,
     });
     return (result.affected ?? 0) > 0;
   }

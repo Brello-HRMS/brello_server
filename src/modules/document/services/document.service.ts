@@ -134,7 +134,7 @@ export class DocumentService {
       bucket: this.storageService.getBucketName(),
       object_key: objectKey,
       folder_type: dto.folderType,
-      base_status: Status.INACTIVE,
+      status: Status.INACTIVE,
       created_by: userId,
     } as Partial<Document>);
 
@@ -162,7 +162,7 @@ export class DocumentService {
 
     // Mark as ACTIVE
     const updatedDoc = await this.documentRepository.update(id, {
-      base_status: Status.ACTIVE,
+      status: Status.ACTIVE,
       modified_by: userId,
     });
 
@@ -176,7 +176,7 @@ export class DocumentService {
     return {
       id: updatedDoc!.id,
       url,
-      status: updatedDoc!.base_status,
+      status: updatedDoc!.status,
     };
   }
 
@@ -203,7 +203,7 @@ export class DocumentService {
       throw new NotFoundException(`Document ${id} not found`);
     }
 
-    if (document.base_status !== Status.ACTIVE) {
+    if (document.status !== Status.ACTIVE) {
       throw new BadRequestException(
         'Document upload was not confirmed or is inactive',
       );
@@ -225,7 +225,7 @@ export class DocumentService {
     }
 
     await this.documentRepository.update(id, {
-      base_status: Status.DELETED,
+      status: Status.DELETED,
       deleted_by: userId,
       deleted_at: new Date(),
     } as unknown as Partial<Document>);

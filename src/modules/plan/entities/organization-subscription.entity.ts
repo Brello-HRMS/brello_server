@@ -27,7 +27,7 @@ export class OrganizationSubscription extends BaseEntity {
     enum: SubscriptionStatus,
     default: SubscriptionStatus.ACTIVE,
   })
-  status: SubscriptionStatus;
+  sub_status: SubscriptionStatus;
 
   @Column({ type: 'timestamp' })
   start_date: Date;

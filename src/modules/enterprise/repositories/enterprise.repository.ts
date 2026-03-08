@@ -21,26 +21,26 @@ export class EnterpriseRepository {
 
   async findAll(): Promise<Enterprise[]> {
     return this.repository.find({
-      where: { base_status: Status.ACTIVE },
+      where: { status : Status.ACTIVE },
       order: { created_at: 'DESC' },
     });
   }
 
   async findOneById(id: string): Promise<Enterprise | null> {
     return this.repository.findOne({
-      where: { id, base_status: Status.ACTIVE },
+      where: { id, status: Status.ACTIVE },
     });
   }
 
   async findByDomain(domain: string): Promise<Enterprise | null> {
     return this.repository.findOne({
-      where: { domain, base_status: Status.ACTIVE },
+      where: { domain, status: Status.ACTIVE },
     });
   }
 
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: Status.DELETED,
+      status: Status.DELETED,
       deleted_at: new Date(),
     });
     return (result.affected ?? 0) > 0;

@@ -18,32 +18,32 @@ export class UserRepository {
 
   async findAll(): Promise<User[]> {
     return this.repository.find({
-      where: { base_status: Not(Status.DELETED) },
+      where: { status: Not(Status.DELETED) },
       order: { created_at: 'DESC' },
     });
   }
 
   async findById(id: string): Promise<User | null> {
     return this.repository.findOne({
-      where: { id, base_status: Not(Status.DELETED) },
+      where: { id, status: Not(Status.DELETED) },
     });
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.repository.findOne({
-      where: { email, base_status: Not(Status.DELETED) },
+      where: { email, status: Not(Status.DELETED) },
     });
   }
 
   async findByPhone(phone: string): Promise<User | null> {
     return this.repository.findOne({
-      where: { phone, base_status: Not(Status.DELETED) },
+      where: { phone, status: Not(Status.DELETED) },
     });
   }
 
   async findByEnterpriseId(enterpriseId: string): Promise<User[]> {
     return this.repository.find({
-      where: { enterprise_id: enterpriseId, base_status: Not(Status.DELETED) },
+      where: { enterprise_id: enterpriseId, status: Not(Status.DELETED) },
       order: { created_at: 'DESC' },
     });
   }
@@ -52,7 +52,7 @@ export class UserRepository {
     return this.repository.find({
       where: {
         organization_id: organizationId,
-        base_status: Not(Status.DELETED),
+        status: Not(Status.DELETED),
       },
       order: { created_at: 'DESC' },
     });
@@ -64,7 +64,7 @@ export class UserRepository {
   }
 
   async softDelete(id: string): Promise<User | null> {
-    await this.repository.update(id, { base_status: Status.DELETED });
+    await this.repository.update(id, { status: Status.DELETED });
     return this.findById(id);
   }
   async delete(id: string): Promise<boolean> {
@@ -73,13 +73,13 @@ export class UserRepository {
   }
   async exists(id: string): Promise<boolean> {
     const count = await this.repository.count({
-      where: { id, base_status: Not(Status.DELETED) },
+      where: { id, status: Not(Status.DELETED) },
     });
     return count > 0;
   }
 
   async emailExists(email: string, excludeUserId?: string): Promise<boolean> {
-    const where: any = { email, base_status: Not(Status.DELETED) };
+    const where: any = { email, status: Not(Status.DELETED) };
     if (excludeUserId) {
       where.id = Not(excludeUserId);
     }
@@ -88,7 +88,7 @@ export class UserRepository {
   }
 
   async phoneExists(phone: string, excludeUserId?: string): Promise<boolean> {
-    const where: any = { phone, base_status: Not(Status.DELETED) };
+    const where: any = { phone, status: Not(Status.DELETED) };
     if (excludeUserId) {
       where.id = Not(excludeUserId);
     }

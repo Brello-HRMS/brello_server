@@ -53,7 +53,7 @@ Manages roles scoped to applications. Each role belongs to exactly one app.
   "is_system_role": false,
   "enterprise_id": "550e8400-...",
   "organization_id": "770e8400-...",
-  "base_status": "ACTIVE",
+  "status": "ACTIVE",
   "created_at": "2026-02-24T10:00:00.000Z",
   "updated_at": "2026-02-24T10:00:00.000Z"
 }
@@ -144,7 +144,7 @@ Returns roles matching the given organization and enterprise, **plus** all syste
 | **Auth**   | JWT Required        |
 | **Status** | `204 No Content`    |
 
-Soft deletes the role (sets `base_status` to `DELETED`).
+Soft deletes the role (sets `status` to `DELETED`).
 
 **Error Responses:**
 

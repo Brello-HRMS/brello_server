@@ -28,8 +28,8 @@ async function getUserAvailableApps(
     .innerJoinAndSelect('role.app', 'app')
     .where('urm.user_id = :userId', { userId })
     .andWhere('urm.organization_id = :orgId', { orgId: organizationId })
-    .andWhere('role.base_status = :roleStatus', { roleStatus: Status.ACTIVE })
-    .andWhere('app.base_status = :appStatus', { appStatus: Status.ACTIVE })
+    .andWhere('role.status = :roleStatus', { roleStatus: Status.ACTIVE })
+    .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
     .getMany();
 
   if (!userRoleMaps.length && !isPlatformAdmin) {

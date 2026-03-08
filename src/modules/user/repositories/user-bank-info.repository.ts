@@ -30,7 +30,7 @@ export class UserBankInfoRepository {
 
   async findByProfileId(profileId: string): Promise<UserBankInfo | null> {
     return this.repository.findOne({
-      where: { user_profile_id: profileId, base_status: Not(Status.DELETED) },
+      where: { user_profile_id: profileId, status: Not(Status.DELETED) },
     });
   }
 }

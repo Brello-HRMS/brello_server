@@ -48,7 +48,7 @@ export class AppRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
-      base_status: Status.DELETED,
+      status: Status.DELETED,
     });
     return (result.affected ?? 0) > 0;
   }

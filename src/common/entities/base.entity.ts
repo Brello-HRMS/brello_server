@@ -21,7 +21,7 @@ export abstract class BaseEntity {
     enum: Status,
     default: Status.ACTIVE,
   })
-  base_status: Status;
+  status: Status;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   code: string;
