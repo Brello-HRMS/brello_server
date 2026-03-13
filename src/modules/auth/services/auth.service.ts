@@ -30,6 +30,7 @@ import {
   ForgotPasswordRequestDto,
   VerifyOtpAndResetPasswordDto,
 } from '../dto/forgot-password.dto';
+import { ResendOtpDto } from '../dto/resend-otp.dto';
 import {
   AuthResponseDto,
   RefreshTokenResponseDto,
@@ -513,5 +514,110 @@ export class AuthService {
     await this.sessionRepository.deleteAllUserSessions(user.id);
 
     this.logger.log(`Password reset successfully: ${user.id}`);
+  }
+
+  // ---------- Resend OTP ----------
+
+  async resendOtp(dto: ResendOtpDto): Promise<void> {
+    this.logger.log(
+      `OTP resend request for email: ${dto.email} (Purpose: ${dto.purpose})`,
+    );
+
+    // 1. Check if an OTP record exists for this email + purpose
+    const existingOtp = await this.otpRepository.findByIdentifierAndPurpose(
+      dto.email,
+      dto.purpose,
+    );
+
+    if (!existingOtp) {
+      throw new BadRequestException(
+        'No active OTP request found. Please initiate the flow first (e.g., click Login or Forgot Password).',
+      );
+    }
+
+    // 2. Clear old OTP
+    await this.otpRepository.deleteByIdentifierAndPurpose(
+      dto.email,
+      dto.purpose,
+    );
+
+    // 3. Generate new OTP
+    const otp = generateOtp();
+    const otpHash = await hashValue(otp);
+
+    // 4. Save new OTP
+    await this.otpRepository.create({
+      identifier: dto.email,
+      otp_hash: otpHash,
+      user_id: existingOtp.user_id,
+      purpose: dto.purpose,
+      expires_at: calculateOtpExpiration(this.configService),
+      attempts_count: 0,
+    });
+
+    // 5. Build dynamic notification based on purpose
+    const notification = this.getNotificationDetails(
+      dto.purpose,
+      dto.email,
+      otp,
+    );
+
+    await this.notificationService.send({
+      user_id: existingOtp.user_id,
+      target_email: dto.email,
+      title: notification.title,
+      message: notification.message,
+      type: NotificationType.EMAIL,
+    });
+
+    this.logger.log(`Resent OTP to ${dto.email} for purpose ${dto.purpose}`);
+
+    // Log for dev
+    if (this.configService.get('brello.environment') === 'dev') {
+      this.logger.warn(`[DEV] Resent OTP for ${dto.email}: ${otp}`);
+    }
+  }
+
+  private getNotificationDetails(
+    purpose: OtpPurpose,
+    email: string,
+    otp: string,
+  ) {
+    const expiration = this.configService.get<number>(
+      'otp.expirationMinutes',
+      10,
+    );
+    switch (purpose) {
+      case OtpPurpose.LOGIN:
+        return {
+          title: 'Your Login OTP',
+          message: `Your one-time password is: ${otp}. It will expire in ${expiration} minutes.`,
+        };
+      case OtpPurpose.RESET_PASSWORD:
+        return {
+          title: 'Reset Your Password',
+          message: `Your password reset OTP is: ${otp}. It will expire in ${expiration} minutes.`,
+        };
+      case OtpPurpose.PLATFORM_ADMIN_REGISTER:
+        return {
+          title: 'Platform Admin Registration OTP',
+          message: `Your registration OTP is ${otp}. Please use it to activate your admin account.`,
+        };
+      case OtpPurpose.PLATFORM_ADMIN_LOGIN:
+        return {
+          title: 'Platform Admin Login OTP',
+          message: `Your login OTP is ${otp}. Please use it to access your admin account.`,
+        };
+      case OtpPurpose.LEAD_VERIFICATION:
+        return {
+          title: 'Verify Your Email',
+          message: `Your verification OTP is ${otp}. It will expire in ${expiration} minutes.`,
+        };
+      default:
+        return {
+          title: 'Verification OTP',
+          message: `Your verification OTP is ${otp}. It will expire in ${expiration} minutes.`,
+        };
+    }
   }
 }

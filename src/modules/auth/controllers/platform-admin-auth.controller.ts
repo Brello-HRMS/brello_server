@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Res,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import * as express from 'express';
 import { PlatformAdminAuthService } from '../services/platform-admin-auth.service';
 import { CookieService } from '../services/cookie.service';
@@ -17,6 +18,7 @@ import {
 } from '../dto/platform-admin.dto';
 
 // Controller specifically for handling Platform Admin authentication flows
+@ApiTags('Platform Admin Authentication')
 @Controller('auth/platform-admin')
 export class PlatformAdminAuthController {
   constructor(

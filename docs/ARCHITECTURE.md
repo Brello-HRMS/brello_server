@@ -354,6 +354,7 @@ Located in `src/modules/auth/`.
 | **Switch App**         | `POST /auth/switch-app` — issues new JWT scoped to a different app                  |
 | **Password Update**    | Requires current password, invalidates all sessions                                 |
 | **Forgot Password**    | OTP-based flow: generate OTP → verify OTP → reset password                          |
+| **Resend OTP**         | `POST /auth/resend-otp` — unified endpoint for all OTP purposes (`LOGIN`, `RESET_PW`, `PA_REGISTER`, etc.) |
 | **OTP Cleanup**        | Cron job runs hourly to purge expired OTPs                                          |
 | **Session Cleanup**    | Cron job runs daily at midnight to purge expired sessions                           |
 

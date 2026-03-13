@@ -7,6 +7,7 @@ import {
   UseGuards,
   Res,
 } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import * as express from 'express';
 import { AuthService } from '../services/auth.service';
 import { CookieService } from '../services/cookie.service';
@@ -21,11 +22,13 @@ import {
   ForgotPasswordRequestDto,
   VerifyOtpAndResetPasswordDto,
 } from '../dto/forgot-password.dto';
+import { ResendOtpDto } from '../dto/resend-otp.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from '../guards/jwt-refresh-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../interfaces/jwt-payload.interface';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -129,5 +132,12 @@ export class AuthController {
     @Body() verifyOtpDto: VerifyOtpAndResetPasswordDto,
   ) {
     return this.authService.verifyOtpAndResetPassword(verifyOtpDto);
+  }
+
+  @Post('resend-otp')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Resend OTP for a given soul/purpose' })
+  resendOtp(@Body() resendOtpDto: ResendOtpDto) {
+    return this.authService.resendOtp(resendOtpDto);
   }
 }

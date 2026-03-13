@@ -334,6 +334,34 @@
           "response": []
         },
         {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"purpose\": \"LOGIN\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/resend-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "resend-otp"
+              ]
+            },
+            "description": "Unified endpoint to resend an OTP for any purpose (LOGIN, RESET_PASSWORD, PLATFORM_ADMIN_LOGIN, etc).\n\n**Requirement:** An initial OTP request must have already been made for this email and purpose."
+          },
+          "response": []
+        },
+        {
           "name": "Platform Admin Register (Request OTP)",
           "request": {
             "method": "POST",
