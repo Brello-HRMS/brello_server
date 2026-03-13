@@ -1,42 +1,33 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import databaseConfig from './config/database.config';
+import { databaseConfigFactory } from './config/database.config';
 import { EnterpriseModule } from './modules/enterprise/enterprise.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DepartmentModule } from './modules/departments/department.module';
+import { RbacModule } from './modules/rbac/rbac.module';
+import { PlanModule } from './modules/plan/plan.module';
+import { NotificationModule } from './modules/notification/notification.module';
+import { AppManagementModule } from './modules/app/app-management.module';
+import { AppModuleModule } from './modules/app-module/app-module.module';
+import { PropertiesModule } from './core/properties/properties.module';
+import { IndustryTypeModule } from './modules/industry-type/industry-type.module';
+import { DocumentModule } from './modules/document/document.module';
+import { LeadModule } from './modules/lead/lead.module';
+import { RoleModule } from './modules/role/role.module';
 
-
-/**
- * App Module
- * 
- * Root module of the application.
- * Imports all feature modules and configures global services.
- * 
- * Design Pattern: Module Pattern
- * - Organizes application into cohesive modules
- * - Provides dependency injection container
- * - Configures global providers
- * 
- * Configuration:
- * - Environment variables via ConfigModule
- * - Database connection via TypeOrmModule
- * - Feature modules: Enterprise, Organization, User, Auth
- */
 @Module({
   imports: [
-    // Load environment variables
-    ConfigModule.forRoot({
-      isGlobal: true, // Make ConfigService available globally
-      load: [databaseConfig],
-      envFilePath: '.env',
-    }),
+    // Load YAML properties first (makes ConfigService available globally)
+    PropertiesModule,
 
-    // Configure TypeORM with database config
+    // TypeORM uses ConfigService to read db.postgres.* from YAML
     TypeOrmModule.forRootAsync({
-      useFactory: databaseConfig,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: databaseConfigFactory,
     }),
 
     // Feature modules — loaded in dependency order
@@ -46,8 +37,16 @@ import { DepartmentModule } from './modules/departments/department.module';
     UserModule,
     AuthModule,
     DepartmentModule,
-
+    DocumentModule,
+    IndustryTypeModule,
+    // New RBAC + multi-app modules
+    AppManagementModule,
+    PlanModule,
+    AppModuleModule,
+    RbacModule,
+    NotificationModule,
+    LeadModule,
+    RoleModule,
   ],
 })
-export class AppModule { }
-
+export class AppModule {}

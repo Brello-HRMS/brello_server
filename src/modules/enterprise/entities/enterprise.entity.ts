@@ -1,29 +1,59 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  Index,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Status } from 'src/common/enums';
 
-// Enterprise Entity - Represents the top-level tenant in the multi-tenant architecture
-@Entity('enterprises')
+@Entity('enterprise')
+@Index(['domain'], { unique: true })
 export class Enterprise {
-    // Unique identifier for the enterprise
-    @Column({ primary: true, type: 'uuid', generated: 'uuid' })
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    // Name of the enterprise
-    @Column({ type: 'varchar', length: 255 })
-    name: string;
+  @Column({
+    type: 'enum',
+    enum: Status,
+    default: Status.ACTIVE,
+  })
+  status: Status;
 
-    // Domain name associated with the enterprise
-    @Column({ type: 'varchar', length: 255 })
-    domain: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  code: string;
 
-    // Timestamp when the enterprise was created
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    created_at: Date;
+  @Column({ type: 'text', nullable: true })
+  description: string;
 
-    // Timestamp when the enterprise was last updated
-    @Column({
-        type: 'timestamp',
-        default: () => 'CURRENT_TIMESTAMP',
-        onUpdate: 'CURRENT_TIMESTAMP',
-    })
-    updated_at: Date;
+  @CreateDateColumn({ type: 'timestamp' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamp' })
+  updated_at: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  modified_by: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  modified_at: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  deleted_by: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deleted_at: Date;
+
+  @Column({ type: 'varchar', length: 255 })
+  name: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  domain: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  logo: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  favicon: string;
 }

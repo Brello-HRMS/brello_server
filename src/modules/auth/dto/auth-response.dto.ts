@@ -1,50 +1,77 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
+
+/** Summary of an available app returned on login/switch-app */
+export class AvailableAppDto {
+  @Expose() id: string;
+  @Expose() name: string;
+  @Expose() priority: number;
+}
 
 /**
- * Auth Response DTO
- * 
- * Data Transfer Object for authentication responses.
- * Contains access token, refresh token, and user information.
- * 
- * Design Pattern: DTO Pattern
- * - Standardizes authentication response structure
- * - Provides type safety for API consumers
+ * Auth Response DTO — returned on login & switch-app
  */
 @Exclude()
 export class AuthResponseDto {
-    @Expose()
-    access_token: string;
+  @Expose()
+  access_token: string;
 
-    @Expose()
-    refresh_token: string;
+  @Expose()
+  refresh_token: string;
 
-    @Expose()
-    user: {
-        id: string;
-        email: string;
-        first_name: string;
-        last_name: string;
-        enterprise_id: string;
-        organization_id: string;
-    };
+  @Expose()
+  user: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    enterprise_id?: string;
+    organization_id?: string;
+    is_platform_admin?: boolean;
+  };
 
-    @Expose()
-    expires_in: number; // Access token expiration in seconds
+  @Expose()
+  expires_in: number;
+
+  /** The app the JWT is currently scoped to */
+  @Expose()
+  defaultAppId: string;
+
+  /** All apps the user has at least one role in */
+  @Expose()
+  @Type(() => AvailableAppDto)
+  availableApps: AvailableAppDto[];
+
+  /** Indicates if the user must complete company setup before proceeding */
+  @Expose()
+  setup_required?: boolean;
 }
 
 /**
  * Refresh Token Response DTO
- * 
- * Response for token refresh endpoint.
  */
 @Exclude()
 export class RefreshTokenResponseDto {
-    @Expose()
-    access_token: string;
+  @Expose()
+  access_token: string;
 
-    @Expose()
-    refresh_token: string;
+  @Expose()
+  refresh_token: string;
 
-    @Expose()
-    expires_in: number;
+  @Expose()
+  expires_in: number;
+}
+
+/**
+ * Switch App Response DTO
+ */
+@Exclude()
+export class SwitchAppResponseDto {
+  @Expose()
+  access_token: string;
+
+  @Expose()
+  appId: string;
+
+  @Expose()
+  expires_in: number;
 }

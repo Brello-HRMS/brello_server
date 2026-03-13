@@ -1,70 +1,96 @@
 import {
-    Controller,
-    Post,
-    Body,
-    HttpCode,
-    HttpStatus,
-    UseGuards,
+  Controller,
+  Post,
+  Body,
+  Get,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
-import { LoginDto } from '../dto/login.dto';
+import {
+  LoginOtpDto,
+  LoginPasswordDto,
+  VerifyLoginOtpDto,
+} from '../dto/login.dto';
+import { SwitchAppDto } from '../dto/switch-app.dto';
 import { UpdatePasswordDto } from '../dto/update-password.dto';
-import { ForgotPasswordRequestDto, VerifyOtpAndResetPasswordDto } from '../dto/forgot-password.dto';
+import {
+  ForgotPasswordRequestDto,
+  VerifyOtpAndResetPasswordDto,
+} from '../dto/forgot-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from '../guards/jwt-refresh-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../interfaces/jwt-payload.interface';
 
-// Auth Controller - Handles HTTP requests for authentication and authorization
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
-    // User login
-    @Post('login')
-    @HttpCode(HttpStatus.OK)
-    login(@Body() loginDto: LoginDto) {
-        return this.authService.login(loginDto);
-    }
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  loginWithPassword(@Body() loginDto: LoginPasswordDto) {
+    return this.authService.loginWithPassword(loginDto);
+  }
 
-    // User logout (requires authentication)
-    @Post('logout')
-    @UseGuards(JwtAuthGuard)
-    @HttpCode(HttpStatus.NO_CONTENT)
-    logout(@CurrentUser() user: JwtPayload) {
-        return this.authService.logout(user.sessionId);
-    }
+  @Post('login/send-otp')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  loginSendOtp(@Body() dto: LoginOtpDto) {
+    return this.authService.loginSendOtp(dto);
+  }
 
-    // Refresh access token (requires refresh token)
-    @Post('refresh')
-    @UseGuards(JwtRefreshAuthGuard)
-    @HttpCode(HttpStatus.OK)
-    refresh(@CurrentUser() user: JwtPayload) {
-        return this.authService.refreshToken(user);
-    }
+  @Post('login/verify-otp')
+  @HttpCode(HttpStatus.OK)
+  loginWithOtp(@Body() dto: VerifyLoginOtpDto) {
+    return this.authService.loginWithOtp(dto);
+  }
 
-    // Update password (requires authentication)
-    @Post('update-password')
-    @UseGuards(JwtAuthGuard)
-    @HttpCode(HttpStatus.NO_CONTENT)
-    updatePassword(
-        @CurrentUser() user: JwtPayload,
-        @Body() updatePasswordDto: UpdatePasswordDto,
-    ) {
-        return this.authService.updatePassword(user.userId, updatePasswordDto);
-    }
+  @Post('switch-app')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  switchApp(
+    @CurrentUser() user: JwtPayload,
+    @Body() switchAppDto: SwitchAppDto,
+  ) {
+    return this.authService.switchApp(user, switchAppDto);
+  }
 
-    // Initiate password reset flow by sending OTP
-    @Post('forgot-password')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    forgotPassword(@Body() forgotPasswordDto: ForgotPasswordRequestDto) {
-        return this.authService.forgotPassword(forgotPasswordDto);
-    }
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  logout(@CurrentUser() user: JwtPayload) {
+    return this.authService.logout(user.sessionId);
+  }
 
-    // Verify OTP and reset password
-    @Post('verify-otp')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    verifyOtpAndResetPassword(@Body() verifyOtpDto: VerifyOtpAndResetPasswordDto) {
-        return this.authService.verifyOtpAndResetPassword(verifyOtpDto);
-    }
+  @Post('refresh')
+  @UseGuards(JwtRefreshAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  refresh(@CurrentUser() user: JwtPayload) {
+    return this.authService.refreshToken(user);
+  }
+
+  @Post('update-password')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  updatePassword(
+    @CurrentUser() user: JwtPayload,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    return this.authService.updatePassword(user.userId, updatePasswordDto);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordRequestDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('verify-otp')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  verifyOtpAndResetPassword(
+    @Body() verifyOtpDto: VerifyOtpAndResetPasswordDto,
+  ) {
+    return this.authService.verifyOtpAndResetPassword(verifyOtpDto);
+  }
 }

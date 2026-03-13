@@ -3,14 +3,14 @@ import { AuthGuard } from '@nestjs/passport';
 
 /**
  * JWT Auth Guard
- * 
+ *
  * Guard that protects routes requiring authentication.
  * Uses the JWT strategy to validate access tokens.
- * 
+ *
  * Design Pattern: Guard Pattern
  * - Controls access to routes based on authentication
  * - Declarative security using decorators
- * 
+ *
  * Usage:
  * ```typescript
  * @UseGuards(JwtAuthGuard)
@@ -21,4 +21,4 @@ import { AuthGuard } from '@nestjs/passport';
  * ```
  */
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') { }
+export class JwtAuthGuard extends AuthGuard('jwt') {}

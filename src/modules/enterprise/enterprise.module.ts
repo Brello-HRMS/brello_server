@@ -1,28 +1,25 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EnterpriseService } from './services/enterprise.service';
-import { EnterpriseController } from './controllers/enterprise.controller';
 import { Enterprise } from './entities/enterprise.entity';
+import { EnterpriseApp } from './entities/enterprise-app.entity';
+import { EnterpriseController } from './controllers/enterprise.controller';
+import { EnterpriseService } from './services/enterprise.service';
 import { EnterpriseRepository } from './repositories/enterprise.repository';
+import { EnterpriseAppRepository } from './repositories/enterprise-app.repository';
+import { AppManagementModule } from '../app/app-management.module';
 
-/**
- * Enterprise Module
- * 
- * Encapsulates all enterprise-related functionality.
- * Follows the Module pattern for organizing related components.
- * 
- * Design Pattern: Module Pattern
- * - Groups related components together
- * - Provides clear boundaries and dependencies
- * - Enables lazy loading and code splitting
- * 
- * Exports:
- * - EnterpriseService: For use in other modules (e.g., Organization module)
- */
 @Module({
-    imports: [TypeOrmModule.forFeature([Enterprise])],
-    controllers: [EnterpriseController],
-    providers: [EnterpriseService, EnterpriseRepository],
-    exports: [EnterpriseService], // Export for use in other modules
+  imports: [
+    TypeOrmModule.forFeature([Enterprise, EnterpriseApp]),
+    forwardRef(() => AppManagementModule),
+  ],
+  controllers: [EnterpriseController],
+  providers: [EnterpriseService, EnterpriseRepository, EnterpriseAppRepository],
+  exports: [
+    EnterpriseService,
+    EnterpriseRepository,
+    EnterpriseAppRepository,
+    TypeOrmModule,
+  ],
 })
-export class EnterpriseModule { }
+export class EnterpriseModule {}

@@ -8,49 +8,59 @@ import { AuthService } from './services/auth.service';
 import { AuthController } from './controllers/auth.controller';
 import { Session } from './entities/session.entity';
 import { Otp } from './entities/otp.entity';
-import { SessionRepository } from './repositories/session.repository';
 import { OtpRepository } from './repositories/otp.repository';
+import { PlatformAdminAuthController } from './controllers/platform-admin-auth.controller';
+import { PlatformAdminAuthService } from './services/platform-admin-auth.service';
+import { TokenService } from './services/token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { OtpCleanupTask } from './tasks/otp-cleanup.task';
 import { UserModule } from '../user/user.module';
+import { UserRoleMap } from '../rbac/entities/user-role-map.entity';
+import { Role } from '../role/entities/role.entity';
+import { App } from '../app/entities/app.entity';
+import { SessionRepository } from './repositories/session.repository';
+import { NotificationModule } from '../notification/notification.module';
 
 /**
  * Auth Module
- * 
- * Encapsulates all authentication and authorization functionality.
- * Follows the Module pattern for organizing related components.
- * 
- * Design Pattern: Module Pattern
- * - Groups related components together
- * - Provides clear boundaries and dependencies
- * - Configures JWT and Passport
- * 
- * Features:
- * - JWT-based authentication
- * - Refresh token rotation
- * - Session management
- * - OTP for password reset
- * - Scheduled cleanup tasks
+ *
+ * Encapsulates all authentication functionality.
+ * Now extended with multi-app support:
+ * - Login resolves available apps & default app from user roles
+ * - JWT payload includes appId, organizationId, enterpriseId
+ * - switch-app endpoint issues app-scoped tokens
  */
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Session, Otp]),
-        UserModule, // Import to access UserService
-        PassportModule,
-        JwtModule.register({}), // Empty config, we'll use ConfigService in strategies
-        ConfigModule,
-        ScheduleModule.forRoot(), // Enable scheduling
-    ],
-    controllers: [AuthController],
-    providers: [
-        AuthService,
-        SessionRepository,
-        OtpRepository,
-        JwtStrategy,
-        JwtRefreshStrategy,
-        OtpCleanupTask,
-    ],
-    exports: [AuthService], // Export for potential use in other modules
+  imports: [
+    TypeOrmModule.forFeature([
+      Session,
+      Otp,
+      UserRoleMap, // For login: resolving available apps from user roles
+      Role, // Joined via UserRoleMap
+      App, // For fetching app priority/name
+    ]),
+    UserModule,
+    PassportModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1d' },
+    }),
+    ConfigModule,
+    ScheduleModule.forRoot(),
+    NotificationModule,
+  ],
+  controllers: [AuthController, PlatformAdminAuthController],
+  providers: [
+    TokenService,
+    AuthService,
+    PlatformAdminAuthService,
+    SessionRepository,
+    OtpRepository,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    OtpCleanupTask,
+  ],
+  exports: [AuthService, PlatformAdminAuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

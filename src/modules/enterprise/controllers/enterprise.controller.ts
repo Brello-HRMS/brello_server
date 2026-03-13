@@ -1,59 +1,57 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
-    HttpCode,
-    HttpStatus,
-    ParseUUIDPipe,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { EnterpriseService } from '../services/enterprise.service';
 import { CreateEnterpriseDto } from '../dto/create-enterprise.dto';
 import { UpdateEnterpriseDto } from '../dto/update-enterprise.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PlatformAdminGuard } from '../../../core/guards/platform-admin.guard';
 
-// Enterprise Controller - Handles HTTP requests for enterprise management
 @Controller('enterprises')
+@UseGuards(JwtAuthGuard, PlatformAdminGuard)
 export class EnterpriseController {
-    constructor(private readonly enterpriseService: EnterpriseService) { }
+  constructor(private readonly enterpriseService: EnterpriseService) {}
 
-    // Create a new enterprise
-    @Post()
-    @HttpCode(HttpStatus.CREATED)
-    create(@Body() createEnterpriseDto: CreateEnterpriseDto) {
-        return this.enterpriseService.create(createEnterpriseDto);
-    }
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  create(@Body() dto: CreateEnterpriseDto) {
+    return this.enterpriseService.create(dto);
+  }
 
-    // Get all enterprises
-    @Get()
-    @HttpCode(HttpStatus.OK)
-    findAll() {
-        return this.enterpriseService.findAll();
-    }
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  findAll() {
+    return this.enterpriseService.findAll();
+  }
 
-    // Get enterprise by ID
-    @Get(':id')
-    @HttpCode(HttpStatus.OK)
-    findOne(@Param('id', ParseUUIDPipe) id: string) {
-        return this.enterpriseService.findOne(id);
-    }
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.enterpriseService.findOneById(id);
+  }
 
-    // Update an enterprise
-    @Patch(':id')
-    @HttpCode(HttpStatus.OK)
-    update(
-        @Param('id', ParseUUIDPipe) id: string,
-        @Body() updateEnterpriseDto: UpdateEnterpriseDto,
-    ) {
-        return this.enterpriseService.update(id, updateEnterpriseDto);
-    }
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateEnterpriseDto,
+  ) {
+    return this.enterpriseService.update(id, dto);
+  }
 
-    // Delete an enterprise
-    @Delete(':id')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    remove(@Param('id', ParseUUIDPipe) id: string) {
-        return this.enterpriseService.remove(id);
-    }
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.enterpriseService.remove(id);
+  }
 }

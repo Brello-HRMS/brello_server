@@ -1,112 +1,188 @@
 import {
-    Injectable,
-    NotFoundException,
-    ConflictException,
-    Logger,
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
-import { EnterpriseRepository } from '../repositories/enterprise.repository';
+import * as dns from 'dns';
+import { DataSource } from 'typeorm';
+import { Enterprise } from '../entities/enterprise.entity';
+import { App } from '../../app/entities/app.entity';
 import { CreateEnterpriseDto } from '../dto/create-enterprise.dto';
 import { UpdateEnterpriseDto } from '../dto/update-enterprise.dto';
-import { Enterprise } from '../entities/enterprise.entity';
+import { EnterpriseRepository } from '../repositories/enterprise.repository';
+import { EnterpriseAppRepository } from '../repositories/enterprise-app.repository';
+import { AppRepository } from '../../app/repositories/app.repository';
 
-// Enterprise Service - Implements business logic for enterprise management
 @Injectable()
 export class EnterpriseService {
-    private readonly logger = new Logger(EnterpriseService.name);
+  constructor(
+    private readonly enterpriseRepository: EnterpriseRepository,
+    private readonly enterpriseAppRepository: EnterpriseAppRepository,
+    @Inject(forwardRef(() => AppRepository))
+    private readonly appRepository: AppRepository,
+    private readonly dataSource: DataSource,
+  ) {}
 
-    constructor(private readonly enterpriseRepository: EnterpriseRepository) { }
+  async create(dto: CreateEnterpriseDto): Promise<Enterprise> {
+    await this.validateDomainExists(dto.domain);
+    await this.validateDomainUniqueness(dto.domain);
 
-    // Create a new enterprise
-    async create(createEnterpriseDto: CreateEnterpriseDto): Promise<Enterprise> {
-        this.logger.log(`Creating enterprise: ${createEnterpriseDto.name}`);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-        // Check if domain already exists
-        const existingEnterprise = await this.enterpriseRepository.findByDomain(
-            createEnterpriseDto.domain,
+    try {
+      const enterprise = this.enterpriseRepository.create(dto);
+      const savedEnterprise = await queryRunner.manager.save(enterprise);
+
+      const allApps = await this.appRepository.findAll();
+      if (allApps.length > 0) {
+        const appIds = allApps.map((app) => app.id);
+        await this.createAppMappings(
+          savedEnterprise.id,
+          appIds,
+          queryRunner.manager,
         );
+      }
 
-        if (existingEnterprise) {
-            throw new ConflictException(
-                `Enterprise with domain '${createEnterpriseDto.domain}' already exists`,
-            );
-        }
+      await queryRunner.commitTransaction();
+      return savedEnterprise;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 
-        const enterprise = await this.enterpriseRepository.create(
-            createEnterpriseDto,
-        );
+  async findAll(): Promise<(Enterprise & { apps: App[] })[]> {
+    const enterprises = await this.enterpriseRepository.findAll();
+    if (!enterprises.length) return [];
 
-        this.logger.log(`Enterprise created successfully: ${enterprise.id}`);
-        return enterprise;
+    const enterpriseIds = enterprises.map((e) => e.id);
+
+    const appEnterpriseMappings =
+      await this.enterpriseAppRepository.getAppsForEnterpriseIds(enterpriseIds);
+
+    const uniqueAppIds = [
+      ...new Set(appEnterpriseMappings.map((app) => app.app_id)),
+    ];
+    const allApps =
+      uniqueAppIds.length > 0
+        ? await this.appRepository.findByIds(uniqueAppIds)
+        : [];
+
+    const appMap = new Map(allApps.map((app) => [app.id, app]));
+
+    return enterprises.map((enterprise) => {
+      const enterpriseAppIds = appEnterpriseMappings
+        .filter((app) => app.enterprise_id === enterprise.id)
+        .map((app) => app.app_id);
+
+      const apps = enterpriseAppIds
+        .map((id) => appMap.get(id))
+        .filter((app): app is App => !!app);
+
+      return { ...enterprise, apps };
+    });
+  }
+
+  async findOneById(id: string): Promise<Enterprise & { apps: App[] }> {
+    const enterprise = await this.enterpriseRepository.findOneById(id);
+    if (!enterprise) {
+      throw new NotFoundException(`Enterprise with ID "${id}" not found`);
     }
 
-    // Get all enterprises
-    async findAll(): Promise<Enterprise[]> {
-        this.logger.log('Fetching all enterprises');
-        return this.enterpriseRepository.findAll();
+    const apps = await this.getAppsForEnterprise(id);
+    return { ...enterprise, apps };
+  }
+
+  private async getAppsForEnterprise(enterpriseId: string): Promise<App[]> {
+    const mappings =
+      await this.enterpriseAppRepository.getAppsForEnterprise(enterpriseId);
+
+    if (!mappings.length) return [];
+
+    const appIds = mappings.map((mapping) => mapping.app_id);
+    return this.appRepository.findByIds(appIds);
+  }
+
+  async update(id: string, dto: UpdateEnterpriseDto): Promise<Enterprise> {
+    const enterprise = await this.findOneById(id);
+
+    if (dto.domain && dto.domain !== enterprise.domain) {
+      await this.validateDomainExists(dto.domain);
+      await this.validateDomainUniqueness(dto.domain);
     }
 
-    // Get enterprise by ID
-    async findOne(id: string): Promise<Enterprise> {
-        this.logger.log(`Fetching enterprise: ${id}`);
+    Object.assign(enterprise, dto);
+    return this.enterpriseRepository.save(enterprise);
+  }
 
-        const enterprise = await this.enterpriseRepository.findById(id);
+  async remove(id: string): Promise<void> {
+    await this.findOneById(id);
 
-        if (!enterprise) {
-            throw new NotFoundException(`Enterprise with ID '${id}' not found`);
-        }
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-        return enterprise;
+    try {
+      await this.enterpriseAppRepository.softDeleteByEnterpriseId(id);
+      await this.enterpriseRepository.softDelete(id);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    // Update an enterprise
-    async update(
-        id: string,
-        updateEnterpriseDto: UpdateEnterpriseDto,
-    ): Promise<Enterprise> {
-        this.logger.log(`Updating enterprise: ${id}`);
+  async assignAppsToEnterprise(
+    enterpriseId: string,
+    appIds: string[],
+  ): Promise<void> {
+    await this.findOneById(enterpriseId);
+    await this.enterpriseAppRepository.bulkCreate(enterpriseId, appIds);
+  }
 
-        // Verify enterprise exists
-        await this.findOne(id);
-
-        // If domain is being updated, check for conflicts
-        if (updateEnterpriseDto.domain) {
-            const existingEnterprise = await this.enterpriseRepository.findByDomain(
-                updateEnterpriseDto.domain,
-            );
-
-            if (existingEnterprise && existingEnterprise.id !== id) {
-                throw new ConflictException(
-                    `Enterprise with domain '${updateEnterpriseDto.domain}' already exists`,
-                );
-            }
-        }
-
-        const updatedEnterprise = await this.enterpriseRepository.update(
-            id,
-            updateEnterpriseDto,
-        );
-
-        if (!updatedEnterprise) {
-            throw new NotFoundException(`Enterprise with ID '${id}' not found after update`);
-        }
-
-        this.logger.log(`Enterprise updated successfully: ${id}`);
-        return updatedEnterprise;
+  private async validateDomainExists(domain: string): Promise<void> {
+    try {
+      await dns.promises.resolve(domain);
+    } catch {
+      throw new BadRequestException(
+        `Domain "${domain}" does not exist. Please provide a valid domain.`,
+      );
     }
+  }
 
-    // Delete an enterprise
-    async remove(id: string): Promise<void> {
-        this.logger.log(`Deleting enterprise: ${id}`);
-
-        // Verify enterprise exists
-        await this.findOne(id);
-
-        const deleted = await this.enterpriseRepository.delete(id);
-
-        if (!deleted) {
-            throw new NotFoundException(`Failed to delete enterprise with ID '${id}'`);
-        }
-
-        this.logger.log(`Enterprise deleted successfully: ${id}`);
+  private async validateDomainUniqueness(domain: string): Promise<void> {
+    const existing = await this.enterpriseRepository.findByDomain(domain);
+    if (existing) {
+      throw new ConflictException(
+        `Enterprise with domain "${domain}" already exists`,
+      );
     }
+  }
+
+  private async createAppMappings(
+    enterpriseId: string,
+    appIds: string[],
+    manager: any,
+  ): Promise<void> {
+    const mappings = appIds.map((appId) => ({
+      enterprise_id: enterpriseId,
+      app_id: appId,
+    }));
+    await manager
+      .createQueryBuilder()
+      .insert()
+      .into('enterprise_app')
+      .values(mappings)
+      .execute();
+  }
 }

@@ -6,7 +6,6 @@ export class AppService {
     return 'Hello Bhushan!';
   }
 
-
   passwordHash(password: string): string {
     return password;
   }
