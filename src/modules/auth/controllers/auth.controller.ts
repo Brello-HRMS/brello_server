@@ -2,12 +2,14 @@ import {
   Controller,
   Post,
   Body,
-  Get,
   HttpCode,
   HttpStatus,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import * as express from 'express';
 import { AuthService } from '../services/auth.service';
+import { CookieService } from '../services/cookie.service';
 import {
   LoginOtpDto,
   LoginPasswordDto,
@@ -26,12 +28,25 @@ import type { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly cookieService: CookieService,
+  ) { }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  loginWithPassword(@Body() loginDto: LoginPasswordDto) {
-    return this.authService.loginWithPassword(loginDto);
+  async loginWithPassword(
+    @Body() loginDto: LoginPasswordDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const result = await this.authService.loginWithPassword(loginDto);
+
+    if (result.refresh_token) {
+      this.cookieService.setRefreshTokenCookie(res, result.refresh_token);
+    }
+
+    const { refresh_token, ...responseBody } = result;
+    return responseBody;
   }
 
   @Post('login/send-otp')
@@ -42,8 +57,18 @@ export class AuthController {
 
   @Post('login/verify-otp')
   @HttpCode(HttpStatus.OK)
-  loginWithOtp(@Body() dto: VerifyLoginOtpDto) {
-    return this.authService.loginWithOtp(dto);
+  async loginWithOtp(
+    @Body() dto: VerifyLoginOtpDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const result = await this.authService.loginWithOtp(dto);
+
+    if (result.refresh_token) {
+      this.cookieService.setRefreshTokenCookie(res, result.refresh_token);
+    }
+
+    const { refresh_token, ...responseBody } = result;
+    return responseBody;
   }
 
   @Post('switch-app')
@@ -59,15 +84,27 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  logout(@CurrentUser() user: JwtPayload) {
-    return this.authService.logout(user.sessionId);
+  async logout(
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    await this.authService.logout(user.sessionId);
+    this.cookieService.clearRefreshTokenCookie(res);
   }
 
   @Post('refresh')
   @UseGuards(JwtRefreshAuthGuard)
   @HttpCode(HttpStatus.OK)
-  refresh(@CurrentUser() user: JwtPayload) {
-    return this.authService.refreshToken(user);
+  async refresh(
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const result = await this.authService.refreshToken(user);
+
+    this.cookieService.setRefreshTokenCookie(res, result.refresh_token);
+
+    const { refresh_token, ...responseBody } = result;
+    return responseBody;
   }
 
   @Post('update-password')
