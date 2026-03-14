@@ -18,6 +18,9 @@ import { DocumentModule } from './modules/document/document.module';
 import { LeadModule } from './modules/lead/lead.module';
 import { RoleModule } from './modules/role/role.module';
 
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.interceptor';
+
 @Module({
   imports: [
     // Load YAML properties first (makes ConfigService available globally)
@@ -47,6 +50,12 @@ import { RoleModule } from './modules/role/role.module';
     NotificationModule,
     LeadModule,
     RoleModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggedInUserInterceptor,
+    },
   ],
 })
 export class AppModule {}

@@ -22,6 +22,8 @@ import {
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from '../guards/jwt-refresh-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../interfaces/logged-in-user.interface';
 import type { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 @Controller('auth')
@@ -50,7 +52,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   switchApp(
-    @CurrentUser() user: JwtPayload,
+    @LoggedInUser() user: LoggedInUserInterface,
     @Body() switchAppDto: SwitchAppDto,
   ) {
     return this.authService.switchApp(user, switchAppDto);
@@ -74,10 +76,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   updatePassword(
-    @CurrentUser() user: JwtPayload,
+    @LoggedInUser() user: LoggedInUserInterface,
     @Body() updatePasswordDto: UpdatePasswordDto,
   ) {
-    return this.authService.updatePassword(user.userId, updatePasswordDto);
+    return this.authService.updatePassword(user, updatePasswordDto);
   }
 
   @Post('forgot-password')

@@ -9,7 +9,7 @@ import { CreateRoleDto } from '../dto/create-role.dto';
 import { UpdateRoleDto } from '../dto/update-role.dto';
 import { RoleRepository } from '../repositories/role.repository';
 import { Role } from '../entities/role.entity';
-import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class RoleService {
@@ -19,11 +19,11 @@ export class RoleService {
 
   async create(
     createRoleDto: CreateRoleDto,
-    currentUser: JwtPayload,
+    user: LoggedInUser,
   ): Promise<Role> {
     this.logger.log(`Creating role: ${createRoleDto.name}`);
-
-    this.validateSystemRoleAccess(currentUser, createRoleDto.is_system_defined);
+ 
+    this.validateSystemRoleAccess(user, createRoleDto.is_system_defined);
 
     const existingRole = await this.roleRepository.findByName(
       createRoleDto.name,
@@ -40,7 +40,7 @@ export class RoleService {
     return role;
   }
 
-  async findAll(): Promise<Role[]> {
+  async findAll(user: LoggedInUser): Promise<Role[]> {
     this.logger.log('Fetching all active roles');
     return this.roleRepository.findAll();
   }
@@ -48,6 +48,7 @@ export class RoleService {
   async findByFilter(
     organizationId: string,
     enterpriseId: string,
+    user: LoggedInUser,
   ): Promise<Role[]> {
     this.logger.log(
       `Fetching roles for org: ${organizationId}, enterprise: ${enterpriseId}`,
@@ -55,7 +56,7 @@ export class RoleService {
     return this.roleRepository.findByFilter(organizationId, enterpriseId);
   }
 
-  async findOne(id: string): Promise<Role> {
+  async findOne(id: string, user: LoggedInUser): Promise<Role> {
     this.logger.log(`Fetching role: ${id}`);
 
     const role = await this.roleRepository.findById(id);
@@ -69,17 +70,17 @@ export class RoleService {
   async update(
     id: string,
     updateRoleDto: UpdateRoleDto,
-    currentUser: JwtPayload,
+    user: LoggedInUser,
   ): Promise<Role> {
     this.logger.log(`Updating role: ${id}`);
-
-    const existingRole = await this.findOne(id);
-
+ 
+    const existingRole = await this.findOne(id, user);
+ 
     if (existingRole.is_system_role) {
-      this.validateSystemRoleAccess(currentUser, true);
+      this.validateSystemRoleAccess(user, true);
     }
-
-    this.validateSystemRoleAccess(currentUser, updateRoleDto.is_system_defined);
+ 
+    this.validateSystemRoleAccess(user, updateRoleDto.is_system_defined);
 
     if (updateRoleDto.name) {
       const duplicateRole = await this.roleRepository.findByName(
@@ -103,13 +104,13 @@ export class RoleService {
     return updatedRole;
   }
 
-  async remove(id: string, currentUser: JwtPayload): Promise<void> {
+  async remove(id: string, user: LoggedInUser): Promise<void> {
     this.logger.log(`Soft deleting role: ${id}`);
-
-    const role = await this.findOne(id);
-
+ 
+    const role = await this.findOne(id, user);
+ 
     if (role.is_system_role) {
-      this.validateSystemRoleAccess(currentUser, true);
+      this.validateSystemRoleAccess(user, true);
     }
 
     const deleted = await this.roleRepository.softDelete(id);
@@ -121,10 +122,10 @@ export class RoleService {
   }
 
   private validateSystemRoleAccess(
-    currentUser: JwtPayload,
+    user: LoggedInUser,
     isSystemRole?: boolean,
   ): void {
-    if (isSystemRole && !currentUser.isPlatformAdmin) {
+    if (isSystemRole && !user.isPlatformAdmin) {
       throw new ForbiddenException(
         'Only platform administrators can manage system-defined roles',
       );

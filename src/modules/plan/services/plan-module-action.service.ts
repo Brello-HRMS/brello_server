@@ -5,6 +5,7 @@ import {
   CreatePlanModuleActionDto,
   UpdatePlanModuleActionDto,
 } from '../dto/plan-module-action.dto';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class PlanModuleActionService {
@@ -12,7 +13,7 @@ export class PlanModuleActionService {
     private readonly planModuleActionRepository: PlanModuleActionRepository,
   ) {}
 
-  async create(dto: CreatePlanModuleActionDto): Promise<PlanModuleAction> {
+  async create(dto: CreatePlanModuleActionDto, user?: LoggedInUser): Promise<PlanModuleAction> {
     const planModuleAction = this.planModuleActionRepository.create(dto);
     try {
       return await this.planModuleActionRepository.save(planModuleAction);
@@ -23,17 +24,18 @@ export class PlanModuleActionService {
     }
   }
 
-  async findAll(): Promise<PlanModuleAction[]> {
+  async findAll(user?: LoggedInUser): Promise<PlanModuleAction[]> {
     return this.planModuleActionRepository.findAll();
   }
 
-  async findOne(id: string): Promise<PlanModuleAction> {
+  async findOne(id: string, user?: LoggedInUser): Promise<PlanModuleAction> {
     return this.planModuleActionRepository.findOneById(id);
   }
 
   async findByPlanAndModule(
     planId: string,
     moduleId: string,
+    user?: LoggedInUser,
   ): Promise<PlanModuleAction[]> {
     return this.planModuleActionRepository.findByPlanAndModule(
       planId,
@@ -44,14 +46,15 @@ export class PlanModuleActionService {
   async update(
     id: string,
     dto: UpdatePlanModuleActionDto,
+    user?: LoggedInUser,
   ): Promise<PlanModuleAction> {
-    const planModuleAction = await this.findOne(id);
+    const planModuleAction = await this.findOne(id, user);
     Object.assign(planModuleAction, dto);
     return this.planModuleActionRepository.save(planModuleAction);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
+    await this.findOne(id, user);
     await this.planModuleActionRepository.delete(id);
   }
 }

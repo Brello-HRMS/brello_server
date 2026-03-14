@@ -13,6 +13,7 @@ import { UpdateDepartmentDto } from '../dto/update-department.dto';
 import { ListDepartmentsDto } from '../dto/list-departments.dto';
 import { Department } from '../entities/department.entity';
 import { Status } from '../../../common/enums';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class DepartmentService {
@@ -24,24 +25,15 @@ export class DepartmentService {
         private readonly userService: UserService,
     ) { }
 
-    private async resolveOrgId(userId: string): Promise<string> {
-        const user = await this.userService.findOne(userId);
-
-        if (!user || !user.organization_id) {
-            throw new BadRequestException(
-                'User is not associated with any organization',
-            );
-        }
-        return user.organization_id;
-    }
+    // Simplified: resolveOrgId is no longer needed as organizationId is in LoggedInUser
 
     async create(
-        userId: string,
+        user: LoggedInUser,
         createDepartmentDto: CreateDepartmentDto,
     ): Promise<Department> {
-        this.logger.log(`User ${userId} is creating department: ${createDepartmentDto.code}`);
+        this.logger.log(`User ${user.userId} is creating department: ${createDepartmentDto.code}`);
 
-        const organizationId = await this.resolveOrgId(userId);
+        const organizationId = user.organizationId;
 
         const existing = await this.departmentRepository.findByCode(
             organizationId,
@@ -60,35 +52,31 @@ export class DepartmentService {
             organization_id: organizationId,
             status,
             is_deleted: false,
-            modified_by: userId,
+            modified_by: user.userId,
         });
 
         this.logger.log(
-            `[AUDIT] Department created | id=${department.id} | code=${department.code} | org=${organizationId} | by=${userId}`,
+            `[AUDIT] Department created | id=${department.id} | code=${department.code} | org=${organizationId} | by=${user.userId}`,
         );
 
         return department;
     }
 
     async findAll(
-        userId: string,
+        user: LoggedInUser,
         filters: ListDepartmentsDto,
     ): Promise<Department[]> {
-        this.logger.log(`User ${userId} is listing departments`);
+        this.logger.log(`User ${user.userId} is listing departments`);
 
-        const organizationId = await this.resolveOrgId(userId);
-
-        return this.departmentRepository.findAllByOrg(organizationId, filters);
+        return this.departmentRepository.findAllByOrg(user.organizationId, filters);
     }
 
-    async findOne(userId: string, id: string): Promise<Department> {
-        this.logger.log(`User ${userId} is fetching department: ${id}`);
-
-        const organizationId = await this.resolveOrgId(userId);
+    async findOne(user: LoggedInUser, id: string): Promise<Department> {
+        this.logger.log(`User ${user.userId} is fetching department: ${id}`);
 
         const department = await this.departmentRepository.findOneByOrg(
             id,
-            organizationId,
+            user.organizationId,
         );
 
         if (!department) {
@@ -99,19 +87,19 @@ export class DepartmentService {
     }
 
     async update(
-        userId: string,
+        user: LoggedInUser,
         id: string,
         updateDepartmentDto: UpdateDepartmentDto,
     ): Promise<Department> {
-        this.logger.log(`User ${userId} is updating department: ${id}`);
+        this.logger.log(`User ${user.userId} is updating department: ${id}`);
 
-        await this.findOne(userId, id);
+        await this.findOne(user, id);
 
         const { ...safeUpdate } = updateDepartmentDto;
 
         const updated = await this.departmentRepository.update(id, {
             ...safeUpdate,
-            modified_by: userId,
+            modified_by: user.userId,
         });
 
         if (!updated) {
@@ -121,16 +109,16 @@ export class DepartmentService {
         }
 
         this.logger.log(
-            `[AUDIT] Department updated | id=${id} | by=${userId} | fields=${Object.keys(safeUpdate).join(', ')}`,
+            `[AUDIT] Department updated | id=${id} | by=${user.userId} | fields=${Object.keys(safeUpdate).join(', ')}`,
         );
 
         return updated;
     }
 
-    async remove(userId: string, id: string): Promise<void> {
-        this.logger.log(`User ${userId} is soft-deleting department: ${id}`);
+    async remove(user: LoggedInUser, id: string): Promise<void> {
+        this.logger.log(`User ${user.userId} is soft-deleting department: ${id}`);
 
-        await this.findOne(userId, id);
+        await this.findOne(user, id);
 
         // TODO (Phase 2): Block deletion if active employees are assigned to this department
         // const activeEmployeeCount = await this.employeeRepository.countByDepartment(id);
@@ -143,7 +131,7 @@ export class DepartmentService {
         await this.departmentRepository.softDelete(id);
 
         this.logger.log(
-            `[AUDIT] Department soft-deleted | id=${id} | by=${userId}`,
+            `[AUDIT] Department soft-deleted | id=${id} | by=${user.userId}`,
         );
     }
 }

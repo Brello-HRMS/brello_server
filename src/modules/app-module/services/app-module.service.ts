@@ -2,16 +2,21 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { AppModule } from '../entities/app-module.entity';
 import { AppModuleRepository } from '../repositories/app-module.repository';
 import { CreateAppModuleDto, UpdateAppModuleDto } from '../dto/app-module.dto';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class AppModuleService {
+  private readonly logger = new Logger(AppModuleService.name);
+ 
   constructor(private readonly appModuleRepository: AppModuleRepository) {}
 
-  async create(dto: CreateAppModuleDto): Promise<AppModule> {
+  async create(dto: CreateAppModuleDto, user?: LoggedInUser): Promise<AppModule> {
+    this.logger.log(`Creating app module: ${dto.code}`);
     const module = this.appModuleRepository.create(dto);
     try {
       return await this.appModuleRepository.save(module);
@@ -23,11 +28,11 @@ export class AppModuleService {
     }
   }
 
-  async findAll(): Promise<AppModule[]> {
+  async findAll(user?: LoggedInUser): Promise<AppModule[]> {
     return this.appModuleRepository.findAll();
   }
 
-  async findOne(id: string): Promise<AppModule> {
+  async findOne(id: string, user?: LoggedInUser): Promise<AppModule> {
     const module = await this.appModuleRepository.findOneById(id);
     if (!module) {
       throw new NotFoundException(`AppModule with ID "${id}" not found`);
@@ -35,14 +40,14 @@ export class AppModuleService {
     return module;
   }
 
-  async update(id: string, dto: UpdateAppModuleDto): Promise<AppModule> {
-    const module = await this.findOne(id);
+  async update(id: string, dto: UpdateAppModuleDto, user?: LoggedInUser): Promise<AppModule> {
+    const module = await this.findOne(id, user);
     Object.assign(module, dto);
     return this.appModuleRepository.save(module);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
+    await this.findOne(id, user);
     await this.appModuleRepository.softDelete(id);
   }
 }
