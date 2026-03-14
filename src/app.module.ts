@@ -16,6 +16,7 @@ import { IndustryTypeModule } from './modules/industry-type/industry-type.module
 import { DocumentModule } from './modules/document/document.module';
 import { LeadModule } from './modules/lead/lead.module';
 import { RoleModule } from './modules/role/role.module';
+import { DesignationModule } from './modules/designations/designation.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { RoleModule } from './modules/role/role.module';
     NotificationModule,
     LeadModule,
     RoleModule,
+    DesignationModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
