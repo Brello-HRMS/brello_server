@@ -1,5 +1,15 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Res,
+} from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import * as express from 'express';
 import { PlatformAdminAuthService } from '../services/platform-admin-auth.service';
+import { CookieService } from '../services/cookie.service';
 import {
   RegisterPlatformAdminDto,
   VerifyRegisterPlatformAdminDto,
@@ -8,11 +18,13 @@ import {
 } from '../dto/platform-admin.dto';
 
 // Controller specifically for handling Platform Admin authentication flows
+@ApiTags('Platform Admin Authentication')
 @Controller('auth/platform-admin')
 export class PlatformAdminAuthController {
   constructor(
     private readonly platformAdminAuthService: PlatformAdminAuthService,
-  ) {}
+    private readonly cookieService: CookieService,
+  ) { }
 
   // 1. Register Platform Admin (Sends OTP)
   @Post('register')
@@ -37,10 +49,21 @@ export class PlatformAdminAuthController {
     return this.platformAdminAuthService.loginPlatformAdmin(loginDto);
   }
 
-  // 4. Verify Login OTP (Returns JWT)
+  // 4. Verify Login OTP (Returns JWT + sets refresh cookie)
   @Post('verify-login')
   @HttpCode(HttpStatus.OK)
-  verifyLoginPlatformAdmin(@Body() verifyDto: VerifyLoginPlatformAdminDto) {
-    return this.platformAdminAuthService.verifyLoginPlatformAdmin(verifyDto);
+  async verifyLoginPlatformAdmin(
+    @Body() verifyDto: VerifyLoginPlatformAdminDto,
+    @Res({ passthrough: true }) res: express.Response,
+  ) {
+    const result =
+      await this.platformAdminAuthService.verifyLoginPlatformAdmin(verifyDto);
+
+    if (result.refresh_token) {
+      this.cookieService.setRefreshTokenCookie(res, result.refresh_token);
+    }
+
+    const { refresh_token, ...responseBody } = result;
+    return responseBody;
   }
 }

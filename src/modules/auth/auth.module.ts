@@ -12,6 +12,7 @@ import { OtpRepository } from './repositories/otp.repository';
 import { PlatformAdminAuthController } from './controllers/platform-admin-auth.controller';
 import { PlatformAdminAuthService } from './services/platform-admin-auth.service';
 import { TokenService } from './services/token.service';
+import { CookieService } from './services/cookie.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { OtpCleanupTask } from './tasks/otp-cleanup.task';
@@ -53,6 +54,7 @@ import { NotificationModule } from '../notification/notification.module';
   controllers: [AuthController, PlatformAdminAuthController],
   providers: [
     TokenService,
+    CookieService,
     AuthService,
     PlatformAdminAuthService,
     SessionRepository,
@@ -63,4 +65,4 @@ import { NotificationModule } from '../notification/notification.module';
   ],
   exports: [AuthService, PlatformAdminAuthService],
 })
-export class AuthModule {}
+export class AuthModule { }
