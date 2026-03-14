@@ -24,6 +24,7 @@ import { Status } from 'src/common/enums';
 import { Role } from 'src/modules/role/entities/role.entity';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { AuthResponseDto } from 'src/modules/auth/dto/auth-response.dto';
+import { PlanService } from 'src/modules/plan/services/plan.service';
 
 @Injectable()
 export class OrganizationService {
@@ -34,6 +35,7 @@ export class OrganizationService {
     private readonly enterpriseService: EnterpriseService,
     private readonly dataSource: DataSource,
     private readonly userRepository: UserRepository,
+    private readonly planService: PlanService,
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
   ) {}
@@ -56,6 +58,8 @@ export class OrganizationService {
       this.logger.warn(`User ${user.id} has no plan assigned.`);
       throw new BadRequestException('User does not have a plan assigned');
     }
+
+    await this.planService.findOne(user.plan_id);
 
     this.logger.log(`Starting company setup for user: ${userId}`);
 
