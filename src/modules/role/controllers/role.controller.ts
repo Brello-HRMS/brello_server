@@ -15,6 +15,7 @@ import {
 import { RoleService } from '../services/role.service';
 import { CreateRoleDto } from '../dto/create-role.dto';
 import { UpdateRoleDto } from '../dto/update-role.dto';
+import { ListRolesDto } from '../dto/list-roles.dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
@@ -35,8 +36,11 @@ export class RoleController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll(@LoggedInUser() user: LoggedInUserInterface) {
-    return this.roleService.findAll(user);
+  findAll(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query() query: ListRolesDto,
+  ) {
+    return this.roleService.findAll(user, query);
   }
 
   @Get('filter')

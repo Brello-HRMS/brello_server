@@ -1,15 +1,12 @@
 import { IsOptional, IsEnum, IsString, IsIn } from 'class-validator';
 import { Status } from '../../../common/enums';
+import { ListQueryDto } from '../../../common/dto/pagination.dto';
 
-export class ListDepartmentsDto {
+export class ListDepartmentsDto extends ListQueryDto {
 
     @IsEnum(Status, { message: 'Status must be a valid Status value' })
     @IsOptional()
     status?: Status;
-
-    @IsString()
-    @IsOptional()
-    search?: string;
 
     @IsString()
     @IsIn(['name', 'created_at'], { message: 'sort_by must be name or created_at' })

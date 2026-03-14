@@ -1078,11 +1078,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/users",
+              "raw": "{{base_url}}/users?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
               "host": ["{{base_url}}"],
-              "path": ["users"]
+              "path": ["users"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number" },
+                { "key": "limit", "value": "10", "description": "Items per page" },
+                { "key": "search", "value": "", "description": "Search by name or email", "disabled": true },
+                { "key": "sort_by", "value": "created_at", "description": "Field to sort by" },
+                { "key": "sort_order", "value": "DESC", "description": "Sort direction (ASC/DESC)" },
+                { "key": "status", "value": "ACTIVE", "description": "Filter by status", "disabled": true }
+              ]
             },
-            "description": "List all users. Password hash is never exposed."
+            "description": "Standardized listing of all users.\n\n**Features:**\n- Pagination (`page`, `limit`)\n- Global Search (`search` across first_name, last_name, email)\n- Sorting (`sort_by`, `sort_order`)\n- Organization-level security (auto-scoped)\n- Includes `avatar` and `memberAvatars` in response."
           },
           "response": []
         },
@@ -1178,11 +1186,21 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/employees",
+              "raw": "{{base_url}}/employees?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
               "host": ["{{base_url}}"],
-              "path": ["employees"]
+              "path": ["employees"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "sort_by", "value": "created_at" },
+                { "key": "sort_order", "value": "DESC" },
+                { "key": "departmentId", "value": "", "disabled": true },
+                { "key": "designationId", "value": "", "disabled": true },
+                { "key": "status", "value": "ACTIVE", "disabled": true }
+              ]
             },
-            "description": "List all employees with optional query filtering."
+            "description": "Standardized listing of all employees.\n\n**Features:**\n- Pagination and Sorting\n- Global Search\n- Filter by `departmentId`, `designationId`, and `status`.\n- Includes `avatar` of the employee."
           },
           "response": []
         },
@@ -2261,11 +2279,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/roles",
+              "raw": "{{base_url}}/roles?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
               "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "path": ["roles"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "sort_by", "value": "created_at" },
+                { "key": "sort_order", "value": "DESC" },
+                { "key": "is_system_role", "value": "false", "disabled": true }
+              ]
             },
-            "description": "List all non-deleted roles ordered by name."
+            "description": "Standardized listing of all roles.\n\n**Features:**\n- Pagination, Search, and Sorting\n- Filter by `is_system_role`\n- Auto-scoped to organization/enterprise."
           },
           "response": []
         },
@@ -2450,25 +2476,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/departments?status=ACTIVE&sort_by=name&sort_order=ASC",
+              "raw": "{{base_url}}/departments?page=1&limit=10&search=&sort_by=name&sort_order=ASC",
               "host": ["{{base_url}}"],
               "path": ["departments"],
               "query": [
-                {
-                  "key": "status",
-                  "value": "ACTIVE"
-                },
-                {
-                  "key": "sort_by",
-                  "value": "name"
-                },
-                {
-                  "key": "sort_order",
-                  "value": "ASC"
-                }
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "status", "value": "ACTIVE" },
+                { "key": "sort_by", "value": "name" },
+                { "key": "sort_order", "value": "ASC" }
               ]
             },
-            "description": "List all departments in the user's organization. Supports filtering and sorting."
+            "description": "Standardized listing of all departments in the user's organization.\n\n**Features:**\n- Pagination, Search, and Sorting\n- Includes `memberAvatars` (first 3 employees in the department)."
           },
           "response": []
         },

@@ -10,10 +10,12 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { ListEmployeesDto } from '../dto/list-employees.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
@@ -37,8 +39,11 @@ export class UserController {
   // Get all users
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll(@LoggedInUser() user: LoggedInUserInterface) {
-    return this.userService.findAll(user);
+  findAll(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query() query: ListEmployeesDto,
+  ) {
+    return this.userService.findAll(user, query);
   }
 
   // Get user by ID

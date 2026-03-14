@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, ILike } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Department } from '../entities/department.entity';
 import { ListDepartmentsDto } from '../dto/list-departments.dto';
 import { Status } from '../../../common/enums';
@@ -18,6 +18,11 @@ export class DepartmentRepository {
         return this.repository.save(department);
     }
 
+    getListingQueryBuilder(alias: string = 'department'): SelectQueryBuilder<Department> {
+        return this.repository.createQueryBuilder(alias)
+            .where(`${alias}.is_deleted = :isDeleted`, { isDeleted: false });
+    }
+
     async findAllByOrg(
         organizationId: string,
         filters: ListDepartmentsDto = {},
@@ -29,27 +34,23 @@ export class DepartmentRepository {
             sort_order = 'DESC',
         } = filters;
 
-        const whereConditions: FindManyOptions<Department>['where'] = [];
+        const queryBuilder = this.getListingQueryBuilder('department')
+            .andWhere('department.organization_id = :organizationId', { organizationId });
 
-        const base = {
-            organization_id: organizationId,
-            is_deleted: false,
-            ...(status ? { status } : {}),
-        };
-
-        if (search) {
-            whereConditions.push(
-                { ...base, name: ILike(`%${search}%`) },
-                { ...base, code: ILike(`%${search}%`) },
-            );
-        } else {
-            whereConditions.push(base);
+        if (status) {
+            queryBuilder.andWhere('department.status = :status', { status });
         }
 
-        return this.repository.find({
-            where: whereConditions,
-            order: { [sort_by]: sort_order },
-        });
+        if (search) {
+            queryBuilder.andWhere(
+                '(department.name ILIKE :search OR department.code ILIKE :search)',
+                { search: `%${search}%` },
+            );
+        }
+
+        queryBuilder.orderBy(`department.${sort_by}`, sort_order as any);
+
+        return queryBuilder.getMany();
     }
 
     async findOneByOrg(

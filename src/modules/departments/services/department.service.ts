@@ -8,12 +8,14 @@ import {
 
 import { DepartmentRepository } from '../repositories/department.repository';
 import { UserService } from '../../user/services/user.service';
+import { UserRepository } from '../../user/repositories/user.repository';
 import { CreateDepartmentDto } from '../dto/create-department.dto';
 import { UpdateDepartmentDto } from '../dto/update-department.dto';
 import { ListDepartmentsDto } from '../dto/list-departments.dto';
 import { Department } from '../entities/department.entity';
 import { Status } from '../../../common/enums';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { ListingHelper } from '../../../common/utils/listing.helper';
 
 @Injectable()
 export class DepartmentService {
@@ -23,6 +25,7 @@ export class DepartmentService {
     constructor(
         private readonly departmentRepository: DepartmentRepository,
         private readonly userService: UserService,
+        private readonly userRepository: UserRepository,
     ) { }
 
     // Simplified: resolveOrgId is no longer needed as organizationId is in LoggedInUser
@@ -65,11 +68,34 @@ export class DepartmentService {
 
     async findAll(
         user: LoggedInUser,
-        filters: ListDepartmentsDto,
-    ): Promise<Department[]> {
+        query: ListDepartmentsDto,
+    ) {
         this.logger.log(`User ${user.userId} is listing departments`);
 
-        return this.departmentRepository.findAllByOrg(user.organizationId, filters);
+        const qb = this.departmentRepository.getListingQueryBuilder('department');
+
+        const response = await ListingHelper.apply(
+            qb,
+            query,
+            user,
+            ['name', 'code'],
+            'department',
+        );
+
+        // Fetch avatars for each department
+        const departmentIds = response.data.map(d => d.id);
+        const avatarMap = await this.userRepository.findAvatarsByDepartmentIds(departmentIds);
+
+        // Map avatars back to departments
+        const items = response.data.map(d => ({
+            ...d,
+            memberAvatars: avatarMap[d.id] || [],
+        }));
+
+        return {
+            ...response,
+            data: items,
+        };
     }
 
     async findOne(user: LoggedInUser, id: string): Promise<Department> {

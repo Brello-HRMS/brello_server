@@ -35,6 +35,10 @@ import {
 import { User } from '../entities/user.entity';
 import { UserProfile } from '../entities/user-profile.entity';
 import { Status } from '../../../common/enums';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { ListEmployeesDto } from '../dto/list-employees.dto';
+import { PaginatedResponse } from '../../../common/dto/pagination.dto';
+import { ListingHelper } from '../../../common/utils/listing.helper';
 
 @Injectable()
 export class EmployeeService {
@@ -195,24 +199,60 @@ export class EmployeeService {
     };
   }
 
-  async listEmployees(query: any): Promise<any> {
-    // Basic implementation for demonstration
-    // A complete implementation would build a complex QueryBuilder here
-    // filtering by department, designation, search text, limit/offset.
-    const users = await this.userRepository.findAll();
+  async listEmployees(
+    user: LoggedInUser,
+    query: ListEmployeesDto,
+  ): Promise<PaginatedResponse<any>> {
+    this.logger.log(`User ${user.userId} is listing employees`);
+
+    const qb = this.userRepository.getListingQueryBuilder('user');
+
+    if (query.departmentId) {
+      qb.andWhere('user.department_id = :deptId', { deptId: query.departmentId });
+    }
+
+    if (query.designationId) {
+      qb.andWhere('user.designation_id = :desigId', {
+        desigId: query.designationId,
+      });
+    }
+
+    if (query.status) {
+      qb.andWhere('user.status = :status', { status: query.status });
+    } else {
+      qb.andWhere('user.status != :deleted', { deleted: Status.DELETED });
+    }
+
+    const response = await ListingHelper.apply(
+      qb,
+      query,
+      user,
+      ['first_name', 'last_name', 'email'],
+      'user',
+    );
+
+    const items = response.data.map((userInstance) => {
+      const photo = userInstance.user_profile?.photo;
+      let avatarUrl: string | null = null;
+      if (photo) {
+        const region = 'us-east-1'; // fallback
+        avatarUrl = `https://${photo.bucket}.s3.${region}.amazonaws.com/${photo.object_key}`;
+      }
+
+      return {
+        id: userInstance.id,
+        firstName: userInstance.first_name,
+        lastName: userInstance.last_name,
+        email: userInstance.email,
+        status: userInstance.status,
+        avatar: avatarUrl,
+        memberAvatars: avatarUrl ? [avatarUrl] : [], // For employees, show their own avatar as first
+      };
+    });
+
     return {
-      data: users.map((user) => ({
-        id: user.id,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        email: user.email,
-        status: user.status,
-      })),
-      meta: {
-        page: query.page || 1,
-        limit: query.limit || 20,
-        total: users.length,
-      },
+      ...response,
+      data: items,
     };
   }
 

@@ -10,6 +10,10 @@ import { UpdateRoleDto } from '../dto/update-role.dto';
 import { RoleRepository } from '../repositories/role.repository';
 import { Role } from '../entities/role.entity';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { ListRolesDto } from '../dto/list-roles.dto';
+import { ListingHelper } from '../../../common/utils/listing.helper';
+import { PaginatedResponse } from '../../../common/dto/pagination.dto';
+import { Status } from '../../../common/enums';
 
 @Injectable()
 export class RoleService {
@@ -40,9 +44,23 @@ export class RoleService {
     return role;
   }
 
-  async findAll(user: LoggedInUser): Promise<Role[]> {
+  async findAll(
+    user: LoggedInUser,
+    query: ListRolesDto,
+  ): Promise<PaginatedResponse<Role>> {
     this.logger.log('Fetching all active roles');
-    return this.roleRepository.findAll();
+
+    const qb = this.roleRepository.getListingQueryBuilder('role');
+
+    if (query.is_system_role !== undefined) {
+      qb.andWhere('role.is_system_role = :isSystem', {
+        isSystem: query.is_system_role,
+      });
+    }
+
+    qb.andWhere('role.status != :deleted', { deleted: Status.DELETED });
+
+    return ListingHelper.apply(qb, query, user, ['name'], 'role');
   }
 
   async findByFilter(

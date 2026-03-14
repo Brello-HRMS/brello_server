@@ -16,6 +16,9 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
 import { Status } from '../../../common/enums';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { ListEmployeesDto } from '../dto/list-employees.dto';
+import { PaginatedResponse } from '../../../common/dto/pagination.dto';
+import { ListingHelper } from '../../../common/utils/listing.helper';
 
 // User Service - Implements business logic for user management
 @Injectable()
@@ -128,9 +131,60 @@ export class UserService {
   }
 
   // Get all users
-  async findAll(loggedInUser?: LoggedInUser): Promise<User[]> {
+  async findAll(
+    loggedInUser: LoggedInUser,
+    query: ListEmployeesDto,
+  ): Promise<PaginatedResponse<any>> {
     this.logger.log('Fetching all users');
-    return this.userRepository.findAll();
+    const qb = this.userRepository.getListingQueryBuilder('user');
+
+    if (query.departmentId) {
+      qb.andWhere('user.department_id = :deptId', { deptId: query.departmentId });
+    }
+
+    if (query.designationId) {
+      qb.andWhere('user.designation_id = :desigId', {
+        desigId: query.designationId,
+      });
+    }
+
+    if (query.status) {
+      qb.andWhere('user.status = :status', { status: query.status });
+    } else {
+      qb.andWhere('user.status != :deleted', { deleted: Status.DELETED });
+    }
+
+    const response = await ListingHelper.apply(
+      qb,
+      query,
+      loggedInUser,
+      ['first_name', 'last_name', 'email'],
+      'user',
+    );
+
+    const items = response.data.map((userInstance) => {
+      const photo = userInstance.user_profile?.photo;
+      let avatarUrl: string | null = null;
+      if (photo) {
+        const region = 'us-east-1'; // fallback
+        avatarUrl = `https://${photo.bucket}.s3.${region}.amazonaws.com/${photo.object_key}`;
+      }
+
+      return {
+        id: userInstance.id,
+        firstName: userInstance.first_name,
+        lastName: userInstance.last_name,
+        email: userInstance.email,
+        status: userInstance.status,
+        avatar: avatarUrl,
+        memberAvatars: avatarUrl ? [avatarUrl] : [],
+      };
+    });
+
+    return {
+      ...response,
+      data: items,
+    };
   }
  
   // Get user by ID
