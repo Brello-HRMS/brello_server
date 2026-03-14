@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "brello-hrms-collection-v1",
     "name": "Brello HRMS API",
-    "description": "Complete API collection for the Brello HRMS multi-tenant, multi-app backend.\n\n## Setup\n1. Set the `base_url` variable to your server address (default: `http://localhost:8000`)\n2. Start with the **Login** request to get tokens\n3. Tokens are auto-saved to collection variables for authenticated requests\n\n## Authentication Flow\n1. Login → saves `access_token` and `refresh_token`\n2. Use authenticated endpoints (token is auto-injected)\n3. Switch App → saves new `access_token`\n4. Refresh → rotates both tokens",
+    "description": "Complete API collection for the Brello HRMS multi-tenant, multi-app backend.\n\n## Setup\n1. Set the `base_url` variable to your server address (default: `http://localhost:8000`)\n2. Start with the **Login** request to get tokens\n3. Access token is auto-saved to collection variables. Refresh token is delivered as an HttpOnly cookie (`refresh_token`).\n\n## Authentication Flow\n1. Login → saves `access_token`, refresh token is set as HttpOnly cookie\n2. Use authenticated endpoints (access token is auto-injected)\n3. Switch App → saves new `access_token`\n4. Refresh → browser/Postman sends cookie automatically, rotates both tokens",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -13,11 +13,6 @@
     },
     {
       "key": "access_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "refresh_token",
       "value": "",
       "type": "string"
     },
@@ -93,12 +88,12 @@
                   "    const response = pm.response.json();",
                   "    const data = response.data;",
                   "    pm.collectionVariables.set('access_token', data.access_token);",
-                  "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
                   "    pm.collectionVariables.set('user_id', data.user.id);",
                   "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
                   "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
                   "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
-                  "    console.log('✅ Tokens saved. Default app:', data.defaultAppId);",
+                  "    console.log('✅ Access token saved. Refresh token is in HttpOnly cookie.');",
+                  "    console.log('Default app:', data.defaultAppId);",
                   "    console.log('Available apps:', JSON.stringify(data.availableApps));",
                   "}"
                 ],
@@ -123,7 +118,7 @@
               "host": ["{{base_url}}"],
               "path": ["auth", "login"]
             },
-            "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables."
+            "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically in the cookie jar."
           },
           "response": []
         },
@@ -186,8 +181,7 @@
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('access_token', response.data.access_token);",
-                  "    pm.collectionVariables.set('refresh_token', response.data.refresh_token);",
-                  "    console.log('✅ Tokens rotated successfully');",
+                  "    console.log('✅ Access token rotated. Refresh token cookie also rotated.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -195,16 +189,6 @@
             }
           ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{refresh_token}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [],
             "url": {
@@ -212,7 +196,7 @@
               "host": ["{{base_url}}"],
               "path": ["auth", "refresh"]
             },
-            "description": "Refresh the access token using the refresh token.\n\n**Important:** Uses the `refresh_token` (not access_token) as the Bearer token.\n\n**Auto-saves:** New `access_token` and `refresh_token` (token rotation)."
+            "description": "Refresh the access token using the HttpOnly cookie.\n\n**No Authorization header needed.** The refresh token is sent automatically as a cookie by the browser (or Postman).\n\n**Auto-saves:** New `access_token` to collection variable. New refresh token cookie is set automatically (token rotation)."
           },
           "response": []
         },
@@ -236,7 +220,7 @@
               "host": ["{{base_url}}"],
               "path": ["auth", "logout"]
             },
-            "description": "Invalidate the current session. Returns 204 No Content."
+            "description": "Invalidate the current session and clear the refresh token cookie. Returns 204 No Content."
           },
           "response": []
         },
@@ -320,6 +304,34 @@
           "response": []
         },
         {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"purpose\": \"LOGIN\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/resend-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "resend-otp"
+              ]
+            },
+            "description": "Unified endpoint to resend an OTP for any purpose (LOGIN, RESET_PASSWORD, PLATFORM_ADMIN_LOGIN, etc).\n\n**Requirement:** An initial OTP request must have already been made for this email and purpose."
+          },
+          "response": []
+        },
+        {
           "name": "Platform Admin Register (Request OTP)",
           "request": {
             "method": "POST",
@@ -399,11 +411,10 @@
                   "    const response = pm.response.json();",
                   "    const data = response.data;",
                   "    pm.collectionVariables.set('access_token', data.access_token);",
-                  "    pm.collectionVariables.set('refresh_token', data.refresh_token);",
                   "    pm.collectionVariables.set('user_id', data.user.id);",
                   "    if (data.user.enterprise_id) pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
                   "    if (data.user.organization_id) pm.collectionVariables.set('organization_id', data.user.organization_id);",
-                  "    console.log('✅ Tokens saved for Platform Admin.');",
+                  "    console.log('✅ Access token saved. Refresh token in HttpOnly cookie.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -427,7 +438,7 @@
               "host": ["{{base_url}}"],
               "path": ["auth", "platform-admin", "verify-login"]
             },
-            "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `refresh_token`, `user_id` to collection variables."
+            "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `user_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically."
           },
           "response": []
         }

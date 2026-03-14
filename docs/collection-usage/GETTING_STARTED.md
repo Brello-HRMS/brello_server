@@ -360,11 +360,12 @@ POST /api/v1/auth/login
 ✅ **Response includes:**
 
 - `access_token` — short-lived (15 min), used for authenticated requests
-- `refresh_token` — long-lived (7 days), used to get new access tokens
 - `defaultAppId` — the app the JWT is scoped to
 - `availableApps` — all apps the user has roles in
+- **`refresh_token`** — delivered as an **HttpOnly cookie** (`refresh_token`), not in the response body
 
-> The Postman script auto-saves both tokens and IDs to collection variables.
+> The Postman script auto-saves the access token and IDs to collection variables.
+> Postman also receives and stores the `refresh_token` cookie automatically.
 
 ---
 
@@ -389,10 +390,12 @@ Returns the hierarchical module tree the user can access in the current app.
 
 ```
 POST /api/v1/auth/refresh
-Authorization: Bearer {{refresh_token}}   ← NOTE: uses refresh_token, not access_token!
+(No Authorization header needed — the HttpOnly cookie `refresh_token` is sent automatically by the browser/Postman)
 ```
 
-✅ Returns new `access_token` and `refresh_token`. The old refresh token is **invalidated** (token rotation).
+✅ Returns a new `access_token` in the JSON body. A new `refresh_token` is set as an HttpOnly cookie (token rotation — the old cookie is replaced).
+
+> **Postman note:** Postman automatically manages cookies. After login, the `refresh_token` cookie is stored in Postman's cookie jar for the domain. The refresh endpoint reads it from the cookie, not from a header.
 
 ---
 
@@ -424,7 +427,7 @@ POST /api/v1/auth/logout
 Authorization: Bearer {{access_token}}
 ```
 
-✅ Session invalidated. Both tokens become unusable.
+✅ Session invalidated. Access token becomes unusable. The `refresh_token` HttpOnly cookie is cleared.
 
 ---
 
@@ -517,7 +520,7 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 | 9    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       |
 | 10   | POST   | `/auth/login`                       | User + Role + App exist                 |
 | 11   | GET    | `/menu`                             | access_token                            |
-| 12   | POST   | `/auth/refresh`                     | refresh_token                           |
+| 12   | POST   | `/auth/refresh`                     | HttpOnly cookie (auto)                  |
 | 13   | POST   | `/auth/switch-app`                  | access_token + multiple apps            |
 | 14   | POST   | `/auth/logout`                      | access_token                            |
 | 15   | POST   | `/auth/update-password`             | access_token                            |

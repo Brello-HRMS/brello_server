@@ -8,14 +8,20 @@ export class AvailableAppDto {
 }
 
 /**
- * Auth Response DTO — returned on login & switch-app
+ * Auth Response DTO — returned on login & OTP-login
+ *
+ * Note: `refresh_token` is deliberately excluded from the response body.
+ * It is delivered only via a Secure HttpOnly cookie set by the controller.
  */
 @Exclude()
 export class AuthResponseDto {
   @Expose()
   access_token: string;
 
-  @Expose()
+  /**
+   * Refresh token — used internally to set the HttpOnly cookie.
+   * Not serialized in the response body (no @Expose).
+   */
   refresh_token: string;
 
   @Expose()
@@ -48,13 +54,19 @@ export class AuthResponseDto {
 
 /**
  * Refresh Token Response DTO
+ *
+ * Note: `refresh_token` is excluded from the response body.
+ * It is delivered only via a Secure HttpOnly cookie.
  */
 @Exclude()
 export class RefreshTokenResponseDto {
   @Expose()
   access_token: string;
 
-  @Expose()
+  /**
+   * Refresh token — used internally to set the HttpOnly cookie.
+   * Not serialized in the response body (no @Expose).
+   */
   refresh_token: string;
 
   @Expose()
