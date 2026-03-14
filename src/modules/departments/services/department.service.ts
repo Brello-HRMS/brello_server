@@ -50,6 +50,7 @@ export class DepartmentService {
         const department = await this.departmentRepository.create({
             ...createDepartmentDto,
             organization_id: organizationId,
+            enterprise_id: user.enterpriseId,
             status,
             is_deleted: false,
             modified_by: user.userId,

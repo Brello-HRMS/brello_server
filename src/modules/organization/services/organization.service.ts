@@ -118,6 +118,7 @@ export class OrganizationService {
 
       // Step 5: Update User
       user.organization_id = savedOrg.id;
+      user.enterprise_id = savedOrg.enterprise_id;
       await manager.save(user);
 
       // Step 6: Create OrganizationSubscription
