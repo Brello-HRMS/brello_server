@@ -155,12 +155,15 @@ export class UserService {
     }
 
     const response = await ListingHelper.apply(
-      qb,
-      query,
-      loggedInUser,
-      ['first_name', 'last_name', 'email'],
-      'user',
-    );
+            qb,
+            query,
+            loggedInUser,
+            {
+                searchFields: ['first_name', 'last_name', 'email'],
+                filterFields: ['status'],
+                alias: 'user',
+            },
+        );
 
     const items = response.data.map((userInstance) => {
       const photo = userInstance.user_profile?.photo;

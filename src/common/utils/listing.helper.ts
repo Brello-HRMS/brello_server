@@ -2,19 +2,30 @@ import { SelectQueryBuilder, ObjectLiteral } from 'typeorm';
 import { ListQueryDto, PaginatedResponse } from '../dto/pagination.dto';
 import { LoggedInUser } from '../../modules/auth/interfaces/logged-in-user.interface';
 
+export interface ListingOptions {
+  searchFields?: string[];
+  filterFields?: string[];
+  alias?: string;
+}
+
 export class ListingHelper {
   /**
-   * Applies standard listing logic (pagination, search, filter, org-scoping) to a QueryBuilder.
+   * Applies standard listing logic (pagination, search, filter, org-scoping, sorting) to a QueryBuilder.
    */
   static async apply<T extends ObjectLiteral>(
     queryBuilder: SelectQueryBuilder<T>,
     listQuery: ListQueryDto,
     loggedInUser: LoggedInUser,
-    searchFields: string[] = [],
-    alias: string = 'entity',
+    options: ListingOptions = {},
   ): Promise<PaginatedResponse<T>> {
+    const {
+      searchFields = [],
+      filterFields = [],
+      alias = 'entity'
+    } = options;
+
     // 1. Enforce Organization Scoping
-    if (!loggedInUser.isPlatformAdmin) {
+    if (!loggedInUser.isPlatformAdmin && loggedInUser.organizationId) {
       queryBuilder.andWhere(`${alias}.organization_id = :orgId`, {
         orgId: loggedInUser.organizationId,
       });
@@ -30,7 +41,7 @@ export class ListingHelper {
       });
     }
 
-    // 3. Apply Filters
+    // 3. Apply Explicit Filters (from listQuery.filters object)
     if (listQuery.filters) {
       Object.entries(listQuery.filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -39,17 +50,30 @@ export class ListingHelper {
       });
     }
 
-    // 4. Get Total Count
+    // 4. Apply Root Level Filters (standard flat params)
+    filterFields.forEach((field) => {
+      const value = (listQuery as any)[field];
+      if (value !== undefined && value !== null && value !== '') {
+        queryBuilder.andWhere(`${alias}.${field} = :${field}`, { [field]: value });
+      }
+    });
+
+    // 5. Apply Sorting
+    const sortBy = (listQuery as any).sort_by || 'created_at';
+    const sortOrder = (listQuery as any).sort_order || 'DESC';
+    queryBuilder.orderBy(`${alias}.${sortBy}`, sortOrder as any);
+
+    // 6. Get Total Count
     const total = await queryBuilder.getCount();
 
-    // 5. Apply Pagination
+    // 7. Apply Pagination
     const page = listQuery.page || 1;
     const limit = listQuery.limit || 10;
     const skip = (page - 1) * limit;
 
     queryBuilder.skip(skip).take(limit);
 
-    // 6. Execute Query
+    // 8. Execute Query
     const data = await queryBuilder.getMany();
 
     return {

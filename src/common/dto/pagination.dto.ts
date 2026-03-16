@@ -26,7 +26,11 @@ export class ListQueryDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
-  sort?: string;
+  sort_by?: string;
+
+  @IsOptional()
+  @IsString()
+  sort_order?: 'ASC' | 'DESC';
 }
 
 export interface PaginatedResponseMeta {

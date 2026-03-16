@@ -8,9 +8,9 @@ export class ListRolesDto extends ListQueryDto {
 
   @IsOptional()
   @IsString()
-  sort_by?: string = 'created_at';
+  declare sort_by?: string;
 
   @IsOptional()
   @IsString()
-  sort_order?: 'ASC' | 'DESC' = 'DESC';
+  declare sort_order?: 'ASC' | 'DESC';
 }

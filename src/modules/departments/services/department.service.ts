@@ -78,8 +78,11 @@ export class DepartmentService {
             qb,
             query,
             user,
-            ['name', 'code'],
-            'department',
+            {
+                searchFields: ['name', 'code'],
+                filterFields: ['status'],
+                alias: 'department',
+            },
         );
 
         // Fetch avatars for each department
