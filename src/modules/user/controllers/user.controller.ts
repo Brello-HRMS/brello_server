@@ -9,35 +9,51 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { ListEmployeesDto } from '../dto/list-employees.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 // User Controller - Handles HTTP requests for user management
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   // Create a new user
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  create(
+    @Body() createUserDto: CreateUserDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.userService.create(createUserDto, user);
   }
 
   // Get all users
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll() {
-    return this.userService.findAll();
+  findAll(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query() query: ListEmployeesDto,
+  ) {
+    return this.userService.findAll(user, query);
   }
 
   // Get user by ID
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.userService.findOne(id, user);
   }
 
   // Update a user
@@ -46,14 +62,18 @@ export class UserController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.userService.update(id, updateUserDto);
+    return this.userService.update(id, updateUserDto, user);
   }
 
   // Delete a user (soft delete)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.userService.remove(id, user);
   }
 }

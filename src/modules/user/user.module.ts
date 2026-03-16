@@ -58,6 +58,6 @@ import { OrganizationModule } from '../organization/organization.module';
     UserEmergencyPersonRepository,
     UserDocumentRepository,
   ],
-  exports: [UserService, EmployeeService],
+  exports: [UserService, EmployeeService, UserRepository],
 })
 export class UserModule {}

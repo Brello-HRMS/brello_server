@@ -60,9 +60,7 @@ export class AccessGuard implements CanActivate {
     const { moduleCode, actionName } = requirement;
 
     const allowed = await this.permissionResolver.hasPermission(
-      user.userId,
-      user.organizationId,
-      user.appId,
+      user,
       moduleCode,
       actionName,
     );

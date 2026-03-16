@@ -15,6 +15,10 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
 import { Status } from '../../../common/enums';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { ListEmployeesDto } from '../dto/list-employees.dto';
+import { PaginatedResponse } from '../../../common/dto/pagination.dto';
+import { ListingHelper } from '../../../common/utils/listing.helper';
 
 // User Service - Implements business logic for user management
 @Injectable()
@@ -40,7 +44,7 @@ export class UserService {
   }
 
   // Create a new user
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto, loggedInUser?: LoggedInUser): Promise<User> {
     this.logger.log(`Creating user: ${createUserDto.email}`);
 
     // Validate enterprise exists
@@ -88,6 +92,7 @@ export class UserService {
   async createPlatformAdmin(
     registerDto: any,
     password_hash: string,
+    loggedInUser?: LoggedInUser,
   ): Promise<User> {
     this.logger.log(`Creating platform admin: ${registerDto.email}`);
 
@@ -126,15 +131,69 @@ export class UserService {
   }
 
   // Get all users
-  async findAll(): Promise<User[]> {
+  async findAll(
+    loggedInUser: LoggedInUser,
+    query: ListEmployeesDto,
+  ): Promise<PaginatedResponse<any>> {
     this.logger.log('Fetching all users');
-    return this.userRepository.findAll();
+    const qb = this.userRepository.getListingQueryBuilder('user');
+
+    if (query.departmentId) {
+      qb.andWhere('user.department_id = :deptId', { deptId: query.departmentId });
+    }
+
+    if (query.designationId) {
+      qb.andWhere('user.designation_id = :desigId', {
+        desigId: query.designationId,
+      });
+    }
+
+    if (query.status) {
+      qb.andWhere('user.status = :status', { status: query.status });
+    } else {
+      qb.andWhere('user.status != :deleted', { deleted: Status.DELETED });
+    }
+
+    const response = await ListingHelper.apply(
+            qb,
+            query,
+            loggedInUser,
+            {
+                searchFields: ['first_name', 'last_name', 'email'],
+                filterFields: ['status'],
+                alias: 'user',
+            },
+        );
+
+    const items = response.data.map((userInstance) => {
+      const photo = userInstance.user_profile?.photo;
+      let avatarUrl: string | null = null;
+      if (photo) {
+        const region = 'us-east-1'; // fallback
+        avatarUrl = `https://${photo.bucket}.s3.${region}.amazonaws.com/${photo.object_key}`;
+      }
+
+      return {
+        id: userInstance.id,
+        firstName: userInstance.first_name,
+        lastName: userInstance.last_name,
+        email: userInstance.email,
+        status: userInstance.status,
+        avatar: avatarUrl,
+        memberAvatars: avatarUrl ? [avatarUrl] : [],
+      };
+    });
+
+    return {
+      ...response,
+      data: items,
+    };
   }
-
+ 
   // Get user by ID
-  async findOne(id: string): Promise<User> {
+  async findOne(id: string, loggedInUser?: LoggedInUser): Promise<User> {
     this.logger.log(`Fetching user: ${id}`);
-
+ 
     const user = await this.userRepository.findById(id);
 
     if (!user) {
@@ -145,16 +204,16 @@ export class UserService {
   }
 
   // Get user by email
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string, loggedInUser?: LoggedInUser): Promise<User | null> {
     return this.userRepository.findByEmail(email);
   }
 
   // Update a user
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDto, loggedInUser?: LoggedInUser): Promise<User> {
     this.logger.log(`Updating user: ${id}`);
-
+ 
     // Verify user exists
-    await this.findOne(id);
+    await this.findOne(id, loggedInUser);
 
     // Validate enterprise if being updated
     if (updateUserDto.enterprise_id) {
@@ -205,11 +264,11 @@ export class UserService {
   }
 
   // Delete a user (soft delete)
-  async remove(id: string): Promise<void> {
+  async remove(id: string, loggedInUser?: LoggedInUser): Promise<void> {
     this.logger.log(`Deleting user: ${id}`);
-
+ 
     // Verify user exists
-    await this.findOne(id);
+    await this.findOne(id, loggedInUser);
 
     await this.userRepository.softDelete(id);
 

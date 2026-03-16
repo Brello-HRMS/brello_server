@@ -11,6 +11,7 @@ import {
 import { PlanModule } from '../../plan/entities/plan-module.entity';
 import { PlanModuleAction } from '../../plan/entities/plan-module-action.entity';
 import { Status } from '../../../common/enums';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 /** Map of moduleId → { actionName → granted } */
 export type PermissionMap = Map<string, Map<string, boolean>>;
@@ -80,11 +81,8 @@ export class PermissionResolverService {
   /**
    * Resolve effective permissions for a user within a specific app.
    */
-  async resolve(
-    userId: string,
-    organizationId: string,
-    appId: string,
-  ): Promise<PermissionResult> {
+  async resolve(user: LoggedInUser): Promise<PermissionResult> {
+    const { userId, organizationId, appId } = user;
     const planId = await this.getActivePlanId(organizationId);
 
     // Step 1: Get role IDs for this user in this app
@@ -115,13 +113,11 @@ export class PermissionResolverService {
    * Check if a user has a specific action on a module (by module code).
    */
   async hasPermission(
-    userId: string,
-    organizationId: string,
-    appId: string,
+    user: LoggedInUser,
     moduleCode: string,
     actionName: string,
   ): Promise<boolean> {
-    const resolved = await this.resolve(userId, organizationId, appId);
+    const resolved = await this.resolve(user);
     for (const mod of resolved.modules) {
       if (mod.code === moduleCode) {
         return mod.actions.has(actionName);

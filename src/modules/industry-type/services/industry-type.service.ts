@@ -8,6 +8,7 @@ import { IndustryTypeRepository } from '../repositories/industry-type.repository
 import { CreateIndustryTypeDto } from '../dto/create-industry-type.dto';
 import { UpdateIndustryTypeDto } from '../dto/update-industry-type.dto';
 import { IndustryType } from '../entities/industry-type.entity';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class IndustryTypeService {
@@ -19,6 +20,7 @@ export class IndustryTypeService {
 
   async create(
     createIndustryTypeDto: CreateIndustryTypeDto,
+    user?: LoggedInUser,
   ): Promise<IndustryType> {
     this.logger.log(`Creating industry type: ${createIndustryTypeDto.name}`);
 
@@ -39,12 +41,12 @@ export class IndustryTypeService {
     return industryType;
   }
 
-  async findAll(): Promise<IndustryType[]> {
+  async findAll(user?: LoggedInUser): Promise<IndustryType[]> {
     this.logger.log('Fetching all active industry types');
     return this.industryTypeRepository.findAll();
   }
 
-  async findOne(id: string): Promise<IndustryType> {
+  async findOne(id: string, user?: LoggedInUser): Promise<IndustryType> {
     this.logger.log(`Fetching industry type: ${id}`);
 
     const industryType = await this.industryTypeRepository.findById(id);
@@ -58,10 +60,11 @@ export class IndustryTypeService {
   async update(
     id: string,
     updateIndustryTypeDto: UpdateIndustryTypeDto,
+    user?: LoggedInUser,
   ): Promise<IndustryType> {
     this.logger.log(`Updating industry type: ${id}`);
-
-    await this.findOne(id);
+ 
+    await this.findOne(id, user);
 
     if (updateIndustryTypeDto.name) {
       const existingType = await this.industryTypeRepository.findByName(
@@ -88,10 +91,10 @@ export class IndustryTypeService {
     return updatedIndustryType;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
     this.logger.log(`Soft deleting industry type: ${id}`);
-
-    await this.findOne(id);
+ 
+    await this.findOne(id, user);
 
     const deleted = await this.industryTypeRepository.softDelete(id);
     if (!deleted) {

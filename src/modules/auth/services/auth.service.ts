@@ -37,6 +37,7 @@ import {
   SwitchAppResponseDto,
 } from '../dto/auth-response.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { OtpPurpose } from '../../../common/enums';
 import { UserRoleMap } from '../../rbac/entities/user-role-map.entity';
 import { App } from '../../app/entities/app.entity';
@@ -268,46 +269,55 @@ export class AuthService {
   }
 
   async switchApp(
-    currentUser: JwtPayload,
+    loggedInUser: LoggedInUser,
     switchAppDto: SwitchAppDto,
   ): Promise<SwitchAppResponseDto> {
     this.logger.log(
-      `App switch: user ${currentUser.userId} → app ${switchAppDto.appId}`,
+      `App switch: user ${loggedInUser.userId} → app ${switchAppDto.appId}`,
     );
-
+ 
     // Validate the user has at least one active role in the requested app
     const hasRole = await this.userRoleMapRepository
       .createQueryBuilder('urm')
       .innerJoin('urm.role', 'role')
       .innerJoin('role.app', 'app')
-      .where('urm.user_id = :userId', { userId: currentUser.userId })
+      .where('urm.user_id = :userId', { userId: loggedInUser.userId })
       .andWhere('urm.organization_id = :orgId', {
-        orgId: currentUser.organizationId,
+        orgId: loggedInUser.organizationId,
       })
       .andWhere('app.id = :appId', { appId: switchAppDto.appId })
       .andWhere('role.status = :roleStatus', { roleStatus: Status.ACTIVE })
       .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
       .getCount();
-
-    if (!hasRole && !currentUser.isPlatformAdmin) {
+ 
+    if (!hasRole && !loggedInUser.isPlatformAdmin) {
       throw new ForbiddenException(
         'You do not have access to the requested application.',
       );
     }
-
-    await this.userService.update(currentUser.userId, {
+ 
+    await this.userService.update(loggedInUser.userId, {
       last_access_app_id: switchAppDto.appId,
-    } as any);
+    } as any, loggedInUser);
+ 
+    // For switching app, we need the original payload fields too, but we mainly need userId, sessId, orgId, enterpriseId, isPlatformAdmin
+    // Since switchApp is called from controller with JwtPayload converted to LoggedInUser, 
+    // we might need to be careful if we need SESSION ID here for generating NEW token.
+    // Wait, switchApp in controller receives BOTH CurrentUser (JwtPayload) and LoggedInUser? No, I'll change it to LoggedInUser.
+    // But then I need sessionId for buildAuthResponse? No, switchApp returns access_token only.
 
-    const newPayload: JwtPayload = {
-      ...currentUser,
+ 
+
+    const accessToken = this.tokenService.generateAccessToken({
+      userId: loggedInUser.userId,
+      organizationId: loggedInUser.organizationId,
+      enterpriseId: loggedInUser.enterpriseId,
       appId: switchAppDto.appId,
-    };
-
-    const accessToken = this.tokenService.generateAccessToken(newPayload);
-
+      isPlatformAdmin: loggedInUser.isPlatformAdmin,
+    } as any);
+ 
     this.logger.log(
-      `App switched successfully: ${currentUser.userId} → ${switchAppDto.appId}`,
+      `App switched successfully: ${loggedInUser.userId} → ${switchAppDto.appId}`,
     );
 
     return {
@@ -387,13 +397,14 @@ export class AuthService {
 
   // Update user password
   async updatePassword(
-    userId: string,
+    loggedInUser: LoggedInUser,
     updatePasswordDto: UpdatePasswordDto,
   ): Promise<void> {
+    const { userId } = loggedInUser;
     this.logger.log(`Password update for user: ${userId}`);
-
+ 
     // Get user
-    const user = await this.userService.findOne(userId);
+    const user = await this.userService.findOne(userId, loggedInUser);
 
     // Verify old password
     const isOldPasswordValid = await this.userService.verifyPassword(
@@ -411,7 +422,7 @@ export class AuthService {
     await this.userService.update(userId, {
       // @ts-ignore - password_hash is not in UpdateUserDto but we need to update it
       password_hash: newPasswordHash,
-    });
+    }, loggedInUser);
 
     // Invalidate all sessions (force re-login for security)
     await this.sessionRepository.deleteAllUserSessions(userId);
