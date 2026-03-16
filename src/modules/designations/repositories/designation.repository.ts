@@ -32,36 +32,36 @@ export class DesignationRepository {
         orgId: string,
         filters: FindDesignationsDto = {},
     ): Promise<Designation[]> {
-        const where: any = { org_id: orgId };
+        const query = this.repository
+            .createQueryBuilder('designation')
+            .where('designation.org_id = :orgId', { orgId });
 
         // Apply status filter if provided
         if (filters.status) {
-            where.status = filters.status;
+            query.andWhere('designation.status = :status', {
+                status: filters.status,
+            });
         }
 
         // Apply department filter if provided
         if (filters.department_id) {
-            where.department_id = filters.department_id;
+            query.andWhere('designation.department_id = :departmentId', {
+                departmentId: filters.department_id,
+            });
         }
 
-        // Apply search filter across title and code using LIKE
+        // Apply search filter across title and code using ILIKE (case-insensitive)
         if (filters.search) {
-            const results = await this.repository
-                .createQueryBuilder('designation')
-                .where('designation.org_id = :orgId', { orgId })
-                .andWhere(
-                    '(designation.title LIKE :search OR designation.code LIKE :search)',
-                    { search: `%${filters.search}%` },
-                )
-                .orderBy('designation.created_at', 'DESC')
-                .getMany();
-            return results;
+            query.andWhere(
+                '(designation.title ILIKE :search OR designation.code ILIKE :search)',
+                { search: `%${filters.search}%` },
+            );
         }
 
-        return this.repository.find({
-            where,
-            order: { created_at: 'DESC' },
-        });
+        // Always order by creation date descending
+        query.orderBy('designation.created_at', 'DESC');
+
+        return query.getMany();
     }
 
     // Find a single designation by its primary key

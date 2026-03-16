@@ -15,11 +15,6 @@ import { Status } from '../../../common/enums/status.enum';
  * All constraints mirror the PRD specification.
  */
 export class CreateDesignationDto {
-    // The organization this designation belongs to (required)
-    @IsUUID('4', { message: 'org_id must be a valid UUID' })
-    @IsNotEmpty({ message: 'org_id is required' })
-    org_id: string;
-
     // Optional department linkage — must belong to the same org (validated in service)
     @IsUUID('4', { message: 'department_id must be a valid UUID' })
     @IsOptional()

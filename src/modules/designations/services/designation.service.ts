@@ -34,17 +34,17 @@ export class DesignationService {
      * 1. The target organization must exist.
      * 2. The code must be unique within that organization.
      */
-    async create(dto: CreateDesignationDto): Promise<Designation> {
+    async create(orgId: string, dto: CreateDesignationDto): Promise<Designation> {
         this.logger.log(
-            `Creating designation "${dto.code}" for org ${dto.org_id}`,
+            `Creating designation "${dto.code}" for org ${orgId}`,
         );
 
         // Rule 1: ensure the organization actually exists
-        await this.organizationService.findOne(dto.org_id);
+        await this.organizationService.findOne(orgId);
 
         // Rule 2: code must be unique within this org
         const existing = await this.designationRepository.findByOrgAndCode(
-            dto.org_id,
+            orgId,
             dto.code.toUpperCase(),
         );
         if (existing) {
@@ -56,6 +56,7 @@ export class DesignationService {
         // Normalize code to uppercase for consistency
         const designation = await this.designationRepository.create({
             ...dto,
+            org_id: orgId,
             code: dto.code.toUpperCase(),
         });
 
@@ -80,17 +81,18 @@ export class DesignationService {
     }
 
     /**
-     * Fetch a single designation by its ID.
+     * Fetch a single designation by its ID and Organization ID.
      * Throws NotFoundException if not found.
      */
-    async findOne(id: string): Promise<Designation> {
-        this.logger.log(`Fetching designation ${id}`);
+    async findOne(id: string, orgId: string): Promise<Designation> {
+        this.logger.log(`Fetching designation ${id} for org ${orgId}`);
 
         const designation = await this.designationRepository.findById(id);
 
-        if (!designation) {
+        // Data isolation check: ensure the designation belongs to the organization
+        if (!designation || designation.org_id !== orgId) {
             throw new NotFoundException(
-                `Designation with ID "${id}" not found`,
+                `Designation with ID "${id}" not found in this organization`,
             );
         }
 
@@ -102,16 +104,16 @@ export class DesignationService {
      *
      * Business rules enforced:
      * - `code` is immutable — ignored even if provided in the payload.
-     * - `org_id` cannot be reassigned.
+     * - Only designations belonging to the orgId can be updated.
      */
-    async update(id: string, dto: UpdateDesignationDto): Promise<Designation> {
-        this.logger.log(`Updating designation ${id}`);
+    async update(id: string, orgId: string, dto: UpdateDesignationDto): Promise<Designation> {
+        this.logger.log(`Updating designation ${id} for org ${orgId}`);
 
-        // Verify the designation exists
-        await this.findOne(id);
+        // Verify the designation exists and belongs to the organization
+        await this.findOne(id, orgId);
 
         // Strip immutable fields to enforce the PRD constraint
-        const { code: _code, org_id: _orgId, ...allowedUpdates } = dto;
+        const { code: _code, ...allowedUpdates } = dto;
 
         const updated = await this.designationRepository.update(
             id,
@@ -131,14 +133,13 @@ export class DesignationService {
     /**
      * Soft-delete a designation by setting its status to INACTIVE.
      *
-     * Phase 1: performs the soft delete unconditionally.
-     * Phase 2 (future): block deletion if active employees are linked.
+     * Only designations belonging to the orgId can be deleted.
      */
-    async remove(id: string): Promise<void> {
-        this.logger.log(`Soft-deleting designation ${id}`);
+    async remove(id: string, orgId: string): Promise<void> {
+        this.logger.log(`Soft-deleting designation ${id} for org ${orgId}`);
 
-        // Ensure the designation exists before trying to delete
-        await this.findOne(id);
+        // Ensure the designation exists and belongs to the organization
+        await this.findOne(id, orgId);
 
         await this.designationRepository.softDelete(id);
 
