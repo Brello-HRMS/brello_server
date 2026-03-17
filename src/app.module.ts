@@ -6,6 +6,7 @@ import { EnterpriseModule } from './modules/enterprise/enterprise.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DepartmentModule } from './modules/departments/department.module';
 import { RbacModule } from './modules/rbac/rbac.module';
 import { PlanModule } from './modules/plan/plan.module';
 import { NotificationModule } from './modules/notification/notification.module';
@@ -17,6 +18,9 @@ import { DocumentModule } from './modules/document/document.module';
 import { LeadModule } from './modules/lead/lead.module';
 import { RoleModule } from './modules/role/role.module';
 import { DesignationModule } from './modules/designations/designation.module';
+
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.interceptor';
 
 @Module({
   imports: [
@@ -30,13 +34,15 @@ import { DesignationModule } from './modules/designations/designation.module';
       useFactory: databaseConfigFactory,
     }),
 
+    // Feature modules — loaded in dependency order
+    // (EnterpriseModule first because OrganizationModule depends on it)
     EnterpriseModule,
     OrganizationModule,
     UserModule,
     AuthModule,
+    DepartmentModule,
     DocumentModule,
     IndustryTypeModule,
-
     // New RBAC + multi-app modules
     AppManagementModule,
     PlanModule,
@@ -46,6 +52,12 @@ import { DesignationModule } from './modules/designations/designation.module';
     LeadModule,
     RoleModule,
     DesignationModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggedInUserInterceptor,
+    },
   ],
 })
 export class AppModule { }

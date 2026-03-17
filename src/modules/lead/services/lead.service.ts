@@ -20,6 +20,7 @@ import { LeadStatus } from '../enums/lead-status.enum';
 import { OtpPurpose } from '../../../common/enums';
 import { NotificationType } from '../../../common/enums/notification-type.enum';
 import { Status } from '../../../common/enums';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class LeadService {
@@ -35,7 +36,7 @@ export class LeadService {
   ) {}
 
   // Register a new lead and send OTP
-  async registerLead(createLeadDto: CreateLeadDto): Promise<void> {
+  async registerLead(createLeadDto: CreateLeadDto, user?: LoggedInUser): Promise<void> {
     this.logger.log(
       `Lead registration initiated for email: ${createLeadDto.email}`,
     );
@@ -64,9 +65,9 @@ export class LeadService {
   }
 
   // Verify OTP and create user transactionally
-  async verifyLeadOtp(verifyDto: VerifyLeadOtpDto): Promise<void> {
+  async verifyLeadOtp(verifyDto: VerifyLeadOtpDto, user?: LoggedInUser): Promise<void> {
     this.logger.log(`Lead OTP verification for email: ${verifyDto.email}`);
-
+ 
     const lead = await this.findLeadByEmailOrFail(verifyDto.email);
 
     if (lead.is_verified) {

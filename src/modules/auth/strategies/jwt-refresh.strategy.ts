@@ -1,24 +1,22 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
+import type { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 /**
  * JWT Refresh Strategy
  *
- * Implements Passport JWT strategy for refresh token validation.
- * This strategy is used specifically for the token refresh endpoint.
+ * Extracts the refresh token JWT from an HttpOnly cookie (not the Authorization header).
+ * This is more secure because HttpOnly cookies are invisible to JavaScript,
+ * eliminating the XSS vector for refresh-token theft.
+ *
+ * Cookie name is driven by config: `cookie.refreshTokenName` (default: 'refresh_token').
  *
  * Design Pattern: Strategy Pattern
  * - Encapsulates the refresh token validation algorithm
  * - Separate from access token strategy for security
- *
- * How it works:
- * 1. Extracts JWT from Authorization header (Bearer token)
- * 2. Validates JWT signature using refresh secret key (different from access)
- * 3. Validates expiration
- * 4. Returns payload if valid, throws UnauthorizedException if invalid
  */
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -26,8 +24,15 @@ export class JwtRefreshStrategy extends PassportStrategy(
   'jwt-refresh',
 ) {
   constructor(private configService: ConfigService) {
+    const cookieName = configService.get<string>(
+      'cookie.refreshTokenName',
+      'refresh_token',
+    );
+
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req: Request) => {
+        return req?.cookies?.[cookieName] || null;
+      },
       ignoreExpiration: false,
       secretOrKey:
         configService.get<string>('auth.JWT_REFRESH_SECRET') ||

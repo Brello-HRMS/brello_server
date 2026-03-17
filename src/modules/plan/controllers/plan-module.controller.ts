@@ -7,47 +7,73 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { PlanModuleService } from '../services/plan-module.service';
 import {
   CreatePlanModuleDto,
   UpdatePlanModuleDto,
 } from '../dto/plan-module.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('plan-modules')
+@UseGuards(JwtAuthGuard)
 export class PlanModuleController {
   constructor(private readonly planModuleService: PlanModuleService) {}
 
   @Post()
-  create(@Body() createPlanModuleDto: CreatePlanModuleDto) {
-    return this.planModuleService.create(createPlanModuleDto);
+  @HttpCode(HttpStatus.CREATED)
+  create(
+    @Body() createPlanModuleDto: CreatePlanModuleDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.planModuleService.create(createPlanModuleDto, user);
   }
 
   @Get()
-  findAll() {
-    return this.planModuleService.findAll();
+  @HttpCode(HttpStatus.OK)
+  findAll(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.planModuleService.findAll(user);
   }
 
   @Get('plan/:planId')
-  findByPlan(@Param('planId', ParseUUIDPipe) planId: string) {
-    return this.planModuleService.findByPlan(planId);
+  @HttpCode(HttpStatus.OK)
+  findByPlan(
+    @Param('planId', ParseUUIDPipe) planId: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.planModuleService.findByPlan(planId, user);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.planModuleService.findOne(id);
+  @HttpCode(HttpStatus.OK)
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.planModuleService.findOne(id, user);
   }
 
   @Patch(':id')
+  @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePlanModuleDto: UpdatePlanModuleDto,
+    @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.planModuleService.update(id, updatePlanModuleDto);
+    return this.planModuleService.update(id, updatePlanModuleDto, user);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.planModuleService.remove(id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.planModuleService.remove(id, user);
   }
 }

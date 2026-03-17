@@ -3,6 +3,7 @@ import { Plan } from '../entities/plan.entity';
 import { PlanRepository } from '../repositories/plan.repository';
 import { PlanAppRepository } from '../repositories/plan-app.repository';
 import { CreatePlanDto, UpdatePlanDto } from '../dto/plan.dto';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class PlanService {
@@ -11,7 +12,7 @@ export class PlanService {
     private readonly planAppRepository: PlanAppRepository,
   ) {}
 
-  async create(dto: CreatePlanDto): Promise<Plan> {
+  async create(dto: CreatePlanDto, user?: LoggedInUser): Promise<Plan> {
     const plan = this.planRepository.create(dto);
     try {
       return await this.planRepository.save(plan);
@@ -22,16 +23,16 @@ export class PlanService {
     }
   }
 
-  async findAll(): Promise<Plan[]> {
+  async findAll(user?: LoggedInUser): Promise<Plan[]> {
     return this.planRepository.findAll();
   }
 
-  async findOne(id: string): Promise<Plan> {
+  async findOne(id: string, user?: LoggedInUser): Promise<Plan> {
     return this.planRepository.findOneById(id);
   }
 
-  async update(id: string, dto: UpdatePlanDto): Promise<Plan> {
-    const plan = await this.findOne(id);
+  async update(id: string, dto: UpdatePlanDto, user?: LoggedInUser): Promise<Plan> {
+    const plan = await this.findOne(id, user);
     Object.assign(plan, dto);
 
     try {
@@ -43,13 +44,13 @@ export class PlanService {
     }
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
+    await this.findOne(id, user);
     await this.planRepository.softDelete(id);
   }
 
-  async assignAppsToPlan(planId: string, appIds: string[]): Promise<void> {
-    await this.findOne(planId);
+  async assignAppsToPlan(planId: string, appIds: string[], user?: LoggedInUser): Promise<void> {
+    await this.findOne(planId, user);
     await this.planAppRepository.assignAppsToPlan(planId, appIds);
   }
 }

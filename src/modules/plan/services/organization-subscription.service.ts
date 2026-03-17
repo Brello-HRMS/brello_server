@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { OrganizationSubscription } from '../entities/organization-subscription.entity';
 import { OrganizationSubscriptionRepository } from '../repositories/organization-subscription.repository';
 import {
@@ -8,9 +8,12 @@ import {
 import { OrganizationService } from '../../organization/services/organization.service';
 import { EnterpriseService } from '../../enterprise/services/enterprise.service';
 import { PlanAppRepository } from '../repositories/plan-app.repository';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class OrganizationSubscriptionService {
+  private readonly logger = new Logger(OrganizationSubscriptionService.name);
+ 
   constructor(
     private readonly orgSubRepository: OrganizationSubscriptionRepository,
     private readonly organizationService: OrganizationService,
@@ -20,6 +23,7 @@ export class OrganizationSubscriptionService {
 
   async create(
     dto: CreateOrganizationSubscriptionDto,
+    user?: LoggedInUser,
   ): Promise<OrganizationSubscription> {
     // Business Rule: An organization cannot have two ACTIVE subscriptions at once.
     // This is a naive check; real logic might upgrade/cancel the existing one first.
@@ -43,6 +47,7 @@ export class OrganizationSubscriptionService {
     // Business Logic: Assign Apps to Enterprise
     const organization = await this.organizationService.findOne(
       dto.organization_id,
+      user,
     );
     const enterpriseId = organization.enterprise_id;
 
@@ -54,6 +59,7 @@ export class OrganizationSubscriptionService {
         await this.enterpriseService.assignAppsToEnterprise(
           enterpriseId,
           appIds,
+          user,
         );
       }
     }
@@ -61,19 +67,24 @@ export class OrganizationSubscriptionService {
     return savedSubscription;
   }
 
-  async findAll(): Promise<OrganizationSubscription[]> {
+  async findAll(user?: LoggedInUser): Promise<OrganizationSubscription[]> {
     return this.orgSubRepository.findAll();
   }
 
-  async findOne(id: string): Promise<OrganizationSubscription> {
-    return this.orgSubRepository.findOneById(id);
+  async findOne(id: string, user?: LoggedInUser): Promise<OrganizationSubscription> {
+    const sub = await this.orgSubRepository.findOneById(id);
+    if (!sub) {
+      throw new NotFoundException(`Subscription with ID "${id}" not found`);
+    }
+    return sub;
   }
 
   async update(
     id: string,
     dto: UpdateOrganizationSubscriptionDto,
+    user?: LoggedInUser,
   ): Promise<OrganizationSubscription> {
-    const subscription = await this.findOne(id);
+    const subscription = await this.findOne(id, user);
 
     if (dto.end_date) {
       subscription.end_date = new Date(dto.end_date);
@@ -85,8 +96,8 @@ export class OrganizationSubscriptionService {
     return this.orgSubRepository.save(subscription);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
+    await this.findOne(id, user);
     await this.orgSubRepository.softDelete(id);
   }
 }

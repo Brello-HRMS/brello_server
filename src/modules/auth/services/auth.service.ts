@@ -30,12 +30,14 @@ import {
   ForgotPasswordRequestDto,
   VerifyOtpAndResetPasswordDto,
 } from '../dto/forgot-password.dto';
+import { ResendOtpDto } from '../dto/resend-otp.dto';
 import {
   AuthResponseDto,
   RefreshTokenResponseDto,
   SwitchAppResponseDto,
 } from '../dto/auth-response.dto';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { OtpPurpose } from '../../../common/enums';
 import { UserRoleMap } from '../../rbac/entities/user-role-map.entity';
 import { App } from '../../app/entities/app.entity';
@@ -267,46 +269,55 @@ export class AuthService {
   }
 
   async switchApp(
-    currentUser: JwtPayload,
+    loggedInUser: LoggedInUser,
     switchAppDto: SwitchAppDto,
   ): Promise<SwitchAppResponseDto> {
     this.logger.log(
-      `App switch: user ${currentUser.userId} → app ${switchAppDto.appId}`,
+      `App switch: user ${loggedInUser.userId} → app ${switchAppDto.appId}`,
     );
-
+ 
     // Validate the user has at least one active role in the requested app
     const hasRole = await this.userRoleMapRepository
       .createQueryBuilder('urm')
       .innerJoin('urm.role', 'role')
       .innerJoin('role.app', 'app')
-      .where('urm.user_id = :userId', { userId: currentUser.userId })
+      .where('urm.user_id = :userId', { userId: loggedInUser.userId })
       .andWhere('urm.organization_id = :orgId', {
-        orgId: currentUser.organizationId,
+        orgId: loggedInUser.organizationId,
       })
       .andWhere('app.id = :appId', { appId: switchAppDto.appId })
       .andWhere('role.status = :roleStatus', { roleStatus: Status.ACTIVE })
       .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
       .getCount();
-
-    if (!hasRole && !currentUser.isPlatformAdmin) {
+ 
+    if (!hasRole && !loggedInUser.isPlatformAdmin) {
       throw new ForbiddenException(
         'You do not have access to the requested application.',
       );
     }
-
-    await this.userService.update(currentUser.userId, {
+ 
+    await this.userService.update(loggedInUser.userId, {
       last_access_app_id: switchAppDto.appId,
-    } as any);
+    } as any, loggedInUser);
+ 
+    // For switching app, we need the original payload fields too, but we mainly need userId, sessId, orgId, enterpriseId, isPlatformAdmin
+    // Since switchApp is called from controller with JwtPayload converted to LoggedInUser, 
+    // we might need to be careful if we need SESSION ID here for generating NEW token.
+    // Wait, switchApp in controller receives BOTH CurrentUser (JwtPayload) and LoggedInUser? No, I'll change it to LoggedInUser.
+    // But then I need sessionId for buildAuthResponse? No, switchApp returns access_token only.
 
-    const newPayload: JwtPayload = {
-      ...currentUser,
+ 
+
+    const accessToken = this.tokenService.generateAccessToken({
+      userId: loggedInUser.userId,
+      organizationId: loggedInUser.organizationId,
+      enterpriseId: loggedInUser.enterpriseId,
       appId: switchAppDto.appId,
-    };
-
-    const accessToken = this.tokenService.generateAccessToken(newPayload);
-
+      isPlatformAdmin: loggedInUser.isPlatformAdmin,
+    } as any);
+ 
     this.logger.log(
-      `App switched successfully: ${currentUser.userId} → ${switchAppDto.appId}`,
+      `App switched successfully: ${loggedInUser.userId} → ${switchAppDto.appId}`,
     );
 
     return {
@@ -386,13 +397,14 @@ export class AuthService {
 
   // Update user password
   async updatePassword(
-    userId: string,
+    loggedInUser: LoggedInUser,
     updatePasswordDto: UpdatePasswordDto,
   ): Promise<void> {
+    const { userId } = loggedInUser;
     this.logger.log(`Password update for user: ${userId}`);
-
+ 
     // Get user
-    const user = await this.userService.findOne(userId);
+    const user = await this.userService.findOne(userId, loggedInUser);
 
     // Verify old password
     const isOldPasswordValid = await this.userService.verifyPassword(
@@ -410,7 +422,7 @@ export class AuthService {
     await this.userService.update(userId, {
       // @ts-ignore - password_hash is not in UpdateUserDto but we need to update it
       password_hash: newPasswordHash,
-    });
+    }, loggedInUser);
 
     // Invalidate all sessions (force re-login for security)
     await this.sessionRepository.deleteAllUserSessions(userId);
@@ -513,5 +525,110 @@ export class AuthService {
     await this.sessionRepository.deleteAllUserSessions(user.id);
 
     this.logger.log(`Password reset successfully: ${user.id}`);
+  }
+
+  // ---------- Resend OTP ----------
+
+  async resendOtp(dto: ResendOtpDto): Promise<void> {
+    this.logger.log(
+      `OTP resend request for email: ${dto.email} (Purpose: ${dto.purpose})`,
+    );
+
+    // 1. Check if an OTP record exists for this email + purpose
+    const existingOtp = await this.otpRepository.findByIdentifierAndPurpose(
+      dto.email,
+      dto.purpose,
+    );
+
+    if (!existingOtp) {
+      throw new BadRequestException(
+        'No active OTP request found. Please initiate the flow first (e.g., click Login or Forgot Password).',
+      );
+    }
+
+    // 2. Clear old OTP
+    await this.otpRepository.deleteByIdentifierAndPurpose(
+      dto.email,
+      dto.purpose,
+    );
+
+    // 3. Generate new OTP
+    const otp = generateOtp();
+    const otpHash = await hashValue(otp);
+
+    // 4. Save new OTP
+    await this.otpRepository.create({
+      identifier: dto.email,
+      otp_hash: otpHash,
+      user_id: existingOtp.user_id,
+      purpose: dto.purpose,
+      expires_at: calculateOtpExpiration(this.configService),
+      attempts_count: 0,
+    });
+
+    // 5. Build dynamic notification based on purpose
+    const notification = this.getNotificationDetails(
+      dto.purpose,
+      dto.email,
+      otp,
+    );
+
+    await this.notificationService.send({
+      user_id: existingOtp.user_id,
+      target_email: dto.email,
+      title: notification.title,
+      message: notification.message,
+      type: NotificationType.EMAIL,
+    });
+
+    this.logger.log(`Resent OTP to ${dto.email} for purpose ${dto.purpose}`);
+
+    // Log for dev
+    if (this.configService.get('brello.environment') === 'dev') {
+      this.logger.warn(`[DEV] Resent OTP for ${dto.email}: ${otp}`);
+    }
+  }
+
+  private getNotificationDetails(
+    purpose: OtpPurpose,
+    email: string,
+    otp: string,
+  ) {
+    const expiration = this.configService.get<number>(
+      'otp.expirationMinutes',
+      10,
+    );
+    switch (purpose) {
+      case OtpPurpose.LOGIN:
+        return {
+          title: 'Your Login OTP',
+          message: `Your one-time password is: ${otp}. It will expire in ${expiration} minutes.`,
+        };
+      case OtpPurpose.RESET_PASSWORD:
+        return {
+          title: 'Reset Your Password',
+          message: `Your password reset OTP is: ${otp}. It will expire in ${expiration} minutes.`,
+        };
+      case OtpPurpose.PLATFORM_ADMIN_REGISTER:
+        return {
+          title: 'Platform Admin Registration OTP',
+          message: `Your registration OTP is ${otp}. Please use it to activate your admin account.`,
+        };
+      case OtpPurpose.PLATFORM_ADMIN_LOGIN:
+        return {
+          title: 'Platform Admin Login OTP',
+          message: `Your login OTP is ${otp}. Please use it to access your admin account.`,
+        };
+      case OtpPurpose.LEAD_VERIFICATION:
+        return {
+          title: 'Verify Your Email',
+          message: `Your verification OTP is ${otp}. It will expire in ${expiration} minutes.`,
+        };
+      default:
+        return {
+          title: 'Verification OTP',
+          message: `Your verification OTP is ${otp}. It will expire in ${expiration} minutes.`,
+        };
+    }
   }
 }

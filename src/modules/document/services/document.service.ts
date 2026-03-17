@@ -16,6 +16,7 @@ import { FolderType, StorageProvider } from '../enums/document.enum';
 import { Status } from '../../../common/enums';
 import { Document } from '../entities/document.entity';
 import { Organization } from 'src/modules/organization/entities/organization.entity';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class DocumentService {
@@ -89,20 +90,21 @@ export class DocumentService {
     }
   }
 
-  async generateUploadUrl(userId: string, dto: GenerateUploadUrlDto) {
+  async generateUploadUrl(user: LoggedInUser, dto: GenerateUploadUrlDto) {
     this.logger.log(
-      `Generating upload URL for ${dto.folderType} requested by user ${userId}`,
+      `Generating upload URL for ${dto.folderType} requested by user ${user.userId}`,
     );
 
     // Validate Enterprise (and get code for slug)
     const enterprise = await this.enterpriseService.findOneById(
       dto.enterpriseId,
+      user,
     );
 
     // Validate Organization (if provided)
     let organization: Organization | null = null;
     if (dto.organizationId) {
-      organization = await this.organizationService.findOne(dto.organizationId);
+      organization = await this.organizationService.findOne(dto.organizationId, user);
     }
 
     // Generate safe file name (uuid + extension)
@@ -135,7 +137,7 @@ export class DocumentService {
       object_key: objectKey,
       folder_type: dto.folderType,
       status: Status.INACTIVE,
-      created_by: userId,
+      created_by: user.userId,
     } as Partial<Document>);
 
     // Generate S3 Pre-signed URL
@@ -152,8 +154,8 @@ export class DocumentService {
     };
   }
 
-  async confirmUpload(id: string, userId: string) {
-    this.logger.log(`Confirming upload for document ${id} by user ${userId}`);
+  async confirmUpload(id: string, user: LoggedInUser) {
+    this.logger.log(`Confirming upload for document ${id} by user ${user.userId}`);
 
     const document = await this.documentRepository.findById(id);
     if (!document) {
@@ -163,7 +165,7 @@ export class DocumentService {
     // Mark as ACTIVE
     const updatedDoc = await this.documentRepository.update(id, {
       status: Status.ACTIVE,
-      modified_by: userId,
+      modified_by: user.userId,
     });
 
     // TODO: In a real system, we'd verify the file actually exists in S3 here by calling headObject
@@ -180,7 +182,7 @@ export class DocumentService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, user: LoggedInUser) {
     const document = await this.documentRepository.findById(id);
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
@@ -197,7 +199,7 @@ export class DocumentService {
     };
   }
 
-  async getSignedUrl(id: string) {
+  async getSignedUrl(id: string, user: LoggedInUser) {
     const document = await this.documentRepository.findById(id);
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
@@ -216,8 +218,8 @@ export class DocumentService {
     return { url };
   }
 
-  async remove(id: string, userId: string) {
-    this.logger.log(`Soft deleting document ${id} by user ${userId}`);
+  async remove(id: string, user: LoggedInUser) {
+    this.logger.log(`Soft deleting document ${id} by user ${user.userId}`);
 
     const document = await this.documentRepository.findById(id);
     if (!document) {
@@ -226,7 +228,7 @@ export class DocumentService {
 
     await this.documentRepository.update(id, {
       status: Status.DELETED,
-      deleted_by: userId,
+      deleted_by: user.userId,
       deleted_at: new Date(),
     } as unknown as Partial<Document>);
 

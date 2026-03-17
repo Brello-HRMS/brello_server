@@ -1,6 +1,8 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 import { PermissionResolverService } from '../services/permission-resolver.service';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 interface MenuNode {
   id: string;
@@ -25,14 +27,8 @@ export class MenuController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async getMenu(@Request() req: any): Promise<MenuNode[]> {
-    const { userId, organizationId, appId } = req.user;
-
-    const resolved = await this.permissionResolver.resolve(
-      userId,
-      organizationId,
-      appId,
-    );
+  async getMenu(@LoggedInUser() user: LoggedInUserInterface): Promise<MenuNode[]> {
+    const resolved = await this.permissionResolver.resolve(user);
 
     // Build flat lookup
     const nodeMap = new Map<string, MenuNode>();

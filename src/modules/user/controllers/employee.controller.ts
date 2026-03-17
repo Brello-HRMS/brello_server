@@ -10,6 +10,7 @@ import {
   Put,
   HttpCode,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { EmployeeService } from '../services/employee.service';
 import {
@@ -24,9 +25,14 @@ import {
   AddDocumentDto,
   UpdateEmergencyContactDto,
   EmployeeExitDto,
+  ListEmployeesDto,
 } from '../dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('employees')
+@UseGuards(JwtAuthGuard)
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
@@ -37,9 +43,11 @@ export class EmployeeController {
   }
 
   @Get()
-  async listEmployees(@Query() query: any) {
-    const response = await this.employeeService.listEmployees(query);
-    return { success: true, ...response };
+  async listEmployees(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query() query: ListEmployeesDto,
+  ) {
+    return this.employeeService.listEmployees(user, query);
   }
 
   @Get(':id')

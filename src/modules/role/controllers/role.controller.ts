@@ -15,9 +15,10 @@ import {
 import { RoleService } from '../services/role.service';
 import { CreateRoleDto } from '../dto/create-role.dto';
 import { UpdateRoleDto } from '../dto/update-role.dto';
+import { ListRolesDto } from '../dto/list-roles.dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import type { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard)
@@ -28,15 +29,18 @@ export class RoleController {
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createRoleDto: CreateRoleDto,
-    @CurrentUser() currentUser: JwtPayload,
+    @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.roleService.create(createRoleDto, currentUser);
+    return this.roleService.create(createRoleDto, user);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll() {
-    return this.roleService.findAll();
+  findAll(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query() query: ListRolesDto,
+  ) {
+    return this.roleService.findAll(user, query);
   }
 
   @Get('filter')
@@ -44,14 +48,18 @@ export class RoleController {
   findByFilter(
     @Query('organization_id', ParseUUIDPipe) organizationId: string,
     @Query('enterprise_id', ParseUUIDPipe) enterpriseId: string,
+    @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.roleService.findByFilter(organizationId, enterpriseId);
+    return this.roleService.findByFilter(organizationId, enterpriseId, user);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.roleService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.roleService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -59,17 +67,17 @@ export class RoleController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateRoleDto: UpdateRoleDto,
-    @CurrentUser() currentUser: JwtPayload,
+    @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.roleService.update(id, updateRoleDto, currentUser);
+    return this.roleService.update(id, updateRoleDto, user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() currentUser: JwtPayload,
+    @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.roleService.remove(id, currentUser);
+    return this.roleService.remove(id, user);
   }
 }

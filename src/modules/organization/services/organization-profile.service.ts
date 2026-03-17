@@ -14,6 +14,7 @@ import { OrganizationService } from './organization.service';
 import { EnterpriseService } from '../../enterprise/services/enterprise.service';
 import { DocumentService } from '../../document/services/document.service';
 import { IndustryTypeService } from '../../industry-type/services/industry-type.service';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class OrganizationProfileService {
@@ -30,30 +31,31 @@ export class OrganizationProfileService {
 
   async create(
     createDto: CreateOrganizationProfileDto,
+    user?: LoggedInUser,
   ): Promise<OrganizationProfile> {
     this.logger.log(
       `Creating organization profile for org: ${createDto.organization_id}`,
     );
 
     // Check if organization exists
-    await this.organizationService.findOne(createDto.organization_id);
+    await this.organizationService.findOne(createDto.organization_id, user);
 
     // Check if enterprise exists
-    await this.enterpriseService.findOneById(createDto.enterprise_id);
+    await this.enterpriseService.findOneById(createDto.enterprise_id, user);
 
     // Check if logo exists (if provided)
     if (createDto.logo_id) {
-      await this.documentService.findOne(createDto.logo_id);
+      await this.documentService.findOne(createDto.logo_id, user as any);
     }
 
     // Check if industry type exists (if provided)
     if (createDto.industry_type_id) {
-      await this.industryTypeService.findOne(createDto.industry_type_id);
+      await this.industryTypeService.findOne(createDto.industry_type_id, user);
     }
 
     // Check if parent organization exists (if provided)
     if (createDto.parent_id) {
-      await this.organizationService.findOne(createDto.parent_id);
+      await this.organizationService.findOne(createDto.parent_id, user);
     }
 
     // Check for unique email
@@ -90,7 +92,7 @@ export class OrganizationProfileService {
     ) as Promise<OrganizationProfile>;
   }
 
-  async findOne(id: string): Promise<OrganizationProfile> {
+  async findOne(id: string, user?: LoggedInUser): Promise<OrganizationProfile> {
     this.logger.log(`Fetching organization profile: ${id}`);
     const profile = await this.profileRepository.findById(id);
 
@@ -104,6 +106,7 @@ export class OrganizationProfileService {
 
   async findByOrganizationId(
     organizationId: string,
+    user?: LoggedInUser,
   ): Promise<OrganizationProfile> {
     this.logger.log(`Fetching profile for organization: ${organizationId}`);
     const profile =
@@ -120,10 +123,11 @@ export class OrganizationProfileService {
   async update(
     id: string,
     updateDto: UpdateOrganizationProfileDto,
+    user?: LoggedInUser,
   ): Promise<OrganizationProfile> {
     this.logger.log(`Updating organization profile: ${id}`);
 
-    const existingProfile = await this.findOne(id);
+    const existingProfile = await this.findOne(id, user);
 
     // If email is updated, check uniqueness
     if (updateDto.email && updateDto.email !== existingProfile.email) {
@@ -139,18 +143,18 @@ export class OrganizationProfileService {
 
     // Validate related entities if they are being updated
     if (updateDto.logo_id)
-      await this.documentService.findOne(updateDto.logo_id);
+      await this.documentService.findOne(updateDto.logo_id, user as any);
     if (updateDto.industry_type_id)
-      await this.industryTypeService.findOne(updateDto.industry_type_id);
+      await this.industryTypeService.findOne(updateDto.industry_type_id, user);
     if (updateDto.parent_id)
-      await this.organizationService.findOne(updateDto.parent_id);
+      await this.organizationService.findOne(updateDto.parent_id, user);
 
     // We don't typically allow moving an existing profile to a different organization/enterprise without complex rules,
     // but if the DTO provides them, we validate them.
     if (updateDto.organization_id)
-      await this.organizationService.findOne(updateDto.organization_id);
+      await this.organizationService.findOne(updateDto.organization_id, user);
     if (updateDto.enterprise_id)
-      await this.enterpriseService.findOneById(updateDto.enterprise_id);
+      await this.enterpriseService.findOneById(updateDto.enterprise_id, user);
 
     // Map fields
     const updateData: Partial<OrganizationProfile> = {
@@ -195,10 +199,10 @@ export class OrganizationProfileService {
     return updated;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
     this.logger.log(`Soft deleting organization profile: ${id}`);
 
-    await this.findOne(id);
+    await this.findOne(id, user);
 
     const deleted = await this.profileRepository.softDelete(id);
     if (!deleted) {
