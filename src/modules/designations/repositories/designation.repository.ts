@@ -34,7 +34,8 @@ export class DesignationRepository {
     ): Promise<Designation[]> {
         const query = this.repository
             .createQueryBuilder('designation')
-            .where('designation.org_id = :orgId', { orgId });
+            .where('designation.org_id = :orgId', { orgId })
+            .andWhere('designation.is_deleted = :is_deleted', { is_deleted: false });
 
         // Apply status filter if provided
         if (filters.status) {
@@ -94,7 +95,7 @@ export class DesignationRepository {
      * The record remains in the database for historical reference.
      */
     async softDelete(id: string): Promise<void> {
-        await this.repository.update(id, { status: Status.INACTIVE });
+        await this.repository.update(id, { status: Status.INACTIVE, is_deleted: true });
     }
 
     // Quick boolean existence check by primary key
