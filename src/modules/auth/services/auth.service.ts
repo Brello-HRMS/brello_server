@@ -75,26 +75,7 @@ export class AuthService {
 
     const isSetupRequired = !user.organization_id && !user.is_platform_admin;
 
-    if (isSetupRequired) {
-      return {
-        access_token: '',
-        refresh_token: '',
-        user: {
-          id: user.id,
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          enterprise_id: user.enterprise_id,
-          organization_id: user.organization_id,
-        },
-        expires_in: 0,
-        defaultAppId: '',
-        availableApps: [],
-        setup_required: true,
-      };
-    }
-
-    return this.buildAuthResponse(user, loginDto.device_fingerprint);
+    return this.buildAuthResponse(user, loginDto.device_fingerprint, isSetupRequired);
   }
 
   // ---------- OTP Login Flow ----------
@@ -173,26 +154,7 @@ export class AuthService {
     await this.otpRepository.delete(otpRecord.id);
     const isSetupRequired = !user.organization_id && !user.is_platform_admin;
 
-    if (isSetupRequired) {
-      return {
-        access_token: '',
-        refresh_token: '',
-        user: {
-          id: user.id,
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          enterprise_id: user.enterprise_id,
-          organization_id: user.organization_id,
-        },
-        expires_in: 0,
-        defaultAppId: '',
-        availableApps: [],
-        setup_required: true,
-      };
-    }
-
-    return this.buildAuthResponse(user, dto.device_fingerprint);
+    return this.buildAuthResponse(user, dto.device_fingerprint, isSetupRequired);
   }
 
   // ---------- Shared Auth Helpers ----------
@@ -228,17 +190,20 @@ export class AuthService {
   async buildAuthResponse(
     user: any,
     deviceFingerprint?: string,
+    isSetupRequired: boolean = false,
   ): Promise<AuthResponseDto> {
     let availableApps: { id: string; name: string; priority: number }[] = [];
     let defaultAppId = null as any;
 
-    availableApps = await getUserAvailableApps(
-      user.id,
-      user.organization_id,
-      user.is_platform_admin,
-      this.userRoleMapRepository,
-    );
-    defaultAppId = determineDefaultApp(user.last_access_app_id, availableApps);
+    if (!isSetupRequired) {
+      availableApps = await getUserAvailableApps(
+        user.id,
+        user.organization_id,
+        user.is_platform_admin,
+        this.userRoleMapRepository,
+      );
+      defaultAppId = determineDefaultApp(user.last_access_app_id, availableApps);
+    }
 
     const tokens = await this.tokenService.createSessionAndTokens({
       userId: user.id,
@@ -263,8 +228,9 @@ export class AuthService {
         organization_id: user.organization_id,
       },
       expires_in: tokens.expires_in,
-      defaultAppId,
+      defaultAppId: defaultAppId || '',
       availableApps,
+      ...(isSetupRequired && { setup_required: true }),
     };
   }
 

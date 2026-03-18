@@ -45,14 +45,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Invalid token payload');
     }
 
-    if (
-      !payload.isPlatformAdmin &&
-      (!payload.appId || !payload.organizationId)
-    ) {
-      throw new UnauthorizedException(
-        'Token missing app or organization context',
-      );
-    }
+    // We no longer strictly enforce appId or organizationId here
+    // because users in the "setup phase" will have valid tokens
+    // but no organization or app assigned yet.
+    // Domain-specific guards (like AccessGuard) and PermissionResolverService
+    // will enforce access control based on these fields later if required.
 
     return payload;
   }
