@@ -8,7 +8,7 @@ brello:
 auth:
   JWT_SECRET: 1hljdhfjsdhfjdjhsdcfhsdljsdnh
   JWT_REFRESH_SECRET: 9xhfjdshfjdhf28347sdhjkfhdsj
-  JWT_ACCESS_EXPIRATION: '15m'
+  JWT_ACCESS_EXPIRATION: '1d'
   JWT_REFRESH_EXPIRATION: '7d'
   ENC_KEY: 7x!A%D*G-JaNdRgUkXp2s5v8y/B?E(H+
   IV: ABCDEFGHIJKLMNOP
