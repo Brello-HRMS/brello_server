@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EnterpriseModule } from '../enterprise/enterprise.module';
 import { OrganizationModule } from '../organization/organization.module';
@@ -45,7 +45,7 @@ import { PlanModuleActionController } from './controllers/plan-module-action.con
       PlanApp,
     ]),
     EnterpriseModule,
-    OrganizationModule,
+    forwardRef(() => OrganizationModule),
   ],
   controllers: [
     PlanController,
