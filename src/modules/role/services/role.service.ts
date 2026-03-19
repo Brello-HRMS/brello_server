@@ -60,7 +60,16 @@ export class RoleService {
 
     qb.andWhere('role.status != :deleted', { deleted: Status.DELETED });
 
-    return ListingHelper.apply(qb, query, user, ['name'], 'role');
+        return ListingHelper.apply(
+            qb,
+            query,
+            user,
+            {
+                searchFields: ['name', 'context'],
+                filterFields: ['is_system_role'],
+                alias: 'role',
+            },
+        );
   }
 
   async findByFilter(

@@ -227,8 +227,11 @@ export class EmployeeService {
       qb,
       query,
       user,
-      ['first_name', 'last_name', 'email'],
-      'user',
+      {
+        searchFields: ['first_name', 'last_name', 'email'],
+        filterFields: ['status', 'departmentId', 'designationId'],
+        alias: 'user',
+      },
     );
 
     const items = response.data.map((userInstance) => {
