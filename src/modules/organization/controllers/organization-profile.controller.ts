@@ -9,33 +9,45 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { OrganizationProfileService } from '../services/organization-profile.service';
 import { CreateOrganizationProfileDto } from '../dto/create-organization-profile.dto';
 import { UpdateOrganizationProfileDto } from '../dto/update-organization-profile.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('organization-profiles')
+@UseGuards(JwtAuthGuard)
 export class OrganizationProfileController {
   constructor(private readonly profileService: OrganizationProfileService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createDto: CreateOrganizationProfileDto) {
-    return this.profileService.create(createDto);
+  create(
+    @Body() createDto: CreateOrganizationProfileDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.profileService.create(createDto, user);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.profileService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.profileService.findOne(id, user);
   }
 
   @Get('organization/:organizationId')
   @HttpCode(HttpStatus.OK)
   findByOrganization(
     @Param('organizationId', ParseUUIDPipe) organizationId: string,
+    @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.profileService.findByOrganizationId(organizationId);
+    return this.profileService.findByOrganizationId(organizationId, user);
   }
 
   @Patch(':id')
@@ -43,13 +55,17 @@ export class OrganizationProfileController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateOrganizationProfileDto,
+    @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.profileService.update(id, updateDto);
+    return this.profileService.update(id, updateDto, user);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.profileService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.profileService.remove(id, user);
   }
 }

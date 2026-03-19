@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, SelectQueryBuilder } from 'typeorm';
 import { Role } from '../entities/role.entity';
 import { Status } from '../../../common/enums';
 
@@ -10,6 +10,10 @@ export class RoleRepository {
     @InjectRepository(Role)
     private readonly repository: Repository<Role>,
   ) {}
+
+  getListingQueryBuilder(alias: string = 'role'): SelectQueryBuilder<Role> {
+    return this.repository.createQueryBuilder(alias);
+  }
 
   async create(roleData: Partial<Role>): Promise<Role> {
     const newRole = this.repository.create(roleData);

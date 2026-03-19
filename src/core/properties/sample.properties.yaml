@@ -16,6 +16,15 @@ auth:
 session:
   expirationDays: 7
 
+cookie:
+  refreshTokenName: 'refresh_token'
+  httpOnly: true
+  secure: true             # true for HTTPS, false for local HTTP
+  sameSite: 'strict'
+  path: '/api/v1/auth'
+  maxAgeDays: 7
+  domain: ''               # e.g. '.brello.co.in'
+
 otp:
   expirationMinutes: 10
   maxAttempts: 5

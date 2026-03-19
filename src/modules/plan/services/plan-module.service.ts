@@ -5,12 +5,13 @@ import {
   CreatePlanModuleDto,
   UpdatePlanModuleDto,
 } from '../dto/plan-module.dto';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class PlanModuleService {
   constructor(private readonly planModuleRepository: PlanModuleRepository) {}
 
-  async create(dto: CreatePlanModuleDto): Promise<PlanModule> {
+  async create(dto: CreatePlanModuleDto, user?: LoggedInUser): Promise<PlanModule> {
     const planModule = this.planModuleRepository.create(dto);
     try {
       return await this.planModuleRepository.save(planModule);
@@ -21,26 +22,26 @@ export class PlanModuleService {
     }
   }
 
-  async findAll(): Promise<PlanModule[]> {
+  async findAll(user?: LoggedInUser): Promise<PlanModule[]> {
     return this.planModuleRepository.findAll();
   }
 
-  async findOne(id: string): Promise<PlanModule> {
+  async findOne(id: string, user?: LoggedInUser): Promise<PlanModule> {
     return this.planModuleRepository.findOneById(id);
   }
 
-  async findByPlan(planId: string): Promise<PlanModule[]> {
+  async findByPlan(planId: string, user?: LoggedInUser): Promise<PlanModule[]> {
     return this.planModuleRepository.findByPlanId(planId);
   }
 
-  async update(id: string, dto: UpdatePlanModuleDto): Promise<PlanModule> {
-    const planModule = await this.findOne(id);
+  async update(id: string, dto: UpdatePlanModuleDto, user?: LoggedInUser): Promise<PlanModule> {
+    const planModule = await this.findOne(id, user);
     Object.assign(planModule, dto);
     return this.planModuleRepository.save(planModule);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
+    await this.findOne(id, user);
     await this.planModuleRepository.delete(id);
   }
 }

@@ -3,6 +3,7 @@ import { NotificationRepository } from '../repositories/notification.repository'
 import { SendNotificationDto } from '../dto/send-notification.dto';
 import { Notification } from '../entities/notification.entity';
 import { Status } from '../../../common/enums/status.enum';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class InAppNotificationService {
@@ -15,7 +16,7 @@ export class InAppNotificationService {
   /**
    * Create an in-app notification record in the database.
    */
-  async send(dto: SendNotificationDto): Promise<Notification | null> {
+  async send(dto: SendNotificationDto, user?: LoggedInUser): Promise<Notification | null> {
     if (!dto.user_id) {
       this.logger.error('Cannot create IN_APP notification: missing user_id');
       return null;
@@ -47,23 +48,23 @@ export class InAppNotificationService {
   /**
    * Fetch unread in-app notifications
    */
-  async getUnread(userId: string): Promise<Notification[]> {
-    return this.notificationRepository.findUnreadInApp(userId);
+  async getUnread(user: LoggedInUser): Promise<Notification[]> {
+    return this.notificationRepository.findUnreadInApp(user.userId);
   }
 
   /**
    * Fetch all in-app notifications
    */
-  async getAll(userId: string): Promise<Notification[]> {
-    return this.notificationRepository.findAllInApp(userId);
+  async getAll(user: LoggedInUser): Promise<Notification[]> {
+    return this.notificationRepository.findAllInApp(user.userId);
   }
 
   /**
    * Mark a notification as read
    */
-  async markAsRead(id: string, userId: string): Promise<void> {
+  async markAsRead(id: string, user: LoggedInUser): Promise<void> {
     await this.notificationRepository.update(
-      { id, user_id: userId },
+      { id, user_id: user.userId },
       { is_read: true, read_at: new Date() },
     );
   }
@@ -71,9 +72,9 @@ export class InAppNotificationService {
   /**
    * Mark all notifications as read for a user
    */
-  async markAllAsRead(userId: string): Promise<void> {
+  async markAllAsRead(user: LoggedInUser): Promise<void> {
     await this.notificationRepository.update(
-      { user_id: userId, is_read: false },
+      { user_id: user.userId, is_read: false },
       { is_read: true, read_at: new Date() },
     );
   }

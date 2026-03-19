@@ -18,13 +18,13 @@ import {
   SubscriptionStatus,
 } from '../../plan/entities/organization-subscription.entity';
 import { UserRepository } from 'src/modules/user/repositories/user.repository';
-import { OrganizationProfileRepository } from '../repositories/organization-profile.repository';
 import { OrganizationProfile } from '../entities/organization-profile.entity';
 import { Status } from 'src/common/enums';
 import { Role } from 'src/modules/role/entities/role.entity';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { AuthResponseDto } from 'src/modules/auth/dto/auth-response.dto';
 import { PlanService } from 'src/modules/plan/services/plan.service';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class OrganizationService {
@@ -121,6 +121,7 @@ export class OrganizationService {
 
       // Step 5: Update User
       user.organization_id = savedOrg.id;
+      user.enterprise_id = savedOrg.enterprise_id;
       await manager.save(user);
 
       // Step 6: Create OrganizationSubscription
@@ -154,12 +155,12 @@ export class OrganizationService {
     }
   }
 
-  async findAll(): Promise<Organization[]> {
+  async findAll(user?: LoggedInUser): Promise<Organization[]> {
     this.logger.log('Fetching all organizations');
     return this.organizationRepository.findAll();
   }
 
-  async findOne(id: string): Promise<Organization> {
+  async findOne(id: string, user?: LoggedInUser): Promise<Organization> {
     this.logger.log(`Fetching organization: ${id}`);
 
     const organization = await this.organizationRepository.findById(id);
@@ -171,7 +172,7 @@ export class OrganizationService {
     return organization;
   }
 
-  async findByName(name: string): Promise<Organization> {
+  async findByName(name: string, user?: LoggedInUser): Promise<Organization> {
     this.logger.log(`Fetching organization: ${name}`);
 
     const organization = await this.organizationRepository.findByName(name);
@@ -183,10 +184,13 @@ export class OrganizationService {
     return organization;
   }
 
-  async findByEnterpriseId(enterpriseId: string): Promise<Organization[]> {
+  async findByEnterpriseId(
+    enterpriseId: string,
+    user?: LoggedInUser,
+  ): Promise<Organization[]> {
     this.logger.log(`Fetching organizations for enterprise: ${enterpriseId}`);
 
-    await this.enterpriseService.findOneById(enterpriseId);
+    await this.enterpriseService.findOneById(enterpriseId, user);
 
     return this.organizationRepository.findByEnterpriseId(enterpriseId);
   }
@@ -194,14 +198,16 @@ export class OrganizationService {
   async update(
     id: string,
     updateOrganizationDto: UpdateOrganizationDto,
+    user?: LoggedInUser,
   ): Promise<Organization> {
     this.logger.log(`Updating organization: ${id}`);
 
-    await this.findOne(id);
+    await this.findOne(id, user);
 
     if (updateOrganizationDto.enterprise_id) {
       await this.enterpriseService.findOneById(
         updateOrganizationDto.enterprise_id,
+        user,
       );
     }
 
@@ -220,10 +226,10 @@ export class OrganizationService {
     return updatedOrganization;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
     this.logger.log(`Deleting organization: ${id}`);
 
-    await this.findOne(id);
+    await this.findOne(id, user);
 
     const deleted = await this.organizationRepository.delete(id);
 

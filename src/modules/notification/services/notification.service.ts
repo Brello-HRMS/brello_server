@@ -4,6 +4,7 @@ import { InAppNotificationService } from './in-app-notification.service';
 import { PushNotificationService } from './push-notification.service';
 import { SendNotificationDto } from '../dto/send-notification.dto';
 import { NotificationType } from '../../../common/enums/notification-type.enum';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class NotificationService {
@@ -19,7 +20,7 @@ export class NotificationService {
    * Facade entry point for dispatching notifications.
    * Routes the payload to the correct underlying provider based on 'type'.
    */
-  async send(dto: SendNotificationDto): Promise<any> {
+  async send(dto: SendNotificationDto, user?: LoggedInUser): Promise<any> {
     this.logger.log(`Dispatching notification type: ${dto.type}`);
 
     switch (dto.type) {
@@ -27,7 +28,7 @@ export class NotificationService {
         return this.emailService.send(dto);
 
       case NotificationType.IN_APP:
-        return this.inAppService.send(dto);
+        return this.inAppService.send(dto, user);
 
       case NotificationType.PUSH:
         return this.pushService.send(dto);
@@ -43,6 +44,7 @@ export class NotificationService {
    */
   async broadcastAllChannels(
     dto: Omit<SendNotificationDto, 'type'>,
+    user?: LoggedInUser,
   ): Promise<void> {
     this.logger.log(
       `Broadcasting notification to all channels for user: ${dto.user_id}`,
@@ -50,7 +52,7 @@ export class NotificationService {
 
     // Fire off all promises concurrently
     await Promise.allSettled([
-      this.inAppService.send({ ...dto, type: NotificationType.IN_APP }),
+      this.inAppService.send({ ...dto, type: NotificationType.IN_APP }, user),
       this.pushService.send({ ...dto, type: NotificationType.PUSH }),
       dto.target_email
         ? this.emailService.send({ ...dto, type: NotificationType.EMAIL })

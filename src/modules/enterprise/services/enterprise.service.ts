@@ -15,6 +15,7 @@ import { UpdateEnterpriseDto } from '../dto/update-enterprise.dto';
 import { EnterpriseRepository } from '../repositories/enterprise.repository';
 import { EnterpriseAppRepository } from '../repositories/enterprise-app.repository';
 import { AppRepository } from '../../app/repositories/app.repository';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 
 @Injectable()
 export class EnterpriseService {
@@ -26,7 +27,7 @@ export class EnterpriseService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(dto: CreateEnterpriseDto): Promise<Enterprise> {
+  async create(dto: CreateEnterpriseDto, user?: LoggedInUser): Promise<Enterprise> {
     await this.validateDomainExists(dto.domain);
     await this.validateDomainUniqueness(dto.domain);
 
@@ -58,7 +59,7 @@ export class EnterpriseService {
     }
   }
 
-  async findAll(): Promise<(Enterprise & { apps: App[] })[]> {
+  async findAll(user?: LoggedInUser): Promise<(Enterprise & { apps: App[] })[]> {
     const enterprises = await this.enterpriseRepository.findAll();
     if (!enterprises.length) return [];
 
@@ -90,7 +91,7 @@ export class EnterpriseService {
     });
   }
 
-  async findOneById(id: string): Promise<Enterprise & { apps: App[] }> {
+  async findOneById(id: string, user?: LoggedInUser): Promise<Enterprise & { apps: App[] }> {
     const enterprise = await this.enterpriseRepository.findOneById(id);
     if (!enterprise) {
       throw new NotFoundException(`Enterprise with ID "${id}" not found`);
@@ -110,8 +111,8 @@ export class EnterpriseService {
     return this.appRepository.findByIds(appIds);
   }
 
-  async update(id: string, dto: UpdateEnterpriseDto): Promise<Enterprise> {
-    const enterprise = await this.findOneById(id);
+  async update(id: string, dto: UpdateEnterpriseDto, user?: LoggedInUser): Promise<Enterprise> {
+    const enterprise = await this.findOneById(id, user);
 
     if (dto.domain && dto.domain !== enterprise.domain) {
       await this.validateDomainExists(dto.domain);
@@ -122,8 +123,8 @@ export class EnterpriseService {
     return this.enterpriseRepository.save(enterprise);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOneById(id);
+  async remove(id: string, user?: LoggedInUser): Promise<void> {
+    await this.findOneById(id, user);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -145,8 +146,9 @@ export class EnterpriseService {
   async assignAppsToEnterprise(
     enterpriseId: string,
     appIds: string[],
+    user?: LoggedInUser,
   ): Promise<void> {
-    await this.findOneById(enterpriseId);
+    await this.findOneById(enterpriseId, user);
     await this.enterpriseAppRepository.bulkCreate(enterpriseId, appIds);
   }
 

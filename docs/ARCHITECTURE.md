@@ -287,6 +287,15 @@ auth:
 session:
   expirationDays: 7 # Session TTL in days
 
+cookie:
+  refreshTokenName: 'refresh_token'  # Name of the HttpOnly cookie
+  httpOnly: true                  # JS cannot read it
+  secure: true                    # Requires HTTPS (false for local dev)
+  sameSite: 'strict'              # CSRF protection
+  path: '/api/v1/auth'            # Cookie only sent to auth endpoints
+  maxAgeDays: 7                   # Must match JWT_REFRESH_EXPIRATION
+  domain: ''                      # e.g. '.brello.co.in' in prod
+
 otp:
   expirationMinutes: 10 # OTP validity period
   maxAttempts: 5 # Max failed OTP attempts
@@ -338,15 +347,27 @@ Located in `src/modules/auth/`.
 | Feature                | Implementation                                                                      |
 | ---------------------- | ----------------------------------------------------------------------------------- |
 | **Login**              | Email/password → validates → resolves available apps → creates session → JWT tokens |
-| **Access Token**       | Short-lived (15m), contains `userId, sessionId, orgId, enterpriseId, appId`         |
-| **Refresh Token**      | Long-lived (7d), separate Passport strategy (`jwt-refresh`)                         |
+| **Access Token**       | Short-lived (15m), sent in JSON response body                                       |
+| **Refresh Token**      | Long-lived (7d), delivered via **HttpOnly Secure cookie** (never in response body)  |
 | **Token Rotation**     | On refresh, old token is invalidated and new one is issued                          |
 | **Session Management** | `Session` entity tracks active sessions with expiration                             |
 | **Switch App**         | `POST /auth/switch-app` — issues new JWT scoped to a different app                  |
 | **Password Update**    | Requires current password, invalidates all sessions                                 |
 | **Forgot Password**    | OTP-based flow: generate OTP → verify OTP → reset password                          |
+| **Resend OTP**         | `POST /auth/resend-otp` — unified endpoint for all OTP purposes (`LOGIN`, `RESET_PW`, `PA_REGISTER`, etc.) |
 | **OTP Cleanup**        | Cron job runs hourly to purge expired OTPs                                          |
 | **Session Cleanup**    | Cron job runs daily at midnight to purge expired sessions                           |
+
+### Token Delivery Strategy
+
+| Token             | Server → Client                            | Client → Server                                  |
+| ----------------- | ------------------------------------------ | ------------------------------------------------ |
+| **Access Token**  | JSON response body                         | `Authorization: Bearer <token>` header           |
+| **Refresh Token** | `Set-Cookie` (HttpOnly, Secure, SameSite)  | Automatically via cookie on `POST /auth/refresh` |
+
+**Frontend storage:**
+- **Access token** → In-memory variable only (JS closure, React state, store). Never `localStorage`.
+- **Refresh token** → Not stored by frontend; lives in an HttpOnly cookie the browser manages.
 
 ### JWT Payload Structure
 
@@ -474,11 +495,12 @@ Applied in `main.ts` before any route handler executes:
 
 | Order | Middleware               | Purpose                                                                          |
 | ----- | ------------------------ | -------------------------------------------------------------------------------- |
-| 1     | **CORS**                 | `origin: true, credentials: true`                                                |
-| 2     | **ValidationPipe**       | Whitelist DTOs, transform types, forbid unknown properties                       |
-| 3     | **HttpExceptionFilter**  | Standardize error responses: `{statusCode, timestamp, path, message, errorCode}` |
-| 4     | **TransformInterceptor** | Wrap success responses: `{success: true, data, timestamp}`                       |
-| 5     | **Global Prefix**        | All routes prefixed with `api/v1`                                                |
+| 1     | **cookie-parser**        | Parses cookies from incoming requests (required for HttpOnly refresh tokens)     |
+| 2     | **CORS**                 | `origin: true, credentials: true`                                                |
+| 3     | **ValidationPipe**       | Whitelist DTOs, transform types, forbid unknown properties                       |
+| 4     | **HttpExceptionFilter**  | Standardize error responses: `{statusCode, timestamp, path, message, errorCode}` |
+| 5     | **TransformInterceptor** | Wrap success responses: `{success: true, data, timestamp}`                       |
+| 6     | **Global Prefix**        | All routes prefixed with `api/v1`                                                |
 
 ### Standardized Response Formats
 
@@ -512,10 +534,10 @@ Applied in `main.ts` before any route handler executes:
 
 | Method | Endpoint           | Auth        | Description                   |
 | ------ | ------------------ | ----------- | ----------------------------- |
-| POST   | `/login`           | ✗           | Login with email/password     |
+| POST   | `/login`           | ✗           | Login (returns access token + sets refresh cookie) |
 | POST   | `/switch-app`      | JWT         | Switch active application     |
-| POST   | `/logout`          | JWT         | Invalidate session            |
-| POST   | `/refresh`         | Refresh JWT | Get new access token          |
+| POST   | `/logout`          | JWT         | Invalidate session + clear refresh cookie |
+| POST   | `/refresh`         | Cookie      | Get new access token (uses HttpOnly cookie) |
 | POST   | `/update-password` | JWT         | Change password               |
 | POST   | `/forgot-password` | ✗           | Send password reset OTP       |
 | POST   | `/verify-otp`      | ✗           | Verify OTP & set new password |
