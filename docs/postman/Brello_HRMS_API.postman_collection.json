@@ -1031,283 +1031,309 @@
       ]
     },
     {
-      "name": "User & Employee",
-      "description": "User authentication records and full Employee Aggregate Management",
+      "name": "Employee Management",
+      "description": "Full lifecycle management of employees, including profile, documents, education, and offboarding.",
       "item": [
         {
-          "name": "Create User",
-          "event": [
+          "name": "Employees",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    const response = pm.response.json();",
-                  "    pm.collectionVariables.set('user_id', response.data.id);",
-                  "    console.log('✅ User created:', response.data.id);",
-                  "}"
+              "name": "List Employees",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "search", "value": "", "disabled": true },
+                    { "key": "sort_by", "value": "created_at" },
+                    { "key": "sort_order", "value": "DESC" },
+                    { "key": "departmentId", "value": "", "disabled": true },
+                    { "key": "designationId", "value": "", "disabled": true },
+                    { "key": "status", "value": "ACTIVE", "disabled": true }
+                  ]
+                },
+                "description": "List employees with pagination, search, and filters."
+              }
+            },
+            {
+              "name": "Get Employee Detail",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}"]
+                },
+                "description": "Get complete employee aggregate data."
+              }
+            },
+            {
+              "name": "Create Employee",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
                 ],
-                "type": "text/javascript"
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"]
+                }
+              }
+            },
+            {
+              "name": "Delete Employee (Soft Delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}"]
+                }
               }
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          ]
+        },
+        {
+          "name": "Profile Management",
+          "item": [
+            {
+              "name": "Update Personal Details",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"dob\": \"1990-01-01\",\n    \"gender\": \"FEMALE\",\n    \"blood_group\": \"O+\",\n    \"marital_status\": \"SINGLE\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/personal",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "personal"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"first_name\": \"John\",\n    \"middle_name\": \"Michael\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+919876543210\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
-            },
-            "description": "Create a new user. Password is hashed server-side.\n\n**Auto-saves:** `user_id` to collection variables.\n\n**Password rules:**\n- Minimum 8 characters\n- At least one uppercase letter\n- At least one lowercase letter\n- At least one digit\n- At least one special character (@$!%*?&)\n\n**Phone format:** E.164 (e.g., +919876543210)"
-          },
-          "response": []
-        },
-        {
-          "name": "Get All Users",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["users"],
-              "query": [
-                { "key": "page", "value": "1", "description": "Page number" },
-                { "key": "limit", "value": "10", "description": "Items per page" },
-                { "key": "search", "value": "", "description": "Search by name or email", "disabled": true },
-                { "key": "sort_by", "value": "created_at", "description": "Field to sort by" },
-                { "key": "sort_order", "value": "DESC", "description": "Sort direction (ASC/DESC)" },
-                { "key": "status", "value": "ACTIVE", "description": "Filter by status", "disabled": true }
-              ]
-            },
-            "description": "Standardized listing of all users.\n\n**Features:**\n- Pagination (`page`, `limit`)\n- Global Search (`search` across first_name, last_name, email)\n- Sorting (`sort_by`, `sort_order`)\n- Organization-level security (auto-scoped)\n- Includes `avatar` and `memberAvatars` in response."
-          },
-          "response": []
-        },
-        {
-          "name": "Get User by ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            },
-            "description": "Get a single user by UUID."
-          },
-          "response": []
-        },
-        {
-          "name": "Update User",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+            {
+              "name": "Update Employment Details",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"department_id\": \"{{department_id}}\",\n    \"designation_id\": \"<DESIGNATION_ID>\",\n    \"employment_type\": \"FULL_TIME\",\n    \"work_location\": \"REMOTE\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/employment",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "employment"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"first_name\": \"Jonathan\",\n    \"phone\": \"+919876543211\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            },
-            "description": "Partially update a user. All fields are optional. Password cannot be changed here (use auth endpoints)."
-          },
-          "response": []
-        },
-        {
-          "name": "Delete User",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            },
-            "description": "Soft-delete a user (sets status to DELETED). Returns 204 No Content."
-          },
-          "response": []
-        },
-        {
-          "name": "Create Employee Aggregate",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+            {
+              "name": "Update Payroll Info",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"bank_info\": {\n        \"account_holder_name\": \"Jane Smith\",\n        \"bank_name\": \"HDFC Bank\",\n        \"account_number\": \"1234567890\",\n        \"ifsc_code\": \"HDFC0001234\"\n    },\n    \"gov_info\": {\n        \"pan\": \"ABCDE1234F\",\n        \"aadhaar\": \"123456789012\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/payroll",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "payroll"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees",
-              "host": ["{{base_url}}"],
-              "path": ["employees"]
+            {
+              "name": "Get Profile Completion",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/profile-completion",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "profile-completion"]
+                }
+              }
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "Get Employee Aggregate",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
+          "name": "Documents",
+          "item": [
+            {
+              "name": "Upload Documents",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"documents\": [\n        {\n            \"name\": \"Aadhaar Card\",\n            \"type\": \"GOV_ID\",\n            \"document_id\": \"{{document_id}}\"\n        }\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/documents",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "documents"]
+                }
+              }
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "List Employees",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/employees?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["employees"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "search", "value": "", "disabled": true },
-                { "key": "sort_by", "value": "created_at" },
-                { "key": "sort_order", "value": "DESC" },
-                { "key": "departmentId", "value": "", "disabled": true },
-                { "key": "designationId", "value": "", "disabled": true },
-                { "key": "status", "value": "ACTIVE", "disabled": true }
-              ]
-            },
-            "description": "Standardized listing of all employees.\n\n**Features:**\n- Pagination and Sorting\n- Global Search\n- Filter by `departmentId`, `designationId`, and `status`.\n- Includes `avatar` of the employee."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Employee Basic Info",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "Education & Experience",
+          "item": [
+            {
+              "name": "Add Education",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"degree\": \"Bachelor of Science\",\n    \"school_name\": \"Stanford\",\n    \"field_of_study\": \"Computer Science\",\n    \"completion_date\": \"2020-05-15\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/education",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Doe\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
-            },
-            "description": "Update basic identity fields of an employee."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Employee Profile",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+            {
+              "name": "Update Education",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"degree\": \"Master of Science\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/education/<EDU_ID>",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education", "<EDU_ID>"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"employmentType\": \"FULL_TIME\",\n    \"workLocation\": \"HYBRID\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}/profile",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "profile"]
-            },
-            "description": "Update HR-specific profile fields of an employee."
-          },
-          "response": []
-        },
-        {
-          "name": "Add Employee Education",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+            {
+              "name": "Delete Education",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/education/<EDU_ID>",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education", "<EDU_ID>"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"degree\": \"B.Tech\",\n    \"school_name\": \"MIT\",\n    \"completion_date\": \"2020-05-01\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}/education",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "education"]
+            {
+              "name": "Add Experience",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"company_name\": \"Google\",\n    \"designation\": \"Software Engineer\",\n    \"start_date\": \"2021-01-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience"]
+                }
+              }
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "Upsert Emergency Contact",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "Offboarding",
+          "item": [
+            {
+              "name": "Initiate Offboarding",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"exit_type\": \"RESIGNATION\",\n    \"reason\": \"Better opportunity\",\n    \"last_working_day\": \"2026-04-15\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/offboarding/initiate",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding", "initiate"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"John Doe\",\n    \"relationship\": \"Spouse\",\n    \"phone\": \"+919876543000\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}/emergency-contact",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "emergency-contact"]
+            {
+              "name": "Update Offboarding",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"reason\": \"Personal reasons\",\n    \"last_working_day\": \"2026-05-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
+                }
+              }
             },
-            "description": "Upsert emergency contact details for an employee."
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Employee",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
+            {
+              "name": "Get Offboarding Status",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
+                }
+              }
             },
-            "description": "Soft-delete both identity and profile layers of an employee."
-          },
-          "response": []
+            {
+              "name": "Cancel Offboarding",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
+                }
+              }
+            }
+          ]
         }
       ]
     },

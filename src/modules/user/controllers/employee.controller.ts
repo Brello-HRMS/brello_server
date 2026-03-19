@@ -26,6 +26,10 @@ import {
   UpdateEmergencyContactDto,
   EmployeeExitDto,
   ListEmployeesDto,
+  InitiateOffboardingDto,
+  UpdateOffboardingDto,
+  UploadDocumentsDto,
+  UpdatePayrollInfoDto,
 } from '../dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
@@ -55,20 +59,40 @@ export class EmployeeController {
     return this.employeeService.getEmployeeAggregate(id);
   }
 
-  @Patch(':id')
-  async updateBasicInfo(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateEmployeeBasicDto,
-  ) {
-    return this.employeeService.updateBasicInfo(id, dto);
-  }
-
-  @Patch(':id/profile')
-  async updateProfile(
+  @Patch(':id/personal')
+  async updatePersonalDetails(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateEmployeeProfileDto,
+    @LoggedInUser() actor: LoggedInUserInterface,
   ) {
-    return this.employeeService.updateProfile(id, dto);
+    return this.employeeService.updatePersonalDetails(id, dto, actor.userId);
+  }
+
+  @Patch(':id/employment')
+  async updateEmploymentDetails(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateEmployeeBasicDto & UpdateEmployeeProfileDto,
+    @LoggedInUser() actor: LoggedInUserInterface,
+  ) {
+    return this.employeeService.updateEmploymentDetails(id, dto, actor.userId);
+  }
+
+  @Patch(':id/payroll')
+  async updatePayrollInformation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePayrollInfoDto,
+    @LoggedInUser() actor: LoggedInUserInterface,
+  ) {
+    return this.employeeService.updatePayrollInformation(id, dto, actor.userId);
+  }
+
+  @Post(':id/documents')
+  async uploadDocuments(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UploadDocumentsDto,
+    @LoggedInUser() actor: LoggedInUserInterface,
+  ) {
+    return this.employeeService.uploadDocuments(id, dto, actor.userId);
   }
 
   @Post(':id/education')
@@ -79,12 +103,21 @@ export class EmployeeController {
     return this.employeeService.addEducation(id, dto);
   }
 
-  @Delete(':id/education/:educationId')
+  @Patch(':id/education/:eduId')
+  async updateEducation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('eduId', ParseUUIDPipe) eduId: string,
+    @Body() dto: AddEducationDto,
+  ) {
+    return this.employeeService.updateEducation(id, eduId, dto);
+  }
+
+  @Delete(':id/education/:eduId')
   async deleteEducation(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('educationId', ParseUUIDPipe) educationId: string,
+    @Param('eduId', ParseUUIDPipe) eduId: string,
   ) {
-    return this.employeeService.deleteEducation(id, educationId);
+    return this.employeeService.deleteEducation(id, eduId);
   }
 
   @Post(':id/experience')
@@ -95,77 +128,57 @@ export class EmployeeController {
     return this.employeeService.addExperience(id, dto);
   }
 
-  @Delete(':id/experience/:experienceId')
+  @Patch(':id/experience/:expId')
+  async updateExperience(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('expId', ParseUUIDPipe) expId: string,
+    @Body() dto: AddExperienceDto,
+  ) {
+    return this.employeeService.updateExperience(id, expId, dto);
+  }
+
+  @Delete(':id/experience/:expId')
   async deleteExperience(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('experienceId', ParseUUIDPipe) experienceId: string,
+    @Param('expId', ParseUUIDPipe) expId: string,
   ) {
-    return this.employeeService.deleteExperience(id, experienceId);
+    return this.employeeService.deleteExperience(id, expId);
   }
 
-  @Post(':id/assets')
-  async addAsset(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AddAssetDto,
-  ) {
-    return this.employeeService.addAsset(id, dto);
+  @Get(':id/profile-completion')
+  async getProfileCompletion(@Param('id', ParseUUIDPipe) id: string) {
+    return this.employeeService.getProfileCompletion(id);
   }
 
-  @Delete(':id/assets/:assetId')
-  async deleteAsset(
+  @Post(':id/offboarding/initiate')
+  async initiateOffboarding(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('assetId', ParseUUIDPipe) assetId: string,
+    @Body() dto: InitiateOffboardingDto,
+    @LoggedInUser() actor: LoggedInUserInterface,
   ) {
-    return this.employeeService.deleteAsset(id, assetId);
+    return this.employeeService.initiateOffboarding(id, dto, actor.userId);
   }
 
-  @Put(':id/gov-info')
-  async updateGovInfo(
+  @Patch(':id/offboarding')
+  async updateOffboarding(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateGovInfoDto,
+    @Body() dto: UpdateOffboardingDto,
+    @LoggedInUser() actor: LoggedInUserInterface,
   ) {
-    return this.employeeService.updateGovInfo(id, dto);
+    return this.employeeService.updateOffboarding(id, dto, actor.userId);
   }
 
-  @Put(':id/bank-info')
-  async updateBankInfo(
+  @Delete(':id/offboarding')
+  async cancelOffboarding(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateBankInfoDto,
+    @LoggedInUser() actor: LoggedInUserInterface,
   ) {
-    return this.employeeService.updateBankInfo(id, dto);
+    return this.employeeService.cancelOffboarding(id, actor.userId);
   }
 
-  @Post(':id/documents')
-  async attachDocument(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AddDocumentDto,
-  ) {
-    return this.employeeService.attachDocument(id, dto);
-  }
-
-  @Delete(':id/documents/:docId')
-  async removeDocument(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('docId', ParseUUIDPipe) docId: string,
-  ) {
-    return this.employeeService.removeDocument(id, docId);
-  }
-
-  @Put(':id/emergency-contact')
-  async updateEmergencyContact(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateEmergencyContactDto,
-  ) {
-    return this.employeeService.updateEmergencyContact(id, dto);
-  }
-
-  @Post(':id/exit')
-  @HttpCode(200)
-  async submitExit(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: EmployeeExitDto,
-  ) {
-    return this.employeeService.submitExit(id, dto);
+  @Get(':id/offboarding')
+  async getOffboardingDetails(@Param('id', ParseUUIDPipe) id: string) {
+    return this.employeeService.getOffboardingDetails(id);
   }
 
   @Delete(':id')

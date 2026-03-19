@@ -54,3 +54,10 @@ export enum EmergencyRelation {
   FRIEND = 'FRIEND',
   RELATIVE = 'RELATIVE',
 }
+export enum EmployeeStatus {
+  DRAFT = 'DRAFT',
+  INVITED = 'INVITED',
+  ACTIVE = 'ACTIVE',
+  OFFBOARDING = 'OFFBOARDING',
+  INACTIVE = 'INACTIVE',
+}
