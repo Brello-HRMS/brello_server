@@ -83,4 +83,23 @@ export class StorageService {
       throw error;
     }
   }
+  async uploadFile(
+    fileBuffer: Buffer,
+    objectKey: string,
+    mimeType: string,
+  ): Promise<void> {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: objectKey,
+        Body: fileBuffer,
+        ContentType: mimeType,
+      });
+
+      await this.s3Client.send(command);
+    } catch (error) {
+      this.logger.error(`Failed to upload file to S3: ${objectKey}`, error);
+      throw error;
+    }
+  }
 }

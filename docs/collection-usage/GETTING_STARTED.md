@@ -53,6 +53,14 @@
  │  Step 12: Update Password                             │
  │  Step 13: Forgot Password (get OTP)                   │
  │  Step 14: Verify OTP & Reset Password                 │
+ └───────────────────────┬──────────────────────────────┘
+                         │
+ PHASE 6: Client & Project Management
+ ┌───────────────────────▼──────────────────────────────┐
+ │  Step 18: Create Client              → client_id     │
+ │  Step 19: Create Project             → project_id    │
+ │  Step 20: Assign Team (with roles)                   │
+ │  Step 21: Upload Contract (S3)                       │
  └──────────────────────────────────────────────────────┘
 ```
 
@@ -503,6 +511,91 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 
 ---
 
+---
+
+## Phase 6: Client & Project Management
+
+### Step 18 — Create Client
+
+> **Folder:** Client → Create Client
+
+```
+POST /api/v1/clients
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Brello Tech Solutions",
+  "poc_name": "Samir Mohd",
+  "poc_email": "samir@brello.io",
+  "poc_phone": "+919999999999",
+  "address": "Tech Hub, Bengaluru",
+  "status": "ACTIVE"
+}
+```
+
+✅ **Save the `id`** — this is your `client_id`.
+
+### Step 19 — Create Project
+
+> **Folder:** Project → Create Project
+
+```
+POST /api/v1/clients/{{client_id}}/projects
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Brello v2 Backend",
+  "description": "Enterprise stability and documentation",
+  "project_type": "AGILE",
+  "status": "IN_PROGRESS",
+  "priority": "HIGH",
+  "start_date": "2024-03-01",
+  "end_date": "2024-12-31"
+}
+```
+
+✅ **Save the `id`** — this is your `project_id`.
+
+### Step 20 — Assign Team
+
+> **Folder:** Project → Assign Team
+
+```
+POST /api/v1/projects/{{project_id}}/team
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "members": [
+    {
+      "user_id": "{{user_id}}",
+      "role": "Lead Architect"
+    }
+  ]
+}
+```
+
+### Step 21 — Upload Contract
+
+> **Folder:** Project → Upload Contract
+
+```
+POST /api/v1/projects/{{project_id}}/contract
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data
+```
+
+- Key: `file`, Value: `(your_file.pdf)`
+
+✅ On success, the binary is uploaded to S3, a Document record is created, and the metadata is linked to the Project Contract table.
+
+---
+
 ## Quick Reference Table
 
 | Step | Method | Endpoint                            | Prerequisite                            |
@@ -526,6 +619,10 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 | 15   | POST   | `/auth/update-password`             | access_token                            |
 | 16   | POST   | `/auth/forgot-password`             | —                                       |
 | 17   | POST   | `/auth/verify-otp`                  | OTP from step 16                        |
+| 18   | POST   | `/clients`                          | access_token                            |
+| 19   | POST   | `/clients/:id/projects`             | client_id                               |
+| 20   | POST   | `/projects/:id/team`                | project_id                              |
+| 21   | POST   | `/projects/:id/contract`            | project_id                              |
 
 ---
 
