@@ -14,6 +14,7 @@ import { IndustryTypeModule } from '../industry-type/industry-type.module';
 import { UserRepository } from '../user/repositories/user.repository';
 import { User } from '../user/entities/user.entity';
 import { AuthModule } from '../auth/auth.module';
+import { PlanModule } from '../plan/plan.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from '../auth/auth.module';
     forwardRef(() => DocumentModule),
     IndustryTypeModule,
     forwardRef(() => AuthModule),
+    forwardRef(() => PlanModule),
   ],
   controllers: [OrganizationController, OrganizationProfileController],
   providers: [
