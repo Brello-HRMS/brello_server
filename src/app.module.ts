@@ -17,6 +17,7 @@ import { IndustryTypeModule } from './modules/industry-type/industry-type.module
 import { DocumentModule } from './modules/document/document.module';
 import { LeadModule } from './modules/lead/lead.module';
 import { RoleModule } from './modules/role/role.module';
+import { DesignationModule } from './modules/designations/designation.module';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.interceptor';
@@ -50,6 +51,7 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     NotificationModule,
     LeadModule,
     RoleModule,
+    DesignationModule,
   ],
   providers: [
     {
@@ -58,4 +60,4 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
