@@ -74,6 +74,139 @@
   ],
   "item": [
     {
+      "name": "Onboarding",
+      "description": "Flow from lead registration to company setup",
+      "item": [
+        {
+          "name": "Register Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin-test@example.com\",\n    \"first_name\": \"Admin\",\n    \"last_name\": \"Test\",\n    \"phone\": \"9100000001\",\n    \"password\": \"Password123\",\n    \"plan_id\": \"{{plan_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads/register",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "register"]
+            },
+            "description": "Register as a new lead. Requires a valid `plan_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin-test@example.com\",\n    \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "verify-otp"]
+            },
+            "description": "Verify lead email using OTP. Default dev OTP is `123456`."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    const data = response.data;",
+                  "    pm.collectionVariables.set('access_token', data.access_token);",
+                  "    pm.collectionVariables.set('user_id', data.user.id);",
+                  "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
+                  "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
+                  "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
+                  "    console.log('✅ Access token and IDs saved.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin-test@example.com\",\n    \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login initially to get the `user_id` for company setup."
+          },
+          "response": []
+        },
+        {
+          "name": "Setup Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('organization_id', response.data.user.organization_id);",
+                  "    console.log('✅ Organization ID saved:', response.data.user.organization_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\",\n    \"name\": \"Brello Enterprise\",\n    \"subdomain\": \"brello-ent\",\n    \"business_type_id\": \"{{industry_type_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/organizations/setup",
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "setup"]
+            },
+            "description": "The final step of the onboarding flow. Links the user to a new organization."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Auth",
       "description": "Authentication and authorization endpoints",
       "item": [
@@ -197,6 +330,30 @@
               "path": ["auth", "refresh"]
             },
             "description": "Refresh the access token using the HttpOnly cookie.\n\n**No Authorization header needed.** The refresh token is sent automatically as a cookie by the browser (or Postman).\n\n**Auto-saves:** New `access_token` to collection variable. New refresh token cookie is set automatically (token rotation)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Permissions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/menu/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["menu", "permissions"]
+            },
+            "description": "Returns a flat list of all granted permissions for the logged-in user in the current app context. Includes `module_code` and `action_code` for each permission."
           },
           "response": []
         },

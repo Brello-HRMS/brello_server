@@ -42,8 +42,7 @@ export class EmployeeController {
 
   @Post()
   async createEmployee(@Body() dto: CreateEmployeeDto) {
-    const data = await this.employeeService.createEmployee(dto);
-    return { success: true, data };
+    return this.employeeService.createEmployee(dto);
   }
 
   @Get()

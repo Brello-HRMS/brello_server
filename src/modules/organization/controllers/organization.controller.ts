@@ -19,7 +19,6 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('organizations')
-@UseGuards(JwtAuthGuard)
 export class OrganizationController {
   constructor(private readonly organizationService: OrganizationService) {}
 
@@ -30,12 +29,14 @@ export class OrganizationController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   findAll(@LoggedInUser() user: LoggedInUserInterface) {
     return this.organizationService.findAll(user);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -45,6 +46,7 @@ export class OrganizationController {
   }
 
   @Get('enterprise/:enterpriseId')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   findByEnterprise(
     @Param('enterpriseId', ParseUUIDPipe) enterpriseId: string,
@@ -54,6 +56,7 @@ export class OrganizationController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -64,6 +67,7 @@ export class OrganizationController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,

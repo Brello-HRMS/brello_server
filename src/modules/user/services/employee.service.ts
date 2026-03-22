@@ -157,10 +157,6 @@ export class EmployeeService {
         user_profile_id: savedProfile.id,
       });
 
-      await queryRunner.manager.update(UserProfile, savedProfile.id, {
-        user: { id: savedUser.id } as any,
-      });
-
       await queryRunner.commitTransaction();
 
       this.logger.log(

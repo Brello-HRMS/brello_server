@@ -80,10 +80,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   switchApp(
-    @LoggedInUser() user: LoggedInUserInterface,
+    @CurrentUser() user: JwtPayload,
     @Body() switchAppDto: SwitchAppDto,
   ) {
-    return this.authService.switchApp(user, switchAppDto);
+    return this.authService.switchApp(user as any, switchAppDto);
   }
 
   @Post('logout')

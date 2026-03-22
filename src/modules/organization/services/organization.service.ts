@@ -11,17 +11,21 @@ import { EnterpriseService } from '../../enterprise/services/enterprise.service'
 import { UpdateOrganizationDto } from '../dto/update-organization.dto';
 import { Organization } from '../entities/organization.entity';
 import { SetupCompanyDto } from '../dto/setup-company.dto';
-import { DataSource } from 'typeorm';
+import { DataSource, IsNull } from 'typeorm';
 import { UserRoleMap } from '../../rbac/entities/user-role-map.entity';
 import {
   OrganizationSubscription,
   SubscriptionStatus,
 } from '../../plan/entities/organization-subscription.entity';
+import { PlanApp } from '../../plan/entities/plan-app.entity';
 import { UserRepository } from 'src/modules/user/repositories/user.repository';
 import { OrganizationProfileRepository } from '../repositories/organization-profile.repository';
 import { OrganizationProfile } from '../entities/organization-profile.entity';
 import { Status } from 'src/common/enums';
+import { AppModule } from '../../app-module/entities/app-module.entity';
+import { ModuleAccess } from '../../app-module/entities/module-access.entity';
 import { Role } from 'src/modules/role/entities/role.entity';
+import { App } from 'src/modules/app/entities/app.entity';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { AuthResponseDto } from 'src/modules/auth/dto/auth-response.dto';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
@@ -97,24 +101,72 @@ export class OrganizationService {
       });
       await manager.save(profile);
 
-      // Step 3: Find 'Org Admin' role
-      const adminRole = await manager.findOne(Role, {
-        where: { name: 'Organization Admin', status: Status.ACTIVE },
+      // Step 3: Find apps for the user's plan
+      const planApps = await manager.find(PlanApp, {
+        where: { plan_id: user.plan_id },
+      });
+      const planAppIds = planApps.map((pa) => pa.app_id);
+
+      // Step 4: Clone platform default roles and permissions for those apps
+      const finalRolesToAssign: Role[] = [];
+      const platformRoles = await manager.find(Role, {
+        where: { 
+          is_system_role: true, 
+          is_default: true,
+          status: Status.ACTIVE,
+          organization_id: IsNull(),
+        },
       });
 
-      if (!adminRole) {
+      for (const appId of planAppIds) {
+        const platformRole = platformRoles.find(r => r.app_id === appId);
+
+        if (platformRole) {
+          // Clone the role for the organization
+          const orgRole = manager.create(Role, {
+            name: platformRole.name,
+            app_id: appId,
+            organization_id: savedOrg.id,
+            is_system_role: false,
+            is_default: false,
+            status: Status.ACTIVE,
+            description: `Cloned from platform default ${platformRole.name} role`,
+          });
+          const savedRole = await manager.save(orgRole);
+          finalRolesToAssign.push(savedRole);
+
+          // Clone permissions (ModuleAccess)
+          const platformPermissions = await manager.find(ModuleAccess, {
+            where: { role_id: platformRole.id },
+          });
+
+          for (const perm of platformPermissions) {
+            const orgPerm = manager.create(ModuleAccess, {
+              role_id: savedRole.id,
+              module_id: perm.module_id,
+              action_id: perm.action_id,
+              access_flag: perm.access_flag,
+            });
+            await manager.save(orgPerm);
+          }
+        }
+      }
+
+      if (finalRolesToAssign.length === 0) {
         throw new NotFoundException(
-          'System role "Organization Admin" not found. Setup incomplete.',
+          'No suitable platform default roles found to clone for the plan applications. Setup incomplete.',
         );
       }
 
-      // Step 4: Create UserRoleMap
-      const urm = manager.create(UserRoleMap, {
-        user_id: user.id,
-        role_id: adminRole.id,
-        organization_id: savedOrg.id,
-      });
-      await manager.save(urm);
+      // Step 5: Create UserRoleMaps for each cloned role
+      for (const role of finalRolesToAssign) {
+        const urm = manager.create(UserRoleMap, {
+          user_id: user.id,
+          role_id: role.id,
+          organization_id: savedOrg.id,
+        });
+        await manager.save(urm);
+      }
 
       // Step 5: Update User
       user.organization_id = savedOrg.id;

@@ -310,11 +310,12 @@ export class AuthService {
 
     const accessToken = this.tokenService.generateAccessToken({
       userId: loggedInUser.userId,
+      sessionId: (loggedInUser as any).sessionId,
       organizationId: loggedInUser.organizationId,
       enterpriseId: loggedInUser.enterpriseId,
       appId: switchAppDto.appId,
       isPlatformAdmin: loggedInUser.isPlatformAdmin,
-    } as any);
+    });
  
     this.logger.log(
       `App switched successfully: ${loggedInUser.userId} → ${switchAppDto.appId}`,

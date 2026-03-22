@@ -77,4 +77,24 @@ export class MenuController {
 
     return roots;
   }
+
+  @Get('permissions')
+  @UseGuards(JwtAuthGuard)
+  async getPermissions(
+    @LoggedInUser() user: LoggedInUserInterface,
+  ): Promise<{ module_code: string; action_code: string }[]> {
+    const resolved = await this.permissionResolver.resolve(user);
+    const result: { module_code: string; action_code: string }[] = [];
+
+    for (const mod of resolved.modules) {
+      for (const actionName of mod.actions) {
+        result.push({
+          module_code: mod.code,
+          action_code: actionName,
+        });
+      }
+    }
+
+    return result;
+  }
 }

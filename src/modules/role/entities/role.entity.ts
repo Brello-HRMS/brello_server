@@ -3,7 +3,7 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 import { App } from 'src/modules/app/entities/app.entity';
 
 @Entity('role')
-@Index(['name'], { unique: true })
+@Index(['name', 'app_id', 'organization_id'], { unique: true })
 export class Role extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string;
@@ -17,4 +17,7 @@ export class Role extends BaseEntity {
 
   @Column({ type: 'boolean', default: true })
   is_system_role: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  is_default: boolean;
 }
