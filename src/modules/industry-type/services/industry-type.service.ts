@@ -3,12 +3,14 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
 import { IndustryTypeRepository } from '../repositories/industry-type.repository';
 import { CreateIndustryTypeDto } from '../dto/create-industry-type.dto';
 import { UpdateIndustryTypeDto } from '../dto/update-industry-type.dto';
 import { IndustryType } from '../entities/industry-type.entity';
-import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { PlatformAdminGuard } from 'src/core/guards/platform-admin.guard';
+import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 
 @Injectable()
 export class IndustryTypeService {
@@ -18,9 +20,9 @@ export class IndustryTypeService {
     private readonly industryTypeRepository: IndustryTypeRepository,
   ) {}
 
+  @UseGuards(JwtAuthGuard, PlatformAdminGuard)
   async create(
     createIndustryTypeDto: CreateIndustryTypeDto,
-    user?: LoggedInUser,
   ): Promise<IndustryType> {
     this.logger.log(`Creating industry type: ${createIndustryTypeDto.name}`);
 
@@ -41,12 +43,12 @@ export class IndustryTypeService {
     return industryType;
   }
 
-  async findAll(user?: LoggedInUser): Promise<IndustryType[]> {
+  async findAll(): Promise<IndustryType[]> {
     this.logger.log('Fetching all active industry types');
     return this.industryTypeRepository.findAll();
   }
 
-  async findOne(id: string, user?: LoggedInUser): Promise<IndustryType> {
+  async findOne(id: string): Promise<IndustryType> {
     this.logger.log(`Fetching industry type: ${id}`);
 
     const industryType = await this.industryTypeRepository.findById(id);
@@ -57,14 +59,14 @@ export class IndustryTypeService {
     return industryType;
   }
 
+  @UseGuards(JwtAuthGuard, PlatformAdminGuard)
   async update(
     id: string,
     updateIndustryTypeDto: UpdateIndustryTypeDto,
-    user?: LoggedInUser,
   ): Promise<IndustryType> {
     this.logger.log(`Updating industry type: ${id}`);
- 
-    await this.findOne(id, user);
+
+    await this.findOne(id);
 
     if (updateIndustryTypeDto.name) {
       const existingType = await this.industryTypeRepository.findByName(
@@ -91,10 +93,11 @@ export class IndustryTypeService {
     return updatedIndustryType;
   }
 
-  async remove(id: string, user?: LoggedInUser): Promise<void> {
+  @UseGuards(JwtAuthGuard, PlatformAdminGuard)
+  async remove(id: string): Promise<void> {
     this.logger.log(`Soft deleting industry type: ${id}`);
- 
-    await this.findOne(id, user);
+
+    await this.findOne(id);
 
     const deleted = await this.industryTypeRepository.softDelete(id);
     if (!deleted) {

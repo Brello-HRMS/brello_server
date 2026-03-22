@@ -58,7 +58,7 @@ export class EmailNotificationService {
         html: `<p>${dto.message}</p>`,
       });
 
-      this.logger.log(`Email successfully sent to ${to} from ${from}`);
+      this.logger.log(`Email successfully sent to ${to} from  ${from} ${dto.message} `);
     } catch (error) {
       this.logger.error(
         `Failed to send email to ${to}: ${error.message}`,
