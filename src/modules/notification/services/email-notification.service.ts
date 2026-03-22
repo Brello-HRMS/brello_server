@@ -24,9 +24,11 @@ export class EmailNotificationService {
     }
 
     this.transporter = nodemailer.createTransport({
+      //@ts-ignore
       host,
       port,
       secure,
+      family: 4,
       pool: true,
       maxConnections: 5,
       maxMessages: 100,
@@ -34,6 +36,8 @@ export class EmailNotificationService {
       tls: {
         rejectUnauthorized: false,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
     });
   }
 
