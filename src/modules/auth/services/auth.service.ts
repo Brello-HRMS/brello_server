@@ -61,7 +61,7 @@ export class AuthService {
     @InjectRepository(UserRoleMap)
     private readonly userRoleMapRepository: Repository<UserRoleMap>,
     private readonly notificationService: NotificationService,
-  ) {}
+  ) { }
 
   // ---------- Password Login Flow ----------
 
@@ -102,7 +102,7 @@ export class AuthService {
       attempts_count: 0,
     });
 
-    await this.notificationService.send({
+    this.notificationService.send({
       user_id: user.id,
       target_email: dto.email,
       title: 'Your Login OTP',
@@ -241,7 +241,7 @@ export class AuthService {
     this.logger.log(
       `App switch: user ${loggedInUser.userId} → app ${switchAppDto.appId}`,
     );
- 
+
     // Validate the user has at least one active role in the requested app
     const hasRole = await this.userRoleMapRepository
       .createQueryBuilder('urm')
@@ -255,24 +255,24 @@ export class AuthService {
       .andWhere('role.status = :roleStatus', { roleStatus: Status.ACTIVE })
       .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
       .getCount();
- 
+
     if (!hasRole && !loggedInUser.isPlatformAdmin) {
       throw new ForbiddenException(
         'You do not have access to the requested application.',
       );
     }
- 
+
     await this.userService.update(loggedInUser.userId, {
       last_access_app_id: switchAppDto.appId,
     } as any, loggedInUser);
- 
+
     // For switching app, we need the original payload fields too, but we mainly need userId, sessId, orgId, enterpriseId, isPlatformAdmin
     // Since switchApp is called from controller with JwtPayload converted to LoggedInUser, 
     // we might need to be careful if we need SESSION ID here for generating NEW token.
     // Wait, switchApp in controller receives BOTH CurrentUser (JwtPayload) and LoggedInUser? No, I'll change it to LoggedInUser.
     // But then I need sessionId for buildAuthResponse? No, switchApp returns access_token only.
 
- 
+
 
     const accessToken = this.tokenService.generateAccessToken({
       userId: loggedInUser.userId,
@@ -282,7 +282,7 @@ export class AuthService {
       appId: switchAppDto.appId,
       isPlatformAdmin: loggedInUser.isPlatformAdmin,
     });
- 
+
     this.logger.log(
       `App switched successfully: ${loggedInUser.userId} → ${switchAppDto.appId}`,
     );
@@ -369,7 +369,7 @@ export class AuthService {
   ): Promise<void> {
     const { userId } = loggedInUser;
     this.logger.log(`Password update for user: ${userId}`);
- 
+
     // Get user
     const user = await this.userService.findOne(userId, loggedInUser);
 
