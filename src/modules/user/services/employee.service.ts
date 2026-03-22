@@ -17,6 +17,8 @@ import { UserGovInfoRepository } from '../repositories/user-gov-info.repository'
 import { UserBankInfoRepository } from '../repositories/user-bank-info.repository';
 import { UserEmergencyPersonRepository } from '../repositories/user-emergency-person.repository';
 import { UserDocumentRepository } from '../repositories/user-document.repository';
+import { EmployeeOffboardingRepository } from '../repositories/offboarding.repository';
+import { AuditLogRepository } from '../repositories/audit-log.repository';
 
 import {
   CreateEmployeeDto,
@@ -30,11 +32,17 @@ import {
   AddDocumentDto,
   UpdateEmergencyContactDto,
   EmployeeExitDto,
+  InitiateOffboardingDto,
+  UpdateOffboardingDto,
+  UploadDocumentsDto,
+  UpdatePayrollInfoDto,
 } from '../dto';
 
 import { User } from '../entities/user.entity';
 import { UserProfile } from '../entities/user-profile.entity';
+import { EmployeeOffboarding } from '../entities/offboarding.entity';
 import { Status } from '../../../common/enums';
+import { EmployeeStatus, ExitType } from '../enums/user.enum';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { ListEmployeesDto } from '../dto/list-employees.dto';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
@@ -55,7 +63,27 @@ export class EmployeeService {
     private readonly bankInfoRepository: UserBankInfoRepository,
     private readonly emergencyRepository: UserEmergencyPersonRepository,
     private readonly documentRepository: UserDocumentRepository,
+    private readonly offboardingRepository: EmployeeOffboardingRepository,
+    private readonly auditLogRepository: AuditLogRepository,
   ) {}
+
+  private async createAuditLog(
+    actorId: string,
+    action: string,
+    oldValue: any,
+    newValue: any,
+    targetId: string,
+    targetType: string,
+  ) {
+    await this.auditLogRepository.save({
+      actor_id: actorId,
+      action,
+      old_value: oldValue,
+      new_value: newValue,
+      target_id: targetId,
+      target_type: targetType,
+    });
+  }
 
   async createEmployee(dto: CreateEmployeeDto): Promise<any> {
     this.logger.log(`Creating employee aggregate for: ${dto.email}`);
@@ -129,10 +157,6 @@ export class EmployeeService {
         user_profile_id: savedProfile.id,
       });
 
-      await queryRunner.manager.update(UserProfile, savedProfile.id, {
-        user: { id: savedUser.id } as any,
-      });
-
       await queryRunner.commitTransaction();
 
       this.logger.log(
@@ -196,6 +220,43 @@ export class EmployeeService {
       bankInfo: profileData?.bank_info || {},
       govInfo: profileData?.gov_info || {},
       emergencyContact: profileData?.emergency_contacts || [],
+    };
+  }
+
+  async getProfileCompletion(id: string): Promise<any> {
+    const profile = await this.validateProfileAccess(id);
+    const sections = [
+      {
+        name: 'personal_details',
+        check: () => !!profile.dob && !!profile.gender,
+      },
+      {
+        name: 'employment_details',
+        check: () => !!profile.joining_date && !!profile.employment_type,
+      },
+      {
+        name: 'bank_details',
+        check: () => !!profile.bank_info?.account_number,
+      },
+      {
+        name: 'gov_info',
+        check: () => !!profile.gov_info?.pan || !!profile.gov_info?.aadhaar,
+      },
+      {
+        name: 'documents',
+        check: () => profile.documents && profile.documents.length > 0,
+      },
+    ];
+
+    const missing_sections = sections
+      .filter((s) => !s.check())
+      .map((s) => s.name);
+    const completion_percentage =
+      ((sections.length - missing_sections.length) / sections.length) * 100;
+
+    return {
+      completion_percentage: Math.round(completion_percentage),
+      missing_sections,
     };
   }
 
@@ -305,6 +366,82 @@ export class EmployeeService {
     return { success: true };
   }
 
+  async updatePersonalDetails(
+    id: string,
+    dto: UpdateEmployeeProfileDto,
+    actorId: string,
+  ): Promise<any> {
+    const user = await this.userRepository.findById(id);
+    if (!user || !user.user_profile_id)
+      throw new NotFoundException('Employee or Profile not found');
+
+    const profile = await this.profileRepository.findByUserId(id);
+    const oldValue = JSON.parse(JSON.stringify(profile));
+
+    const updateData: Partial<UserProfile> = {};
+    if (dto.dob) updateData.dob = new Date(dto.dob);
+    if (dto.gender) updateData.gender = dto.gender;
+    if (dto.maritalStatus) updateData.marital_status = dto.maritalStatus;
+    if (dto.bloodGroup) updateData.blood_group = dto.bloodGroup;
+
+    const updatedProfile = await this.profileRepository.update(
+      user.user_profile_id,
+      updateData,
+    );
+
+    await this.createAuditLog(
+      actorId,
+      'UPDATE_PERSONAL_DETAILS',
+      oldValue,
+      updatedProfile,
+      id,
+      'user',
+    );
+
+    return { success: true };
+  }
+
+  async updateEmploymentDetails(
+    id: string,
+    dto: UpdateEmployeeBasicDto & UpdateEmployeeProfileDto,
+    actorId: string,
+  ): Promise<any> {
+    const user = await this.userRepository.findById(id);
+    if (!user) throw new NotFoundException('Employee not found');
+
+    const oldValue = JSON.parse(JSON.stringify(user));
+
+    const userUpdate: Partial<User> = {};
+    if (dto.departmentId) userUpdate.department_id = dto.departmentId;
+    if (dto.designationId) userUpdate.designation_id = dto.designationId;
+    if (dto.reportsTo) userUpdate.reports_to_id = dto.reportsTo;
+
+    const updatedUser = await this.userRepository.update(id, userUpdate);
+
+    if (user.user_profile_id) {
+      const profileUpdate: Partial<UserProfile> = {};
+      if (dto.employmentType)
+        profileUpdate.employment_type = dto.employmentType;
+      if (dto.workLocation) profileUpdate.work_location = dto.workLocation;
+      if (dto.joiningDate)
+        profileUpdate.joining_date = new Date(dto.joiningDate);
+      if (dto.currentSalary) profileUpdate.current_salary = dto.currentSalary;
+
+      await this.profileRepository.update(user.user_profile_id, profileUpdate);
+    }
+
+    await this.createAuditLog(
+      actorId,
+      'UPDATE_EMPLOYMENT_DETAILS',
+      oldValue,
+      updatedUser,
+      id,
+      'user',
+    );
+
+    return { success: true };
+  }
+
   // Education Endpoints
   async addEducation(id: string, dto: AddEducationDto): Promise<any> {
     const profile = await this.validateProfileAccess(id);
@@ -316,6 +453,22 @@ export class EmployeeService {
       additional_detail: dto.additionalDetail,
       user_profile_id: profile.id,
       status: Status.ACTIVE,
+    });
+    return { success: true };
+  }
+
+  async updateEducation(
+    id: string,
+    educationId: string,
+    dto: AddEducationDto,
+  ): Promise<any> {
+    await this.validateProfileAccess(id);
+    await this.educationRepository.update(educationId, {
+      school_name: dto.schoolName,
+      degree: dto.degree,
+      field_of_study: dto.fieldOfStudy,
+      completion_date: new Date(dto.completionDate),
+      additional_detail: dto.additionalDetail,
     });
     return { success: true };
   }
@@ -336,6 +489,21 @@ export class EmployeeService {
       duration: dto.duration,
       user_profile_id: profile.id,
       status: Status.ACTIVE,
+    });
+    return { success: true };
+  }
+
+  async updateExperience(
+    id: string,
+    experienceId: string,
+    dto: AddExperienceDto,
+  ): Promise<any> {
+    await this.validateProfileAccess(id);
+    await this.experienceRepository.update(experienceId, {
+      occupation: dto.occupation,
+      company: dto.company,
+      summary: dto.summary,
+      duration: dto.duration,
     });
     return { success: true };
   }
@@ -392,6 +560,49 @@ export class EmployeeService {
     return { success: true };
   }
 
+  async updatePayrollInformation(
+    id: string,
+    dto: UpdatePayrollInfoDto,
+    actorId: string,
+  ): Promise<any> {
+    const profile = await this.validateProfileAccess(id);
+    const oldValue = {
+      bank_info: profile.bank_info,
+      gov_info: profile.gov_info,
+    };
+
+    if (dto.bank_info) {
+      await this.bankInfoRepository.upsert({
+        ...dto.bank_info,
+        user_profile_id: profile.id,
+        status: Status.ACTIVE,
+      });
+    }
+
+    if (dto.gov_info) {
+      await this.govInfoRepository.upsert({
+        ...dto.gov_info,
+        user_profile_id: profile.id,
+        status: Status.ACTIVE,
+      });
+    }
+
+    const updatedProfile = await this.validateProfileAccess(id);
+    await this.createAuditLog(
+      actorId,
+      'UPDATE_PAYROLL_INFO',
+      oldValue,
+      {
+        bank_info: updatedProfile.bank_info,
+        gov_info: updatedProfile.gov_info,
+      },
+      id,
+      'user',
+    );
+
+    return { success: true };
+  }
+
   // Documents
   async attachDocument(id: string, dto: AddDocumentDto): Promise<any> {
     const profile = await this.validateProfileAccess(id);
@@ -401,6 +612,33 @@ export class EmployeeService {
       user_profile_id: profile.id,
       status: Status.ACTIVE,
     });
+    return { success: true };
+  }
+
+  async uploadDocuments(
+    id: string,
+    dto: UploadDocumentsDto,
+    actorId: string,
+  ): Promise<any> {
+    const profile = await this.validateProfileAccess(id);
+    for (const doc of dto.documents) {
+      await this.documentRepository.create({
+        name: doc.name,
+        doc_id: doc.docId,
+        user_profile_id: profile.id,
+        status: Status.ACTIVE,
+      });
+    }
+
+    await this.createAuditLog(
+      actorId,
+      'UPLOAD_DOCUMENTS',
+      null,
+      dto.documents,
+      id,
+      'user',
+    );
+
     return { success: true };
   }
 
@@ -440,6 +678,99 @@ export class EmployeeService {
       exit_reason: dto.exitReason,
     });
     return { success: true };
+  }
+
+  async initiateOffboarding(
+    id: string,
+    dto: InitiateOffboardingDto,
+    actorId: string,
+  ): Promise<any> {
+    const profile = await this.validateProfileAccess(id);
+
+    await this.offboardingRepository.save({
+      user_id: id,
+      exit_type: dto.exit_type,
+      reason: dto.reason,
+      last_working_day: new Date(dto.last_working_day),
+      notice_period: dto.notice_period || profile.notice_period,
+    });
+
+    await this.profileRepository.update(profile.id, {
+      employee_status: EmployeeStatus.OFFBOARDING,
+    });
+
+    await this.createAuditLog(
+      actorId,
+      'INITIATE_OFFBOARDING',
+      { status: profile.employee_status },
+      { status: EmployeeStatus.OFFBOARDING, ...dto },
+      id,
+      'user',
+    );
+
+    return { success: true };
+  }
+
+  async updateOffboarding(
+    id: string,
+    dto: UpdateOffboardingDto,
+    actorId: string,
+  ): Promise<any> {
+    const offboarding = await this.offboardingRepository.findByUserId(id);
+    if (!offboarding) throw new NotFoundException('Offboarding not initiated');
+
+    const oldValue = JSON.parse(JSON.stringify(offboarding));
+
+    const updateData: Partial<EmployeeOffboarding> = {};
+    if (dto.reason) updateData.reason = dto.reason;
+    if (dto.last_working_day)
+      updateData.last_working_day = new Date(dto.last_working_day);
+    if (dto.notice_period) updateData.notice_period = dto.notice_period;
+
+    await this.offboardingRepository.update(offboarding.id, updateData);
+
+    await this.createAuditLog(
+      actorId,
+      'UPDATE_OFFBOARDING',
+      oldValue,
+      updateData,
+      id,
+      'user',
+    );
+
+    return { success: true };
+  }
+
+  async cancelOffboarding(id: string, actorId: string): Promise<any> {
+    const offboarding = await this.offboardingRepository.findByUserId(id);
+    if (!offboarding) throw new NotFoundException('Offboarding not initiated');
+
+    await this.offboardingRepository.update(offboarding.id, {
+      is_cancelled: true,
+    });
+
+    const profile = await this.validateProfileAccess(id);
+    await this.profileRepository.update(profile.id, {
+      employee_status: EmployeeStatus.ACTIVE,
+    });
+
+    await this.createAuditLog(
+      actorId,
+      'CANCEL_OFFBOARDING',
+      { status: EmployeeStatus.OFFBOARDING },
+      { status: EmployeeStatus.ACTIVE },
+      id,
+      'user',
+    );
+
+    return { success: true };
+  }
+
+  async getOffboardingDetails(id: string): Promise<any> {
+    const offboarding = await this.offboardingRepository.findByUserId(id);
+    if (!offboarding) throw new NotFoundException('Offboarding not initiated');
+
+    return offboarding;
   }
 
   async softDeleteEmployee(id: string): Promise<any> {

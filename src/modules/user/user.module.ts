@@ -11,6 +11,8 @@ import { UserGovInfo } from './entities/user-gov-info.entity';
 import { UserBankInfo } from './entities/user-bank-info.entity';
 import { UserEmergencyPerson } from './entities/user-emergency-person.entity';
 import { UserDocument } from './entities/user-document.entity';
+import { EmployeeOffboarding } from './entities/offboarding.entity';
+import { AuditLog } from './entities/audit-log.entity';
 
 import { UserRepository } from './repositories/user.repository';
 import { UserProfileRepository } from './repositories/user-profile.repository';
@@ -21,9 +23,13 @@ import { UserGovInfoRepository } from './repositories/user-gov-info.repository';
 import { UserBankInfoRepository } from './repositories/user-bank-info.repository';
 import { UserEmergencyPersonRepository } from './repositories/user-emergency-person.repository';
 import { UserDocumentRepository } from './repositories/user-document.repository';
+import { EmployeeOffboardingRepository } from './repositories/offboarding.repository';
+import { AuditLogRepository } from './repositories/audit-log.repository';
 
 import { EmployeeService } from './services/employee.service';
 import { EmployeeController } from './controllers/employee.controller';
+import { OffboardingCronService } from './services/offboarding-cron.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { EnterpriseModule } from '../enterprise/enterprise.module';
 import { OrganizationModule } from '../organization/organization.module';
@@ -40,7 +46,10 @@ import { OrganizationModule } from '../organization/organization.module';
       UserBankInfo,
       UserEmergencyPerson,
       UserDocument,
+      EmployeeOffboarding,
+      AuditLog,
     ]),
+    ScheduleModule.forRoot(),
     EnterpriseModule,
     forwardRef(() => OrganizationModule),
   ],
@@ -49,6 +58,7 @@ import { OrganizationModule } from '../organization/organization.module';
     UserService,
     UserRepository,
     EmployeeService,
+    OffboardingCronService,
     UserProfileRepository,
     UserEducationRepository,
     UserExperienceRepository,
@@ -57,6 +67,8 @@ import { OrganizationModule } from '../organization/organization.module';
     UserBankInfoRepository,
     UserEmergencyPersonRepository,
     UserDocumentRepository,
+    EmployeeOffboardingRepository,
+    AuditLogRepository,
   ],
   exports: [UserService, EmployeeService, UserRepository],
 })

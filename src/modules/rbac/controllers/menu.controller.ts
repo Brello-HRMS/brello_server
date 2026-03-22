@@ -4,22 +4,18 @@ import { PermissionResolverService } from '../services/permission-resolver.servi
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
-interface MenuNode {
-  id: string;
-  name: string;
-  wbs_code: string;
-  actions: string[];
-  children: MenuNode[];
+interface MenuItem {
+  label: string;
+  icon?: string;
+  path?: string;
+  children?: MenuItem[];
+  actions?: string[];
 }
 
 /**
  * MenuController
  *
  * GET /menu — Returns the user's accessible module tree for the current app.
- *
- * The tree is built from the PermissionResolver result, filtered to only
- * include modules the user can actually access, then structured hierarchically
- * using WBS codes (parent_id relationships).
  */
 @Controller('menu')
 export class MenuController {
@@ -27,41 +23,78 @@ export class MenuController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async getMenu(@LoggedInUser() user: LoggedInUserInterface): Promise<MenuNode[]> {
+  async getMenu(@LoggedInUser() user: LoggedInUserInterface): Promise<MenuItem[]> {
     const resolved = await this.permissionResolver.resolve(user);
 
     // Build flat lookup
-    const nodeMap = new Map<string, MenuNode>();
+    const nodeMap = new Map<string, MenuItem & { id: string; wbs_code: string; parent_id: string | null }>();
     for (const mod of resolved.modules) {
       nodeMap.set(mod.id, {
         id: mod.id,
-        name: mod.name,
+        label: mod.name,
+        icon: mod.icon,
+        path: mod.path,
         wbs_code: mod.wbs_code,
+        parent_id: mod.parent_id,
         actions: [...mod.actions],
         children: [],
       });
     }
 
     // Build tree — attach children to their parents
-    const roots: MenuNode[] = [];
+    const roots: MenuItem[] = [];
     for (const mod of resolved.modules) {
       const node = nodeMap.get(mod.id)!;
       if (mod.parent_id && nodeMap.has(mod.parent_id)) {
-        nodeMap.get(mod.parent_id)!.children.push(node);
+        nodeMap.get(mod.parent_id)!.children!.push(node);
       } else {
         roots.push(node);
       }
     }
 
-    // Sort by WBS code at each level
-    const sortByWbs = (nodes: MenuNode[]) => {
-      nodes.sort((a, b) =>
-        a.wbs_code.localeCompare(b.wbs_code, undefined, { numeric: true }),
-      );
-      nodes.forEach((n) => sortByWbs(n.children));
+    // Post-process: Remove empty children arrays and sort
+    const processNodes = (nodes: MenuItem[]) => {
+      nodes.sort((a, b) => {
+        const wbsA = (a as any).wbs_code;
+        const wbsB = (b as any).wbs_code;
+        return wbsA.localeCompare(wbsB, undefined, { numeric: true });
+      });
+
+      nodes.forEach((n) => {
+        if (n.children && n.children.length === 0) {
+          delete n.children;
+        } else if (n.children) {
+          processNodes(n.children);
+        }
+        // Remove internal tracking fields before returning
+        delete (n as any).id;
+        delete (n as any).wbs_code;
+        delete (n as any).parent_id;
+      });
     };
-    sortByWbs(roots);
+
+    processNodes(roots);
 
     return roots;
+  }
+
+  @Get('permissions')
+  @UseGuards(JwtAuthGuard)
+  async getPermissions(
+    @LoggedInUser() user: LoggedInUserInterface,
+  ): Promise<{ module_code: string; action_code: string }[]> {
+    const resolved = await this.permissionResolver.resolve(user);
+    const result: { module_code: string; action_code: string }[] = [];
+
+    for (const mod of resolved.modules) {
+      for (const actionName of mod.actions) {
+        result.push({
+          module_code: mod.code,
+          action_code: actionName,
+        });
+      }
+    }
+
+    return result;
   }
 }
