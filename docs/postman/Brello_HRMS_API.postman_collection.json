@@ -1188,6 +1188,165 @@
       ]
     },
     {
+      "name": "Company Policy",
+      "description": "Company policies and their categorizations (policy types).",
+      "item": [
+        {
+          "name": "Policy Types",
+          "item": [
+            {
+              "name": "Get All Policy Types",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policy-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types"]
+                }
+              }
+            },
+            {
+              "name": "Create Policy Type",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"General Policies\",\n    \"icon\": \"description\",\n    \"status\": \"ACTIVE\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/policy-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types"]
+                }
+              }
+            },
+            {
+              "name": "Update Policy Type",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"HR Policies\",\n    \"icon\": \"people\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types", "{{policy_type_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Policy Type",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types", "{{policy_type_id}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Policies",
+          "item": [
+            {
+              "name": "Get Grouped Policies",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policies/grouped",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "grouped"]
+                },
+                "description": "Get all policies grouped by their type. If user is an employee, only active policies are returned. If user can edit, all policies are returned."
+              }
+            },
+            {
+              "name": "Get Policy by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policies/{{policy_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Create Policy",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"Leave Policy\",\n    \"description\": \"Standard leave and holiday policy\",\n    \"type_id\": \"{{policy_type_id}}\",\n    \"content\": \"<h1>Leave Policy</h1><p>Content goes here...</p>\",\n    \"status\": \"ACTIVE\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/policies",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies"]
+                }
+              }
+            },
+            {
+              "name": "Update Policy",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"Updated Leave Policy\",\n    \"content\": \"<h1>Updated Content</h1>\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/policies/{{policy_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Policy",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policies/{{policy_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{access_token}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
       "name": "Employee Management",
       "description": "Full lifecycle management of employees, including profile, documents, education, and offboarding.",
       "item": [
