@@ -85,7 +85,11 @@ export class EmployeeService {
     });
   }
 
-  async createEmployee(dto: CreateEmployeeDto): Promise<any> {
+  async createEmployee(
+    dto: CreateEmployeeDto,
+    enterpriseId?: string,
+    organizationId?: string,
+  ): Promise<any> {
     this.logger.log(`Creating employee aggregate for: ${dto.email}`);
 
     // Pre-flight validation
@@ -118,8 +122,8 @@ export class EmployeeService {
         email: dto.email,
         phone: dto.phone,
         password_hash: passwordHash,
-        enterprise_id: dto.enterprise_id,
-        organization_id: dto.organization_id,
+        enterprise_id: enterpriseId || dto.enterprise_id,
+        organization_id: organizationId || dto.organization_id,
         reports_to_id: dto.reportsTo,
         department_id: dto.departmentId,
         designation_id: dto.designationId,
@@ -145,8 +149,8 @@ export class EmployeeService {
         blood_group: dto.profile.bloodGroup,
         notice_period: dto.profile.noticePeriod ?? 30,
         current_salary: dto.profile.currentSalary,
-        enterprise_id: dto.enterprise_id,
-        organization_id: dto.organization_id,
+        enterprise_id: enterpriseId || dto.enterprise_id,
+        organization_id: organizationId || dto.organization_id,
         status: Status.ACTIVE,
       });
 
@@ -318,6 +322,19 @@ export class EmployeeService {
       ...response,
       data: items,
     };
+  }
+
+  async getDropdown(user: LoggedInUser): Promise<{ label: string; value: string }[]> {
+    this.logger.log(`User ${user.userId} is fetching employee dropdown`);
+    
+    const employees = await this.userRepository.getDropdownList(user.organizationId);
+    
+    return employees.map((emp) => ({
+      label: [emp.first_name, emp.middle_name, emp.last_name]
+        .filter(Boolean)
+        .join(' '),
+      value: emp.id!,
+    }));
   }
 
   async updateBasicInfo(id: string, dto: UpdateEmployeeBasicDto): Promise<any> {

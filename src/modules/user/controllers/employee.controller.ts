@@ -41,8 +41,20 @@ export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
   @Post()
-  async createEmployee(@Body() dto: CreateEmployeeDto) {
-    return this.employeeService.createEmployee(dto);
+  async createEmployee(
+    @Body() dto: CreateEmployeeDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.employeeService.createEmployee(
+      dto,
+      user.enterpriseId,
+      user.organizationId,
+    );
+  }
+
+  @Get('dropdown')
+  async getDropdown(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.employeeService.getDropdown(user);
   }
 
   @Get()

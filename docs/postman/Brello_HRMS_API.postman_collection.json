@@ -1218,6 +1218,19 @@
               }
             },
             {
+              "name": "Get Employee Dropdown",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/dropdown",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "dropdown"]
+                },
+                "description": "Get a simplified list of employees (label/value) for dropdowns, scoped to the current organization."
+              }
+            },
+            {
               "name": "Get Employee Detail",
               "request": {
                 "method": "GET",
@@ -1239,7 +1252,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
+                  "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
@@ -1422,6 +1435,36 @@
                   "raw": "{{base_url}}/employees/{{user_id}}/experience",
                   "host": ["{{base_url}}"],
                   "path": ["employees", "{{user_id}}", "experience"]
+                }
+              }
+            },
+            {
+              "name": "Update Experience",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"company_name\": \"Google\",\n    \"designation\": \"Senior Software Engineer\",\n    \"start_date\": \"2021-01-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience/<EXP_ID>",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience", "<EXP_ID>"]
+                }
+              }
+            },
+            {
+              "name": "Delete Experience",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience/<EXP_ID>",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience", "<EXP_ID>"]
                 }
               }
             }
