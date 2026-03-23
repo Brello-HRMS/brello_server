@@ -6,6 +6,7 @@ import {
   MaxLength,
   IsUUID,
   IsEnum,
+  IsInt,
 } from 'class-validator';
 import { EmergencyRelation, ExitType } from '../enums/user.enum';
 
@@ -155,4 +156,49 @@ export class EmployeeExitDto {
   @IsString()
   @IsOptional()
   exitReason?: string;
+}
+
+export class InitiateOffboardingDto {
+  @IsEnum(ExitType)
+  @IsNotEmpty()
+  exit_type: ExitType;
+
+  @IsString()
+  @IsNotEmpty()
+  reason: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  last_working_day: string;
+
+  @IsInt()
+  @IsOptional()
+  notice_period?: number;
+}
+
+export class UpdateOffboardingDto {
+  @IsString()
+  @IsOptional()
+  reason?: string;
+
+  @IsDateString()
+  @IsOptional()
+  last_working_day?: string;
+
+  @IsInt()
+  @IsOptional()
+  notice_period?: number;
+}
+
+export class UploadDocumentsDto {
+  @IsNotEmpty()
+  documents: AddDocumentDto[];
+}
+
+export class UpdatePayrollInfoDto {
+  @IsOptional()
+  bank_info?: UpdateBankInfoDto;
+
+  @IsOptional()
+  gov_info?: UpdateGovInfoDto;
 }

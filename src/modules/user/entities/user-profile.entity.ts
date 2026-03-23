@@ -25,6 +25,7 @@ import {
   WorkLocation,
   BloodGroup,
   ExitType,
+  EmployeeStatus,
 } from '../enums/user.enum';
 
 @Entity('user_profile')
@@ -40,6 +41,13 @@ export class UserProfile extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   @Index({ unique: true })
   email: string;
+
+  @Column({
+    type: 'enum',
+    enum: EmployeeStatus,
+    default: EmployeeStatus.DRAFT,
+  })
+  employee_status: EmployeeStatus;
 
   @Column({ type: 'varchar', length: 20, unique: true })
   @Index({ unique: true })

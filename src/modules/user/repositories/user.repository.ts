@@ -128,4 +128,15 @@ export class UserRepository {
 
     return result;
   }
+
+  async getDropdownList(organizationId: string): Promise<Partial<User>[]> {
+    return this.repository.find({
+      select: ['id', 'first_name', 'middle_name', 'last_name'],
+      where: {
+        organization_id: organizationId,
+        status: Status.ACTIVE,
+      },
+      order: { first_name: 'ASC' },
+    });
+  }
 }

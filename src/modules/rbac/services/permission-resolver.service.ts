@@ -27,6 +27,8 @@ export interface ResolvedModule {
   parent_id: string | null;
   app_id: string;
   actions: Set<string>;
+  icon?: string;
+  path?: string;
 }
 
 export interface PermissionResult {
@@ -324,6 +326,8 @@ export class PermissionResolverService {
           parent_id: mod.parent_id ?? null,
           app_id: mod.app_id,
           actions,
+          icon: mod.icon,
+          path: mod.path,
         });
       }
     }
