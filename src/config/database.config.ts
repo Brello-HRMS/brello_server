@@ -29,7 +29,7 @@ export const databaseConfigFactory = (
     username: config.get<string>('db.postgres.DB_USER', 'postgres'),
     password: config.get<string>('db.postgres.DB_PASSWORD'),
     database: config.get<string>('db.postgres.DB_NAME', 'brello'),
-    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+    autoLoadEntities: true,
     schema: config.get<string>('db.postgres.DB_SCHEMA', 'brello'),
 
     // Auto-sync schema in development only
