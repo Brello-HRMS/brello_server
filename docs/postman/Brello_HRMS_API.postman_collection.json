@@ -256,6 +256,144 @@
           "response": []
         },
         {
+          "name": "Login - Send OTP",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Store the email from request body so Verify OTP can reuse it.",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "pm.collectionVariables.set('otp_login_email', body.email);",
+                  "console.log('📧 OTP login email staged:', body.email);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Send OTP responded with 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "if (pm.response.code === 204) {",
+                  "    console.log('✅ OTP sent. Check server console for the OTP in dev mode.');",
+                  "    console.log('📌 Next step: run \"Login - Verify OTP\" with the OTP from your email/console.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login/send-otp",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login", "send-otp"]
+            },
+            "description": "Initiate OTP-based login. Sends a 6-digit OTP to the provided email.\n\n**Returns:** 204 No Content on success.\n\n**Auto-stages:** `otp_login_email` collection variable, so the follow-up **Login - Verify OTP** request is pre-filled.\n\n**In dev mode:** The OTP is printed to the server console."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Verify OTP",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Automatically fill email from the variable set by 'Login - Send OTP'.",
+                  "const stagedEmail = pm.collectionVariables.get('otp_login_email');",
+                  "if (stagedEmail) {",
+                  "    const body = JSON.parse(pm.request.body.raw);",
+                  "    body.email = stagedEmail;",
+                  "    pm.request.body.update({ mode: 'raw', raw: JSON.stringify(body, null, 4) });",
+                  "    console.log('📧 Email auto-filled from otp_login_email:', stagedEmail);",
+                  "} else {",
+                  "    console.warn('⚠️  otp_login_email not set. Run \"Login - Send OTP\" first, or fill email manually.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Verify OTP responded with 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    const data = response.data;",
+                  "",
+                  "    pm.collectionVariables.set('access_token', data.access_token);",
+                  "    pm.collectionVariables.set('user_id', data.user.id);",
+                  "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
+                  "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
+                  "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
+                  "",
+                  "    // Clean up the staging variable after successful login.",
+                  "    pm.collectionVariables.unset('otp_login_email');",
+                  "",
+                  "    console.log('✅ OTP login successful. Access token saved.');",
+                  "    console.log('✅ Refresh token delivered as HttpOnly cookie.');",
+                  "    console.log('Default app:', data.defaultAppId);",
+                  "    console.log('Available apps:', JSON.stringify(data.availableApps));",
+                  "} else {",
+                  "    const errorBody = pm.response.json();",
+                  "    console.error('❌ OTP verification failed:', errorBody.message || pm.response.status);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"otp\": \"123456\",\n    \"device_fingerprint\": \"postman-dev\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login", "verify-otp"]
+            },
+            "description": "Verify the OTP sent to the email and complete the OTP-based login.\n\n**Email is auto-filled** from the `otp_login_email` variable set by **Login - Send OTP**. You only need to paste the OTP.\n\n**Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`.\n\n**Refresh token:** Delivered as HttpOnly cookie — stored automatically by Postman's cookie jar.\n\n**OTP rules:** 6 digits, max 5 attempts, expires in 10 minutes."
+          },
+          "response": []
+        },
+        {
           "name": "Switch App",
           "event": [
             {
@@ -620,9 +758,9 @@
               "raw": "{\n  \"name\": \"Technology\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/industry-types",
+              "raw": "{{base_url}}/industry-types",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "industry-types"]
+              "path": ["industry-types"]
             }
           },
           "event": [
@@ -631,8 +769,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"industry_type_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"industry_type_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -655,9 +793,9 @@
               "raw": "{\n  \"name\": \"Enterprise Pro\",\n  \"price\": 99.99,\n  \"description\": \"Premium tier plan with all features\",\n  \"discount\": 0,\n  \"feature\": [\"HRMS\", \"CRM\", \"Payroll\"]\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/plans",
+              "raw": "{{base_url}}/plans",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "plans"]
+              "path": ["plans"]
             }
           },
           "event": [
@@ -666,8 +804,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"plan_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"plan_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -690,9 +828,9 @@
               "raw": "{\n  \"name\": \"Acme Corporation\",\n  \"domain\": \"acme.com\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/enterprises",
+              "raw": "{{base_url}}/enterprises",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "enterprises"]
+              "path": ["enterprises"]
             }
           },
           "event": [
@@ -701,8 +839,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"enterprise_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"enterprise_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -725,9 +863,9 @@
               "raw": "{\n  \"name\": \"Acme India Branch\",\n  \"enterprise_id\": \"{{enterprise_id}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/organizations",
+              "raw": "{{base_url}}/organizations",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "organizations"]
+              "path": ["organizations"]
             }
           },
           "event": [
@@ -736,8 +874,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"organization_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"organization_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -760,9 +898,9 @@
               "raw": "{\n  \"name\": \"Acme India Profile\",\n  \"email\": \"contact@acme.com\",\n  \"phone\": \"+919876543210\",\n  \"registration_no\": \"REG12345\",\n  \"industry_type_id\": \"{{industry_type_id}}\",\n  \"organization_id\": \"{{organization_id}}\",\n  \"enterprise_id\": \"{{enterprise_id}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/organizations/profile",
+              "raw": "{{base_url}}/organizations/profile",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "organizations", "profile"]
+              "path": ["organizations", "profile"]
             }
           }
         },
@@ -781,9 +919,9 @@
               "raw": "{\n  \"name\": \"Organization Admin\",\n  \"context\": \"Admin\",\n  \"app_id\": \"{{app_id}}\",\n  \"enterprise_id\": \"{{enterprise_id}}\",\n  \"organization_id\": \"{{organization_id}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/roles",
+              "raw": "{{base_url}}/roles",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "roles"]
+              "path": ["roles"]
             }
           },
           "event": [
@@ -792,8 +930,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"role_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"role_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1112,7 +1250,22 @@
               "host": ["{{base_url}}"],
               "path": ["organization-profiles"]
             },
-            "description": "Create a new organization profile with legal name, GST, and registration details."
+            "description": "Create a new organization profile with legal name, GST, and registration details.",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.data && jsonData.data.id) {",
+                            "    pm.collectionVariables.set(\"organization_profile_id\", jsonData.data.id);",
+                            "    console.log('✅ Organization Profile ID saved:', jsonData.data.id);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ]
           },
           "response": []
         },
@@ -2232,7 +2385,22 @@
               "raw": "{{base_url}}/industry-types",
               "host": ["{{base_url}}"],
               "path": ["industry-types"]
-            }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.data && jsonData.data.id) {",
+                    "    pm.collectionVariables.set(\"industry_type_id\", jsonData.data.id);",
+                    "    console.log('✅ Industry Type ID saved:', jsonData.data.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
           },
           "response": []
         },
@@ -2374,7 +2542,22 @@
               "raw": "{{base_url}}/plans",
               "host": ["{{base_url}}"],
               "path": ["plans"]
-            }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.data && jsonData.data.id) {",
+                    "    pm.collectionVariables.set(\"plan_id\", jsonData.data.id);",
+                    "    console.log('✅ Plan ID saved:', jsonData.data.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
           }
         },
         {
@@ -2609,8 +2792,8 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
-                  "    pm.collectionVariables.set('role_id', response.id);",
-                  "    console.log('✅ Role created:', response.id);",
+                  "    pm.collectionVariables.set('role_id', response.data.id);",
+                  "    console.log('✅ Role created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -2808,7 +2991,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {\n    const response = pm.response.json();\n    pm.collectionVariables.set('department_id', response.id);\n    console.log('✅ Department created:', response.id);\n}"
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('department_id', response.data.id);",
+                  "    console.log('✅ Department created:', response.data.id);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }

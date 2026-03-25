@@ -13,6 +13,38 @@
 
 ---
 
+## Environment Setup
+
+> **Always use a Postman Environment** rather than editing collection variables directly. This lets you switch between `local`, `staging`, and `production` without touching the collection.
+
+### Step-by-step: Create the "Brello Local" Environment
+
+1. In Postman, click **Environments** (left sidebar) → **Create Environment**.
+2. Name it **`Brello Local`**.
+3. Add the following variables (Initial Value = Default Value for local dev):
+
+| Variable | Initial Value | Description |
+|---|---|---|
+| `base_url` | `http://localhost:8000/api/v1` | API base URL |
+| `access_token` | _(empty)_ | Auto-populated by Login / Verify OTP scripts |
+| `user_id` | _(empty)_ | Auto-populated on login |
+| `enterprise_id` | _(empty)_ | Auto-populated on login |
+| `organization_id` | _(empty)_ | Auto-populated on login |
+| `default_app_id` | _(empty)_ | Auto-populated on login |
+| `app_id` | _(empty)_ | Set after creating an App |
+| `role_id` | _(empty)_ | Set after creating a Role |
+| `plan_id` | _(empty)_ | Set after creating a Plan |
+| `industry_type_id` | _(empty)_ | Set after creating an Industry Type |
+| `department_id` | _(empty)_ | Set after creating a Department |
+| `document_id` | _(empty)_ | Set after uploading a document |
+
+4. Click **Save**, then select **`Brello Local`** from the environment dropdown (top-right in Postman).
+5. **Import the collection** via **File → Import** or drag-and-drop the JSON file.
+
+> 💡 The collection's test scripts write to **collection variables** (`pm.collectionVariables.set`). These are always visible to all requests regardless of which environment is active, and are ideal for temporary session data like `access_token`.
+
+---
+
 ## Flow Overview
 
 ```
@@ -41,7 +73,13 @@
                          │
  PHASE 3: Authentication
  ┌───────────────────────▼──────────────────────────────┐
- │  Step 8:  Login                       → tokens 🔑     │
+ │  Option A — Password Login:                           │
+ │    Step 8a: Login (email + password)  → tokens 🔑     │
+ │                                                       │
+ │  Option B — OTP Login (passwordless): │
+ │    Step 8b: Login - Send OTP  (204)                   │
+ │    Step 8c: Login - Verify OTP        → tokens 🔑     │
+ │                                                       │
  │  Step 9:  Get Menu (RBAC tree)                        │
  │  Step 10: Refresh Token               → new tokens    │
  │  Step 11: Switch App (if multiple)                    │
@@ -50,9 +88,9 @@
                          │
  PHASE 4: Password Flows (optional)
  ┌───────────────────────▼──────────────────────────────┐
- │  Step 12: Update Password                             │
- │  Step 13: Forgot Password (get OTP)                   │
- │  Step 14: Verify OTP & Reset Password                 │
+ │  Step 13: Update Password                             │
+ │  Step 14: Forgot Password (get OTP)                   │
+ │  Step 15: Verify OTP & Reset Password                 │
  └──────────────────────────────────────────────────────┘
 ```
 
@@ -341,7 +379,11 @@ POST /api/v1/user-role-maps
 
 ## Phase 3: Authentication
 
-### Step 8 — Login Normal User
+> There are **two login methods**. Use whichever matches your user setup. Both auto-populate the same collection variables on success.
+
+---
+
+### Step 8a — Login (Password-based)
 
 > **Folder:** Auth → Login
 
@@ -357,15 +399,63 @@ POST /api/v1/auth/login
 }
 ```
 
-✅ **Response includes:**
+✅ **Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`
 
-- `access_token` — short-lived (15 min), used for authenticated requests
-- `defaultAppId` — the app the JWT is scoped to
-- `availableApps` — all apps the user has roles in
-- **`refresh_token`** — delivered as an **HttpOnly cookie** (`refresh_token`), not in the response body
+**Refresh token** is delivered as an **HttpOnly cookie** — stored automatically by Postman's cookie jar.
 
-> The Postman script auto-saves the access token and IDs to collection variables.
-> Postman also receives and stores the `refresh_token` cookie automatically.
+---
+
+### Step 8b — Login (OTP-based) — Part 1: Send OTP
+
+> **Folder:** Auth → Login - Send OTP
+
+```
+POST /api/v1/auth/login/send-otp
+```
+
+```json
+{
+  "email": "john.doe@example.com"
+}
+```
+
+✅ Returns **204 No Content**. The OTP is sent to the email (in dev mode, check the server console).
+
+**What the script does automatically:**
+- The **pre-request script** reads the `email` from the body and stores it as `otp_login_email` in collection variables.
+- This staging variable is automatically consumed by the next request.
+
+---
+
+### Step 8c — Login (OTP-based) — Part 2: Verify OTP
+
+> **Folder:** Auth → Login - Verify OTP
+
+```
+POST /api/v1/auth/login/verify-otp
+```
+
+```json
+{
+  "email": "john.doe@example.com",
+  "otp": "123456",
+  "device_fingerprint": "postman-dev"
+}
+```
+
+> **Tip:** The `email` field is **auto-filled** by the pre-request script from `otp_login_email`. You only need to paste the 6-digit OTP.
+
+✅ **Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`
+
+The `otp_login_email` staging variable is cleaned up (unset) automatically after a successful verification.
+
+**Refresh token** is delivered as an HttpOnly cookie — stored automatically by Postman's cookie jar.
+
+| Field | Rule |
+|---|---|
+| `otp` | Exactly 6 digits |
+| Max attempts | 5 attempts before OTP is invalidated |
+| Expiry | 10 minutes |
 
 ---
 
@@ -505,27 +595,29 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 
 ## Quick Reference Table
 
-| Step | Method | Endpoint                            | Prerequisite                            |
-| ---- | ------ | ----------------------------------- | --------------------------------------- |
-| 1    | POST   | `/users`                            | enterprise_id, organization_id (seeded) |
-| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists              |
-| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                         |
-| 3    | POST   | `/industry-types`                   | access_token (Platform Admin)           |
-| 4    | POST   | `/plans`                            | access_token (Platform Admin)           |
-| 5    | POST   | `/enterprises`                      | access_token (Platform Admin)           |
-| 6    | POST   | `/organizations`                    | enterprise_id                           |
-| 6b   | POST   | `/organizations/profile`            | organization_id, industry_type_id       |
-| 7    | POST   | `/apps`                             | access_token (Platform Admin)           |
-| 8    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  |
-| 9    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       |
-| 10   | POST   | `/auth/login`                       | User + Role + App exist                 |
-| 11   | GET    | `/menu`                             | access_token                            |
-| 12   | POST   | `/auth/refresh`                     | HttpOnly cookie (auto)                  |
-| 13   | POST   | `/auth/switch-app`                  | access_token + multiple apps            |
-| 14   | POST   | `/auth/logout`                      | access_token                            |
-| 15   | POST   | `/auth/update-password`             | access_token                            |
-| 16   | POST   | `/auth/forgot-password`             | —                                       |
-| 17   | POST   | `/auth/verify-otp`                  | OTP from step 16                        |
+| Step | Method | Endpoint                            | Prerequisite                            | Script Side-effect |
+| ---- | ------ | ----------------------------------- | --------------------------------------- | --- |
+| 1    | POST   | `/users`                            | enterprise_id, organization_id (seeded) | — |
+| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists              | — |
+| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                         | saves `access_token`, `user_id` |
+| 3    | POST   | `/industry-types`                   | access_token (Platform Admin)           | saves `industry_type_id` |
+| 4    | POST   | `/plans`                            | access_token (Platform Admin)           | saves `plan_id` |
+| 5    | POST   | `/enterprises`                      | access_token (Platform Admin)           | saves `enterprise_id` |
+| 6    | POST   | `/organizations`                    | enterprise_id                           | saves `organization_id` |
+| 6b   | POST   | `/organizations/profile`            | organization_id, industry_type_id       | — |
+| 7    | POST   | `/apps`                             | access_token (Platform Admin)           | — |
+| 8    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  | saves `role_id` |
+| 9    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       | — |
+| 10a  | POST   | `/auth/login`                       | User + Role + App exist                 | saves `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` |
+| 10b  | POST   | `/auth/login/send-otp`              | User + Role + App exist                 | stages `otp_login_email` (pre-request) |
+| 10c  | POST   | `/auth/login/verify-otp`            | OTP from step 10b                       | auto-fills `email`; saves same vars as 10a; unsets `otp_login_email` |
+| 11   | GET    | `/menu`                             | access_token                            | — |
+| 12   | POST   | `/auth/refresh`                     | HttpOnly cookie (auto)                  | rotates `access_token` |
+| 13   | POST   | `/auth/switch-app`                  | access_token + multiple apps            | saves new `access_token`, `default_app_id` |
+| 14   | POST   | `/auth/logout`                      | access_token                            | — |
+| 15   | POST   | `/auth/update-password`             | access_token                            | — |
+| 16   | POST   | `/auth/forgot-password`             | —                                       | — |
+| 17   | POST   | `/auth/verify-otp`                  | OTP from step 16                        | — |
 
 ---
 
