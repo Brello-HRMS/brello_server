@@ -50,7 +50,7 @@ export class OrganizationProfileService {
 
     // Check if industry type exists (if provided)
     if (createDto.industry_type_id) {
-      await this.industryTypeService.findOne(createDto.industry_type_id, user);
+      await this.industryTypeService.findOne(createDto.industry_type_id);
     }
 
     // Check if parent organization exists (if provided)
@@ -145,7 +145,7 @@ export class OrganizationProfileService {
     if (updateDto.logo_id)
       await this.documentService.findOne(updateDto.logo_id, user as any);
     if (updateDto.industry_type_id)
-      await this.industryTypeService.findOne(updateDto.industry_type_id, user);
+      await this.industryTypeService.findOne(updateDto.industry_type_id);
     if (updateDto.parent_id)
       await this.organizationService.findOne(updateDto.parent_id, user);
 

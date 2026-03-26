@@ -19,6 +19,8 @@ import { LeadModule } from './modules/lead/lead.module';
 import { RoleModule } from './modules/role/role.module';
 import { ClientModule } from './modules/client/client.module';
 import { ProjectModule } from './modules/project/project.module';
+import { CompanyPolicyModule } from './modules/company-policy/company-policy.module';
+import { DesignationModule } from './modules/designations/designation.module';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.interceptor';
@@ -54,6 +56,8 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     RoleModule,
     ClientModule,
     ProjectModule,
+    CompanyPolicyModule,
+    DesignationModule,
   ],
   providers: [
     {

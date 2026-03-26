@@ -35,6 +35,16 @@ export class CreateAppModuleDto {
   @IsEnum(ModuleType)
   @IsOptional()
   type?: ModuleType;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 50)
+  icon?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 150)
+  path?: string;
 }
 
 export class UpdateAppModuleDto {
@@ -56,4 +66,14 @@ export class UpdateAppModuleDto {
   @IsEnum(ModuleType)
   @IsOptional()
   type?: ModuleType;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 50)
+  icon?: string;
+
+  @IsString()
+  @IsOptional()
+  @Length(1, 150)
+  path?: string;
 }

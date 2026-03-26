@@ -59,7 +59,7 @@ export class EmailNotificationService {
       });
 
       this.logger.log(
-        `Email successfully sent to ${to} from ${from} ${dto.message}`,
+        `Email successfully sent to ${to} from  ${from} ${dto.message} `,
       );
     } catch (error) {
       this.logger.error(

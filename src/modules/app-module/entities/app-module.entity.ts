@@ -73,4 +73,12 @@ export class AppModule extends BaseEntity {
   /** 'mod' for top-level modules, 'submod' for nested */
   @Column({ type: 'enum', enum: ModuleType, default: ModuleType.MOD })
   type: ModuleType;
+
+  /** Icon name (e.g., LayoutDashboard, Globe) */
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  icon: string;
+
+  /** Navigation path (e.g., /dashboard/daily) */
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  path: string;
 }

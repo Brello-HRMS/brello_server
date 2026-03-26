@@ -84,6 +84,139 @@
   ],
   "item": [
     {
+      "name": "Onboarding",
+      "description": "Flow from lead registration to company setup",
+      "item": [
+        {
+          "name": "Register Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin-test@example.com\",\n    \"first_name\": \"Admin\",\n    \"last_name\": \"Test\",\n    \"phone\": \"9100000001\",\n    \"password\": \"Password123\",\n    \"plan_id\": \"{{plan_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads/register",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "register"]
+            },
+            "description": "Register as a new lead. Requires a valid `plan_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin-test@example.com\",\n    \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leads/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["leads", "verify-otp"]
+            },
+            "description": "Verify lead email using OTP. Default dev OTP is `123456`."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    const data = response.data;",
+                  "    pm.collectionVariables.set('access_token', data.access_token);",
+                  "    pm.collectionVariables.set('user_id', data.user.id);",
+                  "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
+                  "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
+                  "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
+                  "    console.log('✅ Access token and IDs saved.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin-test@example.com\",\n    \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login initially to get the `user_id` for company setup."
+          },
+          "response": []
+        },
+        {
+          "name": "Setup Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('organization_id', response.data.user.organization_id);",
+                  "    console.log('✅ Organization ID saved:', response.data.user.organization_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{user_id}}\",\n    \"name\": \"Brello Enterprise\",\n    \"subdomain\": \"brello-ent\",\n    \"business_type_id\": \"{{industry_type_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/organizations/setup",
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "setup"]
+            },
+            "description": "The final step of the onboarding flow. Links the user to a new organization."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Auth",
       "description": "Authentication and authorization endpoints",
       "item": [
@@ -129,6 +262,144 @@
               "path": ["auth", "login"]
             },
             "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically in the cookie jar."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Send OTP",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Store the email from request body so Verify OTP can reuse it.",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "pm.collectionVariables.set('otp_login_email', body.email);",
+                  "console.log('📧 OTP login email staged:', body.email);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Send OTP responded with 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "if (pm.response.code === 204) {",
+                  "    console.log('✅ OTP sent. Check server console for the OTP in dev mode.');",
+                  "    console.log('📌 Next step: run \"Login - Verify OTP\" with the OTP from your email/console.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login/send-otp",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login", "send-otp"]
+            },
+            "description": "Initiate OTP-based login. Sends a 6-digit OTP to the provided email.\n\n**Returns:** 204 No Content on success.\n\n**Auto-stages:** `otp_login_email` collection variable, so the follow-up **Login - Verify OTP** request is pre-filled.\n\n**In dev mode:** The OTP is printed to the server console."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Verify OTP",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Automatically fill email from the variable set by 'Login - Send OTP'.",
+                  "const stagedEmail = pm.collectionVariables.get('otp_login_email');",
+                  "if (stagedEmail) {",
+                  "    const body = JSON.parse(pm.request.body.raw);",
+                  "    body.email = stagedEmail;",
+                  "    pm.request.body.update({ mode: 'raw', raw: JSON.stringify(body, null, 4) });",
+                  "    console.log('📧 Email auto-filled from otp_login_email:', stagedEmail);",
+                  "} else {",
+                  "    console.warn('⚠️  otp_login_email not set. Run \"Login - Send OTP\" first, or fill email manually.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Verify OTP responded with 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    const data = response.data;",
+                  "",
+                  "    pm.collectionVariables.set('access_token', data.access_token);",
+                  "    pm.collectionVariables.set('user_id', data.user.id);",
+                  "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
+                  "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
+                  "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
+                  "",
+                  "    // Clean up the staging variable after successful login.",
+                  "    pm.collectionVariables.unset('otp_login_email');",
+                  "",
+                  "    console.log('✅ OTP login successful. Access token saved.');",
+                  "    console.log('✅ Refresh token delivered as HttpOnly cookie.');",
+                  "    console.log('Default app:', data.defaultAppId);",
+                  "    console.log('Available apps:', JSON.stringify(data.availableApps));",
+                  "} else {",
+                  "    const errorBody = pm.response.json();",
+                  "    console.error('❌ OTP verification failed:', errorBody.message || pm.response.status);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"otp\": \"123456\",\n    \"device_fingerprint\": \"postman-dev\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login", "verify-otp"]
+            },
+            "description": "Verify the OTP sent to the email and complete the OTP-based login.\n\n**Email is auto-filled** from the `otp_login_email` variable set by **Login - Send OTP**. You only need to paste the OTP.\n\n**Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`.\n\n**Refresh token:** Delivered as HttpOnly cookie — stored automatically by Postman's cookie jar.\n\n**OTP rules:** 6 digits, max 5 attempts, expires in 10 minutes."
           },
           "response": []
         },
@@ -207,6 +478,30 @@
               "path": ["auth", "refresh"]
             },
             "description": "Refresh the access token using the HttpOnly cookie.\n\n**No Authorization header needed.** The refresh token is sent automatically as a cookie by the browser (or Postman).\n\n**Auto-saves:** New `access_token` to collection variable. New refresh token cookie is set automatically (token rotation)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Permissions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/menu/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["menu", "permissions"]
+            },
+            "description": "Returns a flat list of all granted permissions for the logged-in user in the current app context. Includes `module_code` and `action_code` for each permission."
           },
           "response": []
         },
@@ -468,9 +763,9 @@
               "raw": "{\n  \"name\": \"Technology\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/industry-types",
+              "raw": "{{base_url}}/industry-types",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "industry-types"]
+              "path": ["industry-types"]
             }
           },
           "event": [
@@ -479,8 +774,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"industry_type_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"industry_type_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -503,9 +798,9 @@
               "raw": "{\n  \"name\": \"Enterprise Pro\",\n  \"price\": 99.99,\n  \"description\": \"Premium tier plan with all features\",\n  \"discount\": 0,\n  \"feature\": [\"HRMS\", \"CRM\", \"Payroll\"]\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/plans",
+              "raw": "{{base_url}}/plans",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "plans"]
+              "path": ["plans"]
             }
           },
           "event": [
@@ -514,8 +809,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"plan_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"plan_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -538,9 +833,9 @@
               "raw": "{\n  \"name\": \"Acme Corporation\",\n  \"domain\": \"acme.com\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/enterprises",
+              "raw": "{{base_url}}/enterprises",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "enterprises"]
+              "path": ["enterprises"]
             }
           },
           "event": [
@@ -549,8 +844,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"enterprise_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"enterprise_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -573,9 +868,9 @@
               "raw": "{\n  \"name\": \"Acme India Branch\",\n  \"enterprise_id\": \"{{enterprise_id}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/organizations",
+              "raw": "{{base_url}}/organizations",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "organizations"]
+              "path": ["organizations"]
             }
           },
           "event": [
@@ -584,8 +879,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"organization_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"organization_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -608,9 +903,9 @@
               "raw": "{\n  \"name\": \"Acme India Profile\",\n  \"email\": \"contact@acme.com\",\n  \"phone\": \"+919876543210\",\n  \"registration_no\": \"REG12345\",\n  \"industry_type_id\": \"{{industry_type_id}}\",\n  \"organization_id\": \"{{organization_id}}\",\n  \"enterprise_id\": \"{{enterprise_id}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/organizations/profile",
+              "raw": "{{base_url}}/organizations/profile",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "organizations", "profile"]
+              "path": ["organizations", "profile"]
             }
           }
         },
@@ -629,9 +924,9 @@
               "raw": "{\n  \"name\": \"Organization Admin\",\n  \"context\": \"Admin\",\n  \"app_id\": \"{{app_id}}\",\n  \"enterprise_id\": \"{{enterprise_id}}\",\n  \"organization_id\": \"{{organization_id}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/roles",
+              "raw": "{{base_url}}/roles",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "roles"]
+              "path": ["roles"]
             }
           },
           "event": [
@@ -640,8 +935,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.id) {",
-                  "    pm.collectionVariables.set(\"role_id\", jsonData.id);",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"role_id\", jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -960,7 +1255,22 @@
               "host": ["{{base_url}}"],
               "path": ["organization-profiles"]
             },
-            "description": "Create a new organization profile with legal name, GST, and registration details."
+            "description": "Create a new organization profile with legal name, GST, and registration details.",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.data && jsonData.data.id) {",
+                    "    pm.collectionVariables.set(\"organization_profile_id\", jsonData.data.id);",
+                    "    console.log('✅ Organization Profile ID saved:', jsonData.data.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
           },
           "response": []
         },
@@ -1036,305 +1346,516 @@
       ]
     },
     {
-      "name": "User & Employee",
-      "description": "User authentication records and full Employee Aggregate Management",
+      "name": "Company Policy",
+      "description": "Company policies and their categorizations (policy types).",
       "item": [
         {
-          "name": "Create User",
-          "event": [
+          "name": "Policy Types",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    const response = pm.response.json();",
-                  "    pm.collectionVariables.set('user_id', response.data.id);",
-                  "    console.log('✅ User created:', response.data.id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"first_name\": \"John\",\n    \"middle_name\": \"Michael\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+919876543210\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/users",
-              "host": ["{{base_url}}"],
-              "path": ["users"]
-            },
-            "description": "Create a new user. Password is hashed server-side.\n\n**Auto-saves:** `user_id` to collection variables.\n\n**Password rules:**\n- Minimum 8 characters\n- At least one uppercase letter\n- At least one lowercase letter\n- At least one digit\n- At least one special character (@$!%*?&)\n\n**Phone format:** E.164 (e.g., +919876543210)"
-          },
-          "response": []
-        },
-        {
-          "name": "Get All Users",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["users"],
-              "query": [
-                { "key": "page", "value": "1", "description": "Page number" },
-                {
-                  "key": "limit",
-                  "value": "10",
-                  "description": "Items per page"
-                },
-                {
-                  "key": "search",
-                  "value": "",
-                  "description": "Search by name or email",
-                  "disabled": true
-                },
-                {
-                  "key": "sort_by",
-                  "value": "created_at",
-                  "description": "Field to sort by"
-                },
-                {
-                  "key": "sort_order",
-                  "value": "DESC",
-                  "description": "Sort direction (ASC/DESC)"
-                },
-                {
-                  "key": "status",
-                  "value": "ACTIVE",
-                  "description": "Filter by status",
-                  "disabled": true
+              "name": "Get All Policy Types",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policy-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types"]
                 }
-              ]
-            },
-            "description": "Standardized listing of all users.\n\n**Features:**\n- Pagination (`page`, `limit`)\n- Global Search (`search` across first_name, last_name, email)\n- Sorting (`sort_by`, `sort_order`)\n- Organization-level security (auto-scoped)\n- Includes `avatar` and `memberAvatars` in response."
-          },
-          "response": []
-        },
-        {
-          "name": "Get User by ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            },
-            "description": "Get a single user by UUID."
-          },
-          "response": []
-        },
-        {
-          "name": "Update User",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"first_name\": \"Jonathan\",\n    \"phone\": \"+919876543211\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            },
-            "description": "Partially update a user. All fields are optional. Password cannot be changed here (use auth endpoints)."
-          },
-          "response": []
-        },
-        {
-          "name": "Delete User",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/users/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["users", "{{user_id}}"]
-            },
-            "description": "Soft-delete a user (sets status to DELETED). Returns 204 No Content."
-          },
-          "response": []
-        },
-        {
-          "name": "Create Employee Aggregate",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+            {
+              "name": "Create Policy Type",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"General Policies\",\n    \"icon\": \"description\",\n    \"status\": \"ACTIVE\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/policy-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"enterprise_id\": \"{{enterprise_id}}\",\n    \"organization_id\": \"{{organization_id}}\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees",
-              "host": ["{{base_url}}"],
-              "path": ["employees"]
+            {
+              "name": "Update Policy Type",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"HR Policies\",\n    \"icon\": \"people\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types", "{{policy_type_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Policy Type",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types", "{{policy_type_id}}"]
+                }
+              }
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "Get Employee Aggregate",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
+          "name": "Policies",
+          "item": [
+            {
+              "name": "Get Grouped Policies",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policies/grouped",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "grouped"]
+                },
+                "description": "Get all policies grouped by their type. If user is an employee, only active policies are returned. If user can edit, all policies are returned."
+              }
+            },
+            {
+              "name": "Get Policy by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policies/{{policy_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Create Policy",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"Leave Policy\",\n    \"description\": \"Standard leave and holiday policy\",\n    \"type_id\": \"{{policy_type_id}}\",\n    \"content\": \"<h1>Leave Policy</h1><p>Content goes here...</p>\",\n    \"status\": \"ACTIVE\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/policies",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies"]
+                }
+              }
+            },
+            {
+              "name": "Update Policy",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"Updated Leave Policy\",\n    \"content\": \"<h1>Updated Content</h1>\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/policies/{{policy_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Policy",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/policies/{{policy_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
+                }
+              }
             }
-          },
-          "response": []
-        },
+          ]
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{access_token}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Employee Management",
+      "description": "Full lifecycle management of employees, including profile, documents, education, and offboarding.",
+      "item": [
         {
-          "name": "List Employees",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/employees?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["employees"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "search", "value": "", "disabled": true },
-                { "key": "sort_by", "value": "created_at" },
-                { "key": "sort_order", "value": "DESC" },
-                { "key": "departmentId", "value": "", "disabled": true },
-                { "key": "designationId", "value": "", "disabled": true },
-                { "key": "status", "value": "ACTIVE", "disabled": true }
-              ]
-            },
-            "description": "Standardized listing of all employees.\n\n**Features:**\n- Pagination and Sorting\n- Global Search\n- Filter by `departmentId`, `designationId`, and `status`.\n- Includes `avatar` of the employee."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Employee Basic Info",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "Employees",
+          "item": [
+            {
+              "name": "List Employees",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "search", "value": "", "disabled": true },
+                    { "key": "sort_by", "value": "created_at" },
+                    { "key": "sort_order", "value": "DESC" },
+                    { "key": "departmentId", "value": "", "disabled": true },
+                    { "key": "designationId", "value": "", "disabled": true },
+                    { "key": "status", "value": "ACTIVE", "disabled": true }
+                  ]
+                },
+                "description": "List employees with pagination, search, and filters."
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Doe\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
-            },
-            "description": "Update basic identity fields of an employee."
-          },
-          "response": []
-        },
-        {
-          "name": "Update Employee Profile",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+            {
+              "name": "Get Employee Dropdown",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/dropdown",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "dropdown"]
+                },
+                "description": "Get a simplified list of employees (label/value) for dropdowns, scoped to the current organization."
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"employmentType\": \"FULL_TIME\",\n    \"workLocation\": \"HYBRID\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}/profile",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "profile"]
-            },
-            "description": "Update HR-specific profile fields of an employee."
-          },
-          "response": []
-        },
-        {
-          "name": "Add Employee Education",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+            {
+              "name": "Get Employee Detail",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}"]
+                },
+                "description": "Get complete employee aggregate data."
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"degree\": \"B.Tech\",\n    \"school_name\": \"MIT\",\n    \"completion_date\": \"2020-05-01\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}/education",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "education"]
+            {
+              "name": "Create Employee",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"]
+                }
+              }
+            },
+            {
+              "name": "Delete Employee (Soft Delete)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}"]
+                }
+              }
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "Upsert Emergency Contact",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "Profile Management",
+          "item": [
+            {
+              "name": "Update Personal Details",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"dob\": \"1990-01-01\",\n    \"gender\": \"FEMALE\",\n    \"blood_group\": \"O+\",\n    \"marital_status\": \"SINGLE\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/personal",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "personal"]
+                }
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"John Doe\",\n    \"relationship\": \"Spouse\",\n    \"phone\": \"+919876543000\"\n}"
             },
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}/emergency-contact",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "emergency-contact"]
+            {
+              "name": "Update Employment Details",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"department_id\": \"{{department_id}}\",\n    \"designation_id\": \"<DESIGNATION_ID>\",\n    \"employment_type\": \"FULL_TIME\",\n    \"work_location\": \"REMOTE\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/employment",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "employment"]
+                }
+              }
             },
-            "description": "Upsert emergency contact details for an employee."
-          },
-          "response": []
+            {
+              "name": "Update Payroll Info",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"bank_info\": {\n        \"account_holder_name\": \"Jane Smith\",\n        \"bank_name\": \"HDFC Bank\",\n        \"account_number\": \"1234567890\",\n        \"ifsc_code\": \"HDFC0001234\"\n    },\n    \"gov_info\": {\n        \"pan\": \"ABCDE1234F\",\n        \"aadhaar\": \"123456789012\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/payroll",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "payroll"]
+                }
+              }
+            },
+            {
+              "name": "Get Profile Completion",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/profile-completion",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "profile-completion"]
+                }
+              }
+            }
+          ]
         },
         {
-          "name": "Delete Employee",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/employees/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}"]
+          "name": "Documents",
+          "item": [
+            {
+              "name": "Upload Documents",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"documents\": [\n        {\n            \"name\": \"Aadhaar Card\",\n            \"type\": \"GOV_ID\",\n            \"document_id\": \"{{document_id}}\"\n        }\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/documents",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "documents"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Education & Experience",
+          "item": [
+            {
+              "name": "Add Education",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"degree\": \"Bachelor of Science\",\n    \"school_name\": \"Stanford\",\n    \"field_of_study\": \"Computer Science\",\n    \"completion_date\": \"2020-05-15\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/education",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education"]
+                }
+              }
             },
-            "description": "Soft-delete both identity and profile layers of an employee."
-          },
-          "response": []
+            {
+              "name": "Update Education",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"degree\": \"Master of Science\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/education/<EDU_ID>",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education", "<EDU_ID>"]
+                }
+              }
+            },
+            {
+              "name": "Delete Education",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/education/<EDU_ID>",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education", "<EDU_ID>"]
+                }
+              }
+            },
+            {
+              "name": "Add Experience",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"company_name\": \"Google\",\n    \"designation\": \"Software Engineer\",\n    \"start_date\": \"2021-01-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience"]
+                }
+              }
+            },
+            {
+              "name": "Update Experience",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"company_name\": \"Google\",\n    \"designation\": \"Senior Software Engineer\",\n    \"start_date\": \"2021-01-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience/<EXP_ID>",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience", "<EXP_ID>"]
+                }
+              }
+            },
+            {
+              "name": "Delete Experience",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience/<EXP_ID>",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience", "<EXP_ID>"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Offboarding",
+          "item": [
+            {
+              "name": "Initiate Offboarding",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"exit_type\": \"RESIGNATION\",\n    \"reason\": \"Better opportunity\",\n    \"last_working_day\": \"2026-04-15\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/offboarding/initiate",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "offboarding",
+                    "initiate"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Update Offboarding",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"reason\": \"Personal reasons\",\n    \"last_working_day\": \"2026-05-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
+                }
+              }
+            },
+            {
+              "name": "Get Offboarding Status",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
+                }
+              }
+            },
+            {
+              "name": "Cancel Offboarding",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
+                }
+              }
+            }
+          ]
         }
       ]
     },
@@ -1874,7 +2395,22 @@
               "raw": "{{base_url}}/industry-types",
               "host": ["{{base_url}}"],
               "path": ["industry-types"]
-            }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.data && jsonData.data.id) {",
+                    "    pm.collectionVariables.set(\"industry_type_id\", jsonData.data.id);",
+                    "    console.log('✅ Industry Type ID saved:', jsonData.data.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
           },
           "response": []
         },
@@ -2016,7 +2552,22 @@
               "raw": "{{base_url}}/plans",
               "host": ["{{base_url}}"],
               "path": ["plans"]
-            }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "var jsonData = pm.response.json();",
+                    "if (jsonData.data && jsonData.data.id) {",
+                    "    pm.collectionVariables.set(\"plan_id\", jsonData.data.id);",
+                    "    console.log('✅ Plan ID saved:', jsonData.data.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
           }
         },
         {
@@ -2251,8 +2802,8 @@
                 "exec": [
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
-                  "    pm.collectionVariables.set('role_id', response.id);",
-                  "    console.log('✅ Role created:', response.id);",
+                  "    pm.collectionVariables.set('role_id', response.data.id);",
+                  "    console.log('✅ Role created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -2450,7 +3001,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {\n    const response = pm.response.json();\n    pm.collectionVariables.set('department_id', response.id);\n    console.log('✅ Department created:', response.id);\n}"
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('department_id', response.data.id);",
+                  "    console.log('✅ Department created:', response.data.id);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }

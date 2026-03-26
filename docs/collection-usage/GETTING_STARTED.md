@@ -13,6 +13,38 @@
 
 ---
 
+## Environment Setup
+
+> **Always use a Postman Environment** rather than editing collection variables directly. This lets you switch between `local`, `staging`, and `production` without touching the collection.
+
+### Step-by-step: Create the "Brello Local" Environment
+
+1. In Postman, click **Environments** (left sidebar) → **Create Environment**.
+2. Name it **`Brello Local`**.
+3. Add the following variables (Initial Value = Default Value for local dev):
+
+| Variable           | Initial Value                  | Description                                  |
+| ------------------ | ------------------------------ | -------------------------------------------- |
+| `base_url`         | `http://localhost:8000/api/v1` | API base URL                                 |
+| `access_token`     | _(empty)_                      | Auto-populated by Login / Verify OTP scripts |
+| `user_id`          | _(empty)_                      | Auto-populated on login                      |
+| `enterprise_id`    | _(empty)_                      | Auto-populated on login                      |
+| `organization_id`  | _(empty)_                      | Auto-populated on login                      |
+| `default_app_id`   | _(empty)_                      | Auto-populated on login                      |
+| `app_id`           | _(empty)_                      | Set after creating an App                    |
+| `role_id`          | _(empty)_                      | Set after creating a Role                    |
+| `plan_id`          | _(empty)_                      | Set after creating a Plan                    |
+| `industry_type_id` | _(empty)_                      | Set after creating an Industry Type          |
+| `department_id`    | _(empty)_                      | Set after creating a Department              |
+| `document_id`      | _(empty)_                      | Set after uploading a document               |
+
+4. Click **Save**, then select **`Brello Local`** from the environment dropdown (top-right in Postman).
+5. **Import the collection** via **File → Import** or drag-and-drop the JSON file.
+
+> 💡 The collection's test scripts write to **collection variables** (`pm.collectionVariables.set`). These are always visible to all requests regardless of which environment is active, and are ideal for temporary session data like `access_token`.
+
+---
+
 ## Flow Overview
 
 ```
@@ -41,7 +73,13 @@
                          │
  PHASE 3: Authentication
  ┌───────────────────────▼──────────────────────────────┐
- │  Step 8:  Login                       → tokens 🔑     │
+ │  Option A — Password Login:                           │
+ │    Step 8a: Login (email + password)  → tokens 🔑     │
+ │                                                       │
+ │  Option B — OTP Login (passwordless): │
+ │    Step 8b: Login - Send OTP  (204)                   │
+ │    Step 8c: Login - Verify OTP        → tokens 🔑     │
+ │                                                       │
  │  Step 9:  Get Menu (RBAC tree)                        │
  │  Step 10: Refresh Token               → new tokens    │
  │  Step 11: Switch App (if multiple)                    │
@@ -349,7 +387,11 @@ POST /api/v1/user-role-maps
 
 ## Phase 3: Authentication
 
-### Step 8 — Login Normal User
+> There are **two login methods**. Use whichever matches your user setup. Both auto-populate the same collection variables on success.
+
+---
+
+### Step 8a — Login (Password-based)
 
 > **Folder:** Auth → Login
 
@@ -365,15 +407,64 @@ POST /api/v1/auth/login
 }
 ```
 
-✅ **Response includes:**
+✅ **Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`
 
-- `access_token` — short-lived (15 min), used for authenticated requests
-- `defaultAppId` — the app the JWT is scoped to
-- `availableApps` — all apps the user has roles in
-- **`refresh_token`** — delivered as an **HttpOnly cookie** (`refresh_token`), not in the response body
+**Refresh token** is delivered as an **HttpOnly cookie** — stored automatically by Postman's cookie jar.
 
-> The Postman script auto-saves the access token and IDs to collection variables.
-> Postman also receives and stores the `refresh_token` cookie automatically.
+---
+
+### Step 8b — Login (OTP-based) — Part 1: Send OTP
+
+> **Folder:** Auth → Login - Send OTP
+
+```
+POST /api/v1/auth/login/send-otp
+```
+
+```json
+{
+  "email": "john.doe@example.com"
+}
+```
+
+✅ Returns **204 No Content**. The OTP is sent to the email (in dev mode, check the server console).
+
+**What the script does automatically:**
+
+- The **pre-request script** reads the `email` from the body and stores it as `otp_login_email` in collection variables.
+- This staging variable is automatically consumed by the next request.
+
+---
+
+### Step 8c — Login (OTP-based) — Part 2: Verify OTP
+
+> **Folder:** Auth → Login - Verify OTP
+
+```
+POST /api/v1/auth/login/verify-otp
+```
+
+```json
+{
+  "email": "john.doe@example.com",
+  "otp": "123456",
+  "device_fingerprint": "postman-dev"
+}
+```
+
+> **Tip:** The `email` field is **auto-filled** by the pre-request script from `otp_login_email`. You only need to paste the 6-digit OTP.
+
+✅ **Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`
+
+The `otp_login_email` staging variable is cleaned up (unset) automatically after a successful verification.
+
+**Refresh token** is delivered as an HttpOnly cookie — stored automatically by Postman's cookie jar.
+
+| Field        | Rule                                 |
+| ------------ | ------------------------------------ |
+| `otp`        | Exactly 6 digits                     |
+| Max attempts | 5 attempts before OTP is invalidated |
+| Expiry       | 10 minutes                           |
 
 ---
 

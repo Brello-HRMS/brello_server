@@ -19,32 +19,25 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('industry-types')
-@UseGuards(JwtAuthGuard)
 export class IndustryTypeController {
   constructor(private readonly industryTypeService: IndustryTypeService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(
-    @Body() createIndustryTypeDto: CreateIndustryTypeDto,
-    @LoggedInUser() user: LoggedInUserInterface,
-  ) {
-    return this.industryTypeService.create(createIndustryTypeDto, user);
+  create(@Body() createIndustryTypeDto: CreateIndustryTypeDto) {
+    return this.industryTypeService.create(createIndustryTypeDto);
   }
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll(@LoggedInUser() user: LoggedInUserInterface) {
-    return this.industryTypeService.findAll(user);
+  findAll() {
+    return this.industryTypeService.findAll();
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @LoggedInUser() user: LoggedInUserInterface,
-  ) {
-    return this.industryTypeService.findOne(id, user);
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.industryTypeService.findOne(id);
   }
 
   @Patch(':id')
@@ -54,7 +47,7 @@ export class IndustryTypeController {
     @Body() updateIndustryTypeDto: UpdateIndustryTypeDto,
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.industryTypeService.update(id, updateIndustryTypeDto, user);
+    return this.industryTypeService.update(id, updateIndustryTypeDto);
   }
 
   @Delete(':id')
@@ -63,6 +56,6 @@ export class IndustryTypeController {
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.industryTypeService.remove(id, user);
+    return this.industryTypeService.remove(id);
   }
 }
