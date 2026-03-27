@@ -80,6 +80,11 @@
       "key": "project_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "calendar_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -3585,6 +3590,226 @@
               "path": ["projects", "{{project_id}}", "team", "{{user_id}}"]
             },
             "description": "Removes a single team member from the project."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Holiday Management",
+      "item": [
+        {
+          "name": "Create Holiday Calendar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('calendar_id', response.data.id);",
+                  "    console.log('✅ Calendar ID saved:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"India - 2026\",\n  \"year\": 2026\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/holidays/calendars",
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Calendars",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/holidays/calendars?year=2026",
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars"],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Holiday",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Republic Day\",\n  \"date\": \"2026-01-26\",\n  \"type\": \"PUBLIC\",\n  \"color\": \"#FFC107\",\n  \"description\": \"National Holiday\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/holidays",
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}", "holidays"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Month View",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/month-view?month=1",
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}", "month-view"],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate Calendar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/activate",
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}", "activate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clone Calendar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"India - 2027\",\n  \"year\": 2027,\n  \"set_active\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/clone",
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}", "clone"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Employee - Upcoming Holidays",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/employee/holidays",
+              "host": ["{{base_url}}"],
+              "path": ["employee", "holidays"]
+            }
           },
           "response": []
         }
