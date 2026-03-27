@@ -471,6 +471,8 @@ export class EmployeeService {
       completion_date: new Date(dto.completionDate),
       additional_detail: dto.additionalDetail,
       user_profile_id: profile.id,
+      enterprise_id: profile.enterprise_id,
+      organization_id: profile.organization_id,
       status: Status.ACTIVE,
     });
     return { success: true };
@@ -507,6 +509,8 @@ export class EmployeeService {
       summary: dto.summary,
       duration: dto.duration,
       user_profile_id: profile.id,
+      enterprise_id: profile.enterprise_id,
+      organization_id: profile.organization_id,
       status: Status.ACTIVE,
     });
     return { success: true };
@@ -539,6 +543,8 @@ export class EmployeeService {
     await this.assetsRepository.create({
       name: dto.name,
       user_profile_id: profile.id,
+      enterprise_id: profile.enterprise_id,
+      organization_id: profile.organization_id,
       status: Status.ACTIVE,
     });
     return { success: true };
@@ -561,6 +567,8 @@ export class EmployeeService {
       passport: dto.passport,
       driving_licence: dto.drivingLicence,
       user_profile_id: profile.id,
+      enterprise_id: profile.enterprise_id,
+      organization_id: profile.organization_id,
       status: Status.ACTIVE,
     });
     return { success: true };
@@ -574,6 +582,8 @@ export class EmployeeService {
       ifsc_code: dto.ifscCode,
       bank_name: dto.bankName,
       user_profile_id: profile.id,
+      enterprise_id: profile.enterprise_id,
+      organization_id: profile.organization_id,
       status: Status.ACTIVE,
     });
     return { success: true };
@@ -594,6 +604,8 @@ export class EmployeeService {
       await this.bankInfoRepository.upsert({
         ...dto.bank_info,
         user_profile_id: profile.id,
+        enterprise_id: profile.enterprise_id,
+        organization_id: profile.organization_id,
         status: Status.ACTIVE,
       });
     }
@@ -602,6 +614,8 @@ export class EmployeeService {
       await this.govInfoRepository.upsert({
         ...dto.gov_info,
         user_profile_id: profile.id,
+        enterprise_id: profile.enterprise_id,
+        organization_id: profile.organization_id,
         status: Status.ACTIVE,
       });
     }
@@ -629,6 +643,8 @@ export class EmployeeService {
       name: dto.name,
       doc_id: dto.docId,
       user_profile_id: profile.id,
+      enterprise_id: profile.enterprise_id,
+      organization_id: profile.organization_id,
       status: Status.ACTIVE,
     });
     return { success: true };
@@ -645,6 +661,8 @@ export class EmployeeService {
         name: doc.name,
         doc_id: doc.docId,
         user_profile_id: profile.id,
+        enterprise_id: profile.enterprise_id,
+        organization_id: profile.organization_id,
         status: Status.ACTIVE,
       });
     }
@@ -681,6 +699,8 @@ export class EmployeeService {
       phone: dto.phone,
       relation: dto.relation,
       user_profile_id: profile.id,
+      enterprise_id: profile.enterprise_id,
+      organization_id: profile.organization_id,
       status: Status.ACTIVE,
     });
     return { success: true };

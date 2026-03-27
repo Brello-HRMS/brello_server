@@ -226,7 +226,7 @@ export class AuthService {
       appId: defaultAppId,
     });
 
-    this.logger.log(`User ${user.id} logged in. Default app: ${defaultAppId}`);
+    this.logger.log(`User ${user.id} logged in. Default app: ${defaultAppId}. EntID: ${user.enterprise_id}, OrgID: ${user.organization_id}`);
 
     return {
       access_token: tokens.access_token,
