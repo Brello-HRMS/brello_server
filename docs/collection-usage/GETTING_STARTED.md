@@ -23,20 +23,20 @@
 2. Name it **`Brello Local`**.
 3. Add the following variables (Initial Value = Default Value for local dev):
 
-| Variable | Initial Value | Description |
-|---|---|---|
-| `base_url` | `http://localhost:8000/api/v1` | API base URL |
-| `access_token` | _(empty)_ | Auto-populated by Login / Verify OTP scripts |
-| `user_id` | _(empty)_ | Auto-populated on login |
-| `enterprise_id` | _(empty)_ | Auto-populated on login |
-| `organization_id` | _(empty)_ | Auto-populated on login |
-| `default_app_id` | _(empty)_ | Auto-populated on login |
-| `app_id` | _(empty)_ | Set after creating an App |
-| `role_id` | _(empty)_ | Set after creating a Role |
-| `plan_id` | _(empty)_ | Set after creating a Plan |
-| `industry_type_id` | _(empty)_ | Set after creating an Industry Type |
-| `department_id` | _(empty)_ | Set after creating a Department |
-| `document_id` | _(empty)_ | Set after uploading a document |
+| Variable           | Initial Value                  | Description                                  |
+| ------------------ | ------------------------------ | -------------------------------------------- |
+| `base_url`         | `http://localhost:8000/api/v1` | API base URL                                 |
+| `access_token`     | _(empty)_                      | Auto-populated by Login / Verify OTP scripts |
+| `user_id`          | _(empty)_                      | Auto-populated on login                      |
+| `enterprise_id`    | _(empty)_                      | Auto-populated on login                      |
+| `organization_id`  | _(empty)_                      | Auto-populated on login                      |
+| `default_app_id`   | _(empty)_                      | Auto-populated on login                      |
+| `app_id`           | _(empty)_                      | Set after creating an App                    |
+| `role_id`          | _(empty)_                      | Set after creating a Role                    |
+| `plan_id`          | _(empty)_                      | Set after creating a Plan                    |
+| `industry_type_id` | _(empty)_                      | Set after creating an Industry Type          |
+| `department_id`    | _(empty)_                      | Set after creating a Department              |
+| `document_id`      | _(empty)_                      | Set after uploading a document               |
 
 4. Click **Save**, then select **`Brello Local`** from the environment dropdown (top-right in Postman).
 5. **Import the collection** via **File → Import** or drag-and-drop the JSON file.
@@ -88,9 +88,20 @@
                          │
  PHASE 4: Password Flows (optional)
  ┌───────────────────────▼──────────────────────────────┐
- │  Step 13: Update Password                             │
- │  Step 14: Forgot Password (get OTP)                   │
- │  Step 15: Verify OTP & Reset Password                 │
+ │  Step 12: Update Password                             │
+ │  Step 13: Forgot Password (get OTP)                   │
+ │  Step 14: Verify OTP & Reset Password                 │
+ └───────────────────────┬──────────────────────────────┘
+                         │
+ PHASE 6: Client & Project Management
+ ┌───────────────────────▼──────────────────────────────┐
+ │  Step 18: Create Client              → client_id     │
+ │  Step 19: Create Project             → project_id    │
+ │  Step 20: Assign Team (with roles)                   │
+ │  Step 21: Upload Contract (S3)                       │
+ │  Step 22: Get Team (with user profiles)              │
+ │  Step 23: Get Contracts                              │
+ │  Step 24: Remove Team Member                         │
  └──────────────────────────────────────────────────────┘
 ```
 
@@ -422,6 +433,7 @@ POST /api/v1/auth/login/send-otp
 ✅ Returns **204 No Content**. The OTP is sent to the email (in dev mode, check the server console).
 
 **What the script does automatically:**
+
 - The **pre-request script** reads the `email` from the body and stores it as `otp_login_email` in collection variables.
 - This staging variable is automatically consumed by the next request.
 
@@ -451,11 +463,11 @@ The `otp_login_email` staging variable is cleaned up (unset) automatically after
 
 **Refresh token** is delivered as an HttpOnly cookie — stored automatically by Postman's cookie jar.
 
-| Field | Rule |
-|---|---|
-| `otp` | Exactly 6 digits |
+| Field        | Rule                                 |
+| ------------ | ------------------------------------ |
+| `otp`        | Exactly 6 digits                     |
 | Max attempts | 5 attempts before OTP is invalidated |
-| Expiry | 10 minutes |
+| Expiry       | 10 minutes                           |
 
 ---
 
@@ -593,31 +605,145 @@ To test the multi-app flow, repeat Phase 2 for a second app:
 
 ---
 
+---
+
+## Phase 6: Client & Project Management
+
+### Step 18 — Create Client
+
+> **Folder:** Client → Create Client
+
+```
+POST /api/v1/clients
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Brello Tech Solutions",
+  "poc_name": "Samir Mohd",
+  "poc_email": "samir@brello.io",
+  "poc_phone": "+919999999999",
+  "address": "Tech Hub, Bengaluru",
+  "status": "ACTIVE"
+}
+```
+
+✅ **Save the `id`** — this is your `client_id`.
+
+### Step 19 — Create Project
+
+> **Folder:** Project → Create Project
+
+```
+POST /api/v1/clients/{{client_id}}/projects
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Brello v2 Backend",
+  "description": "Enterprise stability and documentation",
+  "project_type": "AGILE",
+  "status": "IN_PROGRESS",
+  "priority": "HIGH",
+  "start_date": "2024-03-01",
+  "end_date": "2024-12-31"
+}
+```
+
+✅ **Save the `id`** — this is your `project_id`.
+
+### Step 20 — Assign Team
+
+> **Folder:** Project → Assign Team
+
+```
+POST /api/v1/projects/{{project_id}}/team
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "members": [
+    {
+      "user_id": "{{user_id}}",
+      "role": "Lead Architect"
+    }
+  ]
+}
+```
+
+### Step 21 — Upload Contract
+
+...
+✅ On success, the binary is uploaded to S3, a Document record is created, and the metadata is linked to the Project Contract table.
+
+### Step 22 — Get Project Team
+
+> **Folder:** Project → Get Project Team
+
+```
+GET /api/v1/projects/{{project_id}}/team
+Authorization: Bearer {{access_token}}
+```
+
+✅ Returns the detailed list of team members, including their roles and full user profiles (name, email).
+
+### Step 23 — Get Project Contracts
+
+> **Folder:** Project → Get Project Contracts
+
+```
+GET /api/v1/projects/{{project_id}}/contracts
+Authorization: Bearer {{access_token}}
+```
+
+✅ Returns the list of all contract documents uploaded for the project.
+
+### Step 24 — Remove Team Member
+
+> **Folder:** Project → Remove Team Member
+
+```
+DELETE /api/v1/projects/{{project_id}}/team/{{user_id}}
+Authorization: Bearer {{access_token}}
+```
+
+✅ Removes the specified user from the project team.
+
+---
+
 ## Quick Reference Table
 
-| Step | Method | Endpoint                            | Prerequisite                            | Script Side-effect |
-| ---- | ------ | ----------------------------------- | --------------------------------------- | --- |
-| 1    | POST   | `/users`                            | enterprise_id, organization_id (seeded) | — |
-| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists              | — |
-| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                         | saves `access_token`, `user_id` |
-| 3    | POST   | `/industry-types`                   | access_token (Platform Admin)           | saves `industry_type_id` |
-| 4    | POST   | `/plans`                            | access_token (Platform Admin)           | saves `plan_id` |
-| 5    | POST   | `/enterprises`                      | access_token (Platform Admin)           | saves `enterprise_id` |
-| 6    | POST   | `/organizations`                    | enterprise_id                           | saves `organization_id` |
-| 6b   | POST   | `/organizations/profile`            | organization_id, industry_type_id       | — |
-| 7    | POST   | `/apps`                             | access_token (Platform Admin)           | — |
-| 8    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  | saves `role_id` |
-| 9    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       | — |
-| 10a  | POST   | `/auth/login`                       | User + Role + App exist                 | saves `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` |
-| 10b  | POST   | `/auth/login/send-otp`              | User + Role + App exist                 | stages `otp_login_email` (pre-request) |
-| 10c  | POST   | `/auth/login/verify-otp`            | OTP from step 10b                       | auto-fills `email`; saves same vars as 10a; unsets `otp_login_email` |
-| 11   | GET    | `/menu`                             | access_token                            | — |
-| 12   | POST   | `/auth/refresh`                     | HttpOnly cookie (auto)                  | rotates `access_token` |
-| 13   | POST   | `/auth/switch-app`                  | access_token + multiple apps            | saves new `access_token`, `default_app_id` |
-| 14   | POST   | `/auth/logout`                      | access_token                            | — |
-| 15   | POST   | `/auth/update-password`             | access_token                            | — |
-| 16   | POST   | `/auth/forgot-password`             | —                                       | — |
-| 17   | POST   | `/auth/verify-otp`                  | OTP from step 16                        | — |
+| Step | Method | Endpoint                            | Prerequisite                            |
+| ---- | ------ | ----------------------------------- | --------------------------------------- |
+| 1    | POST   | `/users`                            | enterprise_id, organization_id (seeded) |
+| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists              |
+| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                         |
+| 3    | POST   | `/industry-types`                   | access_token (Platform Admin)           |
+| 4    | POST   | `/plans`                            | access_token (Platform Admin)           |
+| 5    | POST   | `/enterprises`                      | access_token (Platform Admin)           |
+| 6    | POST   | `/organizations`                    | enterprise_id                           |
+| 6b   | POST   | `/organizations/profile`            | organization_id, industry_type_id       |
+| 7    | POST   | `/apps`                             | access_token (Platform Admin)           |
+| 8    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  |
+| 9    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       |
+| 10   | POST   | `/auth/login`                       | User + Role + App exist                 |
+| 11   | GET    | `/menu`                             | access_token                            |
+| 12   | POST   | `/auth/refresh`                     | HttpOnly cookie (auto)                  |
+| 13   | POST   | `/auth/switch-app`                  | access_token + multiple apps            |
+| 14   | POST   | `/auth/logout`                      | access_token                            |
+| 15   | POST   | `/auth/update-password`             | access_token                            |
+| 16   | POST   | `/auth/forgot-password`             | —                                       |
+| 17   | POST   | `/auth/verify-otp`                  | OTP from step 16                        |
+| 18   | POST   | `/clients`                          | access_token                            |
+| 19   | POST   | `/clients/:id/projects`             | client_id                               |
+| 20   | POST   | `/projects/:id/team`                | project_id                              |
+| 21   | POST   | `/projects/:id/contract`            | project_id                              |
+| 22   | GET    | `/projects/:id/team`                | project_id                              |
+| 23   | GET    | `/projects/:id/contracts`           | project_id                              |
+| 24   | DELETE | `/projects/:id/team/:userId`        | project_id, user_id                     |
 
 ---
 

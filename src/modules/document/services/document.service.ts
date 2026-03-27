@@ -104,7 +104,10 @@ export class DocumentService {
     // Validate Organization (if provided)
     let organization: Organization | null = null;
     if (dto.organizationId) {
-      organization = await this.organizationService.findOne(dto.organizationId, user);
+      organization = await this.organizationService.findOne(
+        dto.organizationId,
+        user,
+      );
     }
 
     // Generate safe file name (uuid + extension)
@@ -155,7 +158,9 @@ export class DocumentService {
   }
 
   async confirmUpload(id: string, user: LoggedInUser) {
-    this.logger.log(`Confirming upload for document ${id} by user ${user.userId}`);
+    this.logger.log(
+      `Confirming upload for document ${id} by user ${user.userId}`,
+    );
 
     const document = await this.documentRepository.findById(id);
     if (!document) {
@@ -216,6 +221,70 @@ export class DocumentService {
     );
 
     return { url };
+  }
+
+  async uploadDocument(
+    user: LoggedInUser,
+    file: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+      size: number;
+    },
+    folderType: FolderType,
+    employeeId?: string,
+  ): Promise<Document> {
+    this.logger.log(`Directly uploading ${folderType} for user ${user.userId}`);
+
+    // 1. Validate/Get Enterprise context
+    const enterprise = await this.enterpriseService.findOneById(
+      user.enterpriseId,
+      user,
+    );
+
+    // 2. Validate/Get Organization context (if required by folder type or token)
+    let organization: Organization | null = null;
+    if (user.organizationId) {
+      organization = await this.organizationService.findOne(
+        user.organizationId,
+        user,
+      );
+    }
+
+    // 3. Generate safe file name and object key
+    const extension = file.originalname.includes('.')
+      ? file.originalname.split('.').pop()!
+      : '';
+    const fileName = extension ? `${uuidv4()}.${extension}` : uuidv4();
+
+    const objectKey = await this.generateObjectKey({
+      enterpriseCode: enterprise.name,
+      organizationCode: organization?.name,
+      employeeId,
+      folderType,
+      fileName,
+    });
+
+    // 4. Upload to S3
+    await this.storageService.uploadFile(file.buffer, objectKey, file.mimetype);
+
+    // 5. Create Document record as ACTIVE
+    return this.documentRepository.create({
+      enterprise_id: user.enterpriseId,
+      organization_id: user.organizationId,
+      employee_id: employeeId,
+      original_name: file.originalname,
+      file_name: fileName,
+      extension: extension,
+      mime_type: file.mimetype,
+      size: file.size,
+      storage_provider: StorageProvider.S3,
+      bucket: this.storageService.getBucketName(),
+      object_key: objectKey,
+      folder_type: folderType,
+      status: Status.ACTIVE,
+      created_by: user.userId,
+    } as Partial<Document>);
   }
 
   async remove(id: string, user: LoggedInUser) {

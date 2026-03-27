@@ -17,6 +17,8 @@ import { IndustryTypeModule } from './modules/industry-type/industry-type.module
 import { DocumentModule } from './modules/document/document.module';
 import { LeadModule } from './modules/lead/lead.module';
 import { RoleModule } from './modules/role/role.module';
+import { ClientModule } from './modules/client/client.module';
+import { ProjectModule } from './modules/project/project.module';
 import { CompanyPolicyModule } from './modules/company-policy/company-policy.module';
 import { DesignationModule } from './modules/designations/designation.module';
 
@@ -52,6 +54,8 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     NotificationModule,
     LeadModule,
     RoleModule,
+    ClientModule,
+    ProjectModule,
     CompanyPolicyModule,
     DesignationModule,
   ],
@@ -62,4 +66,4 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
