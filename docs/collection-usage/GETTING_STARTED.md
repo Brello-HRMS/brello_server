@@ -99,6 +99,9 @@
  │  Step 19: Create Project             → project_id    │
  │  Step 20: Assign Team (with roles)                   │
  │  Step 21: Upload Contract (S3)                       │
+ │  Step 22: Get Team (with user profiles)              │
+ │  Step 23: Get Contracts                              │
+ │  Step 24: Remove Team Member                         │
  └──────────────────────────────────────────────────────┘
 ```
 
@@ -673,17 +676,41 @@ Authorization: Bearer {{access_token}}
 
 ### Step 21 — Upload Contract
 
-> **Folder:** Project → Upload Contract
-
-```
-POST /api/v1/projects/{{project_id}}/contract
-Authorization: Bearer {{access_token}}
-Content-Type: multipart/form-data
-```
-
-- Key: `file`, Value: `(your_file.pdf)`
-
+...
 ✅ On success, the binary is uploaded to S3, a Document record is created, and the metadata is linked to the Project Contract table.
+
+### Step 22 — Get Project Team
+
+> **Folder:** Project → Get Project Team
+
+```
+GET /api/v1/projects/{{project_id}}/team
+Authorization: Bearer {{access_token}}
+```
+
+✅ Returns the detailed list of team members, including their roles and full user profiles (name, email).
+
+### Step 23 — Get Project Contracts
+
+> **Folder:** Project → Get Project Contracts
+
+```
+GET /api/v1/projects/{{project_id}}/contracts
+Authorization: Bearer {{access_token}}
+```
+
+✅ Returns the list of all contract documents uploaded for the project.
+
+### Step 24 — Remove Team Member
+
+> **Folder:** Project → Remove Team Member
+
+```
+DELETE /api/v1/projects/{{project_id}}/team/{{user_id}}
+Authorization: Bearer {{access_token}}
+```
+
+✅ Removes the specified user from the project team.
 
 ---
 
@@ -714,6 +741,9 @@ Content-Type: multipart/form-data
 | 19   | POST   | `/clients/:id/projects`             | client_id                               |
 | 20   | POST   | `/projects/:id/team`                | project_id                              |
 | 21   | POST   | `/projects/:id/contract`            | project_id                              |
+| 22   | GET    | `/projects/:id/team`                | project_id                              |
+| 23   | GET    | `/projects/:id/contracts`           | project_id                              |
+| 24   | DELETE | `/projects/:id/team/:userId`        | project_id, user_id                     |
 
 ---
 

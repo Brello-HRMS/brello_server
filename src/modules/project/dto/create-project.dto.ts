@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsOptional,
   IsDateString,
+  IsDate,
 } from 'class-validator';
 import {
   ProjectStatus,
@@ -22,19 +23,19 @@ export class CreateProjectDto {
 
   @IsOptional()
   @IsEnum(ProjectStatus)
-  status?: ProjectStatus = ProjectStatus.DRAFT;
+  project_status?: ProjectStatus = ProjectStatus.DRAFT;
 
   @IsNotEmpty()
   @IsEnum(ProjectPriority)
   priority: ProjectPriority;
 
   @IsOptional()
-  @IsDateString()
-  start_date?: string;
+  @IsDate()
+  start_date?: Date | undefined;
 
   @IsOptional()
-  @IsDateString()
-  end_date?: string;
+  @IsDate()
+  end_date?: Date | undefined;
 
   @IsOptional()
   @IsString()

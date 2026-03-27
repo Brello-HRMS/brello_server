@@ -156,3 +156,69 @@ Uploads a project contract file (multipart/form-data).
   "file_type": "application/pdf"
 }
 ```
+
+---
+
+## 8. Get Project Team
+
+`GET /projects/:id/team`
+
+Returns the list of members assigned to a project, including roles and user details.
+
+### Response (200 OK)
+
+```json
+[
+  {
+    "id": "uuid",
+    "project_id": "uuid",
+    "user_id": "uuid",
+    "role": "Project Manager",
+    "user": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john@example.com"
+    },
+    "assigned_at": "timestamp"
+  }
+]
+```
+
+---
+
+## 9. Get Project Contracts
+
+`GET /projects/:id/contracts`
+
+Returns the list of contract documents uploaded for the project.
+
+### Response (200 OK)
+
+```json
+[
+  {
+    "id": "uuid",
+    "project_id": "uuid",
+    "file_name": "contract.pdf",
+    "file_url": "https://...",
+    "file_type": "application/pdf",
+    "uploaded_at": "timestamp"
+  }
+]
+```
+
+---
+
+## 10. Remove Team Member
+
+`DELETE /projects/:id/team/:userId`
+
+Removes a single member from the project team.
+
+### Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```

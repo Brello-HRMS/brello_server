@@ -8,12 +8,14 @@ import { ProjectService } from './services/project.service';
 import { ProjectController } from './controllers/project.controller';
 import { ClientProjectController } from './controllers/client-project.controller';
 import { ClientModule } from '../client/client.module';
+import { UserModule } from '../user/user.module';
 import { DocumentModule } from '../document/document.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Project, ProjectContract, ProjectTeam]),
     forwardRef(() => ClientModule),
+    UserModule,
     DocumentModule,
   ],
   controllers: [ProjectController, ClientProjectController],

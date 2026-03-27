@@ -3515,6 +3515,78 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Get Project Team",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/team",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "team"]
+            },
+            "description": "Returns a detailed list of team members assigned to the project, including roles and user profiles."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Contracts",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/contracts",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "contracts"]
+            },
+            "description": "Returns a list of all contract documents uploaded for the project."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Team Member",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/team/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "team", "{{user_id}}"]
+            },
+            "description": "Removes a single team member from the project."
+          },
+          "response": []
         }
       ]
     }

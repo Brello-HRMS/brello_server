@@ -273,7 +273,9 @@ export class EmployeeService {
     const qb = this.userRepository.getListingQueryBuilder('user');
 
     if (query.departmentId) {
-      qb.andWhere('user.department_id = :deptId', { deptId: query.departmentId });
+      qb.andWhere('user.department_id = :deptId', {
+        deptId: query.departmentId,
+      });
     }
 
     if (query.designationId) {
@@ -288,16 +290,11 @@ export class EmployeeService {
       qb.andWhere('user.status != :deleted', { deleted: Status.DELETED });
     }
 
-    const response = await ListingHelper.apply(
-      qb,
-      query,
-      user,
-      {
-        searchFields: ['first_name', 'last_name', 'email'],
-        filterFields: ['status', 'departmentId', 'designationId'],
-        alias: 'user',
-      },
-    );
+    const response = await ListingHelper.apply(qb, query, user, {
+      searchFields: ['first_name', 'last_name', 'email'],
+      filterFields: ['status', 'departmentId', 'designationId'],
+      alias: 'user',
+    });
 
     const items = response.data.map((userInstance) => {
       const photo = userInstance.user_profile?.photo;
@@ -324,16 +321,21 @@ export class EmployeeService {
     };
   }
 
-  async getDropdown(user: LoggedInUser): Promise<{ label: string; value: string }[]> {
+  async getDropdown(
+    user: LoggedInUser,
+  ): Promise<{ name: string; id: string; profile: UserProfile | undefined }[]> {
     this.logger.log(`User ${user.userId} is fetching employee dropdown`);
-    
-    const employees = await this.userRepository.getDropdownList(user.organizationId);
-    
+
+    const employees = await this.userRepository.getDropdownList(
+      user.organizationId,
+    );
+
     return employees.map((emp) => ({
-      label: [emp.first_name, emp.middle_name, emp.last_name]
+      name: [emp.first_name, emp.middle_name, emp.last_name]
         .filter(Boolean)
         .join(' '),
-      value: emp.id!,
+      id: emp.id!,
+      profile: emp.user_profile,
     }));
   }
 

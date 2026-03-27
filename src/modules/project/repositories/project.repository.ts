@@ -78,4 +78,26 @@ export class ProjectRepository {
     const contract = this.contractRepository.create(data);
     return this.contractRepository.save(contract);
   }
+
+  async getTeam(projectId: string): Promise<ProjectTeam[]> {
+    return this.teamRepository.find({
+      where: { project_id: projectId },
+      relations: ['user'],
+      order: { assigned_at: 'DESC' },
+    });
+  }
+
+  async getContracts(projectId: string): Promise<ProjectContract[]> {
+    return this.contractRepository.find({
+      where: { project_id: projectId },
+      order: { uploaded_at: 'DESC' },
+    });
+  }
+
+  async removeTeamMember(projectId: string, userId: string): Promise<void> {
+    await this.teamRepository.delete({
+      project_id: projectId,
+      user_id: userId,
+    });
+  }
 }

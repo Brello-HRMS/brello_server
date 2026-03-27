@@ -38,7 +38,7 @@ export abstract class BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   modified_by: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   modified_at: Date;
 
   @Column({ type: 'uuid', nullable: true })

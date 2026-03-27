@@ -85,4 +85,32 @@ export class ProjectController {
   ) {
     return this.projectService.uploadContract(id, file, user);
   }
+
+  @Get(':id/team')
+  @HttpCode(HttpStatus.OK)
+  getTeam(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.projectService.getTeam(id, user);
+  }
+
+  @Get(':id/contracts')
+  @HttpCode(HttpStatus.OK)
+  getContracts(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.projectService.getContracts(id, user);
+  }
+
+  @Delete(':id/team/:userId')
+  @HttpCode(HttpStatus.OK)
+  removeTeamMember(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.projectService.removeTeamMember(id, userId, user);
+  }
 }

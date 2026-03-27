@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { Project } from './project.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity('project_team_mappings')
 export class ProjectTeam {
@@ -22,6 +23,10 @@ export class ProjectTeam {
 
   @Column({ type: 'uuid' })
   user_id: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column({ type: 'varchar', length: 100 })
   role: string;

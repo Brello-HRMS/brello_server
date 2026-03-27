@@ -66,7 +66,6 @@ export class ProjectService {
 
     const projectData = {
       ...dto,
-      project_status: dto.status,
       client_id: clientId,
       organization_id: user.organizationId,
       enterprise_id: user.enterpriseId,
@@ -171,10 +170,9 @@ export class ProjectService {
 
     const updatedProject = await this.projectRepository.update(id, {
       ...dto,
-      project_status: dto.status,
       modified_by: user.userId,
       modified_at: new Date(),
-    } as any);
+    });
 
     if (!updatedProject) {
       throw new NotFoundException(
@@ -237,5 +235,23 @@ export class ProjectService {
       file_type: file.mimetype,
       uploaded_by: user.userId,
     });
+  }
+
+  async getTeam(id: string, user: LoggedInUser) {
+    this.logger.log(`Fetching team for project: ${id}`);
+    await this.findOne(id, user);
+    return this.projectRepository.getTeam(id);
+  }
+
+  async getContracts(id: string, user: LoggedInUser) {
+    this.logger.log(`Fetching contracts for project: ${id}`);
+    await this.findOne(id, user);
+    return this.projectRepository.getContracts(id);
+  }
+
+  async removeTeamMember(id: string, userId: string, user: LoggedInUser) {
+    this.logger.log(`Removing member: ${userId} from project: ${id}`);
+    await this.findOne(id, user);
+    await this.projectRepository.removeTeamMember(id, userId);
   }
 }
