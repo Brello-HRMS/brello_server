@@ -194,6 +194,8 @@ export class PlatformAdminAuthService {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
+        enterprise_id: user.enterprise_id,
+        organization_id: user.organization_id,
         is_platform_admin: user.is_platform_admin,
       },
       availableApps: [],

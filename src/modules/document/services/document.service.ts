@@ -6,6 +6,7 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentRepository } from '../repositories/document.repository';
 import { StorageService } from './storage.service';
@@ -26,9 +27,17 @@ export class DocumentService {
     private readonly documentRepository: DocumentRepository,
     private readonly storageService: StorageService,
     private readonly enterpriseService: EnterpriseService,
+    private readonly configService: ConfigService,
     @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
   ) {}
+
+  private getStorageProvider(): StorageProvider {
+    return (
+      this.configService.get<StorageProvider>('storage.provider') ||
+      StorageProvider.S3
+    );
+  }
 
   private slugify(text: string): string {
     return text
@@ -95,6 +104,8 @@ export class DocumentService {
       `Generating upload URL for ${dto.folderType} requested by user ${user.userId}`,
     );
 
+    const provider = this.getStorageProvider();
+
     // Validate Enterprise (and get code for slug)
     const enterprise = await this.enterpriseService.findOneById(
       dto.enterpriseId,
@@ -135,7 +146,7 @@ export class DocumentService {
       extension: extension,
       mime_type: dto.mimeType,
       size: dto.size,
-      storage_provider: StorageProvider.S3,
+      storage_provider: provider,
       bucket: this.storageService.getBucketName(),
       object_key: objectKey,
       folder_type: dto.folderType,
@@ -143,11 +154,17 @@ export class DocumentService {
       created_by: user.userId,
     } as Partial<Document>);
 
-    // Generate S3 Pre-signed URL
-    const uploadUrl = await this.storageService.generatePresignedUploadUrl(
-      objectKey,
-      dto.mimeType,
-    );
+    let uploadUrl = '';
+    if (provider === StorageProvider.S3) {
+      // Generate S3 Pre-signed URL
+      uploadUrl = await this.storageService.generatePresignedUploadUrl(
+        objectKey,
+        dto.mimeType,
+      );
+    } else {
+      // For local/db, we return a local URL
+      uploadUrl = `/api/v1/documents/${document.id}/confirm`; // Simplified for DB storage
+    }
 
     return {
       documentId: document.id,
@@ -173,12 +190,14 @@ export class DocumentService {
       modified_by: user.userId,
     });
 
-    // TODO: In a real system, we'd verify the file actually exists in S3 here by calling headObject
-    // before marking it active.
-
-    // Construct public URL (if CDN is configured) or return standard S3 URL
-    const region = 'us-east-1'; // Grab from config in real app
-    const url = `https://${document.bucket}.s3.${region}.amazonaws.com/${document.object_key}`;
+    // Construct public URL
+    let url = '';
+    if (document.storage_provider === StorageProvider.S3) {
+      const region = 'us-east-1'; // Grab from config in real app
+      url = `https://${document.bucket}.s3.${region}.amazonaws.com/${document.object_key}`;
+    } else {
+      url = `/api/v1/documents/${document.id}/view`;
+    }
 
     return {
       id: updatedDoc!.id,
@@ -216,6 +235,10 @@ export class DocumentService {
       );
     }
 
+    if (document.storage_provider === StorageProvider.DATABASE) {
+      return { url: `/api/v1/documents/${id}/view` };
+    }
+
     const url = await this.storageService.generatePresignedDownloadUrl(
       document.object_key,
     );
@@ -235,6 +258,8 @@ export class DocumentService {
     employeeId?: string,
   ): Promise<Document> {
     this.logger.log(`Directly uploading ${folderType} for user ${user.userId}`);
+
+    const provider = this.getStorageProvider();
 
     // 1. Validate/Get Enterprise context
     const enterprise = await this.enterpriseService.findOneById(
@@ -265,8 +290,14 @@ export class DocumentService {
       fileName,
     });
 
-    // 4. Upload to S3
-    await this.storageService.uploadFile(file.buffer, objectKey, file.mimetype);
+    // 4. Upload to S3 or DB
+    if (provider === StorageProvider.S3) {
+      await this.storageService.uploadFile(
+        file.buffer,
+        objectKey,
+        file.mimetype,
+      );
+    }
 
     // 5. Create Document record as ACTIVE
     return this.documentRepository.create({
@@ -278,13 +309,31 @@ export class DocumentService {
       extension: extension,
       mime_type: file.mimetype,
       size: file.size,
-      storage_provider: StorageProvider.S3,
+      storage_provider: provider,
       bucket: this.storageService.getBucketName(),
       object_key: objectKey,
       folder_type: folderType,
       status: Status.ACTIVE,
       created_by: user.userId,
+      file_data: provider === StorageProvider.DATABASE ? file.buffer : null,
     } as Partial<Document>);
+  }
+
+  async getFileData(id: string) {
+    const document = await this.documentRepository.findByIdWithContent(id);
+    if (!document) {
+      throw new NotFoundException(`Document ${id} not found`);
+    }
+
+    if (document.storage_provider !== StorageProvider.DATABASE) {
+      throw new BadRequestException('Document is not stored in the database');
+    }
+
+    return {
+      buffer: document.file_data,
+      mimeType: document.mime_type,
+      fileName: document.original_name,
+    };
   }
 
   async remove(id: string, user: LoggedInUser) {

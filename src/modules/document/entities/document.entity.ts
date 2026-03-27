@@ -60,4 +60,7 @@ export class Document extends BaseEntity {
 
   @Column({ type: 'int', default: 1 })
   version: number;
+
+  @Column({ type: 'bytea', nullable: true, select: false })
+  file_data: Buffer;
 }

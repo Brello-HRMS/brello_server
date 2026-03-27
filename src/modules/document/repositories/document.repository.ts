@@ -22,6 +22,19 @@ export class DocumentRepository {
     });
   }
 
+  async findByIdWithContent(id: string): Promise<Document | null> {
+    return this.repository.findOne({
+      where: { id, status: Not(Status.DELETED) },
+      select: [
+        'id',
+        'file_data',
+        'mime_type',
+        'original_name',
+        'storage_provider',
+      ],
+    });
+  }
+
   async update(
     id: string,
     updateData: Partial<Document>,
