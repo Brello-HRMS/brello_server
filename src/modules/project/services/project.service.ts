@@ -211,6 +211,11 @@ export class ProjectService {
 
     await this.findOne(id, user);
 
+    const leadCount = dto.members.filter((m) => m.is_lead).length;
+    if (leadCount > 1) {
+      throw new BadRequestException('A project can have at most one team lead');
+    }
+
     // V1: Replace existing team mapping
     await this.projectRepository.replaceTeam(id, dto.members, user.userId);
   }

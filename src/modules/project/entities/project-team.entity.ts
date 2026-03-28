@@ -31,6 +31,9 @@ export class ProjectTeam {
   @Column({ type: 'varchar', length: 100 })
   role: string;
 
+  @Column({ type: 'boolean', default: false })
+  is_lead: boolean;
+
   @CreateDateColumn({ type: 'timestamp' })
   assigned_at: Date;
 

@@ -57,7 +57,7 @@ export class ProjectRepository {
   // Team Management
   async replaceTeam(
     projectId: string,
-    members: { user_id: string; role: string }[],
+    members: { user_id: string; role: string; is_lead?: boolean }[],
     assignedBy: string,
   ): Promise<void> {
     // Delete existing team mappings
@@ -70,6 +70,7 @@ export class ProjectRepository {
           project_id: projectId,
           user_id: member.user_id,
           role: member.role,
+          is_lead: member.is_lead ?? false,
           assigned_by: assignedBy,
         }),
       );
