@@ -15,7 +15,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ProjectService } from '../services/project.service';
+import { ProjectService, type MulterFile } from '../services/project.service';
 import { UpdateProjectDto } from '../dto/update-project.dto';
 import { ListProjectsDto } from '../dto/list-projects.dto';
 import { AssignTeamDto } from '../dto/assign-team.dto';
@@ -80,7 +80,7 @@ export class ProjectController {
   @HttpCode(HttpStatus.CREATED)
   uploadContract(
     @Param('id', ParseUUIDPipe) id: string,
-    @UploadedFile() file: any,
+    @UploadedFile() file: MulterFile,
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.projectService.uploadContract(id, file, user);

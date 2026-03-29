@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  Repository,
+  SelectQueryBuilder,
+  FindOneOptions,
+  DeepPartial,
+} from 'typeorm';
 import { Project } from '../entities/project.entity';
 import { ProjectTeam } from '../entities/project-team.entity';
 import { ProjectContract } from '../entities/project-contract.entity';
@@ -21,7 +26,7 @@ export class ProjectRepository {
     return this.repository.createQueryBuilder(alias);
   }
 
-  async create(data: Partial<Project>): Promise<Project> {
+  async create(data: DeepPartial<Project>): Promise<Project> {
     const project = this.repository.create(data);
     return this.repository.save(project);
   }
@@ -29,31 +34,30 @@ export class ProjectRepository {
   async findById(id: string): Promise<Project | null> {
     return this.repository.findOne({
       where: { id },
-      relations: ['client', 'contracts', 'team'],
+      relations: ['client', 'contracts', 'team', 'team.user'],
     });
   }
 
-  async findOne(options: any): Promise<Project | null> {
+  async findOne(options: FindOneOptions<Project>): Promise<Project | null> {
     return this.repository.findOne(options);
   }
 
-  async update(id: string, data: Partial<Project>): Promise<Project | null> {
-    await this.repository.update(id, data);
+  async update(
+    id: string,
+    data: DeepPartial<Project>,
+  ): Promise<Project | null> {
+    await this.repository.save({ id, ...data });
     return this.findById(id);
   }
 
-  async softDelete(id: string, userId: string): Promise<void> {
-    await this.repository.update(id, {
-      deleted_at: new Date(),
-      updated_by: userId,
-      status: Status.DELETED,
-    } as any);
+  async softDelete(id: string): Promise<void> {
+    await this.repository.delete(id);
   }
 
   // Team Management
   async replaceTeam(
     projectId: string,
-    members: { user_id: string; role: string }[],
+    members: { user_id: string; role: string; is_lead?: boolean }[],
     assignedBy: string,
   ): Promise<void> {
     // Delete existing team mappings
@@ -66,6 +70,7 @@ export class ProjectRepository {
           project_id: projectId,
           user_id: member.user_id,
           role: member.role,
+          is_lead: member.is_lead ?? false,
           assigned_by: assignedBy,
         }),
       );

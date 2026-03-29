@@ -5,6 +5,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
+import { DeepPartial } from 'typeorm';
 import { ProjectRepository } from '../repositories/project.repository';
 import { ClientService } from '../../client/services/client.service';
 import { CreateProjectDto } from '../dto/create-project.dto';
@@ -17,6 +18,16 @@ import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { DocumentService } from '../../document/services/document.service';
 import { FolderType } from '../../document/enums/document.enum';
+import { ProjectContract } from '../entities/project-contract.entity';
+
+export interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
 
 @Injectable()
 export class ProjectService {
@@ -72,7 +83,7 @@ export class ProjectService {
       created_by: user.userId,
     };
 
-    return this.projectRepository.create(projectData as any);
+    return this.projectRepository.create(projectData as DeepPartial<Project>);
   }
 
   async findAllByClient(
@@ -172,7 +183,7 @@ export class ProjectService {
       ...dto,
       modified_by: user.userId,
       modified_at: new Date(),
-    });
+    } as DeepPartial<Project>);
 
     if (!updatedProject) {
       throw new NotFoundException(
@@ -188,7 +199,7 @@ export class ProjectService {
 
     await this.findOne(id, user);
 
-    await this.projectRepository.softDelete(id, user.userId);
+    await this.projectRepository.softDelete(id);
   }
 
   async assignTeam(
@@ -200,15 +211,20 @@ export class ProjectService {
 
     await this.findOne(id, user);
 
+    const leadCount = dto.members.filter((m) => m.is_lead).length;
+    if (leadCount > 1) {
+      throw new BadRequestException('A project can have at most one team lead');
+    }
+
     // V1: Replace existing team mapping
     await this.projectRepository.replaceTeam(id, dto.members, user.userId);
   }
 
   async uploadContract(
     id: string,
-    file: any,
+    file: MulterFile,
     user: LoggedInUser,
-  ): Promise<any> {
+  ): Promise<ProjectContract> {
     this.logger.log(`Uploading contract for project: ${id}`);
 
     await this.findOne(id, user);

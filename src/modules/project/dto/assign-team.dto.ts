@@ -3,6 +3,8 @@ import {
   IsUUID,
   IsString,
   IsNotEmpty,
+  IsBoolean,
+  IsOptional,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -15,6 +17,10 @@ export class ProjectMemberDto {
   @IsNotEmpty()
   @IsString()
   role: string;
+
+  @IsOptional()
+  @IsBoolean()
+  is_lead?: boolean;
 }
 
 export class AssignTeamDto {
