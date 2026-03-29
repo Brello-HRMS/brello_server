@@ -18,11 +18,7 @@ export class ListingHelper {
     loggedInUser: LoggedInUser,
     options: ListingOptions = {},
   ): Promise<PaginatedResponse<T>> {
-    const {
-      searchFields = [],
-      filterFields = [],
-      alias = 'entity'
-    } = options;
+    const { searchFields = [], filterFields = [], alias = 'entity' } = options;
 
     // 1. Enforce Organization Scoping
     if (!loggedInUser.isPlatformAdmin && loggedInUser.organizationId) {
@@ -34,7 +30,10 @@ export class ListingHelper {
     // 2. Apply Search
     if (listQuery.search && searchFields.length > 0) {
       const searchClauses = searchFields
-        .map((field) => `${alias}.${field} ILIKE :search`)
+        .map((field) => {
+          const searchField = field.includes('.') ? field : `${alias}.${field}`;
+          return `${searchField} ILIKE :search`;
+        })
         .join(' OR ');
       queryBuilder.andWhere(`(${searchClauses})`, {
         search: `%${listQuery.search}%`,
@@ -45,7 +44,11 @@ export class ListingHelper {
     if (listQuery.filters) {
       Object.entries(listQuery.filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          queryBuilder.andWhere(`${alias}.${key} = :${key}`, { [key]: value });
+          const filterField = key.includes('.') ? key : `${alias}.${key}`;
+          const paramName = key.replace(/\./g, '_');
+          queryBuilder.andWhere(`${filterField} = :${paramName}`, {
+            [paramName]: value,
+          });
         }
       });
     }
@@ -54,14 +57,19 @@ export class ListingHelper {
     filterFields.forEach((field) => {
       const value = (listQuery as any)[field];
       if (value !== undefined && value !== null && value !== '') {
-        queryBuilder.andWhere(`${alias}.${field} = :${field}`, { [field]: value });
+        const filterField = field.includes('.') ? field : `${alias}.${field}`;
+        const paramName = field.replace(/\./g, '_');
+        queryBuilder.andWhere(`${filterField} = :${paramName}`, {
+          [paramName]: value,
+        });
       }
     });
 
     // 5. Apply Sorting
     const sortBy = (listQuery as any).sort_by || 'created_at';
     const sortOrder = (listQuery as any).sort_order || 'DESC';
-    queryBuilder.orderBy(`${alias}.${sortBy}`, sortOrder as any);
+    const sortField = sortBy.includes('.') ? sortBy : `${alias}.${sortBy}`;
+    queryBuilder.orderBy(sortField, sortOrder as any);
 
     // 6. Get Total Count
     const total = await queryBuilder.getCount();

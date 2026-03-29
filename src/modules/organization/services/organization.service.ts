@@ -9,9 +9,12 @@ import {
 import { OrganizationRepository } from '../repositories/organization.repository';
 import { EnterpriseService } from '../../enterprise/services/enterprise.service';
 import { UpdateOrganizationDto } from '../dto/update-organization.dto';
+import { Enterprise } from '../../enterprise/entities/enterprise.entity';
 import { Organization } from '../entities/organization.entity';
 import { SetupCompanyDto } from '../dto/setup-company.dto';
-import { DataSource, IsNull } from 'typeorm';
+import { DataSource, IsNull, Not } from 'typeorm';
+import { User } from 'src/modules/user/entities/user.entity';
+import { UserProfile } from 'src/modules/user/entities/user-profile.entity';
 import { UserRoleMap } from '../../rbac/entities/user-role-map.entity';
 import {
   OrganizationSubscription,
@@ -87,20 +90,34 @@ export class OrganizationService {
     try {
       const manager = queryRunner.manager;
 
-      // Step 1: Create Organization
-      const newOrg = manager.create(Organization, {
+      // Step 1: Create or Link Enterprise
+      let enterpriseId = user.enterprise_id;
+      if (!enterpriseId) {
+        const newEnterpriseContent = manager.create(Enterprise, {
+          name: dto.name,
+          domain: dto.subdomain, // Use subdomain as temporary domain
+          status: Status.ACTIVE,
+        });
+        const savedEnterprise = await manager.save(newEnterpriseContent);
+        enterpriseId = savedEnterprise.id;
+      }
+
+      // Step 2: Create Organization
+      const newOrgObject = manager.create(Organization, {
         name: dto.name,
         subdomain: dto.subdomain,
+        enterprise_id: enterpriseId, // Set the enterprise_id
       });
-      const savedOrg = await manager.save(newOrg);
+      const savedOrg = await manager.save(newOrgObject);
 
-      // Step 2: Create OrganizationProfile
+      // Step 3: Create OrganizationProfile
       const profile = manager.create(OrganizationProfile, {
         organization: savedOrg,
         name: dto.name,
         email: user.email,
         phone: user.phone,
         industry_type_id: dto.business_type_id,
+        enterprise_id: enterpriseId, // Set common field
       });
       await manager.save(profile);
 
@@ -173,7 +190,7 @@ export class OrganizationService {
 
       // Step 5: Update User
       user.organization_id = savedOrg.id;
-      user.enterprise_id = savedOrg.enterprise_id;
+      user.enterprise_id = enterpriseId; // Use the local enterpriseId
       await manager.save(user);
 
       // Step 6: Create OrganizationSubscription
@@ -292,5 +309,117 @@ export class OrganizationService {
     }
 
     this.logger.log(`Organization deleted successfully: ${id}`);
+  }
+  async debugUser(email: string): Promise<any> {
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) return { error: 'User not found' };
+    
+    const org = user.organization_id ? await this.organizationRepository.findById(user.organization_id) : null;
+    
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        enterprise_id: user.enterprise_id,
+        organization_id: user.organization_id,
+        is_platform_admin: user.is_platform_admin,
+        status: user.status,
+      },
+      org: org ? {
+        id: org.id,
+        name: org.name,
+        enterprise_id: org.enterprise_id,
+      } : null,
+    };
+  }
+
+  async repairEnterpriseIds(): Promise<any> {
+    const logs: string[] = [];
+    const addLog = (msg: string) => {
+      this.logger.log(msg);
+      logs.push(msg);
+    };
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      // 1. Log specifically for b10@admin.com
+      const targetUser = await manager.findOne(User, { where: { email: 'b10@admin.com' } });
+      if (targetUser) {
+        addLog(`Target User: ${targetUser.email}, EntID: ${targetUser.enterprise_id}, OrgID: ${targetUser.organization_id}`);
+        const targetOrg = await manager.findOne(Organization, { where: { id: targetUser.organization_id } });
+        if (targetOrg) {
+          addLog(`Target Org: ${targetOrg.name}, EntID: ${targetOrg.enterprise_id}`);
+        } else {
+          addLog(`Target Org NOT FOUND for OrgID: ${targetUser.organization_id}`);
+        }
+      } else {
+        addLog(`Target User b10@admin.com NOT FOUND`);
+      }
+
+      // 2. Log all organizations for debugging
+      const allOrgs = await manager.find(Organization);
+      addLog(`Total organizations in DB: ${allOrgs.length}`);
+
+      // 3. Find organizations missing enterprise_id
+      const orgs = await manager.find(Organization, {
+        where: { enterprise_id: IsNull() },
+      });
+
+      addLog(`Found ${orgs.length} organizations missing enterprise_id`);
+
+      for (const org of orgs) {
+        const enterprise = manager.create(Enterprise, {
+          name: org.name,
+          domain: org.subdomain || org.name.toLowerCase().replace(/ /g, '-'),
+          status: Status.ACTIVE,
+        });
+        const savedEnterprise = await manager.save(enterprise);
+
+        await manager.update(Organization, org.id, { enterprise_id: savedEnterprise.id });
+
+        await manager.update(User, { organization_id: org.id }, { enterprise_id: savedEnterprise.id });
+
+        await manager.update(UserProfile, { organization_id: org.id }, { enterprise_id: savedEnterprise.id });
+
+        addLog(`Linked Org ${org.name} to Enterprise ${savedEnterprise.id}`);
+      }
+
+      // 4. Find users missing enterprise_id but have organization_id
+      const usersToSync = await manager.find(User, {
+        where: { enterprise_id: IsNull(), organization_id: Not(IsNull()) as any },
+      });
+
+      addLog(`Found ${usersToSync.length} users missing enterprise_id but have org_id`);
+
+      for (const u of usersToSync) {
+        const org = await manager.findOne(Organization, { where: { id: u.organization_id } });
+        if (org && org.enterprise_id) {
+          await manager.update(User, u.id, { enterprise_id: org.enterprise_id });
+          if (u.user_profile_id) {
+            await manager.update(UserProfile, u.user_profile_id, { enterprise_id: org.enterprise_id });
+          }
+          addLog(`Synced User ${u.email} with Enterprise ${org.enterprise_id}`);
+        }
+      }
+
+      await queryRunner.commitTransaction();
+      return { 
+        success: true, 
+        logs,
+        fixedOrgs: orgs.length, 
+        syncedUsers: usersToSync.length 
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      addLog(`Repair failed: ${error.message}`);
+      return { success: false, error: error.message, logs };
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

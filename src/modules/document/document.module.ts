@@ -19,6 +19,6 @@ import { OrganizationModule } from '../organization/organization.module';
   ],
   controllers: [DocumentController],
   providers: [DocumentRepository, StorageService, DocumentService],
-  exports: [DocumentService, StorageService],
+  exports: [DocumentService, StorageService, DocumentRepository],
 })
 export class DocumentModule {}

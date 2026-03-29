@@ -9,7 +9,9 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { DocumentService } from '../services/document.service';
 import { GenerateUploadUrlDto } from '../dto/generate-upload-url.dto';
 import { ConfirmUploadDto } from '../dto/confirm-upload.dto';
@@ -61,6 +63,34 @@ export class DocumentController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.documentService.getSignedUrl(id, user);
+  }
+
+  @Get(':id/view')
+  async view(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    const { buffer, mimeType, fileName } =
+      await this.documentService.getFileData(id);
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.send(buffer);
+  }
+
+  @Get(':id/download')
+  async download(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    const { buffer, mimeType, fileName } =
+      await this.documentService.getFileData(id);
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(buffer);
   }
 
   @Delete(':id')

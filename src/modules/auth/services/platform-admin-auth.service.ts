@@ -91,7 +91,7 @@ export class PlatformAdminAuthService {
       attempts_count: 0,
     });
 
-    await this.notificationService.send({
+    this.notificationService.send({
       type: NotificationType.EMAIL,
       target_email: registerDto.email,
       title: 'Platform Admin Registration OTP',
@@ -126,11 +126,7 @@ export class PlatformAdminAuthService {
     );
 
     const user = await this.userService.findByEmail(loginDto.email);
-    if (
-      !user ||
-      user.status !== Status.ACTIVE ||
-      !user.is_platform_admin
-    ) {
+    if (!user || user.status !== Status.ACTIVE || !user.is_platform_admin) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -161,7 +157,7 @@ export class PlatformAdminAuthService {
       attempts_count: 0,
     });
 
-    await this.notificationService.send({
+    this.notificationService.send({
       type: NotificationType.EMAIL,
       target_email: loginDto.email,
       title: 'Platform Admin Login OTP',
@@ -181,11 +177,7 @@ export class PlatformAdminAuthService {
     );
 
     const user = await this.userService.findByEmail(verifyDto.email);
-    if (
-      !user ||
-      user.status !== Status.ACTIVE ||
-      !user.is_platform_admin
-    ) {
+    if (!user || user.status !== Status.ACTIVE || !user.is_platform_admin) {
       throw new UnauthorizedException('Invalid user state');
     }
 
@@ -202,6 +194,8 @@ export class PlatformAdminAuthService {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
+        enterprise_id: user.enterprise_id,
+        organization_id: user.organization_id,
         is_platform_admin: user.is_platform_admin,
       },
       availableApps: [],

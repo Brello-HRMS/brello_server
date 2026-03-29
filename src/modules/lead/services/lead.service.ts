@@ -36,7 +36,10 @@ export class LeadService {
   ) {}
 
   // Register a new lead and send OTP
-  async registerLead(createLeadDto: CreateLeadDto, user?: LoggedInUser): Promise<void> {
+  async registerLead(
+    createLeadDto: CreateLeadDto,
+    user?: LoggedInUser,
+  ): Promise<void> {
     this.logger.log(
       `Lead registration initiated for email: ${createLeadDto.email}`,
     );
@@ -65,9 +68,12 @@ export class LeadService {
   }
 
   // Verify OTP and create user transactionally
-  async verifyLeadOtp(verifyDto: VerifyLeadOtpDto, user?: LoggedInUser): Promise<void> {
+  async verifyLeadOtp(
+    verifyDto: VerifyLeadOtpDto,
+    user?: LoggedInUser,
+  ): Promise<void> {
     this.logger.log(`Lead OTP verification for email: ${verifyDto.email}`);
- 
+
     const lead = await this.findLeadByEmailOrFail(verifyDto.email);
 
     if (lead.is_verified) {
@@ -135,7 +141,7 @@ export class LeadService {
       attempts_count: 0,
     });
 
-    await this.notificationService.send({
+    this.notificationService.send({
       type: NotificationType.EMAIL,
       target_email: email,
       title: 'Verify Your Email',
