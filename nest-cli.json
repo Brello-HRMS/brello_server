@@ -4,6 +4,11 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "assets": ["core/properties/*.yaml"]
+    "assets": [
+      {
+        "include": "core/properties/*.yaml",
+        "watchAssets": true
+      }
+    ]
   }
 }

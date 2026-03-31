@@ -30,6 +30,7 @@ import {
   UpdateOffboardingDto,
   UploadDocumentsDto,
   UpdatePayrollInfoDto,
+  UpdateSystemAccessDto,
 } from '../dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
@@ -97,6 +98,14 @@ export class EmployeeController {
     return this.employeeService.updatePayrollInformation(id, dto, actor.userId);
   }
 
+  @Post(':id/onboard')
+  async onboardEmployee(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() actor: LoggedInUserInterface,
+  ) {
+    return this.employeeService.onboardEmployee(id, actor.userId);
+  }
+
   @Post(':id/documents')
   async uploadDocuments(
     @Param('id', ParseUUIDPipe) id: string,
@@ -159,6 +168,15 @@ export class EmployeeController {
   @Get(':id/profile-completion')
   async getProfileCompletion(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeeService.getProfileCompletion(id);
+  }
+
+  @Patch(':id/system-access')
+  async updateSystemAccess(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateSystemAccessDto,
+    @LoggedInUser() actor: LoggedInUserInterface,
+  ) {
+    return this.employeeService.updateSystemAccess(id, dto, actor.userId);
   }
 
   @Post(':id/offboarding/initiate')

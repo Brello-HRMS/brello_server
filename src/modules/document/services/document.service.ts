@@ -33,10 +33,11 @@ export class DocumentService {
   ) {}
 
   private getStorageProvider(): StorageProvider {
-    return (
-      this.configService.get<StorageProvider>('storage.provider') ||
-      StorageProvider.S3
-    );
+    const provider = this.configService.get<StorageProvider>('storage.provider');
+    if (provider) return provider;
+
+    // Default to DATABASE for development if S3 is not explicitly configured
+    return StorageProvider.DATABASE;
   }
 
   private slugify(text: string): string {
@@ -162,8 +163,8 @@ export class DocumentService {
         dto.mimeType,
       );
     } else {
-      // For local/db, we return a local URL
-      uploadUrl = `/api/v1/documents/${document.id}/confirm`; // Simplified for DB storage
+      // For local/db, point to our new dedicated upload endpoint
+      uploadUrl = `/api/v1/documents/${document.id}/upload`;
     }
 
     return {
@@ -171,6 +172,26 @@ export class DocumentService {
       uploadUrl,
       objectKey,
       expiresIn: 300,
+    };
+  }
+
+  async uploadFileContent(id: string, buffer: Buffer, user: LoggedInUser) {
+    const document = await this.documentRepository.findById(id);
+    if (!document) {
+      throw new NotFoundException(`Document ${id} not found`);
+    }
+
+    // Update document with binary data and mark as ACTIVE
+    await this.documentRepository.update(id, {
+      file_data: buffer,
+      status: Status.ACTIVE,
+      modified_by: user.userId,
+    } as any);
+
+    return {
+      success: true,
+      id,
+      url: `/api/v1/documents/${id}/view`,
     };
   }
 

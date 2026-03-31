@@ -56,8 +56,26 @@ export class HolidayRepository {
     return this.repository.findOne({ where: { id } });
   }
 
-  async softDelete(id: string): Promise<void> {
-    await this.repository.update(id, { is_deleted: true });
+  async softDelete(id: string, deletedBy?: string): Promise<void> {
+    await this.repository.update(id, {
+      is_deleted: true,
+      deleted_at: new Date(),
+      deleted_by: deletedBy,
+    });
+  }
+
+  async softDeleteByCalendar(
+    calendarId: string,
+    deletedBy?: string,
+  ): Promise<void> {
+    await this.repository.update(
+      { calendar_id: calendarId, is_deleted: false },
+      {
+        is_deleted: true,
+        deleted_at: new Date(),
+        deleted_by: deletedBy,
+      },
+    );
   }
 
   async findByOrgAndYear(

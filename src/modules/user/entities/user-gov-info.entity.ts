@@ -4,16 +4,16 @@ import { UserProfile } from './user-profile.entity';
 
 @Entity('user_gov_info')
 export class UserGovInfo extends BaseEntity {
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   uan: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   aadhaar: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
   pan: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   esi: string;
 
   @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
