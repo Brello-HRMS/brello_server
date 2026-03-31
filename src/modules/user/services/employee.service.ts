@@ -36,13 +36,21 @@ import {
   UpdateOffboardingDto,
   UploadDocumentsDto,
   UpdatePayrollInfoDto,
+  UpdateSystemAccessDto,
 } from '../dto';
 
 import { User } from '../entities/user.entity';
 import { UserProfile } from '../entities/user-profile.entity';
+import { UserEmergencyPerson } from '../entities/user-emergency-person.entity';
 import { EmployeeOffboarding } from '../entities/offboarding.entity';
 import { Status } from '../../../common/enums';
-import { EmployeeStatus, ExitType } from '../enums/user.enum';
+import {
+  EmployeeStatus,
+  ExitType,
+  UserType,
+  EmergencyRelation,
+  DocumentCategory,
+} from '../enums/user.enum';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { ListEmployeesDto } from '../dto/list-employees.dto';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
@@ -100,11 +108,14 @@ export class EmployeeService {
       );
     }
 
-    const phoneExistsInUsers = await this.userRepository.phoneExists(dto.phone);
-    if (phoneExistsInUsers) {
-      throw new ConflictException(
-        `User with phone '${dto.phone}' already exists.`,
-      );
+    // Phone uniqueness check only if provided
+    if (dto.phone) {
+      const phoneExistsInUsers = await this.userRepository.phoneExists(dto.phone);
+      if (phoneExistsInUsers) {
+        throw new ConflictException(
+          `User with phone '${dto.phone}' already exists.`,
+        );
+      }
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -112,9 +123,38 @@ export class EmployeeService {
     await queryRunner.startTransaction();
 
     try {
-      const passwordHash = await bcrypt.hash(dto.password, 10);
+      let passwordHash: string | undefined = undefined;
+      if (dto.password) {
+        passwordHash = await bcrypt.hash(dto.password, 10);
+      }
 
-      // Create User
+      // 1. Create Profile First
+      const profileInstance = queryRunner.manager.create(UserProfile, {
+        employee_id: dto.profile?.employeeId,
+        type: dto.profile?.type || UserType.EMPLOYEE,
+        email: dto.email,
+        phone: dto.phone,
+        dob: dto.profile?.dob ? new Date(dto.profile.dob) : undefined,
+        gender: dto.profile?.gender,
+        marital_status: dto.profile?.maritalStatus,
+        joining_date: dto.profile?.joiningDate
+          ? new Date(dto.profile.joiningDate)
+          : undefined,
+        employment_type: dto.profile?.employmentType,
+        work_location: dto.profile?.workLocation,
+        blood_group: dto.profile?.bloodGroup,
+        notice_period: dto.profile?.noticePeriod ?? 30,
+        current_salary: dto.profile?.currentSalary,
+        present_address: dto.profile?.address,
+        enterprise_id: enterpriseId || dto.enterprise_id,
+        organization_id: organizationId || dto.organization_id,
+        employee_status: EmployeeStatus.DRAFT,
+        status: Status.ACTIVE,
+      });
+
+      const savedProfile = await queryRunner.manager.save(profileInstance);
+
+      // 2. Create User with Profile Link
       const userInstance = queryRunner.manager.create(User, {
         first_name: dto.firstName,
         middle_name: dto.middleName,
@@ -127,39 +167,29 @@ export class EmployeeService {
         reports_to_id: dto.reportsTo,
         department_id: dto.departmentId,
         designation_id: dto.designationId,
-        status: Status.ACTIVE,
+        user_profile_id: savedProfile.id,
+        status: Status.PENDING,
       });
 
       const savedUser = await queryRunner.manager.save(userInstance);
 
-      // Create Profile
-      const profileInstance = queryRunner.manager.create(UserProfile, {
-        employee_id: dto.profile.employeeId,
-        type: dto.profile.type,
-        email: dto.email, // Mirror email/phone from auth
-        phone: dto.phone,
-        dob: dto.profile.dob ? new Date(dto.profile.dob) : undefined,
-        gender: dto.profile.gender,
-        marital_status: dto.profile.maritalStatus,
-        joining_date: dto.profile.joiningDate
-          ? new Date(dto.profile.joiningDate)
-          : undefined,
-        employment_type: dto.profile.employmentType,
-        work_location: dto.profile.workLocation,
-        blood_group: dto.profile.bloodGroup,
-        notice_period: dto.profile.noticePeriod ?? 30,
-        current_salary: dto.profile.currentSalary,
-        enterprise_id: enterpriseId || dto.enterprise_id,
-        organization_id: organizationId || dto.organization_id,
-        status: Status.ACTIVE,
-      });
-
-      const savedProfile = await queryRunner.manager.save(profileInstance);
-
-      // Link them together
-      await queryRunner.manager.update(User, savedUser.id, {
-        user_profile_id: savedProfile.id,
-      });
+      // 3. Handle Emergency Contact
+      if (dto.profile?.emergencyContact) {
+        const emergencyInstance = queryRunner.manager.create(
+          UserEmergencyPerson,
+          {
+            name: 'Primary Contact',
+            phone: dto.profile.emergencyContact,
+            relation: EmergencyRelation.RELATIVE,
+            email: 'unknown@example.com',
+            user_profile_id: savedProfile.id,
+            enterprise_id: enterpriseId || dto.enterprise_id,
+            organization_id: organizationId || dto.organization_id,
+            status: Status.ACTIVE,
+          },
+        );
+        await queryRunner.manager.save(emergencyInstance);
+      }
 
       await queryRunner.commitTransaction();
 
@@ -169,8 +199,8 @@ export class EmployeeService {
 
       return {
         id: savedUser.id,
-        employeeId: dto.profile.employeeId,
-        status: Status.ACTIVE,
+        employeeId: dto.profile?.employeeId,
+        status: savedUser.status,
         createdAt: savedUser.created_at,
       };
     } catch (err) {
@@ -374,9 +404,13 @@ export class EmployeeService {
     if (dto.gender) updateData.gender = dto.gender;
     if (dto.maritalStatus) updateData.marital_status = dto.maritalStatus;
     if (dto.joiningDate) updateData.joining_date = new Date(dto.joiningDate);
+    if (dto.employmentDate)
+      updateData.employment_date = new Date(dto.employmentDate);
     if (dto.employmentType) updateData.employment_type = dto.employmentType;
     if (dto.workLocation) updateData.work_location = dto.workLocation;
     if (dto.bloodGroup) updateData.blood_group = dto.bloodGroup;
+    if (dto.probationPeriod) updateData.probation_period = dto.probationPeriod;
+    if (dto.notes) updateData.notes = dto.notes;
     if (dto.noticePeriod !== undefined)
       updateData.notice_period = dto.noticePeriod;
     if (dto.currentSalary) updateData.current_salary = dto.currentSalary;
@@ -402,6 +436,8 @@ export class EmployeeService {
     if (dto.gender) updateData.gender = dto.gender;
     if (dto.maritalStatus) updateData.marital_status = dto.maritalStatus;
     if (dto.bloodGroup) updateData.blood_group = dto.bloodGroup;
+    if (dto.presentAddress) updateData.present_address = dto.presentAddress;
+    if (dto.permanentAddress) updateData.permanent_address = dto.permanentAddress;
 
     const updatedProfile = await this.profileRepository.update(
       user.user_profile_id,
@@ -438,13 +474,17 @@ export class EmployeeService {
     const updatedUser = await this.userRepository.update(id, userUpdate);
 
     if (user.user_profile_id) {
-      const profileUpdate: Partial<UserProfile> = {};
+      const profileUpdate: any = {};
       if (dto.employmentType)
         profileUpdate.employment_type = dto.employmentType;
       if (dto.workLocation) profileUpdate.work_location = dto.workLocation;
       if (dto.joiningDate)
         profileUpdate.joining_date = new Date(dto.joiningDate);
       if (dto.currentSalary) profileUpdate.current_salary = dto.currentSalary;
+      if (dto.employeeId) profileUpdate.employee_id = dto.employeeId;
+      if (dto.probationPeriod)
+        profileUpdate.probation_period = dto.probationPeriod;
+      if (dto.notes) profileUpdate.additional_detail = dto.notes;
 
       await this.profileRepository.update(user.user_profile_id, profileUpdate);
     }
@@ -461,6 +501,135 @@ export class EmployeeService {
     return { success: true };
   }
 
+  async updateSystemAccess(
+    id: string,
+    dto: UpdateSystemAccessDto,
+    actorId: string,
+  ): Promise<any> {
+    const user = await this.userRepository.findById(id);
+    if (!user) throw new NotFoundException('Employee not found');
+
+    const oldValue = {
+      role_id: user.plan_id, // Assuming role/plan link or similar
+      assets: await this.assetsRepository.findByUserProfileId(user.user_profile_id),
+    };
+
+    if (dto.roleId) {
+      await this.userRepository.update(id, { plan_id: dto.roleId });
+    }
+
+    if (dto.assignedAssets) {
+      // Clear existing assets and add new ones (Simplified)
+      // await this.assetsRepository.softDelete({ user_profile_id: user.user_profile_id });
+      for (const assetName of dto.assignedAssets) {
+        await this.assetsRepository.create({
+          name: assetName,
+          user_profile_id: user.user_profile_id,
+          enterprise_id: user.enterprise_id,
+          organization_id: user.organization_id,
+          status: Status.ACTIVE,
+        });
+      }
+    }
+
+    const updatedUser = await this.userRepository.findById(id);
+    await this.createAuditLog(
+      actorId,
+      'UPDATE_SYSTEM_ACCESS',
+      oldValue,
+      {
+        role_id: updatedUser?.plan_id,
+        assets: dto.assignedAssets,
+      },
+      id,
+      'user',
+    );
+
+    return { success: true };
+  }
+
+  async updatePayrollInformation(
+    id: string,
+    dto: UpdatePayrollInfoDto,
+    actorId: string,
+  ): Promise<any> {
+    const profile = await this.validateProfileAccess(id);
+    const oldValue = {
+      bank_info: profile.bank_info,
+      gov_info: profile.gov_info,
+      salary: {
+        annual_ctc: profile.annual_ctc,
+        monthly_gross: profile.monthly_gross,
+        allowances: profile.allowances,
+        bonus: profile.bonus,
+        total_ctc: profile.total_ctc,
+        tax_regime: profile.tax_regime,
+      },
+    };
+
+    if (dto.bank_info) {
+      await this.bankInfoRepository.upsert({
+        account_number: dto.bank_info.accountNumber,
+        ifsc_code: dto.bank_info.ifscCode,
+        bank_name: dto.bank_info.bankName,
+        user_profile_id: profile.id,
+        enterprise_id: profile.enterprise_id,
+        organization_id: profile.organization_id,
+        status: Status.ACTIVE,
+      });
+    }
+
+    if (dto.gov_info) {
+      await this.govInfoRepository.upsert({
+        pan: dto.gov_info.pan,
+        aadhaar: dto.gov_info.aadhaar,
+        uan: dto.gov_info.uan,
+        esi: dto.gov_info.esi,
+        passport: dto.gov_info.passport,
+        driving_licence: dto.gov_info.drivingLicence,
+        user_profile_id: profile.id,
+        enterprise_id: profile.enterprise_id,
+        organization_id: profile.organization_id,
+        status: Status.ACTIVE,
+      });
+    }
+
+    const profileUpdates: Partial<UserProfile> = {};
+    if (dto.annualCtc) profileUpdates.annual_ctc = dto.annualCtc;
+    if (dto.monthlyGross) profileUpdates.monthly_gross = dto.monthlyGross;
+    if (dto.allowances) profileUpdates.allowances = dto.allowances;
+    if (dto.bonus) profileUpdates.bonus = dto.bonus;
+    if (dto.totalCtc) profileUpdates.total_ctc = dto.totalCtc;
+    if (dto.taxRegime) profileUpdates.tax_regime = dto.taxRegime;
+
+    if (Object.keys(profileUpdates).length > 0) {
+      await this.profileRepository.update(profile.id, profileUpdates);
+    }
+
+    const updatedProfile = await this.validateProfileAccess(id);
+    await this.createAuditLog(
+      actorId,
+      'UPDATE_PAYROLL_INFO',
+      oldValue,
+      {
+        bank_info: updatedProfile.bank_info,
+        gov_info: updatedProfile.gov_info,
+        salary: {
+          annual_ctc: updatedProfile.annual_ctc,
+          monthly_gross: updatedProfile.monthly_gross,
+          allowances: updatedProfile.allowances,
+          bonus: updatedProfile.bonus,
+          total_ctc: updatedProfile.total_ctc,
+          tax_regime: updatedProfile.tax_regime,
+        },
+      },
+      id,
+      'user',
+    );
+
+    return { success: true };
+  }
+
   // Education Endpoints
   async addEducation(id: string, dto: AddEducationDto): Promise<any> {
     const profile = await this.validateProfileAccess(id);
@@ -469,6 +638,7 @@ export class EmployeeService {
       degree: dto.degree,
       field_of_study: dto.fieldOfStudy,
       completion_date: new Date(dto.completionDate),
+      completion_year: dto.completionYear,
       additional_detail: dto.additionalDetail,
       user_profile_id: profile.id,
       enterprise_id: profile.enterprise_id,
@@ -504,10 +674,12 @@ export class EmployeeService {
   async addExperience(id: string, dto: AddExperienceDto): Promise<any> {
     const profile = await this.validateProfileAccess(id);
     await this.experienceRepository.create({
-      occupation: dto.occupation,
+      designation: dto.designation,
       company: dto.company,
-      summary: dto.summary,
-      duration: dto.duration,
+      description: dto.description,
+      from_date: new Date(dto.fromDate),
+      to_date: dto.toDate ? new Date(dto.toDate) : undefined,
+      is_current: dto.isCurrent || false,
       user_profile_id: profile.id,
       enterprise_id: profile.enterprise_id,
       organization_id: profile.organization_id,
@@ -523,10 +695,12 @@ export class EmployeeService {
   ): Promise<any> {
     await this.validateProfileAccess(id);
     await this.experienceRepository.update(experienceId, {
-      occupation: dto.occupation,
+      designation: dto.designation,
       company: dto.company,
-      summary: dto.summary,
-      duration: dto.duration,
+      description: dto.description,
+      from_date: new Date(dto.fromDate),
+      to_date: dto.toDate ? new Date(dto.toDate) : undefined,
+      is_current: dto.isCurrent || false,
     });
     return { success: true };
   }
@@ -589,52 +763,6 @@ export class EmployeeService {
     return { success: true };
   }
 
-  async updatePayrollInformation(
-    id: string,
-    dto: UpdatePayrollInfoDto,
-    actorId: string,
-  ): Promise<any> {
-    const profile = await this.validateProfileAccess(id);
-    const oldValue = {
-      bank_info: profile.bank_info,
-      gov_info: profile.gov_info,
-    };
-
-    if (dto.bank_info) {
-      await this.bankInfoRepository.upsert({
-        ...dto.bank_info,
-        user_profile_id: profile.id,
-        enterprise_id: profile.enterprise_id,
-        organization_id: profile.organization_id,
-        status: Status.ACTIVE,
-      });
-    }
-
-    if (dto.gov_info) {
-      await this.govInfoRepository.upsert({
-        ...dto.gov_info,
-        user_profile_id: profile.id,
-        enterprise_id: profile.enterprise_id,
-        organization_id: profile.organization_id,
-        status: Status.ACTIVE,
-      });
-    }
-
-    const updatedProfile = await this.validateProfileAccess(id);
-    await this.createAuditLog(
-      actorId,
-      'UPDATE_PAYROLL_INFO',
-      oldValue,
-      {
-        bank_info: updatedProfile.bank_info,
-        gov_info: updatedProfile.gov_info,
-      },
-      id,
-      'user',
-    );
-
-    return { success: true };
-  }
 
   // Documents
   async attachDocument(id: string, dto: AddDocumentDto): Promise<any> {
@@ -660,6 +788,7 @@ export class EmployeeService {
       await this.documentRepository.create({
         name: doc.name,
         doc_id: doc.docId,
+        category: doc.category || DocumentCategory.OTHER,
         user_profile_id: profile.id,
         enterprise_id: profile.enterprise_id,
         organization_id: profile.organization_id,
@@ -839,5 +968,26 @@ export class EmployeeService {
     const profile = await this.profileRepository.findByUserId(userId);
     if (!profile) throw new NotFoundException('Profile record not found.');
     return profile;
+  }
+
+  async onboardEmployee(id: string, actorId: string): Promise<any> {
+    const profile = await this.validateProfileAccess(id);
+
+    const oldValue = { employee_status: profile.employee_status };
+
+    await this.profileRepository.update(profile.id, {
+      employee_status: EmployeeStatus.INVITED,
+    });
+
+    await this.createAuditLog(
+      actorId,
+      'ONBOARD_EMPLOYEE_INVITE',
+      oldValue,
+      { employee_status: EmployeeStatus.INVITED },
+      id,
+      'user',
+    );
+
+    return { success: true, status: EmployeeStatus.INVITED };
   }
 }

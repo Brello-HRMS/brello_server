@@ -16,6 +16,9 @@ export class UserEducation extends BaseEntity {
   @Column({ type: 'timestamp with time zone', nullable: true })
   completion_date: Date;
 
+  @Column({ type: 'varchar', length: 4, nullable: true })
+  completion_year: string;
+
   @Column({ type: 'text', nullable: true })
   additional_detail: string;
 

@@ -5,16 +5,19 @@ import { UserProfile } from './user-profile.entity';
 @Entity('user_experience')
 export class UserExperience extends BaseEntity {
   @Column({ type: 'varchar', length: 150 })
-  occupation: string;
+  designation: string;
 
   @Column({ type: 'varchar', length: 255 })
   company: string;
 
-  @Column({ type: 'text', nullable: true })
-  summary: string;
+  @Column({ type: 'date', nullable: true })
+  from_date: Date;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  duration: string;
+  @Column({ type: 'date', nullable: true })
+  to_date: Date;
+
+  @Column({ type: 'boolean', default: false })
+  is_current: boolean;
 
   @Column({ type: 'uuid' })
   user_profile_id: string;

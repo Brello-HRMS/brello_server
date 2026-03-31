@@ -10,7 +10,10 @@ import {
   ParseUUIDPipe,
   UseGuards,
   Res,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { DocumentService } from '../services/document.service';
 import { GenerateUploadUrlDto } from '../dto/generate-upload-url.dto';
@@ -40,11 +43,18 @@ export class DocumentController {
     @Body() dto: ConfirmUploadDto,
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    // Enforce that the path ID matches the body ID (optional consistency check)
-    if (dto.id && dto.id !== id) {
-      throw new Error('Path ID and Body ID mismatch');
-    }
     return this.documentService.confirmUpload(id, user);
+  }
+
+  @Post(':id/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @HttpCode(HttpStatus.OK)
+  async uploadFile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: any,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.documentService.uploadFileContent(id, file.buffer, user);
   }
 
   @Get(':id')

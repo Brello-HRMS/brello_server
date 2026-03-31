@@ -7,8 +7,15 @@ import {
   IsUUID,
   IsEnum,
   IsInt,
+  Length,
+  IsBoolean,
 } from 'class-validator';
-import { EmergencyRelation, ExitType } from '../enums/user.enum';
+import {
+  EmergencyRelation,
+  ExitType,
+  TaxRegime,
+  DocumentCategory,
+} from '../enums/user.enum';
 
 export class AddEducationDto {
   @IsString()
@@ -32,6 +39,11 @@ export class AddEducationDto {
 
   @IsString()
   @IsOptional()
+  @Length(4, 4)
+  completionYear?: string;
+
+  @IsString()
+  @IsOptional()
   additionalDetail?: string;
 }
 
@@ -39,7 +51,7 @@ export class AddExperienceDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(150)
-  occupation: string;
+  designation: string;
 
   @IsString()
   @IsNotEmpty()
@@ -47,13 +59,20 @@ export class AddExperienceDto {
   company: string;
 
   @IsString()
-  @IsOptional()
-  summary?: string;
+  @IsNotEmpty()
+  description: string;
 
-  @IsString()
+  @IsDateString()
+  @IsNotEmpty()
+  fromDate: string;
+
+  @IsDateString()
   @IsOptional()
-  @MaxLength(100)
-  duration?: string;
+  toDate?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isCurrent?: boolean;
 }
 
 export class AddAssetDto {
@@ -121,6 +140,10 @@ export class AddDocumentDto {
   @IsUUID()
   @IsNotEmpty()
   docId: string;
+
+  @IsEnum(DocumentCategory)
+  @IsOptional()
+  category?: DocumentCategory;
 }
 
 export class UpdateEmergencyContactDto {
@@ -201,4 +224,28 @@ export class UpdatePayrollInfoDto {
 
   @IsOptional()
   gov_info?: UpdateGovInfoDto;
+
+  @IsString()
+  @IsOptional()
+  annualCtc?: string;
+
+  @IsString()
+  @IsOptional()
+  monthlyGross?: string;
+
+  @IsString()
+  @IsOptional()
+  allowances?: string;
+
+  @IsString()
+  @IsOptional()
+  bonus?: string;
+
+  @IsString()
+  @IsOptional()
+  totalCtc?: string;
+
+  @IsEnum(TaxRegime)
+  @IsOptional()
+  taxRegime?: TaxRegime;
 }

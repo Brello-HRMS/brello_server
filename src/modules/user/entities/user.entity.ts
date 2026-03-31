@@ -24,11 +24,11 @@ export class User extends BaseEntity {
   @Index({ unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
   @Index({ unique: true })
   phone: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   password_hash: string;
 
   @Column({ type: 'boolean', default: false })

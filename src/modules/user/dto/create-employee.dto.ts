@@ -10,7 +10,6 @@ import {
   IsEnum,
   IsDateString,
   IsInt,
-  IsNumberString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -24,8 +23,8 @@ import {
 
 export class CreateUserProfileDto {
   @IsString()
-  @IsNotEmpty()
-  employeeId: string;
+  @IsOptional()
+  employeeId?: string;
 
   @IsEnum(UserType)
   @IsOptional()
@@ -63,9 +62,17 @@ export class CreateUserProfileDto {
   @IsOptional()
   noticePeriod?: number;
 
-  @IsString() // Keeping as string to represent currency value/text
+  @IsString()
   @IsOptional()
   currentSalary?: string;
+
+  @IsString()
+  @IsOptional()
+  address?: string;
+
+  @IsString()
+  @IsOptional()
+  emergencyContact?: string;
 }
 
 export class CreateEmployeeDto {
@@ -89,19 +96,19 @@ export class CreateEmployeeDto {
   email: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'Phone number is required' })
+  @IsOptional()
   @Matches(/^\+?[1-9]\d{1,14}$/, {
     message: 'Valid E.164 phone number required',
   })
-  phone: string;
+  phone?: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'Password is required' })
+  @IsOptional()
   @Length(8, 100)
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
     message: 'Password must be strong',
   })
-  password: string;
+  password?: string;
 
   @IsUUID('4')
   @IsOptional()
@@ -118,8 +125,8 @@ export class CreateEmployeeDto {
   // The nested profile
   @ValidateNested()
   @Type(() => CreateUserProfileDto)
-  @IsNotEmpty()
-  profile: CreateUserProfileDto;
+  @IsOptional()
+  profile?: CreateUserProfileDto;
 
   // Tenant identifiers injected from JWT, not from body typically, but for strictness:
   @IsUUID('4')

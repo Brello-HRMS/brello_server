@@ -61,3 +61,15 @@ export enum EmployeeStatus {
   OFFBOARDING = 'OFFBOARDING',
   INACTIVE = 'INACTIVE',
 }
+
+export enum TaxRegime {
+  OLD = 'OLD',
+  NEW = 'NEW',
+}
+
+export enum DocumentCategory {
+  AADHAAR = 'AADHAAR',
+  PAN = 'PAN',
+  OFFER_LETTER = 'OFFER_LETTER',
+  OTHER = 'OTHER',
+}
