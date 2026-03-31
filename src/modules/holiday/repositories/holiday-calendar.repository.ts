@@ -77,10 +77,12 @@ export class HolidayCalendarRepository {
       .execute();
   }
 
-  async softDelete(id: string): Promise<void> {
+  async softDelete(id: string, deletedBy?: string): Promise<void> {
     await this.repository.update(id, {
       is_deleted: true,
       status: Status.INACTIVE,
+      deleted_at: new Date(),
+      deleted_by: deletedBy,
     });
   }
 }
