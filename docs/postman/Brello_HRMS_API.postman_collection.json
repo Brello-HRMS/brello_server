@@ -95,6 +95,11 @@
       "key": "exp_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "holiday_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -3964,6 +3969,21 @@
         },
         {
           "name": "Add Holiday",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('holiday_id', response.data.id);",
+                  "    console.log('✅ Holiday ID saved:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -4097,6 +4117,52 @@
               "raw": "{{base_url}}/employee/holidays",
               "host": ["{{base_url}}"],
               "path": ["employee", "holidays"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Holiday",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/holidays/{{holiday_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "{{holiday_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Calendar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}"]
             }
           },
           "response": []

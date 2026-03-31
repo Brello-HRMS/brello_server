@@ -108,7 +108,8 @@ export class HolidayCalendarService {
     if (calendar.status === Status.ACTIVE) {
       throw new BadRequestException('Cannot delete an active calendar');
     }
-    await this.calendarRepo.softDelete(id);
+    await this.calendarRepo.softDelete(id, user.userId);
+    await this.holidayRepo.softDeleteByCalendar(id, user.userId);
   }
 
   async clone(user: LoggedInUser, sourceId: string, dto: { name: string; year: number; set_active?: boolean }): Promise<HolidayCalendar> {

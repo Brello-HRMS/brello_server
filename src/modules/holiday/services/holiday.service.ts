@@ -66,7 +66,7 @@ export class HolidayService {
 
   async remove(user: LoggedInUser, id: string): Promise<void> {
     await this.findOne(user, id);
-    await this.holidayRepo.softDelete(id);
+    await this.holidayRepo.softDelete(id, user.userId);
   }
 
   async getMonthView(user: LoggedInUser, calendarId: string, month: number, year: number): Promise<any> {
