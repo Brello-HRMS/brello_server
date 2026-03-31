@@ -4,13 +4,13 @@ import { UserProfile } from './user-profile.entity';
 
 @Entity('user_bank_info')
 export class UserBankInfo extends BaseEntity {
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
   account_number: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   ifsc_code: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   bank_name: string;
 
   @Column({ type: 'uuid' })

@@ -85,6 +85,16 @@
       "key": "calendar_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "edu_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "exp_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -1511,8 +1521,219 @@
     },
     {
       "name": "Employee Management",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{access_token}}",
+            "type": "string"
+          }
+        ]
+      },
       "description": "Full lifecycle management of employees, including profile, documents, education, and offboarding.",
       "item": [
+        {
+          "name": "Add Employee Wizard",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+              }
+            ]
+          },
+          "item": [
+            {
+              "name": "Step 1: Save Draft (Personal Info)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"]
+                }
+              }
+            },
+            {
+              "name": "Step 2: Employment Details",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"departmentId\": \"{{department_id}}\",\n    \"designationId\": \"{{designation_id}}\",\n    \"reportsTo\": \"{{manager_id}}\",\n    \"employmentDate\": \"2026-04-01\",\n    \"joiningDate\": \"2026-04-05\",\n    \"workLocation\": \"ONSITE\",\n    \"probationPeriod\": \"3 Months\",\n    \"notes\": \"Strong candidate for the core team.\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/employment",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "employment"]
+                }
+              }
+            },
+            {
+              "name": "Step 3: Payroll & Compensation",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"annualCtc\": \"1200000\",\n    \"monthlyGross\": \"480000\",\n    \"allowances\": \"20000\",\n    \"bonus\": \"0\",\n    \"totalCtc\": \"1880000\",\n    \"taxRegime\": \"NEW\",\n    \"gov_info\": {\n        \"pan\": \"ABCDE1234F\",\n        \"uan\": \"100987654321\"\n    },\n    \"bank_info\": {\n        \"accountNumber\": \"1234567890\",\n        \"bankName\": \"Global Bank\",\n        \"ifscCode\": \"GLB000123\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/payroll",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "payroll"]
+                }
+              }
+            },
+            {
+              "name": "Step 4a: Get Upload URL",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"folderType\": \"EMPLOYEE_DOCUMENT\",\n    \"enterpriseId\": \"{{enterprise_id}}\",\n    \"organizationId\": \"{{organization_id}}\",\n    \"employeeId\": \"{{user_id}}\",\n    \"originalName\": \"aadhaar.pdf\",\n    \"mimeType\": \"application/pdf\",\n    \"size\": 102400\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/documents/upload-url",
+                  "host": ["{{base_url}}"],
+                  "path": ["documents", "upload-url"]
+                }
+              }
+            },
+            {
+              "name": "Step 4b: Binary Upload (Local/DB)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                        "key": "file",
+                        "type": "file",
+                        "src": "/path/to/your/aadhaar.pdf"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{base_url}}/documents/{{document_id}}/upload",
+                  "host": ["{{base_url}}"],
+                  "path": ["documents", "{{document_id}}", "upload"]
+                },
+                "description": "Upload the binary file. In Postman, go to Body -> form-data -> Hover over 'file' key and change type to 'File' -> Select your PDF."
+              }
+            },
+            {
+              "name": "Step 4c: Link Documents to Employee",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"documents\": [\n        {\n            \"name\": \"Aadhaar Card\",\n            \"docId\": \"{{document_id}}\",\n            \"category\": \"AADHAAR\"\n        }\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/documents",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "documents"]
+                }
+              }
+            },
+            {
+              "name": "Step 5: System Access",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"roleId\": \"{{employee_role_id}}\",\n    \"assignedAssets\": [\"Macbook Pro\", \"iPhone 15\"]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/system-access",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "system-access"]
+                }
+              }
+            },
+            {
+              "name": "Step 6: Add Education",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"schoolName\": \"Stanford University\",\n    \"degree\": \"B.Sc\",\n    \"fieldOfStudy\": \"Computer Science\",\n    \"completionDate\": \"2016-05-15\",\n    \"completionYear\": \"2016\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/education",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education"]
+                }
+              }
+            },
+            {
+              "name": "Step 7: Add Experience",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"company\": \"Global Tech Solutions\",\n    \"designation\": \"Senior Product Designer\",\n    \"fromDate\": \"2021-01-01\",\n    \"isCurrent\": true,\n    \"description\": \"Led the design system initiative for the enterprise cloud platform.\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience"]
+                }
+              }
+            },
+            {
+              "name": "Step 7: Finalize & Send Invite",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/onboard",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "onboard"]
+                },
+                "description": "Final step to transition employee from DRAFT to INVITED status."
+              }
+            }
+          ]
+        },
         {
           "name": "Employees",
           "item": [
@@ -1531,7 +1752,7 @@
                     { "key": "search", "value": "", "disabled": true },
                     { "key": "sort_by", "value": "created_at" },
                     { "key": "sort_order", "value": "DESC" },
-                    { "key": "departmentId", "value": "", "disabled": true },
+                    { "key": "departmentId", "value": "{{department_id}}", "disabled": true },
                     { "key": "designationId", "value": "", "disabled": true },
                     { "key": "status", "value": "ACTIVE", "disabled": true }
                   ]
@@ -1566,7 +1787,7 @@
               }
             },
             {
-              "name": "Create Employee",
+              "name": "Save Employee Draft (Step 1)",
               "request": {
                 "method": "POST",
                 "header": [
@@ -1574,7 +1795,26 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"type\": \"EMPLOYEE\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\"\n    }\n}"
+                  "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"profile\": {\n        \"dob\": \"1990-05-20\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"]
+                },
+                "description": "Minimal request to save an employee as a draft (Step 1). Only first name, last name, and email are strictly required."
+              }
+            },
+            {
+              "name": "Create Employee (Full)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"+919876543222\",\n    \"password\": \"SecurePass@123\",\n    \"profile\": {\n        \"employeeId\": \"EMP001\",\n        \"joiningDate\": \"2026-01-01\",\n        \"employmentType\": \"FULL_TIME\",\n        \"workLocation\": \"ONSITE\",\n        \"address\": \"123 Silicon Valley, CA\",\n        \"emergencyContact\": \"+919000000001\"\n    }\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
@@ -1609,7 +1849,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"dob\": \"1990-01-01\",\n    \"gender\": \"FEMALE\",\n    \"blood_group\": \"O+\",\n    \"marital_status\": \"SINGLE\"\n}"
+                  "raw": "{\n    \"dob\": \"1990-01-01\",\n    \"gender\": \"FEMALE\",\n    \"bloodGroup\": \"O+\",\n    \"maritalStatus\": \"SINGLE\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/personal",
@@ -1627,7 +1867,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"department_id\": \"{{department_id}}\",\n    \"designation_id\": \"<DESIGNATION_ID>\",\n    \"employment_type\": \"FULL_TIME\",\n    \"work_location\": \"REMOTE\"\n}"
+                  "raw": "{\n    \"departmentId\": \"{{department_id}}\",\n    \"designationId\": \"{{role_id}}\",\n    \"employmentType\": \"FULL_TIME\",\n    \"workLocation\": \"ONSITE\",\n    \"joiningDate\": \"2024-01-01\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/employment",
@@ -1645,7 +1885,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"bank_info\": {\n        \"account_holder_name\": \"Jane Smith\",\n        \"bank_name\": \"HDFC Bank\",\n        \"account_number\": \"1234567890\",\n        \"ifsc_code\": \"HDFC0001234\"\n    },\n    \"gov_info\": {\n        \"pan\": \"ABCDE1234F\",\n        \"aadhaar\": \"123456789012\"\n    }\n}"
+                  "raw": "{\n    \"bank_info\": {\n        \"bankName\": \"HDFC Bank\",\n        \"accountNumber\": \"1234567890\",\n        \"ifscCode\": \"HDFC0001234\"\n    },\n    \"gov_info\": {\n        \"pan\": \"ABCDE1234F\",\n        \"aadhaar\": \"123456789012\",\n        \"uan\": \"100123456789\"\n    },\n    \"annualCtc\": \"1200000\",\n    \"taxRegime\": \"NEW\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/payroll",
@@ -1680,12 +1920,30 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"documents\": [\n        {\n            \"name\": \"Aadhaar Card\",\n            \"type\": \"GOV_ID\",\n            \"document_id\": \"{{document_id}}\"\n        }\n    ]\n}"
+                  "raw": "{\n    \"documents\": [\n        {\n            \"name\": \"Aadhaar Card\",\n            \"docId\": \"{{document_id}}\"\n        }\n    ]\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/documents",
                   "host": ["{{base_url}}"],
                   "path": ["employees", "{{user_id}}", "documents"]
+                }
+              }
+            },
+            {
+              "name": "Update System Access",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"roleId\": \"{{role_id}}\",\n    \"assignedAssets\": [\"Laptop\", \"Monitor\"]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/employees/{{user_id}}/system-access",
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "system-access"]
                 }
               }
             }
@@ -1703,7 +1961,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"degree\": \"Bachelor of Science\",\n    \"school_name\": \"Stanford\",\n    \"field_of_study\": \"Computer Science\",\n    \"completion_date\": \"2020-05-15\"\n}"
+                  "raw": "{\n    \"degree\": \"Bachelor of Science\",\n    \"schoolName\": \"Stanford University\",\n    \"fieldOfStudy\": \"Computer Science\",\n    \"completionDate\": \"2020-05-15\",\n    \"additionalDetail\": \"Graduated with Honors\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education",
@@ -1724,9 +1982,9 @@
                   "raw": "{\n    \"degree\": \"Master of Science\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/employees/{{user_id}}/education/<EDU_ID>",
+                  "raw": "{{base_url}}/employees/{{user_id}}/education/{{edu_id}}",
                   "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "education", "<EDU_ID>"]
+                  "path": ["employees", "{{user_id}}", "education", "{{edu_id}}"]
                 }
               }
             },
@@ -1736,9 +1994,9 @@
                 "method": "DELETE",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/employees/{{user_id}}/education/<EDU_ID>",
+                  "raw": "{{base_url}}/employees/{{user_id}}/education/{{edu_id}}",
                   "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "education", "<EDU_ID>"]
+                  "path": ["employees", "{{user_id}}", "education", "{{edu_id}}"]
                 }
               }
             },
@@ -1751,7 +2009,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"company_name\": \"Google\",\n    \"designation\": \"Software Engineer\",\n    \"start_date\": \"2021-01-01\"\n}"
+                  "raw": "{\n    \"company\": \"Google\",\n    \"occupation\": \"Software Engineer\",\n    \"duration\": \"2 Years\",\n    \"summary\": \"Worked on cloud infrastructure\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience",
@@ -1769,12 +2027,12 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"company_name\": \"Google\",\n    \"designation\": \"Senior Software Engineer\",\n    \"start_date\": \"2021-01-01\"\n}"
+                  "raw": "{\n    \"occupation\": \"Senior Software Engineer\"\n}"
                 },
                 "url": {
-                  "raw": "{{base_url}}/employees/{{user_id}}/experience/<EXP_ID>",
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience/{{exp_id}}",
                   "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "experience", "<EXP_ID>"]
+                  "path": ["employees", "{{user_id}}", "experience", "{{exp_id}}"]
                 }
               }
             },
@@ -1784,9 +2042,9 @@
                 "method": "DELETE",
                 "header": [],
                 "url": {
-                  "raw": "{{base_url}}/employees/{{user_id}}/experience/<EXP_ID>",
+                  "raw": "{{base_url}}/employees/{{user_id}}/experience/{{exp_id}}",
                   "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "experience", "<EXP_ID>"]
+                  "path": ["employees", "{{user_id}}", "experience", "{{exp_id}}"]
                 }
               }
             }
@@ -3314,6 +3572,36 @@
       "name": "Project",
       "item": [
         {
+          "name": "List All Projects",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects?page=1&limit=10&sort_by=created_at&sort_order=DESC",
+              "host": ["{{base_url}}"],
+              "path": ["projects"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sort_by", "value": "created_at" },
+                { "key": "sort_order", "value": "DESC" }
+              ]
+            },
+            "description": "Returns a paginated list of all projects across all clients for the user's organization."
+          },
+          "response": []
+        },
+        {
           "name": "Create Project",
           "event": [
             {
@@ -3350,7 +3638,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Brello v2 Backend\",\n    \"description\": \"Enterprise stability and documentation\",\n    \"project_type\": \"AGILE\",\n    \"status\": \"IN_PROGRESS\",\n    \"priority\": \"HIGH\",\n    \"start_date\": \"2024-03-01\",\n    \"end_date\": \"2024-12-31\"\n}"
+              "raw": "{\n    \"name\": \"Brello v2 Backend\",\n    \"description\": \"Enterprise stability and documentation\",\n    \"projectType\": \"AGILE\",\n    \"status\": \"IN_PROGRESS\",\n    \"priority\": \"HIGH\",\n    \"startDate\": \"2024-03-01\",\n    \"endDate\": \"2024-12-31\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}/projects",
@@ -3478,7 +3766,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"members\": [\n        {\n            \"user_id\": \"{{user_id}}\",\n            \"role\": \"Lead Architect\"\n        }\n    ]\n}"
+              "raw": "{\n    \"members\": [\n        {\n            \"userId\": \"{{user_id}}\",\n            \"role\": \"Lead Architect\"\n        }\n    ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team",
@@ -3852,7 +4140,40 @@
           "response": []
         },
         {
-          "name": "Confirm Upload",
+          "name": "Upload Binary (Local)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/documents/{{document_id}}/upload",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "upload"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Upload (S3)",
           "request": {
             "auth": {
               "type": "bearer",

@@ -14,6 +14,7 @@ import {
   EmploymentType,
   WorkLocation,
   BloodGroup,
+  TaxRegime,
 } from '../enums/user.enum';
 
 export class UpdateEmployeeBasicDto {
@@ -50,6 +51,10 @@ export class UpdateEmployeeBasicDto {
   @IsUUID('4')
   @IsOptional()
   designationId?: string;
+
+  @IsString()
+  @IsOptional()
+  employeeId?: string;
 }
 
 export class UpdateEmployeeProfileDto {
@@ -68,6 +73,10 @@ export class UpdateEmployeeProfileDto {
   @IsDateString()
   @IsOptional()
   joiningDate?: string;
+
+  @IsDateString()
+  @IsOptional()
+  employmentDate?: string;
 
   @IsEnum(EmploymentType)
   @IsOptional()
@@ -88,4 +97,54 @@ export class UpdateEmployeeProfileDto {
   @IsString()
   @IsOptional()
   currentSalary?: string;
+
+  @IsString()
+  @IsOptional()
+  presentAddress?: string;
+
+  @IsString()
+  @IsOptional()
+  permanentAddress?: string;
+
+  @IsString()
+  @IsOptional()
+  probationPeriod?: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
+  @IsString()
+  @IsOptional()
+  annualCtc?: string;
+
+  @IsString()
+  @IsOptional()
+  monthlyGross?: string;
+
+  @IsString()
+  @IsOptional()
+  allowances?: string;
+
+  @IsString()
+  @IsOptional()
+  bonus?: string;
+
+  @IsString()
+  @IsOptional()
+  totalCtc?: string;
+
+  @IsEnum(TaxRegime)
+  @IsOptional()
+  taxRegime?: TaxRegime;
+}
+
+export class UpdateSystemAccessDto {
+  @IsUUID('4')
+  @IsOptional()
+  roleId?: string;
+
+  @IsString({ each: true })
+  @IsOptional()
+  assignedAssets?: string[];
 }

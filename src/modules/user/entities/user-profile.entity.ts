@@ -26,11 +26,12 @@ import {
   BloodGroup,
   ExitType,
   EmployeeStatus,
+  TaxRegime,
 } from '../enums/user.enum';
 
 @Entity('user_profile')
 export class UserProfile extends BaseEntity {
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   @Index({ unique: true })
   employee_id: string;
 
@@ -49,7 +50,7 @@ export class UserProfile extends BaseEntity {
   })
   employee_status: EmployeeStatus;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
   @Index({ unique: true })
   phone: string;
 
@@ -70,6 +71,9 @@ export class UserProfile extends BaseEntity {
 
   @Column({ type: 'date', nullable: true })
   joining_date: Date;
+
+  @Column({ type: 'date', nullable: true })
+  employment_date: Date;
 
   @Column({ type: 'enum', enum: WorkLocation, nullable: true })
   work_location: WorkLocation;
@@ -97,6 +101,27 @@ export class UserProfile extends BaseEntity {
 
   @Column({ type: 'int', default: 30 })
   notice_period: number;
+
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  annual_ctc: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  monthly_gross: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  allowances: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  bonus: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  total_ctc: string;
+
+  @Column({ type: 'enum', enum: TaxRegime, nullable: true })
+  tax_regime: TaxRegime;
 
   @Column({ type: 'enum', enum: ExitType, nullable: true })
   exit_type: ExitType;

@@ -28,4 +28,10 @@ export class UserAssetsRepository {
     });
     return (result.affected ?? 0) > 0;
   }
+
+  async findByUserProfileId(userProfileId: string): Promise<UserAssets[]> {
+    return this.repository.find({
+      where: { user_profile_id: userProfileId, status: Not(Status.DELETED) },
+    });
+  }
 }
