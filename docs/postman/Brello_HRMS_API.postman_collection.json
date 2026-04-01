@@ -100,6 +100,51 @@
       "key": "holiday_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "policy_type_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "policy_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "module_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "action_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subscription_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otp_login_email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "designation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "manager_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employee_role_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -123,12 +168,30 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/register",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "register"
+              ]
             },
             "description": "Register as a new lead. Requires a valid `plan_id`."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Lead registered. Check console for OTP successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Verify OTP",
@@ -146,12 +209,30 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "verify-otp"
+              ]
             },
             "description": "Verify lead email using OTP. Default dev OTP is `123456`."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ OTP verified successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Login (Admin)",
@@ -189,8 +270,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Login initially to get the `user_id` for company setup."
           },
@@ -227,8 +313,13 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/setup",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "setup"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "setup"
+              ]
             },
             "description": "The final step of the onboarding flow. Links the user to a new organization."
           },
@@ -278,8 +369,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically in the cookie jar."
           },
@@ -335,8 +431,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login/send-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login", "send-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login",
+                "send-otp"
+              ]
             },
             "description": "Initiate OTP-based login. Sends a 6-digit OTP to the provided email.\n\n**Returns:** 204 No Content on success.\n\n**Auto-stages:** `otp_login_email` collection variable, so the follow-up **Login - Verify OTP** request is pre-filled.\n\n**In dev mode:** The OTP is printed to the server console."
           },
@@ -416,8 +518,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login",
+                "verify-otp"
+              ]
             },
             "description": "Verify the OTP sent to the email and complete the OTP-based login.\n\n**Email is auto-filled** from the `otp_login_email` variable set by **Login - Send OTP**. You only need to paste the OTP.\n\n**Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`.\n\n**Refresh token:** Delivered as HttpOnly cookie — stored automatically by Postman's cookie jar.\n\n**OTP rules:** 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -465,8 +573,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/switch-app",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "switch-app"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "switch-app"
+              ]
             },
             "description": "Switch to a different application. Provide the target `appId` (get available apps from the Login response).\n\n**Auto-saves:** New `access_token` scoped to the target app."
           },
@@ -494,8 +607,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/refresh",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Refresh the access token using the HttpOnly cookie.\n\n**No Authorization header needed.** The refresh token is sent automatically as a cookie by the browser (or Postman).\n\n**Auto-saves:** New `access_token` to collection variable. New refresh token cookie is set automatically (token rotation)."
           },
@@ -518,12 +636,30 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/menu/permissions",
-              "host": ["{{base_url}}"],
-              "path": ["menu", "permissions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "menu",
+                "permissions"
+              ]
             },
             "description": "Returns a flat list of all granted permissions for the logged-in user in the current app context. Includes `module_code` and `action_code` for each permission."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Permissions fetched successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Logout",
@@ -542,12 +678,31 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             },
             "description": "Invalidate the current session and clear the refresh token cookie. Returns 204 No Content."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 204 || pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('access_token', '');",
+                  "    console.log('✅ Logged out. Access token cleared.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Update Password",
@@ -575,12 +730,31 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/update-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "update-password"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "update-password"
+              ]
             },
             "description": "Change the authenticated user's password.\n\n**Side effect:** All active sessions are invalidated (user must re-login).\n\n**Password rules:** Min 8 chars, must contain: uppercase, lowercase, digit, special character."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 204) {",
+                  "    pm.collectionVariables.set('access_token', '');",
+                  "    console.log('✅ Password updated. All sessions invalidated — please re-login.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Forgot Password (Request OTP)",
@@ -598,12 +772,30 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/forgot-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "forgot-password"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
             },
             "description": "Request a password reset OTP. Always returns 204 (even if email doesn't exist, for security).\n\n**In dev mode:** Check the server console for the OTP log."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 204) {",
+                  "    console.log('✅ Password reset OTP sent. Check server console for OTP successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Verify OTP & Reset Password",
@@ -621,12 +813,30 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
             },
             "description": "Verify the OTP received via email and set a new password.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Password reset successful. Please re-login successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Resend OTP",
@@ -644,12 +854,30 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/resend-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "resend-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "resend-otp"
+              ]
             },
             "description": "Unified endpoint to resend an OTP for any purpose (LOGIN, RESET_PASSWORD, PLATFORM_ADMIN_LOGIN, etc).\n\n**Requirement:** An initial OTP request must have already been made for this email and purpose."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 204) {",
+                  "    console.log('✅ OTP resent. Check server console for OTP successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Platform Admin Register (Request OTP)",
@@ -667,12 +895,31 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "register"
+              ]
             },
             "description": "Initiates the registration flow for a new Platform Admin by securely masking their initial creation and sending an OTP to tech@brello.co.in."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Platform Admin registration OTP sent successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Platform Admin Verify Register",
@@ -690,12 +937,31 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/verify-register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "verify-register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "verify-register"
+              ]
             },
             "description": "Verifies the OTP and activates the Platform Admin account."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Platform Admin account activated successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Platform Admin Login (Request OTP)",
@@ -713,12 +979,31 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "login"
+              ]
             },
             "description": "Initiates the login flow for an existing Platform Admin by validating credentials and sending an OTP to their email."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 204) {",
+                  "    console.log('✅ Platform Admin login OTP sent. Check console successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Platform Admin Verify Login (Returns Token)",
@@ -755,8 +1040,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/verify-login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "verify-login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "verify-login"
+              ]
             },
             "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `user_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically."
           },
@@ -784,8 +1075,12 @@
             },
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": ["{{base_url}}"],
-              "path": ["industry-types"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry-types"
+              ]
             }
           },
           "event": [
@@ -819,8 +1114,12 @@
             },
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": ["{{base_url}}"],
-              "path": ["plans"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans"
+              ]
             }
           },
           "event": [
@@ -854,8 +1153,12 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises"
+              ]
             }
           },
           "event": [
@@ -889,8 +1192,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": ["{{base_url}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             }
           },
           "event": [
@@ -924,10 +1231,32 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/profile",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "profile"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "profile"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('organization_profile_id', body.data.id);",
+                  "        console.log('✅ organization_profile_id saved:', body.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create Organization Admin Role",
@@ -945,8 +1274,12 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             }
           },
           "event": [
@@ -1011,8 +1344,12 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises"
+              ]
             },
             "description": "Create a new enterprise.\n\n**Auto-saves:** `enterprise_id` to collection variables.",
             "auth": {
@@ -1035,8 +1372,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises"
+              ]
             },
             "description": "List all enterprises in the system.",
             "auth": {
@@ -1050,7 +1391,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Enterprise by ID",
@@ -1059,8 +1401,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Get a single enterprise by its UUID.",
             "auth": {
@@ -1074,7 +1421,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update Enterprise",
@@ -1092,8 +1440,13 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Partially update an enterprise. All fields are optional.",
             "auth": {
@@ -1107,7 +1460,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Enterprise",
@@ -1116,8 +1470,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Delete an enterprise. Returns 204 No Content.",
             "auth": {
@@ -1131,7 +1490,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -1170,8 +1530,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": ["{{base_url}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             },
             "description": "Create a new organization under an enterprise.\n\n**Auto-saves:** `organization_id` to collection variables."
           },
@@ -1184,12 +1548,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": ["{{base_url}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             },
             "description": "List all organizations."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Organization by ID",
@@ -1198,12 +1567,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Get a single organization by its UUID."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Organizations by Enterprise",
@@ -1212,12 +1587,19 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/enterprise/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "enterprise", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "enterprise",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Get all organizations that belong to a specific enterprise."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update Organization",
@@ -1235,12 +1617,18 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Partially update an organization. All fields are optional."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Organization",
@@ -1249,12 +1637,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Delete an organization. Returns 204 No Content."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Create Organization Profile",
@@ -1272,27 +1666,33 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-profiles",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles"
+              ]
             },
-            "description": "Create a new organization profile with legal name, GST, and registration details.",
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "var jsonData = pm.response.json();",
-                    "if (jsonData.data && jsonData.data.id) {",
-                    "    pm.collectionVariables.set(\"organization_profile_id\", jsonData.data.id);",
-                    "    console.log('✅ Organization Profile ID saved:', jsonData.data.id);",
-                    "}"
-                  ],
-                  "type": "text/javascript"
-                }
-              }
-            ]
+            "description": "Create a new organization profile with legal name, GST, and registration details."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('organization_profile_id', body.data.id);",
+                  "        console.log('✅ organization_profile_id saved:', body.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Organization Profile by ID",
@@ -1301,12 +1701,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Get an organization profile by its UUID."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Organization Profile by Organization",
@@ -1315,7 +1721,9 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/organization/{{organization_id}}",
-              "host": ["{{base_url}}"],
+              "host": [
+                "{{base_url}}"
+              ],
               "path": [
                 "organization-profiles",
                 "organization",
@@ -1324,7 +1732,8 @@
             },
             "description": "Get the profile belonging to a specific organization."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update Organization Profile",
@@ -1342,12 +1751,18 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Partially update an organization profile."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Organization Profile",
@@ -1356,12 +1771,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Delete an organization profile. Returns 204 No Content."
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -1379,17 +1800,25 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policy-types",
-                  "host": ["{{base_url}}"],
-                  "path": ["policy-types"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policy-types"
+                  ]
                 }
-              }
+              },
+              "event": []
             },
             {
               "name": "Create Policy Type",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1397,17 +1826,41 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policy-types",
-                  "host": ["{{base_url}}"],
-                  "path": ["policy-types"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policy-types"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const body = pm.response.json();",
+                      "    if (body.data && body.data.id) {",
+                      "        pm.collectionVariables.set('policy_type_id', body.data.id);",
+                      "        console.log('✅ policy_type_id saved:', body.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Update Policy Type",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1415,10 +1868,16 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policy-types", "{{policy_type_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policy-types",
+                    "{{policy_type_id}}"
+                  ]
                 }
-              }
+              },
+              "event": []
             },
             {
               "name": "Delete Policy Type",
@@ -1427,10 +1886,16 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policy-types", "{{policy_type_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policy-types",
+                    "{{policy_type_id}}"
+                  ]
                 }
-              }
+              },
+              "event": []
             }
           ]
         },
@@ -1444,11 +1909,17 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/grouped",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies", "grouped"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies",
+                    "grouped"
+                  ]
                 },
                 "description": "Get all policies grouped by their type. If user is an employee, only active policies are returned. If user can edit, all policies are returned."
-              }
+              },
+              "event": []
             },
             {
               "name": "Get Policy by ID",
@@ -1457,17 +1928,26 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies", "{{policy_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies",
+                    "{{policy_id}}"
+                  ]
                 }
-              }
+              },
+              "event": []
             },
             {
               "name": "Create Policy",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1475,17 +1955,41 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policies",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const body = pm.response.json();",
+                      "    if (body.data && body.data.id) {",
+                      "        pm.collectionVariables.set('policy_id', body.data.id);",
+                      "        console.log('✅ policy_id saved:', body.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Update Policy",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1493,10 +1997,16 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies", "{{policy_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies",
+                    "{{policy_id}}"
+                  ]
                 }
-              }
+              },
+              "event": []
             },
             {
               "name": "Delete Policy",
@@ -1505,10 +2015,16 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies", "{{policy_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies",
+                    "{{policy_id}}"
+                  ]
                 }
-              }
+              },
+              "event": []
             }
           ]
         }
@@ -1556,7 +2072,10 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1564,17 +2083,42 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const body = pm.response.json();",
+                      "    const val = body.data.id;",
+                      "    if (val) {",
+                      "        pm.collectionVariables.set('user_id', val);",
+                      "        console.log('✅ Employee draft user_id saved:', val);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 2: Employment Details",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1582,17 +2126,39 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/employment",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "employment"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "employment"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Employment details updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 3: Payroll & Compensation",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1600,17 +2166,39 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/payroll",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "payroll"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "payroll"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Payroll info saved successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 4a: Get Upload URL",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1618,10 +2206,35 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/documents/upload-url",
-                  "host": ["{{base_url}}"],
-                  "path": ["documents", "upload-url"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "documents",
+                    "upload-url"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const body = pm.response.json();",
+                      "    if (body.data && body.data.id) {",
+                      "        pm.collectionVariables.set('document_id', body.data.id);",
+                      "        console.log('✅ document_id saved:', body.data.id);",
+                      "    }",
+                      "    if (body.data && body.data.uploadUrl) {",
+                      "        console.log('📎 Upload URL:', body.data.uploadUrl);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 4b: Binary Upload (Local/DB)",
@@ -1632,26 +2245,48 @@
                   "mode": "formdata",
                   "formdata": [
                     {
-                        "key": "file",
-                        "type": "file",
-                        "src": "/path/to/your/aadhaar.pdf"
+                      "key": "file",
+                      "type": "file",
+                      "src": "/path/to/your/aadhaar.pdf"
                     }
                   ]
                 },
                 "url": {
                   "raw": "{{base_url}}/documents/{{document_id}}/upload",
-                  "host": ["{{base_url}}"],
-                  "path": ["documents", "{{document_id}}", "upload"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "documents",
+                    "{{document_id}}",
+                    "upload"
+                  ]
                 },
                 "description": "Upload the binary file. In Postman, go to Body -> form-data -> Hover over 'file' key and change type to 'File' -> Select your PDF."
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Binary upload completed successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 4c: Link Documents to Employee",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1659,17 +2294,39 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/documents",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "documents"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "documents"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Documents linked to employee successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 5: System Access",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1677,17 +2334,39 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/system-access",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "system-access"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "system-access"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ System access updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 6: Add Education",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1695,17 +2374,43 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "education"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "education"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const body = pm.response.json();",
+                      "    if (body.data && body.data.id) {",
+                      "        pm.collectionVariables.set('edu_id', body.data.id);",
+                      "        console.log('✅ edu_id saved:', body.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 7: Add Experience",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1713,17 +2418,43 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "experience"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "experience"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const body = pm.response.json();",
+                      "    if (body.data && body.data.id) {",
+                      "        pm.collectionVariables.set('exp_id', body.data.id);",
+                      "        console.log('✅ exp_id saved:', body.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Step 7: Finalize & Send Invite",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1731,11 +2462,30 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/onboard",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "onboard"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "onboard"
+                  ]
                 },
                 "description": "Final step to transition employee from DRAFT to INVITED status."
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Employee onboarded & invite sent successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             }
           ]
         },
@@ -1749,21 +2499,54 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "10" },
-                    { "key": "search", "value": "", "disabled": true },
-                    { "key": "sort_by", "value": "created_at" },
-                    { "key": "sort_order", "value": "DESC" },
-                    { "key": "departmentId", "value": "{{department_id}}", "disabled": true },
-                    { "key": "designationId", "value": "", "disabled": true },
-                    { "key": "status", "value": "ACTIVE", "disabled": true }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "DESC"
+                    },
+                    {
+                      "key": "departmentId",
+                      "value": "{{department_id}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "designationId",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "status",
+                      "value": "ACTIVE",
+                      "disabled": true
+                    }
                   ]
                 },
                 "description": "List employees with pagination, search, and filters."
-              }
+              },
+              "event": []
             },
             {
               "name": "Get Employee Dropdown",
@@ -1772,11 +2555,17 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/dropdown",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "dropdown"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "dropdown"
+                  ]
                 },
                 "description": "Get a simplified list of employees (label/value) for dropdowns, scoped to the current organization."
-              }
+              },
+              "event": []
             },
             {
               "name": "Get Employee Detail",
@@ -1785,18 +2574,27 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}"
+                  ]
                 },
                 "description": "Get complete employee aggregate data."
-              }
+              },
+              "event": []
             },
             {
               "name": "Save Employee Draft (Step 1)",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1804,18 +2602,43 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees"
+                  ]
                 },
                 "description": "Minimal request to save an employee as a draft (Step 1). Only first name, last name, and email are strictly required."
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const body = pm.response.json();",
+                      "    const val = body.data.id;",
+                      "    if (val) {",
+                      "        pm.collectionVariables.set('user_id', val);",
+                      "        console.log('✅ Employee draft user_id saved:', val);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Create Employee (Full)",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1823,10 +2646,32 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const body = pm.response.json();",
+                      "    const val = body.data.id;",
+                      "    if (val) {",
+                      "        pm.collectionVariables.set('user_id', val);",
+                      "        console.log('✅ Employee user_id saved:', val);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Delete Employee (Soft Delete)",
@@ -1835,10 +2680,16 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}"
+                  ]
                 }
-              }
+              },
+              "event": []
             }
           ]
         },
@@ -1850,7 +2701,10 @@
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1858,17 +2712,39 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/personal",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "personal"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "personal"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Personal details updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Update Employment Details",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1876,17 +2752,39 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/employment",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "employment"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "employment"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Employment details updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Update Payroll Info",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1894,10 +2792,29 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/payroll",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "payroll"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "payroll"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Payroll info updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Get Profile Completion",
@@ -1906,10 +2823,17 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/profile-completion",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "profile-completion"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "profile-completion"
+                  ]
                 }
-              }
+              },
+              "event": []
             }
           ]
         },
@@ -1921,7 +2845,10 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1929,17 +2856,39 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/documents",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "documents"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "documents"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Documents uploaded successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Update System Access",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1947,10 +2896,29 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/system-access",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "system-access"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "system-access"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ System access updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             }
           ]
         },
@@ -1962,7 +2930,10 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1970,17 +2941,43 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "education"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "education"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const body = pm.response.json();",
+                      "    if (body.data && body.data.id) {",
+                      "        pm.collectionVariables.set('edu_id', body.data.id);",
+                      "        console.log('✅ edu_id saved:', body.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Update Education",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -1988,10 +2985,30 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education/{{edu_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "education", "{{edu_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "education",
+                    "{{edu_id}}"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Education updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Delete Education",
@@ -2000,17 +3017,40 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education/{{edu_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "education", "{{edu_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "education",
+                    "{{edu_id}}"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Education deleted successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Add Experience",
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -2018,17 +3058,43 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "experience"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "experience"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const body = pm.response.json();",
+                      "    if (body.data && body.data.id) {",
+                      "        pm.collectionVariables.set('exp_id', body.data.id);",
+                      "        console.log('✅ exp_id saved:', body.data.id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Update Experience",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -2036,10 +3102,30 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience/{{exp_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "experience", "{{exp_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "experience",
+                    "{{exp_id}}"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Experience updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Delete Experience",
@@ -2048,10 +3134,30 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience/{{exp_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "experience", "{{exp_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "experience",
+                    "{{exp_id}}"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Experience deleted successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             }
           ]
         },
@@ -2063,7 +3169,10 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -2071,7 +3180,9 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding/initiate",
-                  "host": ["{{base_url}}"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -2079,14 +3190,30 @@
                     "initiate"
                   ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    console.log('✅ Offboarding initiated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Update Offboarding",
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
@@ -2094,10 +3221,29 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "offboarding"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "offboarding"
+                  ]
                 }
-              }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Offboarding updated successful.');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
             },
             {
               "name": "Get Offboarding Status",
@@ -2106,10 +3252,17 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "offboarding"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "offboarding"
+                  ]
                 }
-              }
+              },
+              "event": []
             },
             {
               "name": "Cancel Offboarding",
@@ -2118,10 +3271,17 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "offboarding"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "offboarding"
+                  ]
                 }
-              }
+              },
+              "event": []
             }
           ]
         }
@@ -2162,8 +3322,12 @@
             },
             "url": {
               "raw": "{{base_url}}/apps",
-              "host": ["{{base_url}}"],
-              "path": ["apps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps"
+              ]
             },
             "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority).",
             "auth": {
@@ -2186,8 +3350,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps",
-              "host": ["{{base_url}}"],
-              "path": ["apps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps"
+              ]
             },
             "description": "List all registered applications, sorted by priority.",
             "auth": {
@@ -2201,7 +3369,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get App by ID",
@@ -2210,8 +3379,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Get a single app by UUID.",
             "auth": {
@@ -2225,7 +3399,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update App",
@@ -2243,8 +3418,13 @@
             },
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Partially update an app.",
             "auth": {
@@ -2258,7 +3438,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete App",
@@ -2267,8 +3448,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Delete an app. Returns 204 No Content.",
             "auth": {
@@ -2282,7 +3468,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -2321,8 +3508,12 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "Create a new role scoped to an app.\n\n**Auto-saves:** `role_id` to collection variables."
           },
@@ -2335,12 +3526,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "List all roles with their associated app."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Role by ID",
@@ -2349,12 +3545,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Get a single role by UUID."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Roles by App",
@@ -2363,12 +3565,19 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/app/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "app", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "app",
+                "{{app_id}}"
+              ]
             },
             "description": "Get all roles belonging to a specific app."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update Role",
@@ -2386,12 +3595,18 @@
             },
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Partially update a role."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Role",
@@ -2400,12 +3615,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Delete a role. Returns 204 No Content."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Assign Role to User",
@@ -2423,12 +3644,29 @@
             },
             "url": {
               "raw": "{{base_url}}/user-role-maps",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps"
+              ]
             },
             "description": "Assign a role to a user in a specific organization.\n\n**This is required before the user can login!**"
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Role assigned to user successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get All User-Role Assignments",
@@ -2437,12 +3675,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps"
+              ]
             },
             "description": "List all user-role assignments."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Roles by User",
@@ -2451,12 +3694,19 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps/user/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps", "user", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps",
+                "user",
+                "{{user_id}}"
+              ]
             },
             "description": "Get all role assignments for a specific user."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Remove Role from User",
@@ -2465,12 +3715,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps",
+                "{{user_id}}"
+              ]
             },
             "description": "Remove a role assignment. Returns 204 No Content."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Menu (Resolved Permissions)",
@@ -2489,12 +3745,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/menu",
-              "host": ["{{base_url}}"],
-              "path": ["menu"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "menu"
+              ]
             },
             "description": "Returns the authenticated user's accessible module tree for the current app.\n\nThe response is a hierarchical tree where:\n- Each node has `id`, `name`, `wbs_code`, `actions[]`, and `children[]`\n- Only modules the user has permission to access are included\n- Actions are filtered by both role permissions AND plan restrictions\n- Tree is sorted by WBS code at each level"
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -2528,11 +3789,36 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/upload-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "upload-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "upload-url"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('document_id', body.data.id);",
+                  "        console.log('✅ document_id saved:', body.data.id);",
+                  "    }",
+                  "    if (body.data && body.data.uploadUrl) {",
+                  "        console.log('📎 Upload URL:', body.data.uploadUrl);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Confirm Upload",
@@ -2551,11 +3837,30 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/confirm",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "confirm"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "confirm"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Upload confirmed successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Document by ID",
@@ -2574,12 +3879,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             },
             "description": "Get document metadata by UUID."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Signed Download URL",
@@ -2598,12 +3909,19 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/signed-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "signed-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "signed-url"
+              ]
             },
             "description": "Get a short-lived signed URL for downloading a document."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Document",
@@ -2622,12 +3940,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             },
             "description": "Delete a document record."
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -2661,26 +3985,30 @@
             },
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": ["{{base_url}}"],
-              "path": ["industry-types"]
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "var jsonData = pm.response.json();",
-                    "if (jsonData.data && jsonData.data.id) {",
-                    "    pm.collectionVariables.set(\"industry_type_id\", jsonData.data.id);",
-                    "    console.log('✅ Industry Type ID saved:', jsonData.data.id);",
-                    "}"
-                  ],
-                  "type": "text/javascript"
-                }
-              }
-            ]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry-types"
+              ]
+            }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"industry_type_id\", jsonData.data.id);",
+                  "    console.log('✅ Industry Type ID saved:', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get All Industry Types",
@@ -2699,11 +4027,16 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": ["{{base_url}}"],
-              "path": ["industry-types"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry-types"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -2717,10 +4050,15 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/app-modules",
-              "host": ["{{base_url}}"],
-              "path": ["app-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app-modules"
+              ]
             }
-          }
+          },
+          "event": []
         },
         {
           "name": "Create App Module",
@@ -2738,10 +4076,31 @@
             },
             "url": {
               "raw": "{{base_url}}/app-modules",
-              "host": ["{{base_url}}"],
-              "path": ["app-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app-modules"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('module_id', body.data.id);",
+                  "        console.log('✅ module_id saved:', body.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create Action",
@@ -2759,10 +4118,31 @@
             },
             "url": {
               "raw": "{{base_url}}/actions",
-              "host": ["{{base_url}}"],
-              "path": ["actions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "actions"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('action_id', body.data.id);",
+                  "        console.log('✅ action_id saved:', body.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create Module Access",
@@ -2780,10 +4160,27 @@
             },
             "url": {
               "raw": "{{base_url}}/module-access",
-              "host": ["{{base_url}}"],
-              "path": ["module-access"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "module-access"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Module access granted successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -2797,10 +4194,15 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": ["{{base_url}}"],
-              "path": ["plans"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans"
+              ]
             }
-          }
+          },
+          "event": []
         },
         {
           "name": "Create Plan",
@@ -2818,25 +4220,29 @@
             },
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": ["{{base_url}}"],
-              "path": ["plans"]
-            },
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "var jsonData = pm.response.json();",
-                    "if (jsonData.data && jsonData.data.id) {",
-                    "    pm.collectionVariables.set(\"plan_id\", jsonData.data.id);",
-                    "    console.log('✅ Plan ID saved:', jsonData.data.id);",
-                    "}"
-                  ],
-                  "type": "text/javascript"
-                }
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"plan_id\", jsonData.data.id);",
+                  "    console.log('✅ Plan ID saved:', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
               }
-            ]
-          }
+            }
+          ]
         },
         {
           "name": "Create Organization Subscription",
@@ -2854,10 +4260,31 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-subscriptions",
-              "host": ["{{base_url}}"],
-              "path": ["organization-subscriptions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-subscriptions"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('subscription_id', body.data.id);",
+                  "        console.log('✅ subscription_id saved:', body.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create Plan Module",
@@ -2875,10 +4302,27 @@
             },
             "url": {
               "raw": "{{base_url}}/plan-modules",
-              "host": ["{{base_url}}"],
-              "path": ["plan-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plan-modules"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Plan module created successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create Plan Module Action",
@@ -2896,10 +4340,27 @@
             },
             "url": {
               "raw": "{{base_url}}/plan-module-actions",
-              "host": ["{{base_url}}"],
-              "path": ["plan-module-actions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plan-module-actions"
+              ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Plan module action created successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -2924,12 +4385,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications",
-              "host": ["{{base_url}}"],
-              "path": ["notifications"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications"
+              ]
             },
             "description": "Get all active in-app notifications for the current user."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Unread Notifications",
@@ -2948,12 +4414,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/unread",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "unread"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "unread"
+              ]
             },
             "description": "Get only unread in-app notifications for the current user."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Mark Notification as Read",
@@ -2972,12 +4444,19 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/<NOTIFICATION_ID>/read",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "<NOTIFICATION_ID>", "read"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "<NOTIFICATION_ID>",
+                "read"
+              ]
             },
             "description": "Mark a specific notification as read."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Mark All Notifications as Read",
@@ -2996,12 +4475,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/read-all",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "read-all"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
             },
             "description": "Mark all notifications as read for the current user."
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -3025,12 +4510,30 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/register",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "register"
+              ]
             },
             "description": "Register a new lead. Sends a verification OTP to the provided email.\n\n**No authentication required.**\n\n**In dev mode:** Check the server console for the OTP log.\n\n**Validation:** email (unique), first_name (min 2), last_name (min 2), phone (E.164), password (strong), source (must be 'website')."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Lead registered. Check server console for OTP successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Verify Lead OTP",
@@ -3048,12 +4551,36 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "verify-otp"
+              ]
             },
             "description": "Verify the OTP sent during lead registration.\n\n**On success:**\n- Lead is marked as verified\n- A User record is created from the lead details (first_name, last_name, email, phone, password_hash)\n- Both operations are wrapped in a transaction — if anything fails, everything rolls back.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.user_id) {",
+                  "        pm.collectionVariables.set('user_id', body.data.user_id);",
+                  "        console.log('✅ Lead verified. user_id saved:', body.data.user_id);",
+                  "    } else {",
+                  "        console.log('✅ Lead OTP verified.');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -3102,8 +4629,12 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "Create a new role. Only platform admins can set `is_system_defined: true`.\n\n**Auto-saves:** `role_id` to collection variables."
           },
@@ -3126,20 +4657,45 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["roles"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "search", "value": "", "disabled": true },
-                { "key": "sort_by", "value": "created_at" },
-                { "key": "sort_order", "value": "DESC" },
-                { "key": "is_system_role", "value": "false", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort_by",
+                  "value": "created_at"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "DESC"
+                },
+                {
+                  "key": "is_system_role",
+                  "value": "false",
+                  "disabled": true
+                }
               ]
             },
             "description": "Standardized listing of all roles.\n\n**Features:**\n- Pagination, Search, and Sorting\n- Filter by `is_system_role`\n- Auto-scoped to organization/enterprise."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Roles by Filter",
@@ -3158,8 +4714,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/filter?organization_id={{organization_id}}&enterprise_id={{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "filter"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "filter"
+              ],
               "query": [
                 {
                   "key": "organization_id",
@@ -3173,7 +4734,8 @@
             },
             "description": "Get roles scoped to the given organization & enterprise, plus all system-defined roles. Both query params are required UUIDs."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Role by ID",
@@ -3192,12 +4754,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Get a single role by its UUID."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update Role",
@@ -3225,12 +4793,18 @@
             },
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Partially update a role. All fields are optional. Only platform admins can modify system-defined roles."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Role",
@@ -3249,12 +4823,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Soft delete a role. Returns 204 No Content. Only platform admins can delete system-defined roles."
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -3303,8 +4883,12 @@
             },
             "url": {
               "raw": "{{base_url}}/departments",
-              "host": ["{{base_url}}"],
-              "path": ["departments"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments"
+              ]
             },
             "description": "Create a new department. The organization is resolved from the authenticated user's profile."
           },
@@ -3327,20 +4911,44 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments?page=1&limit=10&search=&sort_by=name&sort_order=ASC",
-              "host": ["{{base_url}}"],
-              "path": ["departments"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "search", "value": "", "disabled": true },
-                { "key": "status", "value": "ACTIVE" },
-                { "key": "sort_by", "value": "name" },
-                { "key": "sort_order", "value": "ASC" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "name"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "ASC"
+                }
               ]
             },
             "description": "Standardized listing of all departments in the user's organization.\n\n**Features:**\n- Pagination, Search, and Sorting\n- Includes `memberAvatars` (first 3 employees in the department)."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Department by ID",
@@ -3359,12 +4967,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["departments", "{{department_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments",
+                "{{department_id}}"
+              ]
             },
             "description": "Fetch details of a single department by its ID."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update Department",
@@ -3392,12 +5006,18 @@
             },
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["departments", "{{department_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments",
+                "{{department_id}}"
+              ]
             },
             "description": "Update department details. All fields are optional."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Department",
@@ -3416,12 +5036,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["departments", "{{department_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments",
+                "{{department_id}}"
+              ]
             },
             "description": "Soft delete a department. Sets status to INACTIVE and is_deleted to true."
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -3469,8 +5095,12 @@
             },
             "url": {
               "raw": "{{base_url}}/clients",
-              "host": ["{{base_url}}"],
-              "path": ["clients"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
             }
           },
           "response": []
@@ -3492,11 +5122,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update Client",
@@ -3512,18 +5148,29 @@
               ]
             },
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"Brello Tech Solutions Updated\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Client",
@@ -3542,11 +5189,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get All Clients",
@@ -3565,11 +5218,16 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients",
-              "host": ["{{base_url}}"],
-              "path": ["clients"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -3593,18 +5251,35 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects?page=1&limit=10&sort_by=created_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["projects"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "sort_by", "value": "created_at" },
-                { "key": "sort_order", "value": "DESC" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "created_at"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "DESC"
+                }
               ]
             },
             "description": "Returns a paginated list of all projects across all clients for the user's organization."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Create Project",
@@ -3647,8 +5322,14 @@
             },
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}/projects",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}", "projects"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}",
+                "projects"
+              ]
             }
           },
           "response": []
@@ -3670,11 +5351,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}/projects",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}", "projects"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}",
+                "projects"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Project by ID",
@@ -3693,11 +5381,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Update Project",
@@ -3713,18 +5407,29 @@
               ]
             },
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"status\": \"IN_PROGRESS\",\n    \"priority\": \"URGENT\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Project",
@@ -3743,11 +5448,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Assign Team",
@@ -3775,11 +5486,30 @@
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "team"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "team"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Team assigned to project successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Upload Contract",
@@ -3808,11 +5538,30 @@
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/contract",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "contract"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "contract"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Contract uploaded successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Project Team",
@@ -3831,12 +5580,19 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "team"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "team"
+              ]
             },
             "description": "Returns a detailed list of team members assigned to the project, including roles and user profiles."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Project Contracts",
@@ -3855,12 +5611,19 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/contracts",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "contracts"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "contracts"
+              ]
             },
             "description": "Returns a list of all contract documents uploaded for the project."
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Remove Team Member",
@@ -3879,12 +5642,20 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "team", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "team",
+                "{{user_id}}"
+              ]
             },
             "description": "Removes a single team member from the project."
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -3932,8 +5703,13 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars"
+              ]
             }
           },
           "response": []
@@ -3955,8 +5731,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars?year=2026",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars"
+              ],
               "query": [
                 {
                   "key": "year",
@@ -3965,7 +5746,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Add Holiday",
@@ -4008,8 +5790,15 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/holidays",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}", "holidays"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}",
+                "holidays"
+              ]
             }
           },
           "response": []
@@ -4031,8 +5820,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/month-view?month=1",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}", "month-view"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}",
+                "month-view"
+              ],
               "query": [
                 {
                   "key": "month",
@@ -4041,7 +5837,8 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Activate Calendar",
@@ -4060,11 +5857,31 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/activate",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}", "activate"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}",
+                "activate"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Calendar activated successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Clone Calendar",
@@ -4092,11 +5909,35 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/clone",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}", "clone"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}",
+                "clone"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('calendar_id', body.data.id);",
+                  "        console.log('✅ Cloned calendar_id saved:', body.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Employee - Upcoming Holidays",
@@ -4115,11 +5956,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/employee/holidays",
-              "host": ["{{base_url}}"],
-              "path": ["employee", "holidays"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employee",
+                "holidays"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Holiday",
@@ -4138,11 +5985,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/{{holiday_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "{{holiday_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "{{holiday_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Delete Calendar",
@@ -4161,11 +6014,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     },
@@ -4199,11 +6059,36 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/upload-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "upload-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "upload-url"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('document_id', body.data.id);",
+                  "        console.log('✅ document_id saved:', body.data.id);",
+                  "    }",
+                  "    if (body.data && body.data.uploadUrl) {",
+                  "        console.log('📎 Upload URL:', body.data.uploadUrl);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Upload Binary (Local)",
@@ -4232,11 +6117,30 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/upload",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "upload"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "upload"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Binary file uploaded successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Confirm Upload (S3)",
@@ -4264,11 +6168,30 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/confirm",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "confirm"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "confirm"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ S3 Upload confirmed successful.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Get Document Info",
@@ -4287,11 +6210,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Get Signed/View URL",
@@ -4310,11 +6239,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/signed-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "signed-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "signed-url"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "View Document (Inline)",
@@ -4333,11 +6269,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/view",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "view"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "view"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Download Document",
@@ -4356,11 +6299,18 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/download",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "download"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "download"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         },
         {
           "name": "Remove Document",
@@ -4379,11 +6329,17 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": []
         }
       ]
     }
