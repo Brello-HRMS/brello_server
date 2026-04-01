@@ -23,6 +23,12 @@ export class HolidayCalendarRepository {
     const { year, status } = filters;
     const query = this.repository
       .createQueryBuilder('calendar')
+      .loadRelationCountAndMap(
+        'calendar.holiday_count',
+        'calendar.holidays',
+        'holiday',
+        (qb) => qb.andWhere('holiday.is_deleted = :hDeleted', { hDeleted: false }),
+      )
       .where('calendar.organization_id = :organizationId', { organizationId })
       .andWhere('calendar.is_deleted = :isDeleted', { isDeleted: false });
 

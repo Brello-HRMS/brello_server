@@ -16,4 +16,7 @@ export class HolidayCalendar extends BaseEntity {
 
   @OneToMany(() => Holiday, (holiday) => holiday.calendar, { cascade: true })
   holidays: Holiday[];
+
+  /** Populated by loadRelationCountAndMap in listing queries */
+  holiday_count?: number;
 }
