@@ -288,13 +288,13 @@ session:
   expirationDays: 7 # Session TTL in days
 
 cookie:
-  refreshTokenName: 'refresh_token'  # Name of the HttpOnly cookie
-  httpOnly: true                  # JS cannot read it
-  secure: true                    # Requires HTTPS (false for local dev)
-  sameSite: 'strict'              # CSRF protection
-  path: '/api/v1/auth'            # Cookie only sent to auth endpoints
-  maxAgeDays: 7                   # Must match JWT_REFRESH_EXPIRATION
-  domain: ''                      # e.g. '.brello.co.in' in prod
+  refreshTokenName: 'refresh_token' # Name of the HttpOnly cookie
+  httpOnly: true # JS cannot read it
+  secure: true # Requires HTTPS (false for local dev)
+  sameSite: 'strict' # CSRF protection
+  path: '/api/v1/auth' # Cookie only sent to auth endpoints
+  maxAgeDays: 7 # Must match JWT_REFRESH_EXPIRATION
+  domain: '' # e.g. '.brello.co.in' in prod
 
 otp:
   expirationMinutes: 10 # OTP validity period
@@ -344,28 +344,29 @@ Located in `src/modules/auth/`.
 
 ### Features
 
-| Feature                | Implementation                                                                      |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| **Login**              | Email/password → validates → resolves available apps → creates session → JWT tokens |
-| **Access Token**       | Short-lived (15m), sent in JSON response body                                       |
-| **Refresh Token**      | Long-lived (7d), delivered via **HttpOnly Secure cookie** (never in response body)  |
-| **Token Rotation**     | On refresh, old token is invalidated and new one is issued                          |
-| **Session Management** | `Session` entity tracks active sessions with expiration                             |
-| **Switch App**         | `POST /auth/switch-app` — issues new JWT scoped to a different app                  |
-| **Password Update**    | Requires current password, invalidates all sessions                                 |
-| **Forgot Password**    | OTP-based flow: generate OTP → verify OTP → reset password                          |
+| Feature                | Implementation                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Login**              | Email/password → validates → resolves available apps → creates session → JWT tokens                        |
+| **Access Token**       | Short-lived (15m), sent in JSON response body                                                              |
+| **Refresh Token**      | Long-lived (7d), delivered via **HttpOnly Secure cookie** (never in response body)                         |
+| **Token Rotation**     | On refresh, old token is invalidated and new one is issued                                                 |
+| **Session Management** | `Session` entity tracks active sessions with expiration                                                    |
+| **Switch App**         | `POST /auth/switch-app` — issues new JWT scoped to a different app                                         |
+| **Password Update**    | Requires current password, invalidates all sessions                                                        |
+| **Forgot Password**    | OTP-based flow: generate OTP → verify OTP → reset password                                                 |
 | **Resend OTP**         | `POST /auth/resend-otp` — unified endpoint for all OTP purposes (`LOGIN`, `RESET_PW`, `PA_REGISTER`, etc.) |
-| **OTP Cleanup**        | Cron job runs hourly to purge expired OTPs                                          |
-| **Session Cleanup**    | Cron job runs daily at midnight to purge expired sessions                           |
+| **OTP Cleanup**        | Cron job runs hourly to purge expired OTPs                                                                 |
+| **Session Cleanup**    | Cron job runs daily at midnight to purge expired sessions                                                  |
 
 ### Token Delivery Strategy
 
-| Token             | Server → Client                            | Client → Server                                  |
-| ----------------- | ------------------------------------------ | ------------------------------------------------ |
-| **Access Token**  | JSON response body                         | `Authorization: Bearer <token>` header           |
-| **Refresh Token** | `Set-Cookie` (HttpOnly, Secure, SameSite)  | Automatically via cookie on `POST /auth/refresh` |
+| Token             | Server → Client                           | Client → Server                                  |
+| ----------------- | ----------------------------------------- | ------------------------------------------------ |
+| **Access Token**  | JSON response body                        | `Authorization: Bearer <token>` header           |
+| **Refresh Token** | `Set-Cookie` (HttpOnly, Secure, SameSite) | Automatically via cookie on `POST /auth/refresh` |
 
 **Frontend storage:**
+
 - **Access token** → In-memory variable only (JS closure, React state, store). Never `localStorage`.
 - **Refresh token** → Not stored by frontend; lives in an HttpOnly cookie the browser manages.
 
@@ -532,15 +533,15 @@ Applied in `main.ts` before any route handler executes:
 
 ### Auth (`/api/v1/auth`)
 
-| Method | Endpoint           | Auth        | Description                   |
-| ------ | ------------------ | ----------- | ----------------------------- |
-| POST   | `/login`           | ✗           | Login (returns access token + sets refresh cookie) |
-| POST   | `/switch-app`      | JWT         | Switch active application     |
-| POST   | `/logout`          | JWT         | Invalidate session + clear refresh cookie |
-| POST   | `/refresh`         | Cookie      | Get new access token (uses HttpOnly cookie) |
-| POST   | `/update-password` | JWT         | Change password               |
-| POST   | `/forgot-password` | ✗           | Send password reset OTP       |
-| POST   | `/verify-otp`      | ✗           | Verify OTP & set new password |
+| Method | Endpoint           | Auth   | Description                                        |
+| ------ | ------------------ | ------ | -------------------------------------------------- |
+| POST   | `/login`           | ✗      | Login (returns access token + sets refresh cookie) |
+| POST   | `/switch-app`      | JWT    | Switch active application                          |
+| POST   | `/logout`          | JWT    | Invalidate session + clear refresh cookie          |
+| POST   | `/refresh`         | Cookie | Get new access token (uses HttpOnly cookie)        |
+| POST   | `/update-password` | JWT    | Change password                                    |
+| POST   | `/forgot-password` | ✗      | Send password reset OTP                            |
+| POST   | `/verify-otp`      | ✗      | Verify OTP & set new password                      |
 
 ### Enterprise (`/api/v1/enterprises`)
 
@@ -620,6 +621,23 @@ Applied in `main.ts` before any route handler executes:
 | Method | Endpoint | Auth | Description                                  |
 | ------ | -------- | ---- | -------------------------------------------- |
 | GET    | `/`      | JWT  | Get RBAC-resolved menu tree for current user |
+
+### Payroll (`payroll`)
+
+| Method | Endpoint                   | Auth | Description                                     |
+| ------ | -------------------------- | ---- | ----------------------------------------------- |
+| POST   | `/settings`                | JWT  | Configure payroll cycles (PUT actually used)    |
+| GET    | `/settings`                | JWT  | Get current payroll settings                    |
+| POST   | `/components`              | JWT  | Create a component master (Earnings/Deductions) |
+| GET    | `/components`              | JWT  | List component masters                          |
+| PUT    | `/components/:id`          | JWT  | Update component master                         |
+| PUT    | `/pf-config`               | JWT  | Upsert PF (Statutory) configuration             |
+| GET    | `/pf-config`               | JWT  | Get PF configuration                            |
+| POST   | `/templates`               | JWT  | Create Salary Template with component mapping   |
+| GET    | `/templates/:id`           | JWT  | Get Salary Template by ID                       |
+| POST   | `/employee-salary`         | JWT  | Assign template to user & materialize structure |
+| GET    | `/employee-salary/:userId` | JWT  | Get materialized salary structure for user      |
+| POST   | `/dry-run`                 | JWT  | Simulate payroll calc (Gross, Net, Deductions)  |
 
 ---
 

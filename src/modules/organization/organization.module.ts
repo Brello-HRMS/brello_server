@@ -15,10 +15,16 @@ import { UserRepository } from '../user/repositories/user.repository';
 import { User } from '../user/entities/user.entity';
 import { AuthModule } from '../auth/auth.module';
 import { PlanModule } from '../plan/plan.module';
+import { PayrollComponent } from '../payroll/entities/payroll-component.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Organization, OrganizationProfile, User]),
+    TypeOrmModule.forFeature([
+      Organization,
+      OrganizationProfile,
+      User,
+      PayrollComponent,
+    ]),
     EnterpriseModule,
     forwardRef(() => DocumentModule),
     IndustryTypeModule,
