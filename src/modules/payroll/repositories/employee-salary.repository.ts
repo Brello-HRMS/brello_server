@@ -46,6 +46,12 @@ export class EmployeeSalaryRepository {
     return this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.user_profile', 'profile')
+      .leftJoinAndMapOne(
+        'user.department',
+        'departments',
+        'dept',
+        'dept.id = user.department_id',
+      )
       .where('user.id = :userId', { userId })
       .getOne();
   }

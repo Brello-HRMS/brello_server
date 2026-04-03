@@ -97,6 +97,7 @@ export class EmployeeSalaryEngine {
         employee: {
           name: user.fullName,
           employee_code: user.user_profile?.employee_id || null,
+          department: (user as any).department?.name || null,
         },
         components: [],
       };
@@ -130,6 +131,7 @@ export class EmployeeSalaryEngine {
       employee: {
         name: user.fullName,
         employee_code: user.user_profile?.employee_id || null,
+        department: (user as any).department?.name || null,
       },
       components: mappedComponents,
     };
