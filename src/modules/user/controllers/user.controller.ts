@@ -16,6 +16,8 @@ import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ListEmployeesDto } from '../dto/list-employees.dto';
+import { MapDepartmentDesignationDto } from '../dto/map-department-designation.dto';
+import { UnmapDepartmentDesignationDto } from '../dto/unmap-department-designation.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
@@ -36,7 +38,7 @@ export class UserController {
     return this.userService.create(createUserDto, user);
   }
 
-  // Get all users
+  // Get all employees (users with both department and designation mapped)
   @Get()
   @HttpCode(HttpStatus.OK)
   findAll(
@@ -44,6 +46,43 @@ export class UserController {
     @Query() query: ListEmployeesDto,
   ) {
     return this.userService.findAll(user, query);
+  }
+
+  // Get general users (users missing department or designation mapping)
+  @Get('general')
+  @HttpCode(HttpStatus.OK)
+  findGeneralUsers(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query() query: ListEmployeesDto,
+  ) {
+    return this.userService.findGeneralUsers(user, query);
+  }
+
+  // List all users scoped to the caller's organization and enterprise
+  @Get('list')
+  @HttpCode(HttpStatus.OK)
+  listAll(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.userService.listAllUsers(user);
+  }
+
+  // Map missing department and designation for a user
+  @Patch('map')
+  @HttpCode(HttpStatus.OK)
+  mapDepartmentAndDesignation(
+    @Body() dto: MapDepartmentDesignationDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.userService.mapDepartmentAndDesignation(dto, user);
+  }
+
+  // Unmap department and designation for a user
+  @Patch('unmap')
+  @HttpCode(HttpStatus.OK)
+  unmapDepartmentAndDesignation(
+    @Body() dto: UnmapDepartmentDesignationDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.userService.unmapDepartmentAndDesignation(dto, user);
   }
 
   // Get user by ID

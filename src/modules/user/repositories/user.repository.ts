@@ -9,7 +9,7 @@ export class UserRepository {
   constructor(
     @InjectRepository(User)
     private readonly repository: Repository<User>,
-  ) {}
+  ) { }
 
   getListingQueryBuilder(alias: string = 'user'): SelectQueryBuilder<User> {
     return this.repository.createQueryBuilder(alias)
@@ -127,6 +127,33 @@ export class UserRepository {
     });
 
     return result;
+  }
+
+  async findAllUsers(
+    organizationId: string,
+    enterpriseId: string,
+    excludeUserId: string,
+  ): Promise<Partial<User>[]> {
+    return this.repository.find({
+      select: [
+        'id',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'email',
+        'phone',
+        'status',
+        'designation_id',
+        'department_id',
+      ],
+      where: {
+        organization_id: organizationId,
+        enterprise_id: enterpriseId,
+        status: Not(Status.DELETED),
+        id: Not(excludeUserId),
+      },
+      order: { first_name: 'ASC' },
+    });
   }
 
   async getDropdownList(organizationId: string): Promise<Partial<User>[]> {
