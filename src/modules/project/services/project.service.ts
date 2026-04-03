@@ -12,6 +12,7 @@ import { CreateProjectDto } from '../dto/create-project.dto';
 import { UpdateProjectDto } from '../dto/update-project.dto';
 import { ListProjectsDto } from '../dto/list-projects.dto';
 import { AssignTeamDto } from '../dto/assign-team.dto';
+import { UploadContractDto } from '../dto/upload-contract.dto';
 import { Project } from '../entities/project.entity';
 import { ListingHelper } from '../../../common/utils/listing.helper';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
@@ -19,15 +20,6 @@ import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { DocumentService } from '../../document/services/document.service';
 import { FolderType } from '../../document/enums/document.enum';
 import { ProjectContract } from '../entities/project-contract.entity';
-
-export interface MulterFile {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  size: number;
-  buffer: Buffer;
-}
 
 @Injectable()
 export class ProjectService {
@@ -222,33 +214,22 @@ export class ProjectService {
 
   async uploadContract(
     id: string,
-    file: MulterFile,
+    dto: UploadContractDto,
     user: LoggedInUser,
   ): Promise<ProjectContract> {
     this.logger.log(`Uploading contract for project: ${id}`);
 
     await this.findOne(id, user);
 
-    // 1. Upload document using centralized DocumentService
-    const document = await this.documentService.uploadDocument(
-      user,
-      {
-        buffer: file.buffer,
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-      },
-      FolderType.ORGANIZATION_DOCUMENT,
-    );
+    // 1. Get document details from DocumentService
+    const document = await this.documentService.findOne(dto.documentId, user);
 
     // 2. Link to Project Contract
-    const fileUrl = `https://${document.bucket}.s3.amazonaws.com/${document.object_key}`;
-
     return this.projectRepository.addContract({
       project_id: id,
-      file_name: file.originalname,
-      file_url: fileUrl,
-      file_type: file.mimetype,
+      file_name: document.originalName,
+      file_url: document.url,
+      file_type: document.mimeType,
       uploaded_by: user.userId,
     });
   }
