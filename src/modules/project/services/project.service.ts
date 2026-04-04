@@ -231,6 +231,7 @@ export class ProjectService {
       file_url: document.url,
       file_type: document.mimeType,
       uploaded_by: user.userId,
+      document_id: dto.documentId,
     });
   }
 
@@ -250,5 +251,40 @@ export class ProjectService {
     this.logger.log(`Removing member: ${userId} from project: ${id}`);
     await this.findOne(id, user);
     await this.projectRepository.removeTeamMember(id, userId);
+  }
+
+  async removeContract(
+    projectId: string,
+    contractId: string,
+    user: LoggedInUser,
+  ) {
+    this.logger.log(
+      `Removing contract: ${contractId} from project: ${projectId}`,
+    );
+
+    // 1. Ensure project belongs to user's org
+    await this.findOne(projectId, user);
+
+    // 2. Ensure contract exists and belongs to this project
+    const contract = await this.projectRepository.findContractById(contractId);
+    if (!contract || contract.project_id !== projectId) {
+      throw new NotFoundException(
+        `Contract with ID "${contractId}" not found for this project`,
+      );
+    }
+
+    // 3. Delete from repository
+    await this.projectRepository.removeContract(contractId);
+
+    // 4. Delete from document service
+    if (contract.document_id) {
+      try {
+        await this.documentService.remove(contract.document_id, user);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to delete document ${contract.document_id} while removing contract ${contractId}: ${error.message}`,
+        );
+      }
+    }
   }
 }

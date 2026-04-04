@@ -110,4 +110,14 @@ export class ProjectController {
   ) {
     return this.projectService.removeTeamMember(id, userId, user);
   }
+
+  @Delete(':id/contracts/:contractId')
+  @HttpCode(HttpStatus.OK)
+  removeContract(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('contractId', ParseUUIDPipe) contractId: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.projectService.removeContract(id, contractId, user);
+  }
 }

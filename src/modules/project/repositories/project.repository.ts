@@ -99,6 +99,14 @@ export class ProjectRepository {
     });
   }
 
+  async findContractById(id: string): Promise<ProjectContract | null> {
+    return this.contractRepository.findOne({ where: { id } });
+  }
+
+  async removeContract(id: string): Promise<void> {
+    await this.contractRepository.delete(id);
+  }
+
   async removeTeamMember(projectId: string, userId: string): Promise<void> {
     await this.teamRepository.delete({
       project_id: projectId,

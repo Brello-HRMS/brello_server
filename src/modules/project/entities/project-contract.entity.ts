@@ -26,7 +26,7 @@ export class ProjectContract {
   @Column({ type: 'text' })
   file_url: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 255 })
   file_type: string;
 
   @CreateDateColumn({ type: 'timestamp' })
@@ -34,4 +34,7 @@ export class ProjectContract {
 
   @Column({ type: 'uuid' })
   uploaded_by: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  document_id: string;
 }

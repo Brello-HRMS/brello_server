@@ -47,7 +47,34 @@ Generates a short-lived S3 pre-signed upload URL for direct-to-S3 client uploadi
 
 ---
 
-## 2. Confirm Upload
+## 2. Upload Binary (Local Storage)
+
+Uploads the actual file binary when using `DATABASE` storage provider. This is typically used in local development environments.
+
+|            |                                |
+| ---------- | ------------------------------ |
+| **Method** | `POST`                         |
+| **URL**    | `/api/v1/documents/:id/upload` |
+| **Auth**   | Bearer `<access_token>`        |
+| **Status** | `200 OK`                       |
+
+**Form Data:**
+
+- `file`: The file binary.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "id": "uuid",
+  "url": "/api/v1/documents/uuid/view"
+}
+```
+
+---
+
+## 3. Confirm Upload
 
 Validates that the upload completed and activates the Document tracking entity so that it can be assigned to modules via `document_id`.
 
