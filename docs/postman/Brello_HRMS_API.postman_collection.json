@@ -6381,6 +6381,118 @@
           "event": []
         }
       ]
+    },
+    {
+      "name": "Payroll",
+      "item": [
+        {
+          "name": "Dry Run Simulation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payroll/dry-run",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payroll",
+                "dry-run"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Employee List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payroll/employees?page=1&limit=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payroll",
+                "employees"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "department_id",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Fetch a paginated list of employees for payroll."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employee Salary Structure",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payroll",
+                "employees",
+                "{{user_id}}",
+                "salary"
+              ]
+            },
+            "description": "Fetch the structured salary breakdown for a specific employee including editability status."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employee Salary Structure",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"components\": [\n        {\n            \"code\": \"BASIC\",\n            \"value\": 30000\n        },\n        {\n            \"code\": \"HRA\",\n            \"value\": 15000\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payroll",
+                "employees",
+                "{{user_id}}",
+                "salary"
+              ]
+            },
+            "description": "Update the overrides on specific salary components for an employee. Throws error if non-editable constraints are violated."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
