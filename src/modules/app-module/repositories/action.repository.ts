@@ -59,6 +59,7 @@ export class ActionRepository {
     console.log('--- DB SYNC: Running Action Code/Name Sync (QueryBuilder) ---');
     try {
       // 1. Update all actions where code is not set or inconsistent
+      // Using QueryBuilder avoids manual schema/quoting issues
       const actions = await this.repository.find();
       
       for (const action of actions) {

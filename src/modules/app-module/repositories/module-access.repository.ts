@@ -41,6 +41,16 @@ export class ModuleAccessRepository {
     return this.repository.findOne(options);
   }
 
+  async findByRoleModuleAction(roleId: string, moduleId: string, actionId: string): Promise<ModuleAccess | null> {
+    return this.repository.findOne({
+      where: {
+        role_id: roleId,
+        module_id: moduleId,
+        action_id: actionId,
+      },
+    });
+  }
+
   async findByRole(roleId: string): Promise<ModuleAccess[]> {
     return this.repository.find({
       where: { role_id: roleId },
