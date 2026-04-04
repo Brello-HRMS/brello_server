@@ -1,12 +1,16 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { ModuleAccess } from '../entities/module-access.entity';
 import { ModuleAccessRepository } from '../repositories/module-access.repository';
 import {
   CreateModuleAccessDto,
   UpdateModuleAccessDto,
+  AssignModuleAccessByCodeDto,
 } from '../dto/module-access.dto';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
-import { Logger, NotFoundException } from '@nestjs/common';
+import { AppModuleRepository } from '../repositories/app-module.repository';
+import { ActionRepository } from '../repositories/action.repository';
+import { UserRoleMapRepository } from '../../rbac/repositories/user-role-map.repository';
+import { Status } from '../../../common/enums';
 
 @Injectable()
 export class ModuleAccessService {
@@ -14,6 +18,9 @@ export class ModuleAccessService {
  
   constructor(
     private readonly moduleAccessRepository: ModuleAccessRepository,
+    private readonly appModuleRepository: AppModuleRepository,
+    private readonly actionRepository: ActionRepository,
+    private readonly userRoleMapRepository: UserRoleMapRepository,
   ) {}
 
   async create(dto: CreateModuleAccessDto, user?: LoggedInUser): Promise<ModuleAccess> {
@@ -30,6 +37,42 @@ export class ModuleAccessService {
 
   async findAll(user?: LoggedInUser): Promise<ModuleAccess[]> {
     return this.moduleAccessRepository.findAll();
+  }
+
+  async assignByCode(dto: AssignModuleAccessByCodeDto, user: LoggedInUser): Promise<ModuleAccess> {
+    const appModule = await this.appModuleRepository.findByCodeAndApp(dto.module_code, user.appId);
+    if (!appModule) {
+      throw new NotFoundException(`Module with code ${dto.module_code} not found or active in this app.`);
+    }
+
+    const action = await this.actionRepository.findByName(dto.action_code);
+    if (!action) {
+      throw new NotFoundException(`Action with code ${dto.action_code} not found or active.`);
+    }
+
+    const userRoles = await this.userRoleMapRepository.findByUserId(user.userId);
+    const activeRoleMap = userRoles.find(
+      (urm) => urm.role && urm.role.app_id === user.appId && urm.organization_id === user.organizationId,
+    );
+
+    if (!activeRoleMap) {
+      throw new NotFoundException(`No active role found for user in the current app and organization.`);
+    }
+
+    const moduleAccess = this.moduleAccessRepository.create({
+      role_id: activeRoleMap.role_id,
+      module_id: appModule.id,
+      action_id: action.id,
+      access_flag: dto.access_flag ?? true,
+    });
+
+    try {
+      return await this.moduleAccessRepository.save(moduleAccess);
+    } catch (error) {
+      throw new ConflictException(
+        'This role already has a configuration for this action on this module.',
+      );
+    }
   }
 
   async findOne(id: string, user?: LoggedInUser): Promise<ModuleAccess> {
