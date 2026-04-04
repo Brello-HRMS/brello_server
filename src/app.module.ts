@@ -23,6 +23,7 @@ import { CompanyPolicyModule } from './modules/company-policy/company-policy.mod
 import { DesignationModule } from './modules/designations/designation.module';
 import { HolidayModule } from './modules/holiday/holiday.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
+import { PayrollModule } from './modules/payroll/payroll.module';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.interceptor';
@@ -62,6 +63,7 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     DesignationModule,
     HolidayModule,
     AttendanceModule,
+    PayrollModule,
   ],
   providers: [
     {
@@ -70,4 +72,4 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

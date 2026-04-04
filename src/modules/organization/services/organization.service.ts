@@ -32,6 +32,11 @@ import { AuthService } from 'src/modules/auth/services/auth.service';
 import { AuthResponseDto } from 'src/modules/auth/dto/auth-response.dto';
 import { PlanService } from 'src/modules/plan/services/plan.service';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { PayrollComponent } from '../../payroll/entities/payroll-component.entity';
+import {
+  ComponentType,
+  CalculationType,
+} from '../../payroll/enums/payroll.enum';
 
 @Injectable()
 export class OrganizationService {
@@ -130,8 +135,8 @@ export class OrganizationService {
       // Step 4: Clone platform default roles and permissions for those apps
       const finalRolesToAssign: Role[] = [];
       const platformRoles = await manager.find(Role, {
-        where: { 
-          is_system_role: true, 
+        where: {
+          is_system_role: true,
           is_default: true,
           status: Status.ACTIVE,
           organization_id: IsNull(),
@@ -139,7 +144,7 @@ export class OrganizationService {
       });
 
       for (const appId of planAppIds) {
-        const platformRole = platformRoles.find(r => r.app_id === appId);
+        const platformRole = platformRoles.find((r) => r.app_id === appId);
 
         if (platformRole) {
           // Clone the role for the organization
@@ -205,6 +210,20 @@ export class OrganizationService {
       trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
       subscription.end_date = trialEndDate;
       await manager.save(subscription);
+
+      // Step 7: Create Default Payroll Component (Basic Salary)
+      const basicComponent = manager.create(PayrollComponent, {
+        name: 'Basic Salary',
+        type: ComponentType.EARNING,
+        calculation_type: CalculationType.PERCENTAGE,
+        calculation_value: { base: 'CTC', value: 50 },
+        is_taxable: true,
+        is_system_defined: true,
+        is_active: true,
+        enterprise_id: enterpriseId,
+        organization_id: savedOrg.id,
+      });
+      await manager.save(basicComponent);
 
       await queryRunner.commitTransaction();
       this.logger.log(
@@ -313,9 +332,11 @@ export class OrganizationService {
   async debugUser(email: string): Promise<any> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) return { error: 'User not found' };
-    
-    const org = user.organization_id ? await this.organizationRepository.findById(user.organization_id) : null;
-    
+
+    const org = user.organization_id
+      ? await this.organizationRepository.findById(user.organization_id)
+      : null;
+
     return {
       user: {
         id: user.id,
@@ -325,11 +346,13 @@ export class OrganizationService {
         is_platform_admin: user.is_platform_admin,
         status: user.status,
       },
-      org: org ? {
-        id: org.id,
-        name: org.name,
-        enterprise_id: org.enterprise_id,
-      } : null,
+      org: org
+        ? {
+            id: org.id,
+            name: org.name,
+            enterprise_id: org.enterprise_id,
+          }
+        : null,
     };
   }
 
@@ -348,14 +371,24 @@ export class OrganizationService {
       const manager = queryRunner.manager;
 
       // 1. Log specifically for b10@admin.com
-      const targetUser = await manager.findOne(User, { where: { email: 'b10@admin.com' } });
+      const targetUser = await manager.findOne(User, {
+        where: { email: 'b10@admin.com' },
+      });
       if (targetUser) {
-        addLog(`Target User: ${targetUser.email}, EntID: ${targetUser.enterprise_id}, OrgID: ${targetUser.organization_id}`);
-        const targetOrg = await manager.findOne(Organization, { where: { id: targetUser.organization_id } });
+        addLog(
+          `Target User: ${targetUser.email}, EntID: ${targetUser.enterprise_id}, OrgID: ${targetUser.organization_id}`,
+        );
+        const targetOrg = await manager.findOne(Organization, {
+          where: { id: targetUser.organization_id },
+        });
         if (targetOrg) {
-          addLog(`Target Org: ${targetOrg.name}, EntID: ${targetOrg.enterprise_id}`);
+          addLog(
+            `Target Org: ${targetOrg.name}, EntID: ${targetOrg.enterprise_id}`,
+          );
         } else {
-          addLog(`Target Org NOT FOUND for OrgID: ${targetUser.organization_id}`);
+          addLog(
+            `Target Org NOT FOUND for OrgID: ${targetUser.organization_id}`,
+          );
         }
       } else {
         addLog(`Target User b10@admin.com NOT FOUND`);
@@ -380,39 +413,60 @@ export class OrganizationService {
         });
         const savedEnterprise = await manager.save(enterprise);
 
-        await manager.update(Organization, org.id, { enterprise_id: savedEnterprise.id });
+        await manager.update(Organization, org.id, {
+          enterprise_id: savedEnterprise.id,
+        });
 
-        await manager.update(User, { organization_id: org.id }, { enterprise_id: savedEnterprise.id });
+        await manager.update(
+          User,
+          { organization_id: org.id },
+          { enterprise_id: savedEnterprise.id },
+        );
 
-        await manager.update(UserProfile, { organization_id: org.id }, { enterprise_id: savedEnterprise.id });
+        await manager.update(
+          UserProfile,
+          { organization_id: org.id },
+          { enterprise_id: savedEnterprise.id },
+        );
 
         addLog(`Linked Org ${org.name} to Enterprise ${savedEnterprise.id}`);
       }
 
       // 4. Find users missing enterprise_id but have organization_id
       const usersToSync = await manager.find(User, {
-        where: { enterprise_id: IsNull(), organization_id: Not(IsNull()) as any },
+        where: {
+          enterprise_id: IsNull(),
+          organization_id: Not(IsNull()) as any,
+        },
       });
 
-      addLog(`Found ${usersToSync.length} users missing enterprise_id but have org_id`);
+      addLog(
+        `Found ${usersToSync.length} users missing enterprise_id but have org_id`,
+      );
 
       for (const u of usersToSync) {
-        const org = await manager.findOne(Organization, { where: { id: u.organization_id } });
+        const org = await manager.findOne(Organization, {
+          where: { id: u.organization_id },
+        });
         if (org && org.enterprise_id) {
-          await manager.update(User, u.id, { enterprise_id: org.enterprise_id });
+          await manager.update(User, u.id, {
+            enterprise_id: org.enterprise_id,
+          });
           if (u.user_profile_id) {
-            await manager.update(UserProfile, u.user_profile_id, { enterprise_id: org.enterprise_id });
+            await manager.update(UserProfile, u.user_profile_id, {
+              enterprise_id: org.enterprise_id,
+            });
           }
           addLog(`Synced User ${u.email} with Enterprise ${org.enterprise_id}`);
         }
       }
 
       await queryRunner.commitTransaction();
-      return { 
-        success: true, 
+      return {
+        success: true,
         logs,
-        fixedOrgs: orgs.length, 
-        syncedUsers: usersToSync.length 
+        fixedOrgs: orgs.length,
+        syncedUsers: usersToSync.length,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
