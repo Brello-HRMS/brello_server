@@ -35,6 +35,7 @@ export class ActionRepository {
     return action;
   }
 
+
   async findByName(name: string): Promise<Action | null> {
     return this.repository.findOne({
       where: { name, status: 'ACTIVE' as any },

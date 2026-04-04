@@ -145,6 +145,21 @@
       "key": "employee_role_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "shift_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "weekly_off_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "attendance_rule_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -5617,6 +5632,754 @@
           },
           "response": [],
           "event": []
+        }
+      ]
+    },
+    {
+      "name": "Attendance Config",
+      "description": "Attendance configuration module: Shifts, Weekly Offs, Attendance Rules, Rule Assignments, and Geo-Fencing Validation.",
+      "item": [
+        {
+          "name": "Shifts",
+          "item": [
+            {
+              "name": "Create Shift",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/shifts",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "shifts"
+                  ]
+                },
+                "description": "Create a new work shift.\n\nValidations:\n- end_time > start_time\n- auto_checkout_time >= end_time\n- full_day_hours > half_day_hours\n\nAuto-saves: `shift_id`",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"General Shift\",\n  \"start_time\": \"09:00\",\n  \"end_time\": \"18:00\",\n  \"late_grace_minutes\": 15,\n  \"auto_checkout_time\": \"20:00\",\n  \"allow_multiple_checkins\": false,\n  \"full_day_hours\": 8,\n  \"half_day_hours\": 4\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('shift_id', response.data.id);",
+                      "    console.log('✅ shift_id saved:', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "List Shifts",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/shifts?page=1&limit=20",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "shifts"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "List all shifts for the organization with pagination."
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "Update Shift",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/shifts/{{shift_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "shifts",
+                    "{{shift_id}}"
+                  ]
+                },
+                "description": "Partial update of a shift.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"General Shift (Updated)\",\n  \"late_grace_minutes\": 10\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "Change Shift Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/shifts/{{shift_id}}/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "shifts",
+                    "{{shift_id}}",
+                    "status"
+                  ]
+                },
+                "description": "Change shift status (ACTIVE/INACTIVE).\n\nReturns 409 CONFLICT if the shift is used in active attendance rules.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"INACTIVE\"\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            }
+          ]
+        },
+        {
+          "name": "Weekly Offs",
+          "item": [
+            {
+              "name": "Create Weekly Off",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/weekly-offs",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "weekly-offs"
+                  ]
+                },
+                "description": "Create a weekly off pattern.\n\nValidations:\n- At least 1 day required\n- Max 7 days\n- No duplicate days\n\nAuto-saves: `weekly_off_id`",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Standard Week\",\n  \"days\": [\n    \"SATURDAY\",\n    \"SUNDAY\"\n  ]\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('weekly_off_id', response.data.id);",
+                      "    console.log('✅ weekly_off_id saved:', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "List Weekly Offs",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/weekly-offs?page=1&limit=20",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "weekly-offs"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "List all weekly off patterns for the organization."
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "Update Weekly Off",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/weekly-offs/{{weekly_off_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "weekly-offs",
+                    "{{weekly_off_id}}"
+                  ]
+                },
+                "description": "Partial update of a weekly off pattern.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Standard Week (Updated)\",\n  \"days\": [\n    \"SATURDAY\",\n    \"SUNDAY\"\n  ]\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "Change Weekly Off Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/weekly-offs/{{weekly_off_id}}/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "weekly-offs",
+                    "{{weekly_off_id}}",
+                    "status"
+                  ]
+                },
+                "description": "Change weekly off status.\n\nReturns 409 CONFLICT if linked to active attendance rules.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"INACTIVE\"\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            }
+          ]
+        },
+        {
+          "name": "Attendance Rules",
+          "item": [
+            {
+              "name": "Create Attendance Rule",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules"
+                  ]
+                },
+                "description": "Create an attendance rule linking a shift and weekly off.\n\nValidations:\n- shift_id must exist\n- weekly_off_id must exist\n- full_day_hours > half_day_hours\n- overtime_after_hours >= full_day_hours\n- If require_geo_fencing=true, geo_fence is required\n\nAuto-saves: `attendance_rule_id`",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Standard Rule\",\n  \"shift_id\": \"{{shift_id}}\",\n  \"weekly_off_id\": \"{{weekly_off_id}}\",\n  \"full_day_hours\": 8,\n  \"half_day_hours\": 4,\n  \"overtime_after_hours\": 9,\n  \"overtime_multiplier\": 1.5,\n  \"allow_multiple_checkins\": false,\n  \"require_geo_fencing\": true,\n  \"geo_fence\": {\n    \"office_name\": \"Head Office\",\n    \"latitude\": 19.076,\n    \"longitude\": 72.8777,\n    \"radius_meters\": 200\n  }\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('attendance_rule_id', response.data.id);",
+                      "    console.log('✅ attendance_rule_id saved:', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Create Rule (without Geo-fence)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules"
+                  ]
+                },
+                "description": "Create an attendance rule without geo-fencing (for remote teams).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Remote Rule\",\n  \"shift_id\": \"{{shift_id}}\",\n  \"weekly_off_id\": \"{{weekly_off_id}}\",\n  \"full_day_hours\": 8,\n  \"half_day_hours\": 4,\n  \"allow_multiple_checkins\": true,\n  \"require_geo_fencing\": false\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "List Attendance Rules",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules?page=1&limit=20",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "List all attendance rules with joined shift and weekly off names."
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "Update Attendance Rule",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules/{{attendance_rule_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules",
+                    "{{attendance_rule_id}}"
+                  ]
+                },
+                "description": "Partial update of an attendance rule.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Standard Rule (Updated)\",\n  \"overtime_multiplier\": 2\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "Change Rule Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules/{{attendance_rule_id}}/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules",
+                    "{{attendance_rule_id}}",
+                    "status"
+                  ]
+                },
+                "description": "Change attendance rule status (ACTIVE/INACTIVE).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            }
+          ]
+        },
+        {
+          "name": "Rule Assignments",
+          "item": [
+            {
+              "name": "Assign Rule to Departments",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules/{{attendance_rule_id}}/assign/departments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules",
+                    "{{attendance_rule_id}}",
+                    "assign",
+                    "departments"
+                  ]
+                },
+                "description": "Assign an attendance rule to departments.\n\nBehavior:\n- Assigns rule to all employees in the departments\n- Overwrites any previous department-level rule assignment for the same department",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"department_ids\": [\n    \"{{department_id}}\"\n  ]\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "Assign Rule to Employees (Override)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules/{{attendance_rule_id}}/assign/employees",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules",
+                    "{{attendance_rule_id}}",
+                    "assign",
+                    "employees"
+                  ]
+                },
+                "description": "Assign an attendance rule directly to employees.\n\nCritical: Employee-level assignment OVERRIDES department-level assignment.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"employee_ids\": [\n    \"{{user_id}}\"\n  ]\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            },
+            {
+              "name": "Get Rule Assignments",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules/{{attendance_rule_id}}/assignments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules",
+                    "{{attendance_rule_id}}",
+                    "assignments"
+                  ]
+                },
+                "description": "List all assignments (department + employee) for an attendance rule."
+              },
+              "response": [],
+              "event": []
+            }
+          ]
+        },
+        {
+          "name": "Geo-Fence Validation",
+          "item": [
+            {
+              "name": "Validate Location",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/geo/validate",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "geo",
+                    "validate"
+                  ]
+                },
+                "description": "Validate if an employee's location is within the geo-fence radius.\n\nUses Haversine formula for distance calculation.\n\nReturns:\n- is_within_radius: boolean\n- distance: number (meters)\n\nErrors:\n- 404 NOT_FOUND: No rule assigned to employee\n- 422 INVALID_STATE: Geo-fencing not enabled for the rule",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"employee_id\": \"{{user_id}}\",\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777\n}"
+                }
+              },
+              "response": [],
+              "event": []
+            }
+          ]
         }
       ]
     },
