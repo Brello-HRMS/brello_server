@@ -26,7 +26,7 @@ export class ProjectContract {
   @Column({ type: 'text' })
   file_url: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   file_type: string;
 
   @CreateDateColumn({ type: 'timestamp' })
