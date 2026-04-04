@@ -4181,6 +4181,45 @@
               }
             }
           ]
+        },
+        {
+          "name": "Assign Module Access By Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"module_code\": \"LEAVE_MGMT\",\n  \"action_code\": \"view\",\n  \"access_flag\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/module-access/by-code",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "module-access",
+                "by-code"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ Module access by code granted successfully.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },

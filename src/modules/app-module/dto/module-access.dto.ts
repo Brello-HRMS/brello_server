@@ -1,4 +1,18 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+
+export class AssignModuleAccessByCodeDto {
+  @IsString()
+  @IsNotEmpty()
+  module_code: string;
+
+  @IsString()
+  @IsNotEmpty()
+  action_code: string;
+
+  @IsBoolean()
+  @IsOptional()
+  access_flag?: boolean;
+}
 
 export class CreateModuleAccessDto {
   @IsUUID('4')

@@ -31,6 +31,12 @@ export class AppModuleRepository {
     return this.repository.findOne({ where: { id } });
   }
 
+  async findByCodeAndApp(code: string, app_id: string): Promise<AppModule | null> {
+    return this.repository.findOne({
+      where: { code, app_id, status: 'ACTIVE' as any },
+    });
+  }
+
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
       status: 'DELETED' as any,
