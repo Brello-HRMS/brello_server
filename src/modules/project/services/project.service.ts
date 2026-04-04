@@ -12,6 +12,7 @@ import { CreateProjectDto } from '../dto/create-project.dto';
 import { UpdateProjectDto } from '../dto/update-project.dto';
 import { ListProjectsDto } from '../dto/list-projects.dto';
 import { AssignTeamDto } from '../dto/assign-team.dto';
+import { UploadContractDto } from '../dto/upload-contract.dto';
 import { Project } from '../entities/project.entity';
 import { ListingHelper } from '../../../common/utils/listing.helper';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
@@ -19,15 +20,6 @@ import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { DocumentService } from '../../document/services/document.service';
 import { FolderType } from '../../document/enums/document.enum';
 import { ProjectContract } from '../entities/project-contract.entity';
-
-export interface MulterFile {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  size: number;
-  buffer: Buffer;
-}
 
 @Injectable()
 export class ProjectService {
@@ -222,34 +214,24 @@ export class ProjectService {
 
   async uploadContract(
     id: string,
-    file: MulterFile,
+    dto: UploadContractDto,
     user: LoggedInUser,
   ): Promise<ProjectContract> {
     this.logger.log(`Uploading contract for project: ${id}`);
 
     await this.findOne(id, user);
 
-    // 1. Upload document using centralized DocumentService
-    const document = await this.documentService.uploadDocument(
-      user,
-      {
-        buffer: file.buffer,
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-      },
-      FolderType.ORGANIZATION_DOCUMENT,
-    );
+    // 1. Get document details from DocumentService
+    const document = await this.documentService.findOne(dto.documentId, user);
 
     // 2. Link to Project Contract
-    const fileUrl = `https://${document.bucket}.s3.amazonaws.com/${document.object_key}`;
-
     return this.projectRepository.addContract({
       project_id: id,
-      file_name: file.originalname,
-      file_url: fileUrl,
-      file_type: file.mimetype,
+      file_name: document.originalName,
+      file_url: document.url,
+      file_type: document.mimeType,
       uploaded_by: user.userId,
+      document_id: dto.documentId,
     });
   }
 
@@ -269,5 +251,40 @@ export class ProjectService {
     this.logger.log(`Removing member: ${userId} from project: ${id}`);
     await this.findOne(id, user);
     await this.projectRepository.removeTeamMember(id, userId);
+  }
+
+  async removeContract(
+    projectId: string,
+    contractId: string,
+    user: LoggedInUser,
+  ) {
+    this.logger.log(
+      `Removing contract: ${contractId} from project: ${projectId}`,
+    );
+
+    // 1. Ensure project belongs to user's org
+    await this.findOne(projectId, user);
+
+    // 2. Ensure contract exists and belongs to this project
+    const contract = await this.projectRepository.findContractById(contractId);
+    if (!contract || contract.project_id !== projectId) {
+      throw new NotFoundException(
+        `Contract with ID "${contractId}" not found for this project`,
+      );
+    }
+
+    // 3. Delete from repository
+    await this.projectRepository.removeContract(contractId);
+
+    // 4. Delete from document service
+    if (contract.document_id) {
+      try {
+        await this.documentService.remove(contract.document_id, user);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to delete document ${contract.document_id} while removing contract ${contractId}: ${error.message}`,
+        );
+      }
+    }
   }
 }

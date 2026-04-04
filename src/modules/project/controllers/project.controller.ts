@@ -10,15 +10,13 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   UseGuards,
-  UploadedFile,
-  UseInterceptors,
   Query,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ProjectService, type MulterFile } from '../services/project.service';
+import { ProjectService } from '../services/project.service';
 import { UpdateProjectDto } from '../dto/update-project.dto';
 import { ListProjectsDto } from '../dto/list-projects.dto';
 import { AssignTeamDto } from '../dto/assign-team.dto';
+import { UploadContractDto } from '../dto/upload-contract.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
@@ -76,14 +74,13 @@ export class ProjectController {
   }
 
   @Post(':id/contract')
-  @UseInterceptors(FileInterceptor('file'))
   @HttpCode(HttpStatus.CREATED)
   uploadContract(
     @Param('id', ParseUUIDPipe) id: string,
-    @UploadedFile() file: MulterFile,
+    @Body() dto: UploadContractDto,
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.projectService.uploadContract(id, file, user);
+    return this.projectService.uploadContract(id, dto, user);
   }
 
   @Get(':id/team')
@@ -112,5 +109,15 @@ export class ProjectController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.projectService.removeTeamMember(id, userId, user);
+  }
+
+  @Delete(':id/contracts/:contractId')
+  @HttpCode(HttpStatus.OK)
+  removeContract(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('contractId', ParseUUIDPipe) contractId: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.projectService.removeContract(id, contractId, user);
   }
 }

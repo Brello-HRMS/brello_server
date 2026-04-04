@@ -33,7 +33,8 @@ export class DocumentService {
   ) {}
 
   private getStorageProvider(): StorageProvider {
-    const provider = this.configService.get<StorageProvider>('storage.provider');
+    const provider =
+      this.configService.get<StorageProvider>('storage.provider');
     if (provider) return provider;
 
     // Default to DATABASE for development if S3 is not explicitly configured
@@ -233,6 +234,14 @@ export class DocumentService {
       throw new NotFoundException(`Document ${id} not found`);
     }
 
+    let url = '';
+    if (document.storage_provider === StorageProvider.S3) {
+      const region = 'us-east-1'; // Grab from config in real app
+      url = `https://${document.bucket}.s3.${region}.amazonaws.com/${document.object_key}`;
+    } else {
+      url = `/api/v1/documents/${document.id}/view`;
+    }
+
     return {
       id: document.id,
       originalName: document.original_name,
@@ -241,6 +250,7 @@ export class DocumentService {
       folderType: document.folder_type,
       isPublic: document.is_public,
       createdAt: document.created_at,
+      url,
     };
   }
 

@@ -168,13 +168,8 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "leads",
-                "register"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["leads", "register"]
             },
             "description": "Register as a new lead. Requires a valid `plan_id`."
           },
@@ -209,13 +204,8 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/verify-otp",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "leads",
-                "verify-otp"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["leads", "verify-otp"]
             },
             "description": "Verify lead email using OTP. Default dev OTP is `123456`."
           },
@@ -270,13 +260,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
             },
             "description": "Login initially to get the `user_id` for company setup."
           },
@@ -313,13 +298,8 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/setup",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations",
-                "setup"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "setup"]
             },
             "description": "The final step of the onboarding flow. Links the user to a new organization."
           },
@@ -369,13 +349,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
             },
             "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically in the cookie jar."
           },
@@ -431,14 +406,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login/send-otp",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "login",
-                "send-otp"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login", "send-otp"]
             },
             "description": "Initiate OTP-based login. Sends a 6-digit OTP to the provided email.\n\n**Returns:** 204 No Content on success.\n\n**Auto-stages:** `otp_login_email` collection variable, so the follow-up **Login - Verify OTP** request is pre-filled.\n\n**In dev mode:** The OTP is printed to the server console."
           },
@@ -518,14 +487,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login/verify-otp",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "login",
-                "verify-otp"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login", "verify-otp"]
             },
             "description": "Verify the OTP sent to the email and complete the OTP-based login.\n\n**Email is auto-filled** from the `otp_login_email` variable set by **Login - Send OTP**. You only need to paste the OTP.\n\n**Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`.\n\n**Refresh token:** Delivered as HttpOnly cookie — stored automatically by Postman's cookie jar.\n\n**OTP rules:** 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -573,13 +536,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/switch-app",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "switch-app"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "switch-app"]
             },
             "description": "Switch to a different application. Provide the target `appId` (get available apps from the Login response).\n\n**Auto-saves:** New `access_token` scoped to the target app."
           },
@@ -607,13 +565,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/refresh",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "refresh"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
             },
             "description": "Refresh the access token using the HttpOnly cookie.\n\n**No Authorization header needed.** The refresh token is sent automatically as a cookie by the browser (or Postman).\n\n**Auto-saves:** New `access_token` to collection variable. New refresh token cookie is set automatically (token rotation)."
           },
@@ -636,13 +589,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/menu/permissions",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "menu",
-                "permissions"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["menu", "permissions"]
             },
             "description": "Returns a flat list of all granted permissions for the logged-in user in the current app context. Includes `module_code` and `action_code` for each permission."
           },
@@ -678,13 +626,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/logout",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "logout"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
             },
             "description": "Invalidate the current session and clear the refresh token cookie. Returns 204 No Content."
           },
@@ -730,13 +673,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/update-password",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "update-password"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "update-password"]
             },
             "description": "Change the authenticated user's password.\n\n**Side effect:** All active sessions are invalidated (user must re-login).\n\n**Password rules:** Min 8 chars, must contain: uppercase, lowercase, digit, special character."
           },
@@ -772,13 +710,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/forgot-password",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "forgot-password"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "forgot-password"]
             },
             "description": "Request a password reset OTP. Always returns 204 (even if email doesn't exist, for security).\n\n**In dev mode:** Check the server console for the OTP log."
           },
@@ -813,13 +746,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/verify-otp",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "verify-otp"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "verify-otp"]
             },
             "description": "Verify the OTP received via email and set a new password.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -854,13 +782,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/resend-otp",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "resend-otp"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "resend-otp"]
             },
             "description": "Unified endpoint to resend an OTP for any purpose (LOGIN, RESET_PASSWORD, PLATFORM_ADMIN_LOGIN, etc).\n\n**Requirement:** An initial OTP request must have already been made for this email and purpose."
           },
@@ -895,14 +818,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "platform-admin",
-                "register"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "platform-admin", "register"]
             },
             "description": "Initiates the registration flow for a new Platform Admin by securely masking their initial creation and sending an OTP to tech@brello.co.in."
           },
@@ -937,14 +854,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/verify-register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "platform-admin",
-                "verify-register"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "platform-admin", "verify-register"]
             },
             "description": "Verifies the OTP and activates the Platform Admin account."
           },
@@ -979,14 +890,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "platform-admin",
-                "login"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "platform-admin", "login"]
             },
             "description": "Initiates the login flow for an existing Platform Admin by validating credentials and sending an OTP to their email."
           },
@@ -1040,14 +945,8 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/verify-login",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "auth",
-                "platform-admin",
-                "verify-login"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["auth", "platform-admin", "verify-login"]
             },
             "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `user_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically."
           },
@@ -1075,12 +974,8 @@
             },
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "industry-types"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["industry-types"]
             }
           },
           "event": [
@@ -1114,12 +1009,8 @@
             },
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "plans"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["plans"]
             }
           },
           "event": [
@@ -1153,12 +1044,8 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "enterprises"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["enterprises"]
             }
           },
           "event": [
@@ -1192,12 +1079,8 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations"]
             }
           },
           "event": [
@@ -1231,13 +1114,8 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/profile",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations",
-                "profile"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "profile"]
             }
           },
           "event": [
@@ -1274,12 +1152,8 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles"]
             }
           },
           "event": [
@@ -1344,12 +1218,8 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "enterprises"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["enterprises"]
             },
             "description": "Create a new enterprise.\n\n**Auto-saves:** `enterprise_id` to collection variables.",
             "auth": {
@@ -1372,12 +1242,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "enterprises"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["enterprises"]
             },
             "description": "List all enterprises in the system.",
             "auth": {
@@ -1401,13 +1267,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "enterprises",
-                "{{enterprise_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["enterprises", "{{enterprise_id}}"]
             },
             "description": "Get a single enterprise by its UUID.",
             "auth": {
@@ -1440,13 +1301,8 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "enterprises",
-                "{{enterprise_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["enterprises", "{{enterprise_id}}"]
             },
             "description": "Partially update an enterprise. All fields are optional.",
             "auth": {
@@ -1470,13 +1326,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "enterprises",
-                "{{enterprise_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["enterprises", "{{enterprise_id}}"]
             },
             "description": "Delete an enterprise. Returns 204 No Content.",
             "auth": {
@@ -1530,12 +1381,8 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations"]
             },
             "description": "Create a new organization under an enterprise.\n\n**Auto-saves:** `organization_id` to collection variables."
           },
@@ -1548,12 +1395,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations"]
             },
             "description": "List all organizations."
           },
@@ -1567,13 +1410,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations",
-                "{{organization_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "{{organization_id}}"]
             },
             "description": "Get a single organization by its UUID."
           },
@@ -1587,14 +1425,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/enterprise/{{enterprise_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations",
-                "enterprise",
-                "{{enterprise_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "enterprise", "{{enterprise_id}}"]
             },
             "description": "Get all organizations that belong to a specific enterprise."
           },
@@ -1617,13 +1449,8 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations",
-                "{{organization_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "{{organization_id}}"]
             },
             "description": "Partially update an organization. All fields are optional."
           },
@@ -1637,13 +1464,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organizations",
-                "{{organization_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organizations", "{{organization_id}}"]
             },
             "description": "Delete an organization. Returns 204 No Content."
           },
@@ -1666,12 +1488,8 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-profiles",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organization-profiles"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organization-profiles"]
             },
             "description": "Create a new organization profile with legal name, GST, and registration details."
           },
@@ -1701,13 +1519,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organization-profiles",
-                "{{organization_profile_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organization-profiles", "{{organization_profile_id}}"]
             },
             "description": "Get an organization profile by its UUID."
           },
@@ -1721,9 +1534,7 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/organization/{{organization_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
+              "host": ["{{base_url}}"],
               "path": [
                 "organization-profiles",
                 "organization",
@@ -1751,13 +1562,8 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organization-profiles",
-                "{{organization_profile_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organization-profiles", "{{organization_profile_id}}"]
             },
             "description": "Partially update an organization profile."
           },
@@ -1771,13 +1577,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organization-profiles",
-                "{{organization_profile_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organization-profiles", "{{organization_profile_id}}"]
             },
             "description": "Delete an organization profile. Returns 204 No Content."
           },
@@ -1800,12 +1601,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policy-types",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policy-types"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types"]
                 }
               },
               "event": []
@@ -1826,12 +1623,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policy-types",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policy-types"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types"]
                 }
               },
               "event": [
@@ -1868,13 +1661,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policy-types",
-                    "{{policy_type_id}}"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types", "{{policy_type_id}}"]
                 }
               },
               "event": []
@@ -1886,13 +1674,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policy-types",
-                    "{{policy_type_id}}"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policy-types", "{{policy_type_id}}"]
                 }
               },
               "event": []
@@ -1909,13 +1692,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/grouped",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policies",
-                    "grouped"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "grouped"]
                 },
                 "description": "Get all policies grouped by their type. If user is an employee, only active policies are returned. If user can edit, all policies are returned."
               },
@@ -1928,13 +1706,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policies",
-                    "{{policy_id}}"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
                 }
               },
               "event": []
@@ -1955,12 +1728,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policies",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policies"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policies"]
                 }
               },
               "event": [
@@ -1997,13 +1766,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policies",
-                    "{{policy_id}}"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
                 }
               },
               "event": []
@@ -2015,13 +1779,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "policies",
-                    "{{policy_id}}"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["policies", "{{policy_id}}"]
                 }
               },
               "event": []
@@ -2083,12 +1842,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"]
                 }
               },
               "event": [
@@ -2126,14 +1881,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/employment",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "employment"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "employment"]
                 }
               },
               "event": [
@@ -2166,14 +1915,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/payroll",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "payroll"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "payroll"]
                 }
               },
               "event": [
@@ -2206,13 +1949,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/documents/upload-url",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "documents",
-                    "upload-url"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["documents", "upload-url"]
                 }
               },
               "event": [
@@ -2253,14 +1991,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/documents/{{document_id}}/upload",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "documents",
-                    "{{document_id}}",
-                    "upload"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["documents", "{{document_id}}", "upload"]
                 },
                 "description": "Upload the binary file. In Postman, go to Body -> form-data -> Hover over 'file' key and change type to 'File' -> Select your PDF."
               },
@@ -2294,14 +2026,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/documents",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "documents"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "documents"]
                 }
               },
               "event": [
@@ -2334,14 +2060,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/system-access",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "system-access"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "system-access"]
                 }
               },
               "event": [
@@ -2374,14 +2094,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "education"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education"]
                 }
               },
               "event": [
@@ -2418,14 +2132,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "experience"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience"]
                 }
               },
               "event": [
@@ -2462,14 +2170,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/onboard",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "onboard"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "onboard"]
                 },
                 "description": "Final step to transition employee from DRAFT to INVITED status."
               },
@@ -2499,12 +2201,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees"
-                  ],
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"],
                   "query": [
                     {
                       "key": "page",
@@ -2555,13 +2253,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/dropdown",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "dropdown"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "dropdown"]
                 },
                 "description": "Get a simplified list of employees (label/value) for dropdowns, scoped to the current organization."
               },
@@ -2574,13 +2267,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}"]
                 },
                 "description": "Get complete employee aggregate data."
               },
@@ -2602,12 +2290,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"]
                 },
                 "description": "Minimal request to save an employee as a draft (Step 1). Only first name, last name, and email are strictly required."
               },
@@ -2646,12 +2330,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees"]
                 }
               },
               "event": [
@@ -2680,13 +2360,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}"]
                 }
               },
               "event": []
@@ -2712,14 +2387,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/personal",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "personal"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "personal"]
                 }
               },
               "event": [
@@ -2752,14 +2421,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/employment",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "employment"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "employment"]
                 }
               },
               "event": [
@@ -2792,14 +2455,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/payroll",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "payroll"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "payroll"]
                 }
               },
               "event": [
@@ -2823,14 +2480,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/profile-completion",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "profile-completion"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "profile-completion"]
                 }
               },
               "event": []
@@ -2856,14 +2507,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/documents",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "documents"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "documents"]
                 }
               },
               "event": [
@@ -2896,14 +2541,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/system-access",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "system-access"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "system-access"]
                 }
               },
               "event": [
@@ -2941,14 +2580,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "education"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "education"]
                 }
               },
               "event": [
@@ -2985,9 +2618,7 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education/{{edu_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
+                  "host": ["{{base_url}}"],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -3017,9 +2648,7 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education/{{edu_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
+                  "host": ["{{base_url}}"],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -3058,14 +2687,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "experience"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "experience"]
                 }
               },
               "event": [
@@ -3102,9 +2725,7 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience/{{exp_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
+                  "host": ["{{base_url}}"],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -3134,9 +2755,7 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience/{{exp_id}}",
-                  "host": [
-                    "{{base_url}}"
-                  ],
+                  "host": ["{{base_url}}"],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -3180,9 +2799,7 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding/initiate",
-                  "host": [
-                    "{{base_url}}"
-                  ],
+                  "host": ["{{base_url}}"],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -3221,14 +2838,8 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "offboarding"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
                 }
               },
               "event": [
@@ -3252,14 +2863,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "offboarding"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
                 }
               },
               "event": []
@@ -3271,14 +2876,8 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": [
-                    "{{base_url}}"
-                  ],
-                  "path": [
-                    "employees",
-                    "{{user_id}}",
-                    "offboarding"
-                  ]
+                  "host": ["{{base_url}}"],
+                  "path": ["employees", "{{user_id}}", "offboarding"]
                 }
               },
               "event": []
@@ -3322,12 +2921,8 @@
             },
             "url": {
               "raw": "{{base_url}}/apps",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "apps"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["apps"]
             },
             "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority).",
             "auth": {
@@ -3350,12 +2945,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "apps"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["apps"]
             },
             "description": "List all registered applications, sorted by priority.",
             "auth": {
@@ -3379,13 +2970,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "apps",
-                "{{app_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["apps", "{{app_id}}"]
             },
             "description": "Get a single app by UUID.",
             "auth": {
@@ -3418,13 +3004,8 @@
             },
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "apps",
-                "{{app_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["apps", "{{app_id}}"]
             },
             "description": "Partially update an app.",
             "auth": {
@@ -3448,13 +3029,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "apps",
-                "{{app_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["apps", "{{app_id}}"]
             },
             "description": "Delete an app. Returns 204 No Content.",
             "auth": {
@@ -3508,12 +3084,8 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles"]
             },
             "description": "Create a new role scoped to an app.\n\n**Auto-saves:** `role_id` to collection variables."
           },
@@ -3526,12 +3098,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles"]
             },
             "description": "List all roles with their associated app."
           },
@@ -3545,13 +3113,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles",
-                "{{role_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
             },
             "description": "Get a single role by UUID."
           },
@@ -3565,14 +3128,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/app/{{app_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles",
-                "app",
-                "{{app_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles", "app", "{{app_id}}"]
             },
             "description": "Get all roles belonging to a specific app."
           },
@@ -3595,13 +3152,8 @@
             },
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles",
-                "{{role_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
             },
             "description": "Partially update a role."
           },
@@ -3615,13 +3167,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles",
-                "{{role_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
             },
             "description": "Delete a role. Returns 204 No Content."
           },
@@ -3644,12 +3191,8 @@
             },
             "url": {
               "raw": "{{base_url}}/user-role-maps",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "user-role-maps"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["user-role-maps"]
             },
             "description": "Assign a role to a user in a specific organization.\n\n**This is required before the user can login!**"
           },
@@ -3675,12 +3218,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "user-role-maps"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["user-role-maps"]
             },
             "description": "List all user-role assignments."
           },
@@ -3694,14 +3233,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps/user/{{user_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "user-role-maps",
-                "user",
-                "{{user_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["user-role-maps", "user", "{{user_id}}"]
             },
             "description": "Get all role assignments for a specific user."
           },
@@ -3715,13 +3248,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps/{{user_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "user-role-maps",
-                "{{user_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["user-role-maps", "{{user_id}}"]
             },
             "description": "Remove a role assignment. Returns 204 No Content."
           },
@@ -3745,12 +3273,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/menu",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "menu"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["menu"]
             },
             "description": "Returns the authenticated user's accessible module tree for the current app.\n\nThe response is a hierarchical tree where:\n- Each node has `id`, `name`, `wbs_code`, `actions[]`, and `children[]`\n- Only modules the user has permission to access are included\n- Actions are filtered by both role permissions AND plan restrictions\n- Tree is sorted by WBS code at each level"
           },
@@ -3789,13 +3313,8 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/upload-url",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "upload-url"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "upload-url"]
             }
           },
           "response": [],
@@ -3837,14 +3356,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/confirm",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}",
-                "confirm"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "confirm"]
             }
           },
           "response": [],
@@ -3879,13 +3392,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}"]
             },
             "description": "Get document metadata by UUID."
           },
@@ -3909,14 +3417,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/signed-url",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}",
-                "signed-url"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "signed-url"]
             },
             "description": "Get a short-lived signed URL for downloading a document."
           },
@@ -3940,13 +3442,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}"]
             },
             "description": "Delete a document record."
           },
@@ -3985,12 +3482,8 @@
             },
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "industry-types"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["industry-types"]
             }
           },
           "response": [],
@@ -4027,12 +3520,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "industry-types"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["industry-types"]
             }
           },
           "response": [],
@@ -4050,12 +3539,8 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/app-modules",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "app-modules"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["app-modules"]
             }
           },
           "event": []
@@ -4076,12 +3561,8 @@
             },
             "url": {
               "raw": "{{base_url}}/app-modules",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "app-modules"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["app-modules"]
             }
           },
           "event": [
@@ -4118,12 +3599,8 @@
             },
             "url": {
               "raw": "{{base_url}}/actions",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "actions"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["actions"]
             }
           },
           "event": [
@@ -4160,12 +3637,8 @@
             },
             "url": {
               "raw": "{{base_url}}/module-access",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "module-access"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["module-access"]
             }
           },
           "event": [
@@ -4233,12 +3706,8 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "plans"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["plans"]
             }
           },
           "event": []
@@ -4259,12 +3728,8 @@
             },
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "plans"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["plans"]
             }
           },
           "event": [
@@ -4299,12 +3764,8 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-subscriptions",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "organization-subscriptions"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["organization-subscriptions"]
             }
           },
           "event": [
@@ -4341,12 +3802,8 @@
             },
             "url": {
               "raw": "{{base_url}}/plan-modules",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "plan-modules"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["plan-modules"]
             }
           },
           "event": [
@@ -4379,12 +3836,8 @@
             },
             "url": {
               "raw": "{{base_url}}/plan-module-actions",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "plan-module-actions"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["plan-module-actions"]
             }
           },
           "event": [
@@ -4424,12 +3877,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "notifications"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["notifications"]
             },
             "description": "Get all active in-app notifications for the current user."
           },
@@ -4453,13 +3902,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/unread",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "notifications",
-                "unread"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "unread"]
             },
             "description": "Get only unread in-app notifications for the current user."
           },
@@ -4483,14 +3927,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/<NOTIFICATION_ID>/read",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "notifications",
-                "<NOTIFICATION_ID>",
-                "read"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "<NOTIFICATION_ID>", "read"]
             },
             "description": "Mark a specific notification as read."
           },
@@ -4514,13 +3952,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/read-all",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "notifications",
-                "read-all"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "read-all"]
             },
             "description": "Mark all notifications as read for the current user."
           },
@@ -4549,13 +3982,8 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/register",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "leads",
-                "register"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["leads", "register"]
             },
             "description": "Register a new lead. Sends a verification OTP to the provided email.\n\n**No authentication required.**\n\n**In dev mode:** Check the server console for the OTP log.\n\n**Validation:** email (unique), first_name (min 2), last_name (min 2), phone (E.164), password (strong), source (must be 'website')."
           },
@@ -4590,13 +4018,8 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/verify-otp",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "leads",
-                "verify-otp"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["leads", "verify-otp"]
             },
             "description": "Verify the OTP sent during lead registration.\n\n**On success:**\n- Lead is marked as verified\n- A User record is created from the lead details (first_name, last_name, email, phone, password_hash)\n- Both operations are wrapped in a transaction — if anything fails, everything rolls back.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -4668,12 +4091,8 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles"]
             },
             "description": "Create a new role. Only platform admins can set `is_system_defined: true`.\n\n**Auto-saves:** `role_id` to collection variables."
           },
@@ -4696,12 +4115,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["roles"],
               "query": [
                 {
                   "key": "page",
@@ -4753,13 +4168,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/filter?organization_id={{organization_id}}&enterprise_id={{enterprise_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles",
-                "filter"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["roles", "filter"],
               "query": [
                 {
                   "key": "organization_id",
@@ -4793,13 +4203,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles",
-                "{{role_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
             },
             "description": "Get a single role by its UUID."
           },
@@ -4832,13 +4237,8 @@
             },
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles",
-                "{{role_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
             },
             "description": "Partially update a role. All fields are optional. Only platform admins can modify system-defined roles."
           },
@@ -4862,13 +4262,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "roles",
-                "{{role_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
             },
             "description": "Soft delete a role. Returns 204 No Content. Only platform admins can delete system-defined roles."
           },
@@ -4922,12 +4317,8 @@
             },
             "url": {
               "raw": "{{base_url}}/departments",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "departments"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["departments"]
             },
             "description": "Create a new department. The organization is resolved from the authenticated user's profile."
           },
@@ -4950,12 +4341,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments?page=1&limit=10&search=&sort_by=name&sort_order=ASC",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "departments"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["departments"],
               "query": [
                 {
                   "key": "page",
@@ -5006,13 +4393,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "departments",
-                "{{department_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["departments", "{{department_id}}"]
             },
             "description": "Fetch details of a single department by its ID."
           },
@@ -5045,13 +4427,8 @@
             },
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "departments",
-                "{{department_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["departments", "{{department_id}}"]
             },
             "description": "Update department details. All fields are optional."
           },
@@ -5075,13 +4452,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "departments",
-                "{{department_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["departments", "{{department_id}}"]
             },
             "description": "Soft delete a department. Sets status to INACTIVE and is_deleted to true."
           },
@@ -5134,12 +4506,8 @@
             },
             "url": {
               "raw": "{{base_url}}/clients",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "clients"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["clients"]
             }
           },
           "response": []
@@ -5161,13 +4529,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "clients",
-                "{{client_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["clients", "{{client_id}}"]
             }
           },
           "response": [],
@@ -5199,13 +4562,8 @@
             },
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "clients",
-                "{{client_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["clients", "{{client_id}}"]
             }
           },
           "response": [],
@@ -5228,13 +4586,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "clients",
-                "{{client_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["clients", "{{client_id}}"]
             }
           },
           "response": [],
@@ -5257,12 +4610,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "clients"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["clients"]
             }
           },
           "response": [],
@@ -5290,12 +4639,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects?page=1&limit=10&sort_by=created_at&sort_order=DESC",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "projects"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["projects"],
               "query": [
                 {
                   "key": "page",
@@ -5361,14 +4706,8 @@
             },
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}/projects",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "clients",
-                "{{client_id}}",
-                "projects"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["clients", "{{client_id}}", "projects"]
             }
           },
           "response": []
@@ -5390,14 +4729,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}/projects",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "clients",
-                "{{client_id}}",
-                "projects"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["clients", "{{client_id}}", "projects"]
             }
           },
           "response": [],
@@ -5420,13 +4753,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "projects",
-                "{{project_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
             }
           },
           "response": [],
@@ -5458,13 +4786,8 @@
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "projects",
-                "{{project_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
             }
           },
           "response": [],
@@ -5487,13 +4810,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "projects",
-                "{{project_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
             }
           },
           "response": [],
@@ -5525,14 +4843,8 @@
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "projects",
-                "{{project_id}}",
-                "team"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "team"]
             }
           },
           "response": [],
@@ -5551,7 +4863,7 @@
           ]
         },
         {
-          "name": "Upload Contract",
+          "name": "Link Contract",
           "request": {
             "auth": {
               "type": "bearer",
@@ -5564,27 +4876,20 @@
               ]
             },
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file",
-                  "src": []
-                }
-              ]
+              "mode": "raw",
+              "raw": "{\n    \"documentId\": \"{{document_id}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/contract",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "projects",
-                "{{project_id}}",
-                "contract"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "contract"]
             }
           },
           "response": [],
@@ -5594,7 +4899,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Contract uploaded successful.');",
+                  "    console.log('✅ Contract linked successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -5619,14 +4924,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "projects",
-                "{{project_id}}",
-                "team"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "team"]
             },
             "description": "Returns a detailed list of team members assigned to the project, including roles and user profiles."
           },
@@ -5650,19 +4949,29 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/contracts",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "projects",
-                "{{project_id}}",
-                "contracts"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "contracts"]
             },
             "description": "Returns a list of all contract documents uploaded for the project."
           },
           "response": [],
-          "event": []
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.length > 0) {",
+                  "        pm.collectionVariables.set('contract_id', response[0].id);",
+                  "        console.log('✅ Contract ID saved:', response[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Remove Team Member",
@@ -5681,17 +4990,40 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team/{{user_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "team", "{{user_id}}"]
+            },
+            "description": "Removes a single team member from the project."
+          },
+          "response": [],
+          "event": []
+        },
+        {
+          "name": "Delete Contract",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/contracts/{{contract_id}}",
+              "host": ["{{base_url}}"],
               "path": [
                 "projects",
                 "{{project_id}}",
-                "team",
-                "{{user_id}}"
+                "contracts",
+                "{{contract_id}}"
               ]
             },
-            "description": "Removes a single team member from the project."
+            "description": "Removes a contract from the project and deletes the associated document."
           },
           "response": [],
           "event": []
@@ -5742,13 +5074,8 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "holidays",
-                "calendars"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars"]
             }
           },
           "response": []
@@ -5770,13 +5097,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars?year=2026",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "holidays",
-                "calendars"
-              ],
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars"],
               "query": [
                 {
                   "key": "year",
@@ -5829,15 +5151,8 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/holidays",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "holidays",
-                "calendars",
-                "{{calendar_id}}",
-                "holidays"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}", "holidays"]
             }
           },
           "response": []
@@ -5859,9 +5174,7 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/month-view?month=1",
-              "host": [
-                "{{base_url}}"
-              ],
+              "host": ["{{base_url}}"],
               "path": [
                 "holidays",
                 "calendars",
@@ -5896,15 +5209,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/activate",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "holidays",
-                "calendars",
-                "{{calendar_id}}",
-                "activate"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}", "activate"]
             }
           },
           "response": [],
@@ -5948,15 +5254,8 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/clone",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "holidays",
-                "calendars",
-                "{{calendar_id}}",
-                "clone"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}", "clone"]
             }
           },
           "response": [],
@@ -5995,13 +5294,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/employee/holidays",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "employee",
-                "holidays"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["employee", "holidays"]
             }
           },
           "response": [],
@@ -6024,13 +5318,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/{{holiday_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "holidays",
-                "{{holiday_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "{{holiday_id}}"]
             }
           },
           "response": [],
@@ -6053,14 +5342,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "holidays",
-                "calendars",
-                "{{calendar_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["holidays", "calendars", "{{calendar_id}}"]
             }
           },
           "response": [],
@@ -6098,13 +5381,8 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/upload-url",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "upload-url"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "upload-url"]
             }
           },
           "response": [],
@@ -6156,14 +5434,8 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/upload",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}",
-                "upload"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "upload"]
             }
           },
           "response": [],
@@ -6207,14 +5479,8 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/confirm",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}",
-                "confirm"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "confirm"]
             }
           },
           "response": [],
@@ -6249,13 +5515,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}"]
             }
           },
           "response": [],
@@ -6278,14 +5539,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/signed-url",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}",
-                "signed-url"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "signed-url"]
             }
           },
           "response": [],
@@ -6308,14 +5563,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/view",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}",
-                "view"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "view"]
             }
           },
           "response": [],
@@ -6338,14 +5587,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/download",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}",
-                "download"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}", "download"]
             }
           },
           "response": [],
@@ -6368,13 +5611,8 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "documents",
-                "{{document_id}}"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}"]
             }
           },
           "response": [],

@@ -34,4 +34,7 @@ export class ProjectContract {
 
   @Column({ type: 'uuid' })
   uploaded_by: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  document_id: string;
 }
