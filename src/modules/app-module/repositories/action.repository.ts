@@ -41,10 +41,49 @@ export class ActionRepository {
     });
   }
 
+  async findByCode(code: string): Promise<Action | null> {
+    return this.repository.findOne({
+      where: { code: code.toLowerCase(), status: 'ACTIVE' as any },
+    });
+  }
+
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
       status: 'DELETED' as any,
     });
     return (result.affected ?? 0) > 0;
+  }
+
+  async syncActionsCodeAndName(): Promise<void> {
+    console.log('--- DB SYNC: Running Action Code/Name Sync (QueryBuilder) ---');
+    try {
+      // 1. Update all actions where code is not set or inconsistent
+      // Using QueryBuilder avoids manual schema/quoting issues
+      const actions = await this.repository.find();
+      
+      for (const action of actions) {
+        let changed = false;
+        const correctCode = action.name.toLowerCase();
+        const correctName = action.name.charAt(0).toUpperCase() + action.name.slice(1).toLowerCase();
+
+        if (action.code !== correctCode) {
+          action.code = correctCode;
+          changed = true;
+        }
+        if (action.name !== correctName) {
+          action.name = correctName;
+          changed = true;
+        }
+
+        if (changed) {
+          await this.repository.save(action);
+        }
+      }
+      
+      console.log('--- DB SYNC: Completed Successfully (Standardized All Actions) ---');
+    } catch (err) {
+      console.error('--- DB SYNC: FAILED ---');
+      console.error(err);
+    }
   }
 }

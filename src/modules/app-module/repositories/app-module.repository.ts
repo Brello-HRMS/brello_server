@@ -33,7 +33,7 @@ export class AppModuleRepository {
 
   async findByCodeAndApp(code: string, app_id: string): Promise<AppModule | null> {
     return this.repository.findOne({
-      where: { code, app_id, status: 'ACTIVE' as any },
+      where: { code: code.toUpperCase(), app_id, status: 'ACTIVE' as any },
     });
   }
 

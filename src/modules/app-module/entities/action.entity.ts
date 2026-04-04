@@ -10,7 +10,7 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 @Entity('actions')
 @Index(['name'], { unique: true })
 export class Action extends BaseEntity {
-  /** Unique action name (view | create | update | delete | approve | export) */
+  /** action name for UI display (e.g., View, Create, Update, Delete) */
   @Column({ type: 'varchar', length: 50, unique: true })
   name: string;
 }
