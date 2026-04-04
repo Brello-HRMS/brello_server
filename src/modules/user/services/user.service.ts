@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository';
+import { UserDepartmentRepository } from '../repositories/department.repository';
+import { UserDesignationRepository } from '../repositories/designation.repository';
 import { EnterpriseService } from '../../enterprise/services/enterprise.service';
 import { OrganizationService } from '../../organization/services/organization.service';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -30,6 +32,8 @@ export class UserService {
 
   constructor(
     private readonly userRepository: UserRepository,
+    private readonly departmentRepository: UserDepartmentRepository,
+    private readonly designationRepository: UserDesignationRepository,
     private readonly enterpriseService: EnterpriseService,
     @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
@@ -133,33 +137,16 @@ export class UserService {
   }
 
   // Get all employees (users with both department and designation mapped)
+  // Routes to department or designation repository based on which context ID is provided.
   async findAll(
     loggedInUser: LoggedInUser,
     query: ListEmployeesDto,
   ): Promise<PaginatedResponse<any>> {
     this.logger.log('Fetching employee users (fully mapped)');
-    const qb = this.userRepository.getListingQueryBuilder('user');
 
-    // Only show users with both department and designation mapped
-    qb.andWhere('user.department_id IS NOT NULL')
-      .andWhere('user.designation_id IS NOT NULL');
-
-    // Optional drill-down by specific department or designation
-    if (query.departmentId) {
-      qb.andWhere('user.department_id = :deptId', { deptId: query.departmentId });
-    }
-
-    if (query.designationId) {
-      qb.andWhere('user.designation_id = :desigId', {
-        desigId: query.designationId,
-      });
-    }
-
-    if (query.status) {
-      qb.andWhere('user.status = :status', { status: query.status });
-    } else {
-      qb.andWhere('user.status != :deleted', { deleted: Status.DELETED });
-    }
+    const qb = query.designationId
+      ? this.designationRepository.getEmployeeListingQueryBuilder(query)
+      : this.departmentRepository.getEmployeeListingQueryBuilder(query);
 
     const response = await ListingHelper.apply(
       qb,
@@ -181,22 +168,24 @@ export class UserService {
   }
 
   // Get general users (users missing department or designation mapping)
+  // Routes to department or designation repository based on which context ID is provided.
   async findGeneralUsers(
     loggedInUser: LoggedInUser,
     query: ListEmployeesDto,
   ): Promise<PaginatedResponse<any>> {
     this.logger.log('Fetching general users (unmapped or partially mapped)');
-    const qb = this.userRepository.getListingQueryBuilder('user');
 
-    // Only show users missing department OR designation
-    qb.andWhere(
-      '(user.department_id IS NULL OR user.designation_id IS NULL)',
-    );
-
-    if (query.status) {
-      qb.andWhere('user.status = :status', { status: query.status });
+    let qb: any;
+    if (query.departmentId) {
+      qb = this.departmentRepository.getGeneralListingQueryBuilder(query);
+    } else if (query.designationId) {
+      qb = this.designationRepository.getGeneralListingQueryBuilder(query);
     } else {
-      qb.andWhere('user.status != :deleted', { deleted: Status.DELETED });
+      const baseQb = this.userRepository.getListingQueryBuilder('user');
+      baseQb
+        .andWhere('(user.department_id IS NULL OR user.designation_id IS NULL)')
+        .andWhere('user.status != :deleted', { deleted: Status.DELETED });
+      qb = baseQb;
     }
 
     const response = await ListingHelper.apply(
@@ -265,35 +254,24 @@ export class UserService {
     }));
   }
 
-  // Provide functionality to map missing departmentId and designationId
+  // Map missing departmentId and/or designationId for a user
   async mapDepartmentAndDesignation(
     dto: MapDepartmentDesignationDto,
     loggedInUser: LoggedInUser,
   ): Promise<User> {
     this.logger.log(`Mapping department/designation for user: ${dto.userId}`);
 
-    // Verify user exists and check scope implicitly
     const user = await this.findOne(dto.userId, loggedInUser);
 
-    const updateData: Partial<User> = {};
-
-    // Identify users whose departmentId is missing and update only the missing fields
     if (!user.department_id && dto.departmentId) {
-      updateData.department_id = dto.departmentId;
+      await this.departmentRepository.mapDepartment(dto.userId, dto.departmentId);
     }
 
-    // Identify users whose designationId is missing and update only the missing fields
     if (!user.designation_id && dto.designationId) {
-      updateData.designation_id = dto.designationId;
+      await this.designationRepository.mapDesignation(dto.userId, dto.designationId);
     }
 
-    if (Object.keys(updateData).length === 0) {
-      this.logger.log(`No missing fields to update for user: ${dto.userId}`);
-      return user;
-    }
-
-    const updatedUser = await this.userRepository.update(dto.userId, updateData);
-
+    const updatedUser = await this.userRepository.findById(dto.userId);
     if (!updatedUser) {
       throw new NotFoundException(`User with ID '${dto.userId}' not found after update`);
     }
@@ -302,33 +280,24 @@ export class UserService {
     return updatedUser;
   }
 
-  // Provide functionality to unmap departmentId and designationId
+  // Unmap departmentId and/or designationId for a user
   async unmapDepartmentAndDesignation(
     dto: UnmapDepartmentDesignationDto,
     loggedInUser: LoggedInUser,
   ): Promise<User> {
     this.logger.log(`Unmapping department/designation for user: ${dto.userId}`);
 
-    // Verify user exists
-    const user = await this.findOne(dto.userId, loggedInUser);
-
-    const updateData: Partial<User> = {};
+    await this.findOne(dto.userId, loggedInUser);
 
     if (dto.unmapDepartment) {
-      updateData.department_id = null as any;
+      await this.departmentRepository.unmapDepartment(dto.userId);
     }
 
     if (dto.unmapDesignation) {
-      updateData.designation_id = null as any;
+      await this.designationRepository.unmapDesignation(dto.userId);
     }
 
-    if (Object.keys(updateData).length === 0) {
-      this.logger.log(`No fields to unmap for user: ${dto.userId}`);
-      return user;
-    }
-
-    const updatedUser = await this.userRepository.update(dto.userId, updateData);
-
+    const updatedUser = await this.userRepository.findById(dto.userId);
     if (!updatedUser) {
       throw new NotFoundException(`User with ID '${dto.userId}' not found after update`);
     }

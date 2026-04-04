@@ -15,6 +15,8 @@ import { EmployeeOffboarding } from './entities/offboarding.entity';
 import { AuditLog } from './entities/audit-log.entity';
 
 import { UserRepository } from './repositories/user.repository';
+import { UserDepartmentRepository } from './repositories/department.repository';
+import { UserDesignationRepository } from './repositories/designation.repository';
 import { UserProfileRepository } from './repositories/user-profile.repository';
 import { UserEducationRepository } from './repositories/user-education.repository';
 import { UserExperienceRepository } from './repositories/user-experience.repository';
@@ -57,6 +59,8 @@ import { OrganizationModule } from '../organization/organization.module';
   providers: [
     UserService,
     UserRepository,
+    UserDepartmentRepository,
+    UserDesignationRepository,
     EmployeeService,
     OffboardingCronService,
     UserProfileRepository,
@@ -70,6 +74,6 @@ import { OrganizationModule } from '../organization/organization.module';
     EmployeeOffboardingRepository,
     AuditLogRepository,
   ],
-  exports: [UserService, EmployeeService, UserRepository],
+  exports: [UserService, EmployeeService, UserRepository, UserDepartmentRepository, UserDesignationRepository],
 })
 export class UserModule {}
