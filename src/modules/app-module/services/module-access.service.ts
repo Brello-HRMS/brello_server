@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ModuleAccess } from '../entities/module-access.entity';
 import { ModuleAccessRepository } from '../repositories/module-access.repository';
 import {
@@ -13,7 +13,7 @@ import { UserRoleMapRepository } from '../../rbac/repositories/user-role-map.rep
 import { Status } from '../../../common/enums';
 
 @Injectable()
-export class ModuleAccessService {
+export class ModuleAccessService implements OnModuleInit {
   private readonly logger = new Logger(ModuleAccessService.name);
  
   constructor(
@@ -22,6 +22,10 @@ export class ModuleAccessService {
     private readonly actionRepository: ActionRepository,
     private readonly userRoleMapRepository: UserRoleMapRepository,
   ) {}
+
+  async onModuleInit() {
+    await this.actionRepository.syncActionsCodeAndName();
+  }
 
   async create(dto: CreateModuleAccessDto, user?: LoggedInUser): Promise<ModuleAccess> {
     this.logger.log(`Creating module access configuration`);
@@ -45,7 +49,7 @@ export class ModuleAccessService {
       throw new NotFoundException(`Module with code ${dto.module_code} not found or active in this app.`);
     }
 
-    const action = await this.actionRepository.findByName(dto.action_code);
+    const action = await this.actionRepository.findByCode(dto.action_code);
     if (!action) {
       throw new NotFoundException(`Action with code ${dto.action_code} not found or active.`);
     }
@@ -59,16 +63,34 @@ export class ModuleAccessService {
       throw new NotFoundException(`No active role found for user in the current app and organization.`);
     }
 
-    const moduleAccess = this.moduleAccessRepository.create({
-      role_id: activeRoleMap.role_id,
-      module_id: appModule.id,
-      action_id: action.id,
-      access_flag: dto.access_flag ?? true,
+    this.logger.log(`Resolved Role: ${activeRoleMap.role.name} (ID: ${activeRoleMap.role_id})`);
+
+    // UPSERT: Check if configuration already exists
+    let moduleAccess = await this.moduleAccessRepository.findOne({
+      where: {
+        role_id: activeRoleMap.role_id,
+        module_id: appModule.id,
+        action_id: action.id,
+      },
     });
+
+    if (moduleAccess) {
+      this.logger.log(`Updating existing module access for Action: ${action.name}`);
+      moduleAccess.access_flag = dto.access_flag ?? true;
+    } else {
+      this.logger.log(`Creating new module access for Action: ${action.name}`);
+      moduleAccess = this.moduleAccessRepository.create({
+        role_id: activeRoleMap.role_id,
+        module_id: appModule.id,
+        action_id: action.id,
+        access_flag: dto.access_flag ?? true,
+      });
+    }
 
     try {
       return await this.moduleAccessRepository.save(moduleAccess);
     } catch (error) {
+      this.logger.error(`Failed to save module access: ${error.message}`);
       throw new ConflictException(
         'This role already has a configuration for this action on this module.',
       );

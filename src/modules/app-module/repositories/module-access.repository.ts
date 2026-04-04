@@ -36,6 +36,11 @@ export class ModuleAccessRepository {
     return moduleAccess;
   }
 
+
+  async findOne(options: any): Promise<ModuleAccess | null> {
+    return this.repository.findOne(options);
+  }
+
   async findByRole(roleId: string): Promise<ModuleAccess[]> {
     return this.repository.find({
       where: { role_id: roleId },
