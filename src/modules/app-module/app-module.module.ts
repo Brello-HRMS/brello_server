@@ -5,11 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppModule as AppModuleEntity } from './entities/app-module.entity';
 import { Action } from './entities/action.entity';
 import { ModuleAccess } from './entities/module-access.entity';
+import { UserRoleMap } from '../rbac/entities/user-role-map.entity';
 
 // Repositories
 import { AppModuleRepository } from './repositories/app-module.repository';
 import { ActionRepository } from './repositories/action.repository';
 import { ModuleAccessRepository } from './repositories/module-access.repository';
+import { UserRoleMapRepository } from '../rbac/repositories/user-role-map.repository';
 
 // Services
 import { AppModuleService } from './services/app-module.service';
@@ -22,12 +24,13 @@ import { ActionController } from './controllers/action.controller';
 import { ModuleAccessController } from './controllers/module-access.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AppModuleEntity, Action, ModuleAccess])],
+  imports: [TypeOrmModule.forFeature([AppModuleEntity, Action, ModuleAccess, UserRoleMap])],
   controllers: [AppModuleController, ActionController, ModuleAccessController],
   providers: [
     AppModuleRepository,
     ActionRepository,
     ModuleAccessRepository,
+    UserRoleMapRepository,
     AppModuleService,
     ActionService,
     ModuleAccessService,
@@ -36,6 +39,7 @@ import { ModuleAccessController } from './controllers/module-access.controller';
     AppModuleRepository,
     ActionRepository,
     ModuleAccessRepository,
+    UserRoleMapRepository,
     AppModuleService,
     ActionService,
     ModuleAccessService,

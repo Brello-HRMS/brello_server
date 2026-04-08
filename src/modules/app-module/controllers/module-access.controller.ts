@@ -15,6 +15,7 @@ import { ModuleAccessService } from '../services/module-access.service';
 import {
   CreateModuleAccessDto,
   UpdateModuleAccessDto,
+  AssignModuleAccessByCodeDto,
 } from '../dto/module-access.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
@@ -32,6 +33,15 @@ export class ModuleAccessController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.moduleAccessService.create(createModuleAccessDto, user);
+  }
+
+  @Post('by-code')
+  @HttpCode(HttpStatus.CREATED)
+  assignByCode(
+    @Body() dto: AssignModuleAccessByCodeDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.moduleAccessService.assignByCode(dto, user);
   }
 
   @Get()

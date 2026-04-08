@@ -114,6 +114,7 @@ export class PermissionResolverService {
   /**
    * Check if a user has a specific action on a module (by module code).
    */
+
   async hasPermission(
     user: LoggedInUser,
     moduleCode: string,
@@ -122,7 +123,8 @@ export class PermissionResolverService {
     const resolved = await this.resolve(user);
     for (const mod of resolved.modules) {
       if (mod.code === moduleCode) {
-        return mod.actions.has(actionName);
+        // Case-insensitive check
+        return [...mod.actions].some(a => a.toLowerCase() === actionName.toLowerCase());
       }
     }
     return false;

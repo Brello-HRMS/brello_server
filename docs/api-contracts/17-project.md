@@ -136,15 +136,19 @@ Assigns or replaces the project team members and their roles.
 
 ---
 
-## 7. Upload Contract
+## 7. Link Contract
 
 `POST /projects/:id/contract`
 
-Uploads a project contract file (multipart/form-data).
+Links an already uploaded document as a project contract.
 
-### Form Data
+### Request Body
 
-- `file`: The contract file (PDF, DOCX, etc.)
+```json
+{
+  "documentId": "uuid"
+}
+```
 
 ### Response (201 Created)
 
@@ -214,6 +218,20 @@ Returns the list of contract documents uploaded for the project.
 `DELETE /projects/:id/team/:userId`
 
 Removes a single member from the project team.
+
+### Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+## 11. Delete Contract
+
+`DELETE /projects/:id/contracts/:contractId`
+
+Removes a contract from the project and automatically deletes the associated document record from the system.
 
 ### Response (200 OK)
 
