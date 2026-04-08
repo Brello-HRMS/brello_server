@@ -36,17 +36,11 @@ export class PfConfigService {
   async getConfig(
     enterpriseId: string,
     organizationId: string,
-  ): Promise<PfConfig> {
+  ): Promise<PfConfig | null> {
     const config = await this.pfConfigRepository.findOne({
       where: { enterprise_id: enterpriseId, organization_id: organizationId },
     });
 
-    if (!config) {
-      throw new NotFoundException(
-        'PF configuration not found for this organization',
-      );
-    }
-
-    return config;
+    return config || null;
   }
 }

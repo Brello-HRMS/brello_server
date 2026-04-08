@@ -36,17 +36,11 @@ export class PayrollService {
   async getSetting(
     enterpriseId: string,
     organizationId: string,
-  ): Promise<PayrollSetting> {
+  ): Promise<PayrollSetting | null> {
     const setting = await this.payrollSettingRepository.findOne({
       where: { enterprise_id: enterpriseId, organization_id: organizationId },
     });
 
-    if (!setting) {
-      throw new NotFoundException(
-        'Payroll setting not found for this organization',
-      );
-    }
-
-    return setting;
+    return setting || null;
   }
 }

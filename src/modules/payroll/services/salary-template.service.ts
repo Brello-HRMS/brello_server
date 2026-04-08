@@ -81,60 +81,104 @@ export class SalaryTemplateEngine {
     return template;
   }
 
+  async getAllTemplates(
+    enterpriseId: string,
+    organizationId: string,
+  ): Promise<SalaryTemplate[]> {
+    return this.templateRepository.find({
+      where: { enterprise_id: enterpriseId, organization_id: organizationId },
+      relations: ['components', 'components.component'],
+    });
+  }
+
   private validateDependencies(
-    dbComponents: PayrollComponent[],
-    dtos: { component_id: string; override_config?: Record<string, any> }[],
+    databaseComponents: PayrollComponent[],
+    componentDtos: {
+      component_id: string;
+      override_config?: Record<string, any>;
+      sort_order: number;
+    }[],
   ) {
+    const VIRTUAL_BASES = ['CTC'];
     const componentMap = new Map(
-      dbComponents.map((dbComponent) => [dbComponent.id, dbComponent]),
+      databaseComponents.map((component) => [component.id, component]),
     );
-    const resolved = new Set<string>();
-    const visiting = new Set<string>();
 
-    const dfs = (id: string) => {
-      if (resolved.has(id)) return;
-      if (visiting.has(id))
+    const componentDtoMap = new Map(
+      componentDtos.map((dto) => [dto.component_id, dto]),
+    );
+
+    const resolvedComponents = new Set<string>();
+    const visitingComponents = new Set<string>();
+
+    const validateComponentDependencies = (componentId: string) => {
+      if (resolvedComponents.has(componentId)) return;
+      if (visitingComponents.has(componentId)) {
         throw new BadRequestException(
-          `Circular dependency detected for component ID ${id}`,
+          `Circular dependency detected for component ID ${componentId}`,
         );
+      }
 
-      visiting.add(id);
-      const dbComp = componentMap.get(id);
-      const dtoComp = dtos.find(
-        (dtoComponent) => dtoComponent.component_id === id,
-      );
+      visitingComponents.add(componentId);
 
-      // Merge config to check dependencies
-      const config = {
-        ...dbComp?.calculation_value,
-        ...dtoComp?.override_config,
+      const databaseComponent = componentMap.get(componentId);
+      const dtoComponent = componentDtoMap.get(componentId);
+
+      if (!databaseComponent || !dtoComponent) {
+        throw new BadRequestException(
+          `Component context missing for ID ${componentId}`,
+        );
+      }
+
+      // Merge configuration to check dependencies
+      const configuration = {
+        ...(databaseComponent.calculation_value as Record<string, any>),
+        ...(dtoComponent.override_config as Record<string, any>),
       };
 
-      if (config && config.base) {
-        // Base can be a single string or an array of strings depending on complex formulas
-        const dependencies = Array.isArray(config.base)
-          ? config.base
-          : [config.base];
+      if (configuration && configuration.base) {
+        const dependencies = Array.isArray(configuration.base)
+          ? configuration.base
+          : [configuration.base];
 
-        for (const depName of dependencies) {
-          const depComp = dbComponents.find(
-            (dbComponent) => dbComponent.name === depName,
+        for (const dependencyName of dependencies) {
+          // 1. Allow built-in virtual bases
+          if (VIRTUAL_BASES.includes(dependencyName.toUpperCase())) {
+            continue;
+          }
+
+          // 2. Find dependency in the template's components
+          const dependencyComponent = databaseComponents.find(
+            (component) => component.name === dependencyName,
           );
-          if (!depComp) {
+
+          if (!dependencyComponent) {
             throw new BadRequestException(
-              `Dependency '${depName}' for component ID ${id} is missing in the template.`,
+              `Dependency '${dependencyName}' for component '${databaseComponent.name}' is missing in the template. Every component in a formula must be included in the template.`,
             );
           }
-          dfs(depComp.id);
+
+          // 3. Strict Sort Order Check: Dependency must be calculated BEFORE dependent
+          const dependencyDto = componentDtoMap.get(dependencyComponent.id);
+          if (
+            dependencyDto &&
+            dependencyDto.sort_order >= dtoComponent.sort_order
+          ) {
+            throw new BadRequestException(
+              `Calculation sequence error: '${dependencyComponent.name}' must have a lower sort_order than '${databaseComponent.name}' because '${databaseComponent.name}' depends on it.`,
+            );
+          }
+
+          validateComponentDependencies(dependencyComponent.id);
         }
       }
 
-      visiting.delete(id);
-      resolved.add(id);
+      visitingComponents.delete(componentId);
+      resolvedComponents.add(componentId);
     };
 
-    for (const id of componentMap.keys()) {
-      dfs(id);
+    for (const componentId of componentMap.keys()) {
+      validateComponentDependencies(componentId);
     }
   }
 }

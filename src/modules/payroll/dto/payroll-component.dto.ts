@@ -4,8 +4,21 @@ import {
   IsBoolean,
   IsOptional,
   IsObject,
+  ValidateNested,
+  IsNumber,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ComponentType, CalculationType } from '../enums/payroll.enum';
+
+export class CalculationValueDto {
+  @IsOptional()
+  @IsNumber()
+  value?: number;
+
+  @IsOptional()
+  @IsString()
+  base?: string;
+}
 
 export class CreatePayrollComponentDto {
   @IsString()
@@ -19,7 +32,9 @@ export class CreatePayrollComponentDto {
 
   @IsOptional()
   @IsObject()
-  calculation_value?: Record<string, any>;
+  @ValidateNested()
+  @Type(() => CalculationValueDto)
+  calculation_value?: CalculationValueDto;
 
   @IsOptional()
   @IsBoolean()

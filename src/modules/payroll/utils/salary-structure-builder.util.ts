@@ -5,7 +5,11 @@ import { CalculationType, ComponentType } from '../enums/payroll.enum';
  * Ensures consistency between dry-run simulations and actual employee assignments.
  */
 export class SalaryStructureBuilder {
-  static build(template: any, ctc: number, overrides?: Record<string, any>) {
+  static build(
+    template: any,
+    costToCompany: number,
+    overrides?: Record<string, any>,
+  ) {
     // Sort components by sort_order
     const components = template.components.sort(
       (componentA, componentB) => componentA.sort_order - componentB.sort_order,
@@ -15,36 +19,47 @@ export class SalaryStructureBuilder {
     const deductions: any[] = [];
     const calculationContext: Record<string, number> = {};
 
-    for (const templateComponent of components) {
-      const databaseComponent = templateComponent.component;
-      const config = {
+    for (const templateComponentItem of components) {
+      const databaseComponent = templateComponentItem.component;
+      const configuration = {
         ...databaseComponent.calculation_value,
-        ...templateComponent.override_config,
+        ...templateComponentItem.override_config,
       };
 
       // Apply overrides if any
       if (overrides && overrides[databaseComponent.name]) {
-        Object.assign(config, overrides[databaseComponent.name]);
+        Object.assign(configuration, overrides[databaseComponent.name]);
       }
 
       let value = 0;
       if (databaseComponent.calculation_type === CalculationType.FIXED) {
-        value = config.value || 0;
+        value = configuration.value || 0;
       } else if (
         databaseComponent.calculation_type === CalculationType.PERCENTAGE
       ) {
-        const base = config.base;
-        const baseVal = calculationContext[base] || ctc; // Default to CTC if base not found
-        value = (baseVal * (config.value || 0)) / 100;
+        const base = configuration.base;
+        let baseValue = 0;
+
+        if (base === 'CTC') {
+          baseValue = costToCompany;
+        } else if (calculationContext[base] !== undefined) {
+          baseValue = calculationContext[base];
+        } else {
+          throw new Error(
+            `Calculation Error: Dependency '${base}' for component '${databaseComponent.name}' was not found in the current sequence. Ensure the base component is added to the template and has a lower sort order.`,
+          );
+        }
+
+        value = (baseValue * (configuration.value || 0)) / 100;
       } else if (
         databaseComponent.calculation_type === CalculationType.RESIDUAL
       ) {
         const totalEarnings = earnings.reduce(
-          (acc, earningItem) => acc + earningItem.value,
+          (total, earningItem) => total + earningItem.value,
           0,
         );
         // Residual takes what's left of CTC after other earnings
-        value = Math.max(0, ctc - totalEarnings);
+        value = Math.max(0, costToCompany - totalEarnings);
       }
 
       calculationContext[databaseComponent.name] = value;
@@ -54,7 +69,7 @@ export class SalaryStructureBuilder {
         name: databaseComponent.name,
         type: databaseComponent.type, // earning or deduction
         calculation_type: databaseComponent.calculation_type, // fixed, percentage, residual
-        base: config.base,
+        base: configuration.base,
         value: value,
       };
 

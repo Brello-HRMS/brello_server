@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Put,
+  Delete,
   Body,
   Param,
   HttpCode,
@@ -97,6 +98,11 @@ export class PayrollController {
     return this.componentMasterService.updateComponent(id, dto);
   }
 
+  @Delete('component-master/:id')
+  async deleteComponent(@Param('id') id: string) {
+    return this.componentMasterService.deleteComponent(id);
+  }
+
   // --- PF Configuration ---
   @Put('statutory-pf-config')
   async updatePfConfig(
@@ -134,6 +140,14 @@ export class PayrollController {
   @Get('salary-templates/:id')
   async getTemplate(@Param('id') id: string) {
     return this.salaryTemplateEngine.getTemplateById(id);
+  }
+
+  @Get('salary-templates')
+  async getAllTemplates(@CurrentUser() user: AuthPayload) {
+    return this.salaryTemplateEngine.getAllTemplates(
+      user.enterpriseId,
+      user.organizationId,
+    );
   }
 
   // --- Dry Run ---
