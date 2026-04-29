@@ -3,38 +3,37 @@ import {
   IsString,
   IsBoolean,
   IsOptional,
-  IsObject,
-  ValidateNested,
   IsNumber,
+  IsUUID,
+  IsInt,
+  Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ComponentType, CalculationType } from '../enums/payroll.enum';
-
-export class CalculationValueDto {
-  @IsOptional()
-  @IsNumber()
-  value?: number;
-
-  @IsOptional()
-  @IsString()
-  base?: string;
-}
+import {
+  ComponentType,
+  ComponentCategory,
+  CalculationType,
+} from '../enums/payroll.enum';
 
 export class CreatePayrollComponentDto {
   @IsString()
   name: string;
 
   @IsEnum(ComponentType)
-  type: ComponentType;
+  component_type: ComponentType;
+
+  @IsEnum(ComponentCategory)
+  category: ComponentCategory;
 
   @IsEnum(CalculationType)
   calculation_type: CalculationType;
 
   @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => CalculationValueDto)
-  calculation_value?: CalculationValueDto;
+  @IsUUID()
+  calculate_from?: string;
+
+  @IsOptional()
+  @IsNumber()
+  value?: number;
 
   @IsOptional()
   @IsBoolean()
@@ -42,9 +41,29 @@ export class CreatePayrollComponentDto {
 
   @IsOptional()
   @IsBoolean()
-  is_system_defined?: boolean;
+  is_residual?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  calculation_priority?: number;
+}
+
+export class UpdatePayrollComponentDto {
+  @IsOptional()
+  @IsNumber()
+  value?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  calculation_priority?: number;
 
   @IsOptional()
   @IsBoolean()
   is_active?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  is_taxable?: boolean;
 }

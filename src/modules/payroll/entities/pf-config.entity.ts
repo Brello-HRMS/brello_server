@@ -10,11 +10,14 @@ export class PfConfig extends BaseEntity {
   employer_contribution: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  min_salary_threshold: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  wage_ceiling: number;
+  minimum_salary_threshold: number;
 
   @Column({ type: 'boolean', default: true })
-  salary_ceiling_enabled: boolean;
+  is_enabled: boolean;
+
+  @Column({ type: 'date' })
+  effective_from: Date;
+
+  @Column({ type: 'date', nullable: true })
+  effective_to: Date;
 }

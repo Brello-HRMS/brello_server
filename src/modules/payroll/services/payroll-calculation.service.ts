@@ -87,12 +87,9 @@ export class PayrollCalculationEngine {
 
     if (
       basicComp &&
-      basicComp.calculated_value >= pfConfig.min_salary_threshold
+      basicComp.calculated_value >= pfConfig.minimum_salary_threshold
     ) {
-      let applicableSalary = basicComp.calculated_value;
-      if (pfConfig.salary_ceiling_enabled && pfConfig.wage_ceiling) {
-        applicableSalary = Math.min(applicableSalary, pfConfig.wage_ceiling);
-      }
+      const applicableSalary = basicComp.calculated_value;
 
       const employeePf =
         (applicableSalary * pfConfig.employee_contribution) / 100;
