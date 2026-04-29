@@ -3703,7 +3703,8 @@
                 "module-access",
                 "by-code"
               ]
-            }
+            },
+            "description": "Assign module access to the user's role by string codes. This also automatically configures the organization's active plan to include the module and action, ensuring they appear in the UI menu."
           },
           "event": [
             {

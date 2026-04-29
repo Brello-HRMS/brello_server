@@ -23,8 +23,13 @@ import { AppModuleController } from './controllers/app-module.controller';
 import { ActionController } from './controllers/action.controller';
 import { ModuleAccessController } from './controllers/module-access.controller';
 
+import { PlanModule } from '../plan/plan.module';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([AppModuleEntity, Action, ModuleAccess, UserRoleMap])],
+  imports: [
+    TypeOrmModule.forFeature([AppModuleEntity, Action, ModuleAccess, UserRoleMap]),
+    PlanModule,
+  ],
   controllers: [AppModuleController, ActionController, ModuleAccessController],
   providers: [
     AppModuleRepository,
