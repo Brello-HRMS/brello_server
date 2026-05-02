@@ -26,8 +26,16 @@ export class RoleService {
     user: LoggedInUser,
   ): Promise<Role> {
     this.logger.log(`Creating role: ${createRoleDto.name}`);
- 
-    this.validateSystemRoleAccess(user, createRoleDto.is_system_defined);
+
+    // Automatically attach user's context IDs
+    createRoleDto.enterprise_id = user.enterpriseId;
+    createRoleDto.organization_id = user.organizationId;
+
+    this.validateSystemRoleAccess(
+      user,
+      createRoleDto.is_system_defined,
+      user.organizationId,
+    );
 
     const existingRole = await this.roleRepository.findByName(
       createRoleDto.name,
@@ -38,7 +46,11 @@ export class RoleService {
       );
     }
 
-    const role = await this.roleRepository.create(createRoleDto);
+    const { is_system_defined, ...roleData } = createRoleDto;
+    const role = await this.roleRepository.create({
+      ...roleData,
+      is_system_role: is_system_defined || false,
+    });
     this.logger.log(`Role created successfully: ${role.id}`);
 
     return role;
@@ -52,6 +64,18 @@ export class RoleService {
 
     const qb = this.roleRepository.getListingQueryBuilder('role');
 
+    // Filter by user context
+    qb.andWhere('role.enterprise_id = :enterpriseId', {
+      enterpriseId: user.enterpriseId,
+    });
+    qb.andWhere('role.organization_id = :organizationId', {
+      organizationId: user.organizationId,
+    });
+
+    if (query.app_id) {
+      qb.andWhere('role.app_id = :appId', { appId: query.app_id });
+    }
+
     if (query.is_system_role !== undefined) {
       qb.andWhere('role.is_system_role = :isSystem', {
         isSystem: query.is_system_role,
@@ -60,16 +84,25 @@ export class RoleService {
 
     qb.andWhere('role.status != :deleted', { deleted: Status.DELETED });
 
-        return ListingHelper.apply(
-            qb,
-            query,
-            user,
-            {
-                searchFields: ['name', 'context'],
-                filterFields: ['is_system_role'],
-                alias: 'role',
-            },
-        );
+    // Handle sort parameter from frontend (e.g., createdAt_DESC)
+    if (query.sort) {
+      const [sortBy, sortOrder] = query.sort.split('_');
+
+      // Map frontend camelCase to backend snake_case
+      const fieldMapping: Record<string, string> = {
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+      };
+
+      query.sort_by = fieldMapping[sortBy] || sortBy;
+      query.sort_order = sortOrder as 'ASC' | 'DESC';
+    }
+
+    return ListingHelper.apply(qb, query, user, {
+      searchFields: ['name', 'context'],
+      filterFields: ['is_system_role', 'app_id'],
+      alias: 'role',
+    });
   }
 
   async findByFilter(
@@ -91,6 +124,16 @@ export class RoleService {
       throw new NotFoundException(`Role with ID '${id}' not found`);
     }
 
+    // Security check: ensure user only accesses roles within their context
+    if (
+      role.enterprise_id !== user.enterpriseId ||
+      role.organization_id !== user.organizationId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to access this role',
+      );
+    }
+
     return role;
   }
 
@@ -100,14 +143,18 @@ export class RoleService {
     user: LoggedInUser,
   ): Promise<Role> {
     this.logger.log(`Updating role: ${id}`);
- 
+
     const existingRole = await this.findOne(id, user);
- 
+
     if (existingRole.is_system_role) {
-      this.validateSystemRoleAccess(user, true);
+      this.validateSystemRoleAccess(user, true, existingRole.organization_id);
     }
- 
-    this.validateSystemRoleAccess(user, updateRoleDto.is_system_defined);
+
+    this.validateSystemRoleAccess(
+      user,
+      updateRoleDto.is_system_defined,
+      existingRole.organization_id,
+    );
 
     if (updateRoleDto.name) {
       const duplicateRole = await this.roleRepository.findByName(
@@ -120,7 +167,13 @@ export class RoleService {
       }
     }
 
-    const updatedRole = await this.roleRepository.update(id, updateRoleDto);
+    const { is_system_defined, ...roleData } = updateRoleDto;
+    const updatedRole = await this.roleRepository.update(id, {
+      ...roleData,
+      ...(is_system_defined !== undefined
+        ? { is_system_role: is_system_defined }
+        : {}),
+    });
     if (!updatedRole) {
       throw new NotFoundException(
         `Role with ID '${id}' not found after update`,
@@ -133,9 +186,9 @@ export class RoleService {
 
   async remove(id: string, user: LoggedInUser): Promise<void> {
     this.logger.log(`Soft deleting role: ${id}`);
- 
+
     const role = await this.findOne(id, user);
- 
+
     if (role.is_system_role) {
       this.validateSystemRoleAccess(user, true);
     }
@@ -151,10 +204,18 @@ export class RoleService {
   private validateSystemRoleAccess(
     user: LoggedInUser,
     isSystemRole?: boolean,
+    roleOrganizationId?: string,
   ): void {
+    // Only block if it's a system role and user is not a platform admin
     if (isSystemRole && !user.isPlatformAdmin) {
+      // However, if the role belongs to the user's own organization, allow it
+      // This handles cases where roles were mistakenly created as system roles
+      if (roleOrganizationId && roleOrganizationId === user.organizationId) {
+        return;
+      }
+
       throw new ForbiddenException(
-        'Only platform administrators can manage system-defined roles',
+        'Only platform administrators can manage global system-defined roles',
       );
     }
   }

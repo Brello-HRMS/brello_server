@@ -14,8 +14,8 @@ export class GenerateUploadUrlDto {
   folderType: FolderType;
 
   @IsUUID()
-  @IsNotEmpty()
-  enterpriseId: string;
+  @IsOptional()
+  enterpriseId?: string;
 
   @IsUUID()
   @IsOptional()

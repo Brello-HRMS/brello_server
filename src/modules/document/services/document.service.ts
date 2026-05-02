@@ -96,6 +96,13 @@ export class DocumentService {
           );
         return `${enterprise}/${organization}/documents/${params.fileName}`;
 
+      case FolderType.REIMBURSEMENT_DOCUMENT:
+        if (!organization)
+          throw new BadRequestException(
+            'Organization context required for REIMBURSEMENT_DOCUMENT',
+          );
+        return `${enterprise}/${organization}/reimbursements/${params.fileName}`;
+
       default:
         throw new BadRequestException('Invalid folder type');
     }
@@ -108,17 +115,20 @@ export class DocumentService {
 
     const provider = this.getStorageProvider();
 
+    const enterpriseId = dto.enterpriseId ?? user.enterpriseId;
+    const organizationId = dto.organizationId ?? user.organizationId;
+
     // Validate Enterprise (and get code for slug)
     const enterprise = await this.enterpriseService.findOneById(
-      dto.enterpriseId,
+      enterpriseId,
       user,
     );
 
     // Validate Organization (if provided)
     let organization: Organization | null = null;
-    if (dto.organizationId) {
+    if (organizationId) {
       organization = await this.organizationService.findOne(
-        dto.organizationId,
+        organizationId,
         user,
       );
     }
@@ -140,8 +150,8 @@ export class DocumentService {
 
     // Create document record in INACTIVE state
     const document = await this.documentRepository.create({
-      enterprise_id: dto.enterpriseId,
-      organization_id: dto.organizationId,
+      enterprise_id: enterpriseId,
+      organization_id: organizationId,
       employee_id: dto.employeeId,
       original_name: dto.originalName,
       file_name: fileName,
