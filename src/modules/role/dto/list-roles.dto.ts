@@ -8,6 +8,14 @@ export class ListRolesDto extends ListQueryDto {
 
   @IsOptional()
   @IsString()
+  app_id?: string;
+
+  @IsOptional()
+  @IsString()
+  sort?: string;
+
+  @IsOptional()
+  @IsString()
   declare sort_by?: string;
 
   @IsOptional()
