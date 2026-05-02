@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { UserProfile } from './user-profile.entity';
+import { Department } from '../../departments/entities/department.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -47,9 +48,10 @@ export class User extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   department_id: string;
 
-  // @ManyToOne(() => Department)
-  // @JoinColumn({ name: 'department_id' })
-  // department: Department;
+  @ManyToOne(() => Department, { nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  department: Department;
+
 
   @Column({ type: 'uuid', nullable: true })
   designation_id: string;

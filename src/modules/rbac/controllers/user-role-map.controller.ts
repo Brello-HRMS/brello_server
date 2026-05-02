@@ -8,9 +8,17 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UserRoleMapService } from '../services/user-role-map.service';
 import { CreateUserRoleMapDto } from '../dto/create-user-role-map.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { ListUserRoleMapsDto } from '../dto/list-user-role-maps.dto';
+
+
 
 @Controller('user-role-maps')
 export class UserRoleMapController {
@@ -24,9 +32,15 @@ export class UserRoleMapController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll() {
-    return this.userRoleMapService.findAll();
+  @UseGuards(JwtAuthGuard)
+  findAll(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query() query: ListUserRoleMapsDto,
+  ) {
+    return this.userRoleMapService.findAll(user, query);
   }
+
+
 
   @Get('user/:userId')
   @HttpCode(HttpStatus.OK)

@@ -8,6 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Role } from '../../role/entities/role.entity';
+import { User } from '../../user/entities/user.entity';
+
 
 /**
  * UserRoleMap Entity
@@ -34,6 +36,11 @@ export class UserRoleMap {
   @ManyToOne(() => Role, { eager: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'role_id' })
   role: Role;
+
+  @ManyToOne(() => User, { eager: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
 
   /** Organization scope for this role assignment */
   @Column({ type: 'uuid' })

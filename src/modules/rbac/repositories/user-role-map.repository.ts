@@ -1,7 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { UserRoleMap } from '../entities/user-role-map.entity';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { ListUserRoleMapsDto } from '../dto/list-user-role-maps.dto';
+import { PaginatedResponse } from '../../../common/dto/pagination.dto';
+import { ListingHelper } from '../../../common/utils/listing.helper';
+
+
 
 @Injectable()
 export class UserRoleMapRepository {
@@ -18,12 +24,28 @@ export class UserRoleMapRepository {
     return this.repository.save(map);
   }
 
-  async findAll(): Promise<UserRoleMap[]> {
-    return this.repository.find({
-      relations: ['role'],
-      order: { created_at: 'DESC' },
+  getListingQueryBuilder(alias = 'urm'): SelectQueryBuilder<UserRoleMap> {
+    return this.repository
+      .createQueryBuilder(alias)
+      .leftJoinAndSelect(`${alias}.role`, 'role')
+      .leftJoinAndSelect(`${alias}.user`, 'user')
+      .leftJoinAndSelect('user.department', 'dept');
+  }
+
+  async findAll(
+    user: LoggedInUser,
+    query: ListUserRoleMapsDto,
+  ): Promise<PaginatedResponse<UserRoleMap>> {
+    const qb = this.getListingQueryBuilder('urm');
+
+    return ListingHelper.apply(qb, query, user, {
+      searchFields: ['user.first_name', 'user.last_name', 'role.name'],
+      filterFields: ['role_id', 'user_id'],
+      alias: 'urm',
     });
   }
+
+
 
   async findByUserId(userId: string): Promise<UserRoleMap[]> {
     return this.repository.find({
