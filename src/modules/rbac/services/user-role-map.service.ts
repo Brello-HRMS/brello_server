@@ -2,6 +2,11 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import { UserRoleMap } from '../entities/user-role-map.entity';
 import { CreateUserRoleMapDto } from '../dto/create-user-role-map.dto';
 import { UserRoleMapRepository } from '../repositories/user-role-map.repository';
+import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { ListUserRoleMapsDto } from '../dto/list-user-role-maps.dto';
+import { PaginatedResponse } from '../../../common/dto/pagination.dto';
+
+
 
 @Injectable()
 export class UserRoleMapService {
@@ -25,9 +30,14 @@ export class UserRoleMapService {
     return this.userRoleMapRepository.save(mapping);
   }
 
-  async findAll(): Promise<UserRoleMap[]> {
-    return this.userRoleMapRepository.findAll();
+  async findAll(
+    user: LoggedInUser,
+    query: ListUserRoleMapsDto,
+  ): Promise<PaginatedResponse<UserRoleMap>> {
+    return this.userRoleMapRepository.findAll(user, query);
   }
+
+
 
   async findByUserId(userId: string): Promise<UserRoleMap[]> {
     return this.userRoleMapRepository.findByUserId(userId);
