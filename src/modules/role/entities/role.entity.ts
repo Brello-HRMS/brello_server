@@ -15,7 +15,7 @@ export class Role extends BaseEntity {
   @JoinColumn({ name: 'app_id' })
   app: App;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', default: false })
   is_system_role: boolean;
 
   @Column({ type: 'boolean', default: false })
