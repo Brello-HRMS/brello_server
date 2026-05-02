@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { PfConfig } from '../entities/pf-config.entity';
 import { UpsertPfConfigDto } from '../dto/pf-config.dto';
 
@@ -16,37 +16,62 @@ export class PfConfigService {
     organizationId: string,
     dto: UpsertPfConfigDto,
   ): Promise<PfConfig> {
-    let config = await this.pfConfigRepository.findOne({
-      where: { enterprise_id: enterpriseId, organization_id: organizationId },
-    });
+    const newEffectiveFrom = new Date(dto.effective_from);
 
-    if (config) {
-      config = this.pfConfigRepository.merge(config, dto as any);
-    } else {
-      config = this.pfConfigRepository.create({
-        ...dto,
+    const current = await this.pfConfigRepository.findOne({
+      where: {
         enterprise_id: enterpriseId,
         organization_id: organizationId,
-      });
+        effective_to: IsNull(),
+      },
+    });
+
+    if (current) {
+      const currentFrom = new Date(current.effective_from);
+      if (newEffectiveFrom <= currentFrom) {
+        throw new BadRequestException(
+          'effective_from must be after the current active config date.',
+        );
+      }
+      const effectiveTo = new Date(newEffectiveFrom);
+      effectiveTo.setDate(effectiveTo.getDate() - 1);
+      current.effective_to = effectiveTo;
+      await this.pfConfigRepository.save(current);
     }
 
-    return this.pfConfigRepository.save(config);
+    const newConfig = this.pfConfigRepository.create({
+      employee_contribution: dto.employee_contribution,
+      employer_contribution: dto.employer_contribution,
+      minimum_salary_threshold: dto.minimum_salary_threshold,
+      is_enabled: dto.is_enabled ?? true,
+      effective_from: newEffectiveFrom,
+      enterprise_id: enterpriseId,
+      organization_id: organizationId,
+    });
+
+    return this.pfConfigRepository.save(newConfig);
   }
 
   async getConfig(
     enterpriseId: string,
     organizationId: string,
-  ): Promise<PfConfig> {
-    const config = await this.pfConfigRepository.findOne({
-      where: { enterprise_id: enterpriseId, organization_id: organizationId },
+  ): Promise<PfConfig | null> {
+    return this.pfConfigRepository.findOne({
+      where: {
+        enterprise_id: enterpriseId,
+        organization_id: organizationId,
+        effective_to: IsNull(),
+      },
     });
+  }
 
-    if (!config) {
-      throw new NotFoundException(
-        'PF configuration not found for this organization',
-      );
-    }
-
-    return config;
+  async getHistory(
+    enterpriseId: string,
+    organizationId: string,
+  ): Promise<PfConfig[]> {
+    return this.pfConfigRepository.find({
+      where: { enterprise_id: enterpriseId, organization_id: organizationId },
+      order: { effective_from: 'DESC' },
+    });
   }
 }

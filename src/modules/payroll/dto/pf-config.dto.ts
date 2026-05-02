@@ -1,4 +1,4 @@
-import { IsNumber, IsBoolean, IsOptional, Min } from 'class-validator';
+import { IsNumber, IsBoolean, IsOptional, Min, IsDateString } from 'class-validator';
 
 export class UpsertPfConfigDto {
   @IsNumber()
@@ -11,14 +11,12 @@ export class UpsertPfConfigDto {
 
   @IsNumber()
   @Min(0)
-  min_salary_threshold: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  wage_ceiling?: number;
+  minimum_salary_threshold: number;
 
   @IsOptional()
   @IsBoolean()
-  salary_ceiling_enabled?: boolean;
+  is_enabled?: boolean;
+
+  @IsDateString()
+  effective_from: string;
 }

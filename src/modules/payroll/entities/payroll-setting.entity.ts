@@ -1,6 +1,12 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
-import { PayrollFrequency } from '../enums/payroll.enum';
+import {
+  PayrollFrequency,
+  PayoutType,
+  PayoutDayShift,
+  AttendanceCutoffType,
+  FinancialMonth,
+} from '../enums/payroll.enum';
 
 @Entity('payroll_settings')
 export class PayrollSetting extends BaseEntity {
@@ -11,15 +17,30 @@ export class PayrollSetting extends BaseEntity {
   })
   frequency: PayrollFrequency;
 
-  @Column({ type: 'date' })
-  start_date: Date;
+  @Column({ type: 'enum', enum: FinancialMonth })
+  financial_start_month: FinancialMonth;
+
+  @Column({ type: 'enum', enum: FinancialMonth })
+  financial_end_month: FinancialMonth;
+
+  @Column({ type: 'varchar', length: 10 })
+  financial_year_label: string;
+
+  @Column({ type: 'enum', enum: PayoutType })
+  payout_type: PayoutType;
+
+  @Column({ type: 'int', nullable: true })
+  payout_date: number;
+
+  @Column({ type: 'enum', enum: PayoutDayShift, nullable: true })
+  payout_day_shift: PayoutDayShift;
+
+  @Column({ type: 'boolean', default: true })
+  consider_holidays: boolean;
+
+  @Column({ type: 'enum', enum: AttendanceCutoffType })
+  attendance_cutoff_type: AttendanceCutoffType;
 
   @Column({ type: 'int' })
-  cutoff_day: number;
-
-  @Column({ type: 'int' })
-  payout_day: number;
-
-  @Column({ type: 'int' })
-  payslip_release_day: number;
+  attendance_cutoff_value: number;
 }

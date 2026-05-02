@@ -62,43 +62,48 @@ export class PayrollCalculationEngine {
 
     // Process Statutory (PF)
     let employerContribution = 0;
-    try {
-      const pfConfig = await this.pfConfigService.getConfig(
-        enterpriseId,
-        organizationId,
-      );
-      const basicComp = calculatedEarnings.find(
-        (earningComponent) =>
-          earningComponent.name.toLowerCase() === 'basic' ||
-          earningComponent.name.toLowerCase() === 'basic salary',
-      );
+    const pfConfig = await this.pfConfigService.getConfig(
+      enterpriseId,
+      organizationId,
+    );
 
-      if (
-        basicComp &&
-        basicComp.calculated_value >= pfConfig.min_salary_threshold
-      ) {
-        let applicableSalary = basicComp.calculated_value;
-        if (pfConfig.salary_ceiling_enabled && pfConfig.wage_ceiling) {
-          applicableSalary = Math.min(applicableSalary, pfConfig.wage_ceiling);
-        }
+    if (!pfConfig) {
+      return {
+        gross,
+        deductions_total: totalDeductions,
+        net: gross - totalDeductions,
+        employer_contribution: employerContribution,
+        earnings: calculatedEarnings,
+        deductions: calculatedDeductions,
+        warnings: ['PF configuration missing. Skipping PF calculation.'],
+      };
+    }
 
-        const employeePf =
-          (applicableSalary * pfConfig.employee_contribution) / 100;
-        const employerPf =
-          (applicableSalary * pfConfig.employer_contribution) / 100;
+    const basicComp = calculatedEarnings.find(
+      (earningComponent) =>
+        earningComponent.name.toLowerCase() === 'basic' ||
+        earningComponent.name.toLowerCase() === 'basic salary',
+    );
 
-        calculatedDeductions.push({
-          name: 'PF',
-          type: 'statutory',
-          value: employeePf,
-          calculated_value: employeePf,
-        });
-        totalDeductions += employeePf;
-        employerContribution = employerPf;
-      }
-    } catch (error) {
-      // PF not configured -> Issue a warning in dry-run, but for calculation engine it just skips PF.
-      // A warning array should be returned
+    if (
+      basicComp &&
+      basicComp.calculated_value >= pfConfig.minimum_salary_threshold
+    ) {
+      const applicableSalary = basicComp.calculated_value;
+
+      const employeePf =
+        (applicableSalary * pfConfig.employee_contribution) / 100;
+      const employerPf =
+        (applicableSalary * pfConfig.employer_contribution) / 100;
+
+      calculatedDeductions.push({
+        name: 'PF',
+        type: 'statutory',
+        value: employeePf,
+        calculated_value: employeePf,
+      });
+      totalDeductions += employeePf;
+      employerContribution = employerPf;
     }
 
     const net = gross - totalDeductions;

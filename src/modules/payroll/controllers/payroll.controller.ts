@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Put,
+  Delete,
   Body,
   Param,
   HttpCode,
@@ -15,14 +16,20 @@ import { PfConfigService } from '../services/pf-config.service';
 import { SalaryTemplateEngine } from '../services/salary-template.service';
 import { EmployeeSalaryEngine } from '../services/employee-salary.service';
 import { DryRunEngine } from '../services/dry-run.service';
+import { ChangePropagationService } from '../services/change-propagation.service';
 
 import { CreatePayrollSettingDto } from '../dto/payroll-setting.dto';
-import { CreatePayrollComponentDto } from '../dto/payroll-component.dto';
+import {
+  CreatePayrollComponentDto,
+  UpdatePayrollComponentDto,
+} from '../dto/payroll-component.dto';
 import { UpsertPfConfigDto } from '../dto/pf-config.dto';
 import { CreateSalaryTemplateDto } from '../dto/salary-template.dto';
 import {
   AssignEmployeeSalaryDto,
+  BulkAssignEmployeeSalaryDto,
   UpdateEmployeeSalaryDto,
+  PropagationApplyDto,
 } from '../dto/employee-salary.dto';
 import { EmployeeQueryDto } from '../dto/employee-listing.dto';
 import { DryRunDto } from '../dto/dry-run.dto';
@@ -33,6 +40,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 interface AuthPayload {
   enterpriseId: string;
   organizationId: string;
+  userId: string;
 }
 
 @UseGuards(JwtAuthGuard)
@@ -45,11 +53,13 @@ export class PayrollController {
     private readonly salaryTemplateEngine: SalaryTemplateEngine,
     private readonly employeeSalaryEngine: EmployeeSalaryEngine,
     private readonly dryRunEngine: DryRunEngine,
+    private readonly changePropagationService: ChangePropagationService,
   ) {}
 
-  // --- Payroll Settings ---
+  // ─── Payroll Settings ───────────────────────────────────────────────────────
+
   @Put('configurations')
-  async updateSettings(
+  updateSettings(
     @CurrentUser() user: AuthPayload,
     @Body() dto: CreatePayrollSettingDto,
   ) {
@@ -61,16 +71,14 @@ export class PayrollController {
   }
 
   @Get('configurations')
-  async getSettings(@CurrentUser() user: AuthPayload) {
-    return this.payrollService.getSetting(
-      user.enterpriseId,
-      user.organizationId,
-    );
+  getSettings(@CurrentUser() user: AuthPayload) {
+    return this.payrollService.getSetting(user.enterpriseId, user.organizationId);
   }
 
-  // --- Component Master ---
+  // ─── Component Master ────────────────────────────────────────────────────────
+
   @Post('component-master')
-  async createComponent(
+  createComponent(
     @CurrentUser() user: AuthPayload,
     @Body() dto: CreatePayrollComponentDto,
   ) {
@@ -82,7 +90,7 @@ export class PayrollController {
   }
 
   @Get('component-master')
-  async getAllComponents(@CurrentUser() user: AuthPayload) {
+  getAllComponents(@CurrentUser() user: AuthPayload) {
     return this.componentMasterService.getAllComponents(
       user.enterpriseId,
       user.organizationId,
@@ -90,16 +98,22 @@ export class PayrollController {
   }
 
   @Put('component-master/:id')
-  async updateComponent(
+  updateComponent(
     @Param('id') id: string,
-    @Body() dto: Partial<CreatePayrollComponentDto>,
+    @Body() dto: UpdatePayrollComponentDto,
   ) {
     return this.componentMasterService.updateComponent(id, dto);
   }
 
-  // --- PF Configuration ---
+  @Delete('component-master/:id')
+  deleteComponent(@Param('id') id: string) {
+    return this.componentMasterService.deleteComponent(id);
+  }
+
+  // ─── PF Configuration ────────────────────────────────────────────────────────
+
   @Put('statutory-pf-config')
-  async updatePfConfig(
+  updatePfConfig(
     @CurrentUser() user: AuthPayload,
     @Body() dto: UpsertPfConfigDto,
   ) {
@@ -111,16 +125,19 @@ export class PayrollController {
   }
 
   @Get('statutory-pf-config')
-  async getPfConfig(@CurrentUser() user: AuthPayload) {
-    return this.pfConfigService.getConfig(
-      user.enterpriseId,
-      user.organizationId,
-    );
+  getPfConfig(@CurrentUser() user: AuthPayload) {
+    return this.pfConfigService.getConfig(user.enterpriseId, user.organizationId);
   }
 
-  // --- Salary Templates ---
+  @Get('statutory-pf-config/history')
+  getPfConfigHistory(@CurrentUser() user: AuthPayload) {
+    return this.pfConfigService.getHistory(user.enterpriseId, user.organizationId);
+  }
+
+  // ─── Salary Templates ────────────────────────────────────────────────────────
+
   @Post('salary-templates')
-  async createTemplate(
+  createTemplate(
     @CurrentUser() user: AuthPayload,
     @Body() dto: CreateSalaryTemplateDto,
   ) {
@@ -131,25 +148,51 @@ export class PayrollController {
     );
   }
 
+  @Get('salary-templates')
+  getAllTemplates(@CurrentUser() user: AuthPayload) {
+    return this.salaryTemplateEngine.getAllTemplates(
+      user.enterpriseId,
+      user.organizationId,
+    );
+  }
+
   @Get('salary-templates/:id')
-  async getTemplate(@Param('id') id: string) {
+  getTemplate(@Param('id') id: string) {
     return this.salaryTemplateEngine.getTemplateById(id);
   }
 
-  // --- Dry Run ---
-  @Post('simulations/dry-run')
-  @HttpCode(200)
-  async dryRun(@CurrentUser() user: AuthPayload, @Body() dto: DryRunDto) {
-    return this.dryRunEngine.simulate(
+  @Put('salary-templates/:id')
+  updateTemplate(
+    @CurrentUser() user: AuthPayload,
+    @Param('id') id: string,
+    @Body() dto: CreateSalaryTemplateDto,
+  ) {
+    return this.salaryTemplateEngine.updateTemplate(
       user.enterpriseId,
       user.organizationId,
+      id,
       dto,
     );
   }
 
-  // --- Employee Salary ---
+  @Delete('salary-templates/:id')
+  @HttpCode(204)
+  deleteTemplate(@Param('id') id: string) {
+    return this.salaryTemplateEngine.deleteTemplate(id);
+  }
+
+  // ─── Dry Run ─────────────────────────────────────────────────────────────────
+
+  @Post('simulations/dry-run')
+  @HttpCode(200)
+  dryRun(@CurrentUser() user: AuthPayload, @Body() dto: DryRunDto) {
+    return this.dryRunEngine.simulate(user.enterpriseId, user.organizationId, dto);
+  }
+
+  // ─── Employee Salary ─────────────────────────────────────────────────────────
+
   @Post('employee-salary-assignments')
-  async assignSalaryToEmployee(
+  assignSalary(
     @CurrentUser() user: AuthPayload,
     @Body() dto: AssignEmployeeSalaryDto,
   ) {
@@ -160,8 +203,20 @@ export class PayrollController {
     );
   }
 
+  @Post('employee-salary-assignments/bulk')
+  bulkAssignSalary(
+    @CurrentUser() user: AuthPayload,
+    @Body() dto: BulkAssignEmployeeSalaryDto,
+  ) {
+    return this.employeeSalaryEngine.bulkAssignSalary(
+      user.enterpriseId,
+      user.organizationId,
+      dto,
+    );
+  }
+
   @Get('employees')
-  async getEmployeesList(
+  getEmployeesList(
     @CurrentUser() user: AuthPayload,
     @Query() query: EmployeeQueryDto,
   ) {
@@ -173,12 +228,12 @@ export class PayrollController {
   }
 
   @Get('employees/:userId/salary')
-  async getEmployeeSalaryStructure(@Param('userId') userId: string) {
+  getEmployeeSalaryStructure(@Param('userId') userId: string) {
     return this.employeeSalaryEngine.getEmployeeSalaryStructure(userId);
   }
 
   @Put('employees/:userId/salary')
-  async updateEmployeeSalaryStructure(
+  updateEmployeeSalaryStructure(
     @CurrentUser() user: AuthPayload,
     @Param('userId') userId: string,
     @Body() dto: UpdateEmployeeSalaryDto,
@@ -187,6 +242,38 @@ export class PayrollController {
       user.enterpriseId,
       user.organizationId,
       userId,
+      dto,
+    );
+  }
+
+  @Get('employees/:userId/salary/history')
+  getEmployeeSalaryHistory(@Param('userId') userId: string) {
+    return this.employeeSalaryEngine.getEmployeeSalaryHistory(userId);
+  }
+
+  // ─── Change Propagation ──────────────────────────────────────────────────────
+
+  @Get('propagation/preview')
+  getPropagationPreview(
+    @CurrentUser() user: AuthPayload,
+    @Query('component_id') componentId: string,
+  ) {
+    return this.changePropagationService.previewImpact(
+      user.enterpriseId,
+      user.organizationId,
+      componentId,
+    );
+  }
+
+  @Post('propagation/apply')
+  @HttpCode(200)
+  applyPropagation(
+    @CurrentUser() user: AuthPayload,
+    @Body() dto: PropagationApplyDto,
+  ) {
+    return this.changePropagationService.applyPropagation(
+      user.enterpriseId,
+      user.organizationId,
       dto,
     );
   }

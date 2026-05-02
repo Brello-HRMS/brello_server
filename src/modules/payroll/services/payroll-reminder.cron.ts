@@ -23,8 +23,8 @@ export class PayrollReminderCron {
     const today = new Date().getDate();
 
     for (const setting of settings) {
-      // PRD trigger_date = payout_day - 4 days
-      let triggerDate = setting.payout_day - 4;
+      // Trigger 4 days before payout date (only relevant for custom payout type)
+      let triggerDate = (setting.payout_date ?? 28) - 4;
       if (triggerDate <= 0) {
         // e.g. payout_day is 2, trigger date is month end - 2 roughly.
         // Simplified fallback for now

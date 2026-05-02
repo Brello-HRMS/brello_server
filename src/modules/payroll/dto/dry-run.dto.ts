@@ -1,4 +1,4 @@
-import { IsUUID, IsNumber, IsOptional, IsObject } from 'class-validator';
+import { IsUUID, IsNumber, IsOptional, IsObject, IsArray } from 'class-validator';
 
 export class DryRunDto {
   @IsUUID()
@@ -6,6 +6,11 @@ export class DryRunDto {
 
   @IsNumber()
   ctc: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  component_ids?: string[];
 
   @IsOptional()
   @IsObject()

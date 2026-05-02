@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { PayrollSetting } from './entities/payroll-setting.entity';
 import { PayrollComponent } from './entities/payroll-component.entity';
 import { PfConfig } from './entities/pf-config.entity';
 import { SalaryTemplate } from './entities/salary-template.entity';
 import { SalaryTemplateComponent } from './entities/salary-template-component.entity';
 import { EmployeeSalary } from './entities/employee-salary.entity';
+import { EmployeeSalaryComponent } from './entities/employee-salary-component.entity';
+import { EmployeeStatutoryOverride } from './entities/employee-statutory-override.entity';
+import { PayrollAuditLog } from './entities/payroll-audit-log.entity';
 
 import { PayrollService } from './services/payroll.service';
 import { ComponentMasterService } from './services/component-master.service';
@@ -15,8 +19,9 @@ import { EmployeeSalaryEngine } from './services/employee-salary.service';
 import { PayrollCalculationEngine } from './services/payroll-calculation.service';
 import { DryRunEngine } from './services/dry-run.service';
 import { PayrollReminderCron } from './services/payroll-reminder.cron';
-import { PayrollController } from './controllers/payroll.controller';
+import { ChangePropagationService } from './services/change-propagation.service';
 
+import { PayrollController } from './controllers/payroll.controller';
 import { EmployeeSalaryRepository } from './repositories/employee-salary.repository';
 
 import { User } from '../user/entities/user.entity';
@@ -32,6 +37,9 @@ import { Department } from '../departments/entities/department.entity';
       SalaryTemplate,
       SalaryTemplateComponent,
       EmployeeSalary,
+      EmployeeSalaryComponent,
+      EmployeeStatutoryOverride,
+      PayrollAuditLog,
       User,
       UserProfile,
       Department,
@@ -48,12 +56,14 @@ import { Department } from '../departments/entities/department.entity';
     PayrollCalculationEngine,
     DryRunEngine,
     PayrollReminderCron,
+    ChangePropagationService,
   ],
   exports: [
     PayrollService,
     EmployeeSalaryEngine,
     PayrollCalculationEngine,
     EmployeeSalaryRepository,
+    ChangePropagationService,
   ],
 })
 export class PayrollModule {}
