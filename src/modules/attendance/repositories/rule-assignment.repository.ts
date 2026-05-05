@@ -16,7 +16,10 @@ export class RuleAssignmentRepository {
     return this.repository.save(assignment);
   }
 
-  async findByRule(ruleId: string, organizationId: string): Promise<RuleAssignment[]> {
+  async findByRule(
+    ruleId: string,
+    organizationId: string,
+  ): Promise<RuleAssignment[]> {
     return this.repository.find({
       where: {
         rule_id: ruleId,
@@ -89,5 +92,25 @@ export class RuleAssignmentRepository {
     }
 
     return null;
+  }
+
+  async findByEmployeeId(employeeId: string) {
+    return this.repository.findOne({
+      where: {
+        target_id: employeeId,
+        is_deleted: false,
+        assignment_type: AssignmentType.EMPLOYEE,
+      },
+    });
+  }
+
+  async findRuleByDepartmentId(departmentId: string) {
+    return this.repository.findOne({
+      where: {
+        target_id: departmentId,
+        is_deleted: false,
+        assignment_type: AssignmentType.DEPARTMENT,
+      },
+    });
   }
 }

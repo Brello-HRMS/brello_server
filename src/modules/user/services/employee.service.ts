@@ -110,7 +110,9 @@ export class EmployeeService {
 
     // Phone uniqueness check only if provided
     if (dto.phone) {
-      const phoneExistsInUsers = await this.userRepository.phoneExists(dto.phone);
+      const phoneExistsInUsers = await this.userRepository.phoneExists(
+        dto.phone,
+      );
       if (phoneExistsInUsers) {
         throw new ConflictException(
           `User with phone '${dto.phone}' already exists.`,
@@ -236,6 +238,8 @@ export class EmployeeService {
       email: user.email,
       phone: user.phone,
       reportsTo: user.reports_to_id,
+      departmentId: user.department_id,
+      designationId: user.designation_id,
       profile: profileData
         ? {
             employeeId: profileData.employee_id,
@@ -437,7 +441,8 @@ export class EmployeeService {
     if (dto.maritalStatus) updateData.marital_status = dto.maritalStatus;
     if (dto.bloodGroup) updateData.blood_group = dto.bloodGroup;
     if (dto.presentAddress) updateData.present_address = dto.presentAddress;
-    if (dto.permanentAddress) updateData.permanent_address = dto.permanentAddress;
+    if (dto.permanentAddress)
+      updateData.permanent_address = dto.permanentAddress;
 
     const updatedProfile = await this.profileRepository.update(
       user.user_profile_id,
@@ -511,7 +516,9 @@ export class EmployeeService {
 
     const oldValue = {
       role_id: user.plan_id, // Assuming role/plan link or similar
-      assets: await this.assetsRepository.findByUserProfileId(user.user_profile_id),
+      assets: await this.assetsRepository.findByUserProfileId(
+        user.user_profile_id,
+      ),
     };
 
     if (dto.roleId) {
@@ -763,7 +770,6 @@ export class EmployeeService {
     return { success: true };
   }
 
-
   // Documents
   async attachDocument(id: string, dto: AddDocumentDto): Promise<any> {
     const profile = await this.validateProfileAccess(id);
@@ -989,5 +995,13 @@ export class EmployeeService {
     );
 
     return { success: true, status: EmployeeStatus.INVITED };
+  }
+
+  async getUserById(id: string): Promise<User> {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException(`User ${id} not found.`);
+    }
+    return user;
   }
 }
