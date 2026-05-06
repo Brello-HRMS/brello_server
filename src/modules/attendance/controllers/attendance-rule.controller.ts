@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
   HttpCode,
   HttpStatus,
@@ -67,5 +68,15 @@ export class AttendanceRuleController {
     @Body() dto: ChangeStatusDto,
   ) {
     return this.ruleService.changeStatus(user, id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermission('ATTENDANCE_CONFIG', 'delete')
+  delete(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.ruleService.delete(user, id);
   }
 }

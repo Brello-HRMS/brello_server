@@ -6,6 +6,9 @@ import { GeoFence } from './geo-fence.entity';
 
 @Entity('attendance_rules')
 @Index(['organization_id', 'name'], { unique: true, where: '"is_deleted" = false' })
+@Index(['organization_id', 'is_deleted'])
+@Index(['shift_id', 'status', 'is_deleted'])
+@Index(['weekly_off_id', 'status', 'is_deleted'])
 export class AttendanceRule extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })
   name: string;
