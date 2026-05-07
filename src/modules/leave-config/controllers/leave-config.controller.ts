@@ -34,6 +34,13 @@ export class LeaveConfigController {
     return this.leaveConfigService.createDraft(user, dto);
   }
 
+  @Get('current')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermission('LEAVE_SETUP', 'view')
+  findCurrent(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.leaveConfigService.findCurrent(user);
+  }
+
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('LEAVE_SETUP', 'view')

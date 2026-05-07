@@ -25,6 +25,14 @@ export class LeaveConfigRepository {
     });
   }
 
+  async findCurrent(organizationId: string): Promise<LeaveConfig | null> {
+    return this.repository.findOne({
+      where: { organization_id: organizationId },
+      order: { created_at: 'DESC' },
+      relations: ['leave_types', 'rules'],
+    });
+  }
+
   async save(config: LeaveConfig): Promise<LeaveConfig> {
     return this.repository.save(config);
   }

@@ -157,4 +157,17 @@ export class LeaveConfigService {
     }
     return config;
   }
+
+  /**
+   * Retrieves the current/latest leave configuration for the user's organization.
+   */
+  async findCurrent(user: LoggedInUser): Promise<LeaveConfig> {
+    const config = await this.configRepo.findCurrent(user.organizationId);
+    if (!config) {
+      throw new NotFoundException(
+        `No leave configuration found for the organization`,
+      );
+    }
+    return config;
+  }
 }
