@@ -247,7 +247,7 @@ export class AuthService {
   }
 
   async switchApp(
-    loggedInUser: LoggedInUser,
+    loggedInUser: JwtPayload,
     switchAppDto: SwitchAppDto,
   ): Promise<SwitchAppResponseDto> {
     this.logger.log(
@@ -290,7 +290,7 @@ export class AuthService {
 
     const accessToken = this.tokenService.generateAccessToken({
       userId: loggedInUser.userId,
-      sessionId: (loggedInUser as any).sessionId,
+      sessionId: loggedInUser.sessionId,
       organizationId: loggedInUser.organizationId,
       enterpriseId: loggedInUser.enterpriseId,
       appId: switchAppDto.appId,

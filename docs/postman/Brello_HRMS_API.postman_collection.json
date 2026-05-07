@@ -3698,7 +3698,8 @@
                 "module-access",
                 "by-code"
               ]
-            }
+            },
+            "description": "Assign module access to the user's role by string codes. This also automatically configures the organization's active plan to include the module and action, ensuring they appear in the UI menu."
           },
           "event": [
             {
@@ -6390,113 +6391,494 @@
     },
     {
       "name": "Payroll",
+      "description": "Payroll configuration module: Settings, Component Master, PF Config, Salary Templates, Employee Salary, Change Propagation, and Dry Run Simulation.",
       "item": [
         {
-          "name": "Dry Run Simulation",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/payroll/dry-run",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "payroll",
-                "dry-run"
-              ]
+          "name": "Payroll Settings",
+          "item": [
+            {
+              "name": "Update Payroll Settings",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"financial_start_month\": \"apr\",\n  \"payout_type\": \"custom\",\n  \"payout_date\": 1,\n  \"payout_day_shift\": \"next\",\n  \"consider_holidays\": true,\n  \"attendance_cutoff_type\": \"days_before_month_end\",\n  \"attendance_cutoff_value\": 4\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/configurations",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "configurations"]
+                },
+                "description": "Create or update the organization's payroll cycle settings. financial_end_month and financial_year_label are auto-derived from financial_start_month.\n\npayout_type options: last_working_day | first_working_day | custom\nattendance_cutoff_type options: days_before_month_end | fixed_date\nfinancial_start_month options: jan | feb | mar | apr | may | jun | jul | aug | sep | oct | nov | dec"
+              },
+              "response": []
+            },
+            {
+              "name": "Get Payroll Settings",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/configurations",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "configurations"]
+                },
+                "description": "Get current payroll settings for the organization."
+              },
+              "response": []
             }
-          }
+          ]
         },
         {
-          "name": "Get Employee List",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/payroll/employees?page=1&limit=10",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "payroll",
-                "employees"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
+          "name": "Component Master",
+          "item": [
+            {
+              "name": "Get All Components",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
                 },
-                {
-                  "key": "limit",
-                  "value": "10"
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/component-master",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "component-master"]
                 },
-                {
-                  "key": "search",
-                  "value": "",
-                  "disabled": true
+                "description": "Returns all active components sorted by calculation_priority. Auto-seeds the 5 default components on first call:\n- CTC (virtual root, priority 0)\n- Basic Salary (50% of CTC, priority 1)\n- PF Employee (12% of Basic, priority 2)\n- PF Employer (12% of Basic, priority 3)\n- Special Allowance (residual, priority 99)"
+              },
+              "response": []
+            },
+            {
+              "name": "Create Component",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
                 },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"HRA\",\n  \"component_type\": \"earning\",\n  \"category\": \"fixed\",\n  \"calculation_type\": \"percentage\",\n  \"calculate_from\": \"{{payroll_component_id}}\",\n  \"value\": 40,\n  \"is_taxable\": false,\n  \"is_residual\": false,\n  \"calculation_priority\": 5\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/component-master",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "component-master"]
+                },
+                "description": "Creates a custom salary component.\n\ncomponent_type: earning | deduction | bonus\ncategory: fixed | variable | statutory\ncalculation_type: fixed | percentage | residual\n\nRules:\n- calculate_from must be the UUID of another component (use Basic Salary's UUID for % of Basic)\n- is_residual: only ONE allowed per org\n- Default components cannot be created via this endpoint\n\nAuto-saves: payroll_component_id"
+              },
+              "response": [],
+              "event": [
                 {
-                  "key": "department_id",
-                  "value": "",
-                  "disabled": true
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('payroll_component_id', response.data.id);",
+                      "    console.log('✅ payroll_component_id saved:', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
                 }
               ]
             },
-            "description": "Fetch a paginated list of employees for payroll."
-          },
-          "response": []
+            {
+              "name": "Update Component",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"value\": 45,\n  \"calculation_priority\": 5,\n  \"is_taxable\": true\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/component-master/{{payroll_component_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "component-master", "{{payroll_component_id}}"]
+                },
+                "description": "Updates a component. For default components (is_default: true), only value and calculation_priority can be changed."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Component",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/component-master/{{payroll_component_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "component-master", "{{payroll_component_id}}"]
+                },
+                "description": "Deletes a custom component.\n\nFails if:\n- Component is a default (is_default: true)\n- Component is used in any salary template"
+              },
+              "response": []
+            }
+          ]
         },
         {
-          "name": "Get Employee Salary Structure",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "payroll",
-                "employees",
-                "{{user_id}}",
-                "salary"
+          "name": "Statutory PF Config",
+          "item": [
+            {
+              "name": "Upsert PF Config",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"employee_contribution\": 12.0,\n  \"employer_contribution\": 12.0,\n  \"minimum_salary_threshold\": 15000,\n  \"is_enabled\": true,\n  \"effective_from\": \"2026-04-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/statutory-pf-config",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "statutory-pf-config"]
+                },
+                "description": "Creates a new versioned PF config. The current active config is automatically closed (effective_to = new effective_from − 1 day).\n\nNote: effective_from must be after the current active config's effective_from date.\nNote: Wage ceiling has been removed from this version."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Active PF Config",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/statutory-pf-config",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "statutory-pf-config"]
+                },
+                "description": "Returns the currently active PF config (where effective_to is null)."
+              },
+              "response": []
+            },
+            {
+              "name": "Get PF Config History",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/statutory-pf-config/history",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "statutory-pf-config", "history"]
+                },
+                "description": "Returns all PF config versions ordered by effective_from DESC."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Salary Templates",
+          "item": [
+            {
+              "name": "Create Salary Template",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Standard Software Engineer\",\n  \"description\": \"For mid-level engineers\",\n  \"components\": [\n    {\n      \"component_id\": \"{{payroll_component_id}}\",\n      \"sort_order\": 5\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/salary-templates",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "salary-templates"]
+                },
+                "description": "Creates a salary template. CTC, Basic Salary, and Special Allowance are auto-included even if not listed.\n\nValidations:\n- No circular component dependencies (DAG check)\n- Each component's dependency must be included in the template\n- sort_order of a dependent must be higher than its base component\n\nAuto-saves: salary_template_id"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('salary_template_id', response.data.id);",
+                      "    console.log('✅ salary_template_id saved:', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
               ]
             },
-            "description": "Fetch the structured salary breakdown for a specific employee including editability status."
-          },
-          "response": []
+            {
+              "name": "Get All Templates",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/salary-templates",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "salary-templates"]
+                },
+                "description": "Returns all salary templates for the organization with their components."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Template by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/salary-templates/{{salary_template_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "salary-templates", "{{salary_template_id}}"]
+                },
+                "description": "Returns a single template with full component and base_component relations."
+              },
+              "response": []
+            }
+          ]
         },
         {
-          "name": "Update Employee Salary Structure",
+          "name": "Dry Run Simulation",
           "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"components\": [\n        {\n            \"code\": \"BASIC\",\n            \"value\": 30000\n        },\n        {\n            \"code\": \"HRA\",\n            \"value\": 15000\n        }\n    ]\n}"
+              "raw": "{\n  \"template_id\": \"{{salary_template_id}}\",\n  \"ctc\": 1200000,\n  \"bonus\": 50000,\n  \"loan_emi\": 5000,\n  \"lwp_days\": 2,\n  \"other_deductions\": 1000\n}"
             },
             "url": {
-              "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "payroll",
-                "employees",
-                "{{user_id}}",
-                "salary"
-              ]
+              "raw": "{{base_url}}/payroll/simulations/dry-run",
+              "host": ["{{base_url}}"],
+              "path": ["payroll", "simulations", "dry-run"]
             },
-            "description": "Update the overrides on specific salary components for an employee. Throws error if non-editable constraints are violated."
+            "description": "Simulates the full salary breakdown against a template and CTC without saving anything. Uses the same calculation engine as actual assignment.\n\nReturns gross, deductions_total, net, employer_contribution, earnings[], deductions[], warnings[], and metadata."
           },
           "response": []
+        },
+        {
+          "name": "Employee Salary",
+          "item": [
+            {
+              "name": "Assign Salary to Employee",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"template_id\": \"{{salary_template_id}}\",\n  \"ctc\": 1200000,\n  \"effective_from\": \"2026-04-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/employee-salary-assignments",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "employee-salary-assignments"]
+                },
+                "description": "Assigns a salary template to an employee. Creates version 1 or increments to the next version. Previous version is automatically closed with effective_to = effective_from − 1 day.\n\nStores a full component snapshot — changes to the template after assignment do NOT affect the employee."
+              },
+              "response": []
+            },
+            {
+              "name": "Bulk Assign Salary",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"user_ids\": [\n    \"{{user_id}}\"\n  ],\n  \"template_id\": \"{{salary_template_id}}\",\n  \"ctc\": 800000,\n  \"effective_from\": \"2026-04-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/employee-salary-assignments/bulk",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "employee-salary-assignments", "bulk"]
+                },
+                "description": "Assigns the same template and CTC to multiple employees at once. Returns { assigned: N, failed: [] } — failed contains user IDs that could not be processed."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Employee List",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/employees?page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "employees"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" },
+                    { "key": "search", "value": "", "disabled": true },
+                    { "key": "department_id", "value": "", "disabled": true }
+                  ]
+                },
+                "description": "Paginated list of employees with name, employee code, and department."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Employee Salary Structure",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "employees", "{{user_id}}", "salary"]
+                },
+                "description": "Returns the active salary version with full component breakdown including version number and effective date."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Salary History",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary/history",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "employees", "{{user_id}}", "salary", "history"]
+                },
+                "description": "Returns all past salary versions for the employee ordered by version number descending."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Employee Salary",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"components\": [\n    {\n      \"component_name\": \"HRA\",\n      \"value\": 18000\n    }\n  ],\n  \"effective_from\": \"2026-05-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "employees", "{{user_id}}", "salary"]
+                },
+                "description": "Creates a new salary version with updated component values. The residual component (Special Allowance) is recalculated automatically. Always creates a new version — never mutates history.\n\nNote: use component_name (not code) to identify components."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Change Propagation",
+          "item": [
+            {
+              "name": "Preview Propagation Impact",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/propagation/preview?component_id={{payroll_component_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "propagation", "preview"],
+                  "query": [
+                    { "key": "component_id", "value": "{{payroll_component_id}}" }
+                  ]
+                },
+                "description": "Returns the number of salary templates and active employee salaries that contain this component. Use this before applying propagation to understand the blast radius."
+              },
+              "response": []
+            },
+            {
+              "name": "Apply Propagation",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"component_id\": \"{{payroll_component_id}}\",\n  \"scope\": \"selected_employees\",\n  \"employee_ids\": [\n    \"{{user_id}}\"\n  ],\n  \"effective_from\": \"2026-05-01\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/propagation/apply",
+                  "host": ["{{base_url}}"],
+                  "path": ["payroll", "propagation", "apply"]
+                },
+                "description": "Pushes an updated component value to selected employees by creating new salary versions.\n\nscope options:\n- future_only: update master component only, no employee impact (safe default)\n- selected_employees: create new salary versions for selected employees\n\neffective_from must not be in the past.\n\nReturns { updated: N, skipped: N }."
+              },
+              "response": []
+            }
+          ]
         }
       ]
     },

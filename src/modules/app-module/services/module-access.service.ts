@@ -17,6 +17,9 @@ import { AppModuleRepository } from '../repositories/app-module.repository';
 import { ActionRepository } from '../repositories/action.repository';
 import { UserRoleMapRepository } from '../../rbac/repositories/user-role-map.repository';
 import { Status } from '../../../common/enums';
+import { OrganizationSubscriptionRepository } from '../../plan/repositories/organization-subscription.repository';
+import { PlanModuleRepository } from '../../plan/repositories/plan-module.repository';
+import { PlanModuleActionRepository } from '../../plan/repositories/plan-module-action.repository';
 
 @Injectable()
 export class ModuleAccessService implements OnModuleInit {
@@ -27,6 +30,9 @@ export class ModuleAccessService implements OnModuleInit {
     private readonly appModuleRepository: AppModuleRepository,
     private readonly actionRepository: ActionRepository,
     private readonly userRoleMapRepository: UserRoleMapRepository,
+    private readonly organizationSubscriptionRepository: OrganizationSubscriptionRepository,
+    private readonly planModuleRepository: PlanModuleRepository,
+    private readonly planModuleActionRepository: PlanModuleActionRepository,
   ) {}
 
   async onModuleInit() {
@@ -105,12 +111,61 @@ export class ModuleAccessService implements OnModuleInit {
     }
 
     try {
-      return await this.moduleAccessRepository.save(moduleAccess);
+      const savedModuleAccess = await this.moduleAccessRepository.save(moduleAccess);
+
+      // Ensure it's active in the organization's plan
+      const activeSubscription = await this.organizationSubscriptionRepository.findActiveByOrganization(user.organizationId);
+      if (activeSubscription) {
+        const planId = activeSubscription.plan_id;
+        this.logger.log(`Ensuring Module and Action are available in Plan: ${planId}`);
+
+        // Ensure PlanModule exists
+        const planModules = await this.planModuleRepository.findByPlanId(planId);
+        let planModule = planModules.find(pm => pm.module_id === appModule.id);
+        if (!planModule) {
+          this.logger.log(`Creating PlanModule entry for Plan: ${planId}, Module: ${appModule.id}`);
+          planModule = this.planModuleRepository.create({
+            plan_id: planId,
+            module_id: appModule.id,
+            enabled: true,
+          });
+          await this.planModuleRepository.save(planModule);
+        } else if (!planModule.enabled) {
+          this.logger.log(`Enabling PlanModule entry for Plan: ${planId}, Module: ${appModule.id}`);
+          planModule.enabled = true;
+          await this.planModuleRepository.save(planModule);
+        }
+
+        // Ensure PlanModuleAction exists
+        const planModuleActions = await this.planModuleActionRepository.findByPlanAndModule(
+          planId,
+          appModule.id,
+        );
+        let planModuleAction = planModuleActions.find((pma) => pma.action_id === action.id);
+        if (!planModuleAction) {
+          this.logger.log(
+            `Creating PlanModuleAction entry for Plan: ${planId}, Module: ${appModule.id}, Action: ${action.id}`,
+          );
+          planModuleAction = this.planModuleActionRepository.create({
+            plan_id: planId,
+            module_id: appModule.id,
+            action_id: action.id,
+            enabled: true,
+          });
+          await this.planModuleActionRepository.save(planModuleAction);
+        } else if (!planModuleAction.enabled) {
+          this.logger.log(
+            `Enabling PlanModuleAction entry for Plan: ${planId}, Module: ${appModule.id}, Action: ${action.id}`,
+          );
+          planModuleAction.enabled = true;
+          await this.planModuleActionRepository.save(planModuleAction);
+        }
+      }
+
+      return savedModuleAccess;
     } catch (error) {
-      this.logger.error(`Failed to save module access: ${error.message}`);
-      throw new ConflictException(
-        'This role already has a configuration for this action on this module.',
-      );
+      this.logger.error(`Failed to save module access or update plan: ${error.message}`);
+      throw new ConflictException('Failed to process module access assignment.');
     }
   }
 

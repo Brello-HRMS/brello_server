@@ -1,13 +1,12 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { EmployeeSalary } from '../entities/employee-salary.entity';
+import { EmployeeSalaryComponent } from '../entities/employee-salary-component.entity';
 import {
   AssignEmployeeSalaryDto,
+  BulkAssignEmployeeSalaryDto,
   UpdateEmployeeSalaryDto,
 } from '../dto/employee-salary.dto';
 import { EmployeeQueryDto } from '../dto/employee-listing.dto';
@@ -29,36 +28,63 @@ export class EmployeeSalaryEngine {
     dto: AssignEmployeeSalaryDto,
   ): Promise<EmployeeSalary> {
     const template = await this.templateEngine.getTemplateById(dto.template_id);
-
-    // Build materialized salary structure breakdown using shared utility
-    const salaryStructure = SalaryStructureBuilder.build(
+    const effectiveFrom = new Date(dto.effective_from);
+    const snapshot = SalaryStructureBuilder.build(
       template,
       dto.ctc,
+      dto.component_ids,
       dto.overrides,
     );
 
-    const employeeSalary = await this.employeeSalaryRepository.createSalary({
+    return this.employeeSalaryRepository.createNewVersion({
       user_id: dto.user_id,
-      template_id: dto.template_id,
       ctc: dto.ctc,
-      salary_structure: salaryStructure,
-      effective_from: new Date(dto.effective_from),
+      effective_from: effectiveFrom,
       enterprise_id: enterpriseId,
       organization_id: organizationId,
+      components: snapshot,
     });
+  }
 
-    return employeeSalary;
+  async bulkAssignSalary(
+    enterpriseId: string,
+    organizationId: string,
+    dto: BulkAssignEmployeeSalaryDto,
+  ): Promise<{ assigned: number; failed: string[] }> {
+    const template = await this.templateEngine.getTemplateById(dto.template_id);
+    const effectiveFrom = new Date(dto.effective_from);
+    const snapshot = SalaryStructureBuilder.build(template, dto.ctc);
+
+    let assigned = 0;
+    const failed: string[] = [];
+
+    for (const userId of dto.user_ids) {
+      try {
+        await this.employeeSalaryRepository.createNewVersion({
+          user_id: userId,
+          ctc: dto.ctc,
+          effective_from: effectiveFrom,
+          enterprise_id: enterpriseId,
+          organization_id: organizationId,
+          components: snapshot,
+        });
+        assigned++;
+      } catch {
+        failed.push(userId);
+      }
+    }
+
+    return { assigned, failed };
   }
 
   async getEmployeeSalary(userId: string): Promise<EmployeeSalary> {
-    const salary =
-      await this.employeeSalaryRepository.findSalaryByUserId(userId);
-
-    if (!salary) {
-      throw new NotFoundException('Employee salary structure not found.');
-    }
-
+    const salary = await this.employeeSalaryRepository.findActiveSalary(userId);
+    if (!salary) throw new NotFoundException('Employee salary structure not found.');
     return salary;
+  }
+
+  async getEmployeeSalaryHistory(userId: string): Promise<EmployeeSalary[]> {
+    return this.employeeSalaryRepository.findSalaryHistory(userId);
   }
 
   async getEmployeesList(
@@ -66,31 +92,63 @@ export class EmployeeSalaryEngine {
     orgId: string,
     query: EmployeeQueryDto,
   ) {
-    const [users, total] =
-      await this.employeeSalaryRepository.queryEmployeesList(
-        enterpriseId,
-        orgId,
-        query,
-      );
+    const [users, total] = await this.employeeSalaryRepository.queryEmployeesList(
+      enterpriseId,
+      orgId,
+      query,
+    );
 
-    const data = users.map((u: any) => ({
-      id: u.id,
-      name: u.fullName,
-      employee_code: u.user_profile?.employee_id || null,
-      department: u.department?.name || null,
-    }));
+    const data = await Promise.all(
+      users.map(async (u: any) => {
+        const base = {
+          id: u.id,
+          name: u.fullName,
+          employee_code: u.user_profile?.employee_id || null,
+          department: u.department?.name || null,
+        };
+
+        const salary = await this.employeeSalaryRepository.findActiveSalary(u.id);
+        if (!salary) {
+          return {
+            ...base,
+            annual_ctc: null,
+            monthly_ctc: null,
+            gross: null,
+            deductions: null,
+            take_home: null,
+          };
+        }
+
+        const withComponents =
+          await this.employeeSalaryRepository.findSalaryWithComponents(salary.id);
+
+        const components = withComponents?.components ?? [];
+        const monthlyEarnings = components
+          .filter((c) => c.component_type === ComponentType.EARNING)
+          .reduce((s, c) => s + Number(c.value), 0);
+        const monthlyDeductions = components
+          .filter((c) => c.component_type === ComponentType.DEDUCTION)
+          .reduce((s, c) => s + Number(c.value), 0);
+
+        return {
+          ...base,
+          annual_ctc: Number(salary.ctc),
+          monthly_ctc: Math.round(Number(salary.ctc) / 12),
+          gross: Math.round(monthlyEarnings),
+          deductions: Math.round(monthlyDeductions),
+          take_home: Math.round(monthlyEarnings - monthlyDeductions),
+        };
+      }),
+    );
 
     return { data, total, page: query.page || 1, limit: query.limit || 10 };
   }
 
   async getEmployeeSalaryStructure(userId: string) {
-    const user =
-      await this.employeeSalaryRepository.findUserWithProfile(userId);
+    const user = await this.employeeSalaryRepository.findUserWithProfile(userId);
+    if (!user) throw new NotFoundException('Employee not found.');
 
-    if (!user) throw new NotFoundException('Employee not found');
-
-    const salary =
-      await this.employeeSalaryRepository.findSalaryByUserId(userId);
+    const salary = await this.employeeSalaryRepository.findActiveSalary(userId);
 
     if (!salary) {
       return {
@@ -99,33 +157,16 @@ export class EmployeeSalaryEngine {
           employee_code: user.user_profile?.employee_id || null,
           department: (user as any).department?.name || null,
         },
+        ctc: 0,
+        version: null,
         components: [],
       };
     }
 
-    const componentsMaster =
-      await this.employeeSalaryRepository.findComponentsMaster(
-        user.enterprise_id,
-        user.organization_id,
-      );
+    const salaryWithComponents =
+      await this.employeeSalaryRepository.findSalaryWithComponents(salary.id);
 
-    const masterMap = new Map(componentsMaster.map((c) => [c.code, c]));
-
-    const mappedComponents: any[] = [];
-    if (salary.salary_structure && salary.salary_structure.components) {
-      for (const comp of Object.values(
-        salary.salary_structure.components,
-      ) as any[]) {
-        const master = masterMap.get(comp.code);
-        mappedComponents.push({
-          code: comp.code,
-          name: master?.name || comp.name || comp.code,
-          type: master?.type || comp.type,
-          value: comp.value,
-          is_editable: master ? master.is_editable : false,
-        });
-      }
-    }
+    if (!salaryWithComponents) throw new NotFoundException('Salary record not found.');
 
     return {
       employee: {
@@ -133,70 +174,75 @@ export class EmployeeSalaryEngine {
         employee_code: user.user_profile?.employee_id || null,
         department: (user as any).department?.name || null,
       },
-      components: mappedComponents,
+      ctc: salaryWithComponents.ctc,
+      version: salaryWithComponents.version_number,
+      effective_from: salaryWithComponents.effective_from,
+      components: (salaryWithComponents.components ?? []).map(
+        (c: EmployeeSalaryComponent) => ({
+          component_name: c.component_name,
+          component_type: c.component_type,
+          value: c.value,
+          calculation_type: c.calculation_type,
+          is_residual: c.is_residual,
+          calculation_priority: c.calculation_priority,
+        }),
+      ),
     };
   }
 
   async updateEmployeeSalaryStructure(
     enterpriseId: string,
-    orgId: string,
+    organizationId: string,
     userId: string,
     dto: UpdateEmployeeSalaryDto,
   ) {
-    const salary =
-      await this.employeeSalaryRepository.findSalaryByUserId(userId);
+    const salary = await this.employeeSalaryRepository.findActiveSalary(userId);
+    if (!salary) throw new NotFoundException('Employee salary structure not found.');
 
-    if (!salary)
-      throw new NotFoundException('Employee salary structure not found.');
+    const existing =
+      await this.employeeSalaryRepository.findSalaryWithComponents(salary.id);
+    if (!existing) throw new NotFoundException('Salary record not found.');
 
-    const componentsMaster =
-      await this.employeeSalaryRepository.findComponentsMaster(
-        enterpriseId,
-        orgId,
-      );
-    const masterMap = new Map(componentsMaster.map((c) => [c.code, c]));
+    const updatesMap = new Map(
+      dto.components.map((u) => [u.component_name, u.value]),
+    );
 
-    const structure = salary.salary_structure;
-    if (!structure.components) structure.components = {};
+    const updatedComponents = (existing.components ?? []).map(
+      (c: EmployeeSalaryComponent) => ({
+        component_name: c.component_name,
+        component_type: c.component_type,
+        calculation_type: c.calculation_type,
+        calculate_from: c.calculate_from,
+        is_residual: c.is_residual,
+        calculation_priority: c.calculation_priority,
+        value: updatesMap.has(c.component_name)
+          ? updatesMap.get(c.component_name)!
+          : Number(c.value),
+      }),
+    );
 
-    for (const update of dto.components) {
-      const master = masterMap.get(update.code);
-      if (!master)
-        throw new BadRequestException(`Invalid component code: ${update.code}`);
+    // Recalculate residual
+    const totalEarnings = updatedComponents
+      .filter(
+        (c) => c.component_type === ComponentType.EARNING && !c.is_residual,
+      )
+      .reduce((sum: number, c) => sum + c.value, 0);
 
-      if (!master.is_editable) {
-        throw new BadRequestException(
-          `Component ${update.code} is not editable.`,
-        );
+    for (const c of updatedComponents) {
+      if (c.is_residual) {
+        c.value = Math.max(0, Number(existing.ctc) - totalEarnings);
       }
-
-      const compVal = {
-        ...structure.components[update.code],
-        value: update.value,
-        code: update.code,
-        type: master.type,
-        name: master.name,
-      };
-
-      structure.components[update.code] = compVal;
     }
 
-    let totalEarnings = 0;
-    let totalDeductions = 0;
+    await this.employeeSalaryRepository.createNewVersion({
+      user_id: userId,
+      ctc: Number(existing.ctc),
+      effective_from: new Date(dto.effective_from),
+      enterprise_id: enterpriseId,
+      organization_id: organizationId,
+      components: updatedComponents,
+    });
 
-    for (const c of Object.values(structure.components) as any[]) {
-      if (c.type === ComponentType.EARNING) totalEarnings += Number(c.value);
-      if (c.type === ComponentType.DEDUCTION)
-        totalDeductions += Number(c.value);
-    }
-
-    structure.total_earnings = totalEarnings;
-    structure.total_deductions = totalDeductions;
-    structure.net_salary = totalEarnings - totalDeductions;
-
-    salary.salary_structure = structure;
-
-    await this.employeeSalaryRepository.saveSalary(salary);
-    return { message: 'Salary updated successfully' };
+    return { message: 'Salary updated successfully.' };
   }
 }
