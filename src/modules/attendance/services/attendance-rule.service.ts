@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  UnprocessableEntityException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +13,7 @@ import { CreateAttendanceRuleDto } from '../dto/create-attendance-rule.dto';
 import { UpdateAttendanceRuleDto } from '../dto/update-attendance-rule.dto';
 import { ChangeStatusDto } from '../dto/change-status.dto';
 import { AttendanceRule } from '../entities/attendance-rule.entity';
+import { Shift } from '../entities/shift.entity';
 import { GeoFence } from '../entities/geo-fence.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
@@ -31,15 +31,26 @@ export class AttendanceRuleService {
   ) {}
 
   async create(user: LoggedInUser, dto: CreateAttendanceRuleDto): Promise<{ id: string }> {
-    await this.validateReferences(user, dto);
-    this.validateHoursRelation(dto);
+    const { shift } = await this.validateReferences(user, dto);
+
+    // Inherit working-hour thresholds from the shift when not explicitly provided
+    const full_day_hours = dto.full_day_hours ?? shift?.full_day_hours;
+    const half_day_hours = dto.half_day_hours ?? shift?.half_day_hours;
+
+    if (!full_day_hours || !half_day_hours) {
+      throw new BadRequestException(
+        'full_day_hours and half_day_hours are required (set them on the shift or provide them here)',
+      );
+    }
+
+    this.validateHoursRelation({ ...dto, full_day_hours, half_day_hours });
 
     const rule = await this.ruleRepo.create({
       name: dto.name,
       shift_id: dto.shift_id,
       weekly_off_id: dto.weekly_off_id,
-      full_day_hours: dto.full_day_hours,
-      half_day_hours: dto.half_day_hours,
+      full_day_hours,
+      half_day_hours,
       overtime_after_hours: dto.overtime_after_hours,
       overtime_multiplier: dto.overtime_multiplier,
       allow_multiple_checkins: dto.allow_multiple_checkins,
@@ -101,6 +112,7 @@ export class AttendanceRuleService {
       });
     }
 
+
     if (dto.full_day_hours !== undefined || dto.half_day_hours !== undefined) {
       this.validateHoursRelation({
         full_day_hours: dto.full_day_hours ?? existingRule.full_day_hours,
@@ -148,19 +160,36 @@ export class AttendanceRuleService {
 
   async changeStatus(user: LoggedInUser, id: string, dto: ChangeStatusDto): Promise<void> {
     await this.findOne(user, id);
-    await this.ruleRepo.update(id, {
-      status: dto.status,
-      modified_by: user.userId,
+    await this.ruleRepo.update(id, { status: dto.status, modified_by: user.userId });
+    this.logger.log(`[AUDIT] Attendance rule ${id} status → ${dto.status} by ${user.userId}`);
+  }
+
+  async delete(user: LoggedInUser, id: string): Promise<void> {
+    const rule = await this.findOne(user, id);
+
+    const geoFence = await this.geoFenceRepository.findOne({
+      where: { rule_id: id, is_deleted: false },
     });
-    this.logger.log(`Attendance rule ${id} status changed to ${dto.status} by ${user.userId}`);
+    if (geoFence) {
+      await this.geoFenceRepository.update(geoFence.id, {
+        is_deleted: true,
+        deleted_at: new Date(),
+        deleted_by: user.userId,
+      });
+    }
+
+    await this.ruleRepo.softDelete(id, user.userId);
+    this.logger.log(`[AUDIT] Attendance rule "${rule.name}" (${id}) deleted by ${user.userId}`);
   }
 
   private async validateReferences(
     user: LoggedInUser,
     dto: { shift_id?: string; weekly_off_id?: string },
-  ): Promise<void> {
+  ): Promise<{ shift: Shift | null }> {
+    let shift: Shift | null = null;
+
     if (dto.shift_id) {
-      const shift = await this.shiftRepo.findOneByOrg(dto.shift_id, user.organizationId);
+      shift = await this.shiftRepo.findOneByOrg(dto.shift_id, user.organizationId);
       if (!shift) {
         throw new NotFoundException(`Shift ${dto.shift_id} not found`);
       }
@@ -172,6 +201,8 @@ export class AttendanceRuleService {
         throw new NotFoundException(`Weekly off ${dto.weekly_off_id} not found`);
       }
     }
+
+    return { shift };
   }
 
   private validateHoursRelation(dto: {

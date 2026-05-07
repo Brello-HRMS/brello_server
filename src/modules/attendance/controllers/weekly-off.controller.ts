@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
   HttpCode,
   HttpStatus,
@@ -67,5 +68,15 @@ export class WeeklyOffController {
     @Body() dto: ChangeStatusDto,
   ) {
     return this.weeklyOffService.changeStatus(user, id, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermission('ATTENDANCE_CONFIG', 'delete')
+  delete(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.weeklyOffService.delete(user, id);
   }
 }

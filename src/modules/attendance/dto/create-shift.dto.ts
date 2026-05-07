@@ -38,6 +38,10 @@ export class CreateShiftDto {
 
   @IsOptional()
   @IsBoolean()
+  is_night_shift?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   allow_multiple_checkins?: boolean;
 
   @IsOptional()

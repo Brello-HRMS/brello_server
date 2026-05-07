@@ -5,6 +5,7 @@ import {
   IsUUID,
   IsNumber,
   Min,
+  Max,
   IsBoolean,
   IsOptional,
   ValidateNested,
@@ -20,14 +21,17 @@ export class GeoFenceDto {
 
   @IsNumber()
   @Min(-90, { message: 'latitude must be >= -90' })
+  @Max(90, { message: 'latitude must be <= 90' })
   latitude: number;
 
   @IsNumber()
   @Min(-180, { message: 'longitude must be >= -180' })
+  @Max(180, { message: 'longitude must be <= 180' })
   longitude: number;
 
   @IsNumber()
-  @Min(1, { message: 'radius_meters must be > 0' })
+  @Min(1, { message: 'radius_meters must be >= 1' })
+  @Max(50000, { message: 'radius_meters must be <= 50000' })
   radius_meters: number;
 }
 
@@ -45,13 +49,15 @@ export class CreateAttendanceRuleDto {
   @IsNotEmpty({ message: 'weekly_off_id is required' })
   weekly_off_id: string;
 
+  @IsOptional()
   @IsNumber()
   @Min(0.01, { message: 'full_day_hours must be > 0' })
-  full_day_hours: number;
+  full_day_hours?: number;
 
+  @IsOptional()
   @IsNumber()
   @Min(0.01, { message: 'half_day_hours must be > 0' })
-  half_day_hours: number;
+  half_day_hours?: number;
 
   @IsOptional()
   @IsNumber()

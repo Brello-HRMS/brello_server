@@ -3,6 +3,7 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 
 @Entity('shifts')
 @Index(['organization_id', 'name'], { unique: true, where: '"is_deleted" = false' })
+@Index(['organization_id', 'is_deleted'])
 export class Shift extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })
   name: string;
@@ -27,6 +28,9 @@ export class Shift extends BaseEntity {
 
   @Column({ type: 'decimal', precision: 4, scale: 2, nullable: true })
   half_day_hours: number;
+
+  @Column({ type: 'boolean', default: false })
+  is_night_shift: boolean;
 
   @Column({ type: 'boolean', default: false })
   is_deleted: boolean;

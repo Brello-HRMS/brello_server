@@ -64,7 +64,7 @@ export class ShiftService {
   async update(user: LoggedInUser, id: string, dto: UpdateShiftDto): Promise<Shift> {
     await this.findOne(user, id);
 
-    if (dto.start_time || dto.end_time || dto.auto_checkout_time || dto.full_day_hours || dto.half_day_hours) {
+    if (dto.start_time || dto.end_time || dto.auto_checkout_time || dto.full_day_hours || dto.half_day_hours || dto.is_night_shift !== undefined) {
       this.validateShiftTimings(dto);
     }
 
@@ -91,13 +91,56 @@ export class ShiftService {
     this.logger.log(`Shift ${id} status changed to ${dto.status} by ${user.userId}`);
   }
 
-  private validateShiftTimings(dto: Partial<CreateShiftDto>): void {
-    if (dto.start_time && dto.end_time && dto.end_time <= dto.start_time) {
-      throw new BadRequestException('end_time must be greater than start_time');
+  async delete(user: LoggedInUser, id: string): Promise<void> {
+    const shift = await this.findOne(user, id);
+
+    const activeRuleCount = await this.ruleRepo.countActiveByShiftId(shift.id);
+    if (activeRuleCount > 0) {
+      throw new ConflictException(
+        'Cannot delete shift: it is used in active attendance rules',
+      );
     }
 
-    if (dto.auto_checkout_time && dto.end_time && dto.auto_checkout_time < dto.end_time) {
-      throw new BadRequestException('auto_checkout_time must be >= end_time');
+    await this.shiftRepo.softDelete(id, user.userId);
+    this.logger.log(`Shift ${id} deleted by ${user.userId}`);
+  }
+
+  private timeToMinutes(time: string): number {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  private validateShiftTimings(dto: Partial<CreateShiftDto>): void {
+    const isNightShift = dto.is_night_shift ?? false;
+
+    if (dto.start_time && dto.end_time) {
+      const startMins = this.timeToMinutes(dto.start_time);
+      const endMins = this.timeToMinutes(dto.end_time);
+
+      if (!isNightShift && endMins <= startMins) {
+        throw new BadRequestException('end_time must be greater than start_time');
+      }
+      if (isNightShift && endMins >= startMins) {
+        throw new BadRequestException(
+          'For a night shift, end_time must be earlier than start_time (shift must cross midnight)',
+        );
+      }
+    }
+
+    if (dto.auto_checkout_time && dto.end_time) {
+      let endMins = this.timeToMinutes(dto.end_time);
+      let autoMins = this.timeToMinutes(dto.auto_checkout_time);
+
+      if (isNightShift && dto.start_time) {
+        const startMins = this.timeToMinutes(dto.start_time);
+        // Times earlier than start_time are on the next calendar day
+        if (endMins < startMins) endMins += 1440;
+        if (autoMins < startMins) autoMins += 1440;
+      }
+
+      if (autoMins < endMins) {
+        throw new BadRequestException('auto_checkout_time must be >= end_time');
+      }
     }
 
     if (

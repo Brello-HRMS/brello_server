@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
   HttpCode,
   HttpStatus,
@@ -67,5 +68,14 @@ export class ShiftController {
     @Body() dto: ChangeStatusDto,
   ) {
     return this.shiftService.changeStatus(user, id, dto);
+  }
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermission('ATTENDANCE_CONFIG', 'delete')
+  delete(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.shiftService.delete(user, id);
   }
 }
