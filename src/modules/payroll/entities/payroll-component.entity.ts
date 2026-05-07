@@ -13,6 +13,7 @@ export class PayrollComponent extends BaseEntity {
   @Column({
     type: 'enum',
     enum: ComponentType,
+    nullable: true,
   })
   type: ComponentType;
 

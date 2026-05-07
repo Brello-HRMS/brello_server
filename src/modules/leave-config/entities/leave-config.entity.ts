@@ -5,9 +5,6 @@ import { LeaveRules } from './leave-rules.entity';
 
 @Entity('leave_configs')
 export class LeaveConfig extends BaseEntity {
-  @Column({ type: 'int', default: 1 })
-  leave_year_start_month: number;
-
   @Column({ type: 'int', nullable: true })
   total_leave: number;
 

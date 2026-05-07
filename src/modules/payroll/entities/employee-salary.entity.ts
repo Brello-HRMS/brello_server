@@ -12,8 +12,8 @@ export class EmployeeSalary extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'uuid' })
-  template_id: string;
+  @Column({ type: 'uuid', nullable: true })
+  template_id: string | null;
 
   @ManyToOne(() => SalaryTemplate)
   @JoinColumn({ name: 'template_id' })
@@ -22,7 +22,7 @@ export class EmployeeSalary extends BaseEntity {
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   ctc: number;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'jsonb', nullable: true })
   salary_structure: Record<string, any>;
 
   @Column({ type: 'date' })

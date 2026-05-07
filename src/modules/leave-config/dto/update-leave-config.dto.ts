@@ -13,12 +13,6 @@ import { LeaveRulesDto } from './leave-rules.dto';
 
 export class UpdateLeaveConfigDto {
   @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(12)
-  leaveYearStartMonth?: number;
-
-  @IsOptional()
   @IsNumber()
   @Min(0)
   totalLeave?: number;

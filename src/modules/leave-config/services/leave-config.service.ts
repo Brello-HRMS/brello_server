@@ -20,9 +20,11 @@ export class LeaveConfigService {
   /**
    * Creates a draft leave configuration.
    */
-  async createDraft(user: LoggedInUser, dto: CreateLeaveConfigDto): Promise<{ id: string }> {
+  async createDraft(
+    user: LoggedInUser,
+    dto: CreateLeaveConfigDto,
+  ): Promise<{ id: string }> {
     const config = await this.configRepo.create({
-      leave_year_start_month: dto.leaveYearStartMonth,
       total_leave: dto.totalLeave,
       status: Status.PENDING, // Draft
       organization_id: user.organizationId,
@@ -30,7 +32,9 @@ export class LeaveConfigService {
       modified_by: user.userId,
     });
 
-    this.logger.log(`Leave configuration draft created with ID: ${config.id} by user: ${user.userId}`);
+    this.logger.log(
+      `Leave configuration draft created with ID: ${config.id} by user: ${user.userId}`,
+    );
     return { id: config.id };
   }
 
@@ -38,12 +42,15 @@ export class LeaveConfigService {
    * Updates an existing leave configuration (Stepper Save).
    * Uses REPLACE strategy for leave types.
    */
-  async updateConfig(user: LoggedInUser, id: string, dto: UpdateLeaveConfigDto): Promise<LeaveConfig> {
+  async updateConfig(
+    user: LoggedInUser,
+    id: string,
+    dto: UpdateLeaveConfigDto,
+  ): Promise<LeaveConfig> {
     const existingConfig = await this.findOne(user, id);
 
     const configData: Partial<LeaveConfig> = {
       modified_by: user.userId,
-      ...(dto.leaveYearStartMonth !== undefined && { leave_year_start_month: dto.leaveYearStartMonth }),
       ...(dto.totalLeave !== undefined && { total_leave: dto.totalLeave }),
     };
 
@@ -77,7 +84,9 @@ export class LeaveConfigService {
     );
 
     if (!updatedConfig) {
-      throw new NotFoundException(`Leave configuration ${id} not found after update`);
+      throw new NotFoundException(
+        `Leave configuration ${id} not found after update`,
+      );
     }
 
     return updatedConfig;
@@ -91,11 +100,14 @@ export class LeaveConfigService {
 
     // 1. Total Leave Validation
     if (!config.total_leave || config.total_leave <= 0) {
-      throw new BadRequestException('INVALID_TOTAL_LEAVE: Total leave must be greater than 0');
+      throw new BadRequestException(
+        'INVALID_TOTAL_LEAVE: Total leave must be greater than 0',
+      );
     }
 
     // 2. Allocation Validation (CRITICAL)
-    const allocatedDays = config.leave_types?.reduce((sum, type) => sum + type.days, 0) || 0;
+    const allocatedDays =
+      config.leave_types?.reduce((sum, type) => sum + type.days, 0) || 0;
     if (allocatedDays !== config.total_leave) {
       throw new BadRequestException(
         `ALLOCATION_MISMATCH: Allocated leave (${allocatedDays}) must equal total leave (${config.total_leave})`,
@@ -110,8 +122,13 @@ export class LeaveConfigService {
     }
 
     // 4. Max Per Month Validation
-    if (config.rules?.max_per_month !== undefined && config.rules?.max_per_month < 0) {
-      throw new BadRequestException('INVALID_MAX_PER_MONTH: Max per month cannot be negative');
+    if (
+      config.rules?.max_per_month !== undefined &&
+      config.rules?.max_per_month < 0
+    ) {
+      throw new BadRequestException(
+        'INVALID_MAX_PER_MONTH: Max per month cannot be negative',
+      );
     }
 
     // Update status to ACTIVE
@@ -120,16 +137,23 @@ export class LeaveConfigService {
       modified_by: user.userId,
     });
 
-    this.logger.log(`Leave configuration ${id} activated by user: ${user.userId}`);
+    this.logger.log(
+      `Leave configuration ${id} activated by user: ${user.userId}`,
+    );
   }
 
   /**
    * Retrieves a leave configuration with its relations.
    */
   async findOne(user: LoggedInUser, id: string): Promise<LeaveConfig> {
-    const config = await this.configRepo.findOneWithRelations(id, user.organizationId);
+    const config = await this.configRepo.findOneWithRelations(
+      id,
+      user.organizationId,
+    );
     if (!config) {
-      throw new NotFoundException(`Leave configuration with ID ${id} not found`);
+      throw new NotFoundException(
+        `Leave configuration with ID ${id} not found`,
+      );
     }
     return config;
   }
