@@ -24,6 +24,7 @@ import { DesignationModule } from './modules/designations/designation.module';
 import { HolidayModule } from './modules/holiday/holiday.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { PayrollModule } from './modules/payroll/payroll.module';
+import { LeaveConfigModule } from './modules/leave-config/leave-config.module';
 import { ReimbursementModule } from './modules/reimbursement/reimbursement.module';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -65,6 +66,7 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     HolidayModule,
     AttendanceModule,
     PayrollModule,
+    LeaveConfigModule,
     ReimbursementModule,
   ],
   providers: [
@@ -74,4 +76,4 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

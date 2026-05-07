@@ -162,12 +162,7 @@
       "type": "string"
     },
     {
-      "key": "payroll_component_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "salary_template_id",
+      "key": "leave_config_id",
       "value": "",
       "type": "string"
     }
@@ -6884,6 +6879,121 @@
               "response": []
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Leave Configuration",
+      "description": "Endpoints for managing leave types, rules, and configurations.",
+      "item": [
+        {
+          "name": "Create Draft Config",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('leave_config_id', response.data.id);",
+                  "    console.log('✅ Leave Config ID saved:', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leaveYearStartMonth\": 1,\n    \"totalLeave\": 24\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-configs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-configs"
+              ]
+            },
+            "description": "Create a new draft leave configuration. A draft cannot be used for leave applications until activated."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Config Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-configs/{{leave_config_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-configs",
+                "{{leave_config_id}}"
+              ]
+            },
+            "description": "Fetch details of a specific leave configuration including its types and rules."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Config",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leaveYearStartMonth\": 1,\n    \"totalLeave\": 24,\n    \"leaveTypes\": [\n        {\n            \"name\": \"Annual Leave\",\n            \"days\": 12,\n            \"accrual\": \"monthly\",\n            \"allowHalfDay\": true\n        },\n        {\n            \"name\": \"Sick Leave\",\n            \"days\": 12,\n            \"accrual\": \"none\",\n            \"allowHalfDay\": true\n        }\n    ],\n    \"rules\": {\n        \"approvalRequired\": true,\n        \"maxPerMonth\": 2,\n        \"allowHalfDay\": true,\n        \"allowBackdated\": false,\n        \"sandwichRule\": true\n    }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-configs/{{leave_config_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-configs",
+                "{{leave_config_id}}"
+              ]
+            },
+            "description": "Update an existing leave configuration. You can update the year start month, total leaves, leave types, and rules."
+          },
+          "response": []
+        },
+        {
+          "name": "Activate Config",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-configs/{{leave_config_id}}/activate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-configs",
+                "{{leave_config_id}}",
+                "activate"
+              ]
+            },
+            "description": "Activate a leave configuration. This will deactivate the current active configuration and make this one active. This action is irreversible."
+          },
+          "response": []
         }
       ]
     }

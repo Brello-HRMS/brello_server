@@ -27,9 +27,13 @@ export class EmployeeSalary extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
 
-  @OneToMany(() => EmployeeSalaryComponent, (c: EmployeeSalaryComponent) => c.employee_salary, {
-    cascade: true,
-    eager: false,
-  })
+  @OneToMany(
+    () => EmployeeSalaryComponent,
+    (c: EmployeeSalaryComponent) => c.employee_salary,
+    {
+      cascade: true,
+      eager: false,
+    },
+  )
   components: EmployeeSalaryComponent[];
 }
