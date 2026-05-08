@@ -1,0 +1,30 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { Announcement } from './entities/announcement.entity';
+import { AnnouncementTarget } from './entities/announcement-target.entity';
+import { AnnouncementRead } from './entities/announcement-read.entity';
+import { AnnouncementAttachment } from './entities/announcement-attachment.entity';
+import { User } from '../user/entities/user.entity';
+
+import { AnnouncementRepository } from './repositories/announcement.repository';
+import { AnnouncementService } from './services/announcement.service';
+import { EmployeeAnnouncementService } from './services/employee-announcement.service';
+import { AnnouncementController } from './controllers/announcement.controller';
+import { EmployeeAnnouncementController } from './controllers/employee-announcement.controller';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      Announcement,
+      AnnouncementTarget,
+      AnnouncementRead,
+      AnnouncementAttachment,
+      User,
+    ]),
+  ],
+  controllers: [AnnouncementController, EmployeeAnnouncementController],
+  providers: [AnnouncementRepository, AnnouncementService, EmployeeAnnouncementService],
+  exports: [AnnouncementService, EmployeeAnnouncementService],
+})
+export class AnnouncementModule {}

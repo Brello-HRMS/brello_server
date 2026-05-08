@@ -28,6 +28,7 @@ import { LeaveConfigModule } from './modules/leave-config/leave-config.module';
 import { LeaveBalanceModule } from './modules/leave-balance/leave-balance.module';
 import { LeaveRequestModule } from './modules/leave-request/leave-request.module';
 import { ReimbursementModule } from './modules/reimbursement/reimbursement.module';
+import { AnnouncementModule } from './modules/announcement/announcement.module';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.interceptor';
@@ -72,6 +73,7 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     LeaveBalanceModule,
     LeaveRequestModule,
     ReimbursementModule,
+    AnnouncementModule,
   ],
   providers: [
     {
