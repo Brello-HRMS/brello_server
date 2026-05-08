@@ -18,17 +18,22 @@ import * as path from 'path';
 const SCHEMA = 'brello_dev';
 const ADMIN_EMAIL = 'b10@admin.com';
 
-const ANNOUNCEMENT_ACTIONS = ['view', 'create', 'update', 'delete', 'publish', 'archive'];
+const ANNOUNCEMENT_ACTIONS = [
+  'view',
+  'create',
+  'update',
+  'delete',
+  'publish',
+  'archive',
+];
 
 const client = new Client({
-  host: 'brello-service-test-brello.c.aivencloud.com',
-  port: 21789,
-  user: 'avnadmin',
-  password: 'AVNS_6fF5sDvxo5vO1kGlzuQ',
-  database: 'defaultdb',
-  ssl: {
-    ca: fs.readFileSync(path.resolve(__dirname, '../../certs/ca.pem')).toString(),
-  },
+  host: 'localhost',
+  port: 5432,
+  user: 'postgres',
+  password: 'password',
+  database: 'brello_dev',
+  ssl: false,
 });
 
 async function query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
@@ -51,7 +56,9 @@ async function run() {
     apps.find((a) => a.name === 'Admin App') ??
     apps.find((a) => a.name.toLowerCase().includes('admin'));
   if (!adminApp) {
-    throw new Error(`No admin app found. Available: ${apps.map((a) => a.name).join(', ')}`);
+    throw new Error(
+      `No admin app found. Available: ${apps.map((a) => a.name).join(', ')}`,
+    );
   }
   console.log(`\nUsing app: ${adminApp.name} (${adminApp.id})`);
 
@@ -129,7 +136,11 @@ async function run() {
   console.log('\nAction IDs:', actionIdMap);
 
   // ── 5. Find b10admin@gmail.com ────────────────────────────────────────────
-  const users = await query<{ id: string; email: string; organization_id: string }>(
+  const users = await query<{
+    id: string;
+    email: string;
+    organization_id: string;
+  }>(
     `SELECT id, email, organization_id FROM ${SCHEMA}.users WHERE email = $1 AND deleted_at IS NULL LIMIT 1`,
     [ADMIN_EMAIL],
   );
@@ -137,7 +148,9 @@ async function run() {
     throw new Error(`User ${ADMIN_EMAIL} not found in the database`);
   }
   const adminUser = users[0];
-  console.log(`\nUser: ${adminUser.email} (${adminUser.id}), org: ${adminUser.organization_id}`);
+  console.log(
+    `\nUser: ${adminUser.email} (${adminUser.id}), org: ${adminUser.organization_id}`,
+  );
 
   // ── 6. Find the user's roles in the admin app ─────────────────────────────
   const roles = await query<{ role_id: string; role_name: string }>(
@@ -194,7 +207,9 @@ async function run() {
     }
   }
 
-  console.log(`\nPermissions: ${grantedCount} granted, ${skippedCount} already existed`);
+  console.log(
+    `\nPermissions: ${grantedCount} granted, ${skippedCount} already existed`,
+  );
 
   // ── 8. Verify TypeORM synchronize creates announcement tables ─────────────
   const tables = await query<{ tablename: string }>(
@@ -205,7 +220,10 @@ async function run() {
     [SCHEMA],
   );
   if (tables.length > 0) {
-    console.log('\nAnnouncement tables found:', tables.map((t) => t.tablename).join(', '));
+    console.log(
+      '\nAnnouncement tables found:',
+      tables.map((t) => t.tablename).join(', '),
+    );
   } else {
     console.log(
       '\nAnnouncement tables not yet created — they will be auto-created by TypeORM synchronize on next server start.',
