@@ -29,6 +29,10 @@ This folder contains the API contract documentation for the Brello HRMS backend,
 | [15-departments.md](./15-departments.md)                       | Department          | CRUD for organization departments                                  |
 | [16-client.md](./16-client.md)                                 | Client              | CRUD for organization clients                                      |
 | [17-project.md](./17-project.md)                               | Project             | CRUD projects, team assignment, contract upload                    |
+| [18-attendance-config.md](./18-attendance-config.md)           | Attendance Config   | Shifts, weekly offs, attendance rules, geo-fencing                 |
+| [18-payroll.md](./18-payroll.md)                               | Payroll             | Payroll settings, components, templates, employee salary, dry-run  |
+| [19-leave-balance.md](./19-leave-balance.md)                   | Leave Balance       | Per-employee balance ledger, initialization, adjustments           |
+| [20-leave-request.md](./20-leave-request.md)                   | Leave Request       | Apply, approve, reject, cancel; balance-aware state machine        |
 
 ## Postman Collection
 
@@ -37,3 +41,10 @@ Import the Postman collection from [`../postman/Brello_HRMS_API.postman_collecti
 ## Getting Started
 
 See [`../collection-usage/GETTING_STARTED.md`](../collection-usage/GETTING_STARTED.md) for a step-by-step walkthrough of the entire API flow starting from an empty database.
+
+## Domain-Specific Walkthroughs
+
+| Domain                        | Walkthrough                                                  |
+| ----------------------------- | ------------------------------------------------------------ |
+| Payroll                       | [`../collection-usage/PAYROLL.md`](../collection-usage/PAYROLL.md) |
+| Leave Balance + Leave Request | [`../collection-usage/LEAVE.md`](../collection-usage/LEAVE.md)     |

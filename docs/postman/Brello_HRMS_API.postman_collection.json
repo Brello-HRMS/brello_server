@@ -165,6 +165,36 @@
       "key": "leave_config_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "leave_type_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lwp_leave_type_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leave_balance_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leave_request_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leave_draft_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employee_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -6992,6 +7022,711 @@
               ]
             },
             "description": "Activate a leave configuration. This will deactivate the current active configuration and make this one active. This action is irreversible."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Leave Balance",
+      "description": "Per-employee leave balance ledger: initialize, read, adjust, recompute. Self-service `GET /me` requires only JWT; HR endpoints require `LEAVE_MGMT.{view|create|update}` permission.",
+      "item": [
+        {
+          "name": "Get My Balance",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-balances/me?leave_year=2026",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances", "me"],
+              "query": [
+                { "key": "leave_year", "value": "2026" }
+              ]
+            },
+            "description": "Self-service. Returns the caller's balance for the requested year. LWP rows are always present with `is_unlimited: true` and null balance fields."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const balances = pm.response.json().data.balances || [];",
+                  "    const casual = balances.find(b => !b.is_unlimited);",
+                  "    if (casual) {",
+                  "        pm.collectionVariables.set('leave_balance_id', casual.id);",
+                  "        pm.collectionVariables.set('leave_type_id', casual.leave_type_id);",
+                  "        console.log('✅ leave_balance_id + leave_type_id saved.');",
+                  "    }",
+                  "    const lwp = balances.find(b => b.leave_type_code === 'LWP');",
+                  "    if (lwp) {",
+                  "        pm.collectionVariables.set('lwp_leave_type_id', lwp.leave_type_id);",
+                  "        console.log('✅ lwp_leave_type_id saved.');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Employee Balance (HR)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-balances/employee/{{employee_id}}?leave_year=2026",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances", "employee", "{{employee_id}}"],
+              "query": [
+                { "key": "leave_year", "value": "2026" }
+              ]
+            },
+            "description": "HR / manager view. Requires `LEAVE_MGMT.view`."
+          },
+          "response": []
+        },
+        {
+          "name": "Initialize Balance for Employee",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employee_id\": \"{{employee_id}}\",\n    \"leave_year\": 2026,\n    \"carry_forward\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-balances/initialize",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances", "initialize"]
+            },
+            "description": "Creates one balance row per LeaveType in the active LeaveConfig. Idempotent — second call returns 409 ALREADY_INITIALIZED. Requires `LEAVE_MGMT.create`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json().data;",
+                  "    const first = (data.balances || [])[0];",
+                  "    if (first) {",
+                  "        pm.collectionVariables.set('leave_balance_id', first.id);",
+                  "        pm.collectionVariables.set('leave_type_id', first.leave_type_id);",
+                  "        console.log('✅ Balance initialized.');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Bulk Initialize",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leave_year\": 2026,\n    \"scope\": \"ORGANIZATION\",\n    \"auto_carry_forward\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-balances/initialize/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances", "initialize", "bulk"]
+            },
+            "description": "Initializes balances for all employees in scope. `scope`: `ORGANIZATION` | `DEPARTMENT` (with `department_ids[]`) | `EMPLOYEES` (with `employee_ids[]`). Already-initialized employees are skipped, not failed. Requires `LEAVE_MGMT.create`."
+          },
+          "response": []
+        },
+        {
+          "name": "List All Balances (HR)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-balances?leave_year=2026&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances"],
+              "query": [
+                { "key": "leave_year", "value": "2026" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "search", "value": "", "disabled": true, "description": "Free-text on employee name OR employee code (>= 2 chars)" },
+                { "key": "department_id", "value": "", "disabled": true },
+                { "key": "leave_type_id", "value": "", "disabled": true },
+                { "key": "employee_id", "value": "", "disabled": true },
+                { "key": "low_balance", "value": "true", "disabled": true, "description": "Filter rows where available_days <= 2" }
+              ]
+            },
+            "description": "Paginated HR list with filters. Requires `LEAVE_MGMT.view`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Balance by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-balances/{{leave_balance_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances", "{{leave_balance_id}}"]
+            },
+            "description": "Single balance row. Requires `LEAVE_MGMT.view`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Balance Ledger",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-balances/{{leave_balance_id}}/ledger?page=1&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances", "{{leave_balance_id}}", "ledger"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "50" },
+                { "key": "from_date", "value": "", "disabled": true },
+                { "key": "to_date", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Immutable audit trail of credits/debits for a balance row. Requires `LEAVE_MGMT.view`."
+          },
+          "response": []
+        },
+        {
+          "name": "Adjust Balance (HR)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"direction\": \"CREDIT\",\n    \"days\": 2,\n    \"reason\": \"Bonus leaves for project milestone\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-balances/{{leave_balance_id}}/adjust",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances", "{{leave_balance_id}}", "adjust"]
+            },
+            "description": "Manual credit/debit. `days` must be in 0.5 increments. Reason is mandatory. Returns 422 UNLIMITED_TYPE_NOT_ADJUSTABLE for LWP. Requires `LEAVE_MGMT.update`."
+          },
+          "response": []
+        },
+        {
+          "name": "Recompute Balance",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-balances/{{leave_balance_id}}/recompute",
+              "host": ["{{base_url}}"],
+              "path": ["leave-balances", "{{leave_balance_id}}", "recompute"]
+            },
+            "description": "Self-heal: recomputes used/pending from leave_requests. No-op for unlimited types. Requires `LEAVE_MGMT.update`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Leave Request",
+      "description": "Per-employee leave application lifecycle (DRAFT → PENDING → APPROVED | REJECTED | CANCELLED). Employee endpoints (`/me`, create, cancel own) need only JWT; HR endpoints require `LEAVE_MGMT.{view|approve|delete}`.",
+      "item": [
+        {
+          "name": "Validate (Dry-Run)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leave_type_id\": \"{{leave_type_id}}\",\n    \"from_date\": \"2026-05-12\",\n    \"to_date\": \"2026-05-14\",\n    \"is_half_day\": false,\n    \"reason\": \"Family vacation planned in advance.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests/validate",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "validate"]
+            },
+            "description": "Dry-run validation. Returns `is_valid`, computed days breakdown, balance_before/after — without persisting anything. Use this to power a 'Days: X' counter in the Apply Leave UI."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Leave Request (Submit)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leave_type_id\": \"{{leave_type_id}}\",\n    \"from_date\": \"2026-05-12\",\n    \"to_date\": \"2026-05-14\",\n    \"is_half_day\": false,\n    \"reason\": \"Family vacation planned in advance.\",\n    \"attachment_ids\": [],\n    \"submit\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests"]
+            },
+            "description": "Creates a leave request. With `submit: true` (default) it goes straight to PENDING and the balance is held. Set `submit: false` to save as DRAFT for editing later. The server computes `total_days` — never trust client-side computation."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.collectionVariables.set('leave_request_id', data.id);",
+                  "    console.log('✅ leave_request_id saved:', data.id, 'status:', data.status);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Create as Draft",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leave_type_id\": \"{{leave_type_id}}\",\n    \"from_date\": \"2026-06-15\",\n    \"to_date\": \"2026-06-16\",\n    \"reason\": \"Tentative — pending confirmation.\",\n    \"submit\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests"]
+            },
+            "description": "Saves as DRAFT (no balance hold, no PENDING transition). Edit freely with PATCH, then call /submit when ready."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json().data;",
+                  "    pm.collectionVariables.set('leave_draft_id', data.id);",
+                  "    console.log('✅ leave_draft_id saved:', data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "List My Requests",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-requests/me?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "me"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "status", "value": "PENDING,APPROVED", "disabled": true, "description": "Comma-separated" },
+                { "key": "leave_type_id", "value": "", "disabled": true },
+                { "key": "from_date", "value": "", "disabled": true },
+                { "key": "to_date", "value": "", "disabled": true },
+                { "key": "sort_by", "value": "submitted_at", "disabled": true },
+                { "key": "sort_order", "value": "DESC", "disabled": true }
+              ]
+            },
+            "description": "Caller's own requests. Includes `manager_note` per row (resolves to approver_comment / rejection_reason / admin cancel reason based on status)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Request by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_request_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_request_id}}"]
+            },
+            "description": "Full detail view. Owner OR `LEAVE_MGMT.view`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Request History",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_request_id}}", "history"]
+            },
+            "description": "Append-only audit trail of state transitions (Applied → PENDING → APPROVED, etc.). Powers the request-detail timeline UI."
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Request (PENDING — limited)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"reason\": \"Updated reason for family event.\",\n    \"attachment_ids\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_request_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_request_id}}"]
+            },
+            "description": "On PENDING only `reason` and `attachment_ids` are editable. To change dates, cancel and re-create. On DRAFT, all fields are editable."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Draft (full edit)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"leave_type_id\": \"{{leave_type_id}}\",\n    \"from_date\": \"2026-06-20\",\n    \"to_date\": \"2026-06-22\",\n    \"reason\": \"Updated draft details.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_draft_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_draft_id}}"]
+            },
+            "description": "On DRAFT: all fields editable. The server recomputes `total_days` and `computed_days_breakdown` on every PATCH."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Draft",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_draft_id}}/submit",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_draft_id}}", "submit"]
+            },
+            "description": "Transitions DRAFT → PENDING. Re-runs all validations (overlap, balance, max-per-month, backdated)."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel My Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"reason\": \"No longer needed.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_request_id}}", "cancel"]
+            },
+            "description": "Allowed if status is DRAFT, PENDING, or APPROVED (and from_date > today). Returns 422 ALREADY_CONSUMED otherwise."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Draft",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_draft_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_draft_id}}"]
+            },
+            "description": "Hard-deletes a DRAFT only. 422 INVALID_STATE for any other status."
+          },
+          "response": []
+        },
+        {
+          "name": "List All Requests (HR)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-requests?page=1&limit=20&sort_by=submitted_at&sort_order=DESC",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sort_by", "value": "submitted_at" },
+                { "key": "sort_order", "value": "DESC" },
+                { "key": "search", "value": "", "disabled": true, "description": "Employee name or code" },
+                { "key": "status", "value": "PENDING", "disabled": true },
+                { "key": "department_id", "value": "", "disabled": true },
+                { "key": "leave_type_id", "value": "", "disabled": true },
+                { "key": "from_date", "value": "", "disabled": true },
+                { "key": "to_date", "value": "", "disabled": true }
+              ]
+            },
+            "description": "HR list with full filters. Requires `LEAVE_MGMT.view`."
+          },
+          "response": []
+        },
+        {
+          "name": "Pending Approvals (Manager Inbox)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leave-requests/pending-approval?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "pending-approval"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "All PENDING requests in the org that the caller is authorized to approve. v1: any user with `LEAVE_MGMT.approve` sees all pending requests in the org (manager-of routing is a v2 task)."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"comment\": \"Enjoy your holiday\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_request_id}}", "approve"]
+            },
+            "description": "PENDING → APPROVED. Self-approval forbidden. Re-validates balance to prevent stale-PENDING approvals. Atomic with row-lock on the balance row."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rejection_reason\": \"Conflicts with planned release.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/reject",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_request_id}}", "reject"]
+            },
+            "description": "PENDING → REJECTED. Releases held days back to available. `rejection_reason` is mandatory."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Cancel Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{access_token}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"reason\": \"Retroactive correction approved by HR.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/admin-cancel",
+              "host": ["{{base_url}}"],
+              "path": ["leave-requests", "{{leave_request_id}}", "admin-cancel"]
+            },
+            "description": "HR can cancel any request — PENDING or APPROVED, even past start_date. Credits days back to balance. Requires `LEAVE_MGMT.delete`."
           },
           "response": []
         }
