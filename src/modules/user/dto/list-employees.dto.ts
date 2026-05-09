@@ -1,5 +1,6 @@
 import { IsOptional, IsEnum, IsString, IsUUID } from 'class-validator';
 import { Status } from '../../../common/enums';
+import { EmployeeStatus } from '../enums/user.enum';
 import { ListQueryDto } from '../../../common/dto/pagination.dto';
 
 export class ListEmployeesDto extends ListQueryDto {
@@ -14,4 +15,8 @@ export class ListEmployeesDto extends ListQueryDto {
   @IsOptional()
   @IsEnum(Status)
   status?: Status;
+
+  @IsOptional()
+  @IsEnum(EmployeeStatus)
+  employeeStatus?: EmployeeStatus;
 }
