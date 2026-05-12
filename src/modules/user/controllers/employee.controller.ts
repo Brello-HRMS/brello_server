@@ -106,6 +106,15 @@ export class EmployeeController {
     return this.employeeService.onboardEmployee(id, actor.userId);
   }
 
+  @Post(':id/activate')
+  @HttpCode(200)
+  async activateEmployee(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() actor: LoggedInUserInterface,
+  ) {
+    return this.employeeService.activateEmployee(id, actor.userId);
+  }
+
   @Post(':id/documents')
   async uploadDocuments(
     @Param('id', ParseUUIDPipe) id: string,

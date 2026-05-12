@@ -320,6 +320,12 @@ export class EmployeeService {
       qb.andWhere('user.status != :deleted', { deleted: Status.DELETED });
     }
 
+    if (query.employeeStatus) {
+      qb.andWhere('profile.employee_status = :empStatus', {
+        empStatus: query.employeeStatus,
+      });
+    }
+
     const response = await ListingHelper.apply(qb, query, user, {
       searchFields: ['first_name', 'last_name', 'email'],
       filterFields: ['status', 'departmentId', 'designationId'],
@@ -340,6 +346,7 @@ export class EmployeeService {
         lastName: userInstance.last_name,
         email: userInstance.email,
         status: userInstance.status,
+        employeeStatus: userInstance.user_profile?.employee_status ?? null,
         avatar: avatarUrl,
         memberAvatars: avatarUrl ? [avatarUrl] : [], // For employees, show their own avatar as first
       };
@@ -989,5 +996,69 @@ export class EmployeeService {
     );
 
     return { success: true, status: EmployeeStatus.INVITED };
+  }
+
+  async activateEmployee(id: string, actorId: string): Promise<any> {
+    this.logger.log(`Activating employee: ${id}`);
+
+    const user = await this.userRepository.findById(id);
+    if (!user || !user.user_profile_id) {
+      throw new NotFoundException('Employee not found.');
+    }
+
+    const profile = await this.profileRepository.findByUserId(id);
+    if (!profile) {
+      throw new NotFoundException('Profile record not found.');
+    }
+
+    if (profile.employee_status !== EmployeeStatus.INVITED) {
+      throw new BadRequestException(
+        `Employee cannot be activated from '${profile.employee_status}' status. Only INVITED employees can be activated.`,
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      await queryRunner.manager.update(
+        UserProfile,
+        profile.id,
+        { employee_status: EmployeeStatus.ACTIVE },
+      );
+
+      await queryRunner.manager.update(
+        User,
+        id,
+        { status: Status.ACTIVE },
+      );
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(`Failed to activate employee ${id}: ${(err as Error).message}`);
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+
+    await this.createAuditLog(
+      actorId,
+      'ACTIVATE_EMPLOYEE',
+      {
+        employee_status: EmployeeStatus.INVITED,
+        user_status: Status.PENDING,
+      },
+      {
+        employee_status: EmployeeStatus.ACTIVE,
+        user_status: Status.ACTIVE,
+      },
+      id,
+      'user',
+    );
+
+    this.logger.log(`Employee activated successfully: ${id}`);
+    return { success: true, status: EmployeeStatus.ACTIVE };
   }
 }

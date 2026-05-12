@@ -2242,6 +2242,41 @@
           ]
         },
         {
+          "name": "Step 8: Activate Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees/{{user_id}}/activate",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "{{user_id}}", "activate"]
+            },
+            "description": "Admin action to transition employee from INVITED to ACTIVE. Updates both employee_status and user status, enabling the employee to log in."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Employee activated successfully.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
           "name": "Employees",
           "item": [
             {
@@ -2288,6 +2323,11 @@
                     {
                       "key": "status",
                       "value": "ACTIVE",
+                      "disabled": true
+                    },
+                    {
+                      "key": "employeeStatus",
+                      "value": "INVITED",
                       "disabled": true
                     }
                   ]
