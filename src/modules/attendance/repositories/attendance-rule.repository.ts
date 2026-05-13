@@ -37,14 +37,20 @@ export class AttendanceRuleRepository {
     return { data, total };
   }
 
-  async findOneByOrg(id: string, organizationId: string): Promise<AttendanceRule | null> {
+  async findOneByOrg(
+    id: string,
+    organizationId: string,
+  ): Promise<AttendanceRule | null> {
     return this.repository.findOne({
       where: { id, organization_id: organizationId, is_deleted: false },
       relations: ['shift', 'weekly_off', 'geo_fence'],
     });
   }
 
-  async update(id: string, data: Partial<AttendanceRule>): Promise<AttendanceRule | null> {
+  async update(
+    id: string,
+    data: Partial<AttendanceRule>,
+  ): Promise<AttendanceRule | null> {
     await this.repository.update(id, data);
     return this.repository.findOne({
       where: { id },

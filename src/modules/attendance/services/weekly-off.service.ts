@@ -34,7 +34,10 @@ export class WeeklyOffService {
     private readonly ruleRepo: AttendanceRuleRepository,
   ) {}
 
-  private computeDaysOff(workingDays: string[], saturdayRule?: SaturdayRule): DayOfWeek[] {
+  private computeDaysOff(
+    workingDays: string[],
+    saturdayRule?: SaturdayRule,
+  ): DayOfWeek[] {
     const upper = new Set(workingDays.map((d) => d.toUpperCase()));
     const daysOff = NON_SAT_DAYS.filter((d) => !upper.has(d));
     if (saturdayRule === SaturdayRule.ALL_OFF) {
@@ -43,14 +46,20 @@ export class WeeklyOffService {
     return daysOff;
   }
 
-  async create(user: LoggedInUser, dto: CreateWeeklyOffDto): Promise<{ id: string }> {
+  async create(
+    user: LoggedInUser,
+    dto: CreateWeeklyOffDto,
+  ): Promise<{ id: string }> {
     const { working_days, saturday_rule, saturday_off_weeks, name } = dto;
 
     const weeklyOff = await this.weeklyOffRepo.create({
       name,
       days: this.computeDaysOff(working_days, saturday_rule),
       saturday_rule: saturday_rule ?? null,
-      saturday_off_weeks: saturday_rule === SaturdayRule.CUSTOM ? (saturday_off_weeks ?? null) : null,
+      saturday_off_weeks:
+        saturday_rule === SaturdayRule.CUSTOM
+          ? (saturday_off_weeks ?? null)
+          : null,
       organization_id: user.organizationId,
       enterprise_id: user.enterpriseId,
       modified_by: user.userId,
@@ -63,8 +72,14 @@ export class WeeklyOffService {
   async findAll(
     user: LoggedInUser,
     pagination: PaginationDto,
-  ): Promise<{ data: WeeklyOff[]; pagination: { page: number; limit: number; total: number } }> {
-    const { data, total } = await this.weeklyOffRepo.findAllByOrg(user.organizationId, pagination);
+  ): Promise<{
+    data: WeeklyOff[];
+    pagination: { page: number; limit: number; total: number };
+  }> {
+    const { data, total } = await this.weeklyOffRepo.findAllByOrg(
+      user.organizationId,
+      pagination,
+    );
     return {
       data,
       pagination: {
@@ -76,36 +91,55 @@ export class WeeklyOffService {
   }
 
   async findOne(user: LoggedInUser, id: string): Promise<WeeklyOff> {
-    const weeklyOff = await this.weeklyOffRepo.findOneByOrg(id, user.organizationId);
+    const weeklyOff = await this.weeklyOffRepo.findOneByOrg(
+      id,
+      user.organizationId,
+    );
     if (!weeklyOff) {
       throw new NotFoundException(`Weekly off ${id} not found`);
     }
     return weeklyOff;
   }
 
-  async update(user: LoggedInUser, id: string, dto: UpdateWeeklyOffDto): Promise<WeeklyOff> {
+  async update(
+    user: LoggedInUser,
+    id: string,
+    dto: UpdateWeeklyOffDto,
+  ): Promise<WeeklyOff> {
     await this.findOne(user, id);
 
     const updateData: Partial<WeeklyOff> = { modified_by: user.userId };
 
     if (dto.name !== undefined) updateData.name = dto.name;
-    if (dto.saturday_rule !== undefined) updateData.saturday_rule = dto.saturday_rule ?? null;
+    if (dto.saturday_rule !== undefined)
+      updateData.saturday_rule = dto.saturday_rule ?? null;
 
     if (dto.working_days !== undefined) {
-      updateData.days = this.computeDaysOff(dto.working_days, dto.saturday_rule);
+      updateData.days = this.computeDaysOff(
+        dto.working_days,
+        dto.saturday_rule,
+      );
     }
 
     updateData.saturday_off_weeks =
-      dto.saturday_rule === SaturdayRule.CUSTOM ? (dto.saturday_off_weeks ?? null) : null;
+      dto.saturday_rule === SaturdayRule.CUSTOM
+        ? (dto.saturday_off_weeks ?? null)
+        : null;
 
     return (await this.weeklyOffRepo.update(id, updateData))!;
   }
 
-  async changeStatus(user: LoggedInUser, id: string, dto: ChangeStatusDto): Promise<void> {
+  async changeStatus(
+    user: LoggedInUser,
+    id: string,
+    dto: ChangeStatusDto,
+  ): Promise<void> {
     const weeklyOff = await this.findOne(user, id);
 
     if (dto.status === Status.INACTIVE) {
-      const activeRuleCount = await this.ruleRepo.countActiveByWeeklyOffId(weeklyOff.id);
+      const activeRuleCount = await this.ruleRepo.countActiveByWeeklyOffId(
+        weeklyOff.id,
+      );
       if (activeRuleCount > 0) {
         throw new ConflictException(
           'Cannot deactivate weekly off: it is linked to active attendance rules',
@@ -118,13 +152,17 @@ export class WeeklyOffService {
       modified_by: user.userId,
     });
 
-    this.logger.log(`[AUDIT] Weekly off ${id} status → ${dto.status} by ${user.userId}`);
+    this.logger.log(
+      `[AUDIT] Weekly off ${id} status → ${dto.status} by ${user.userId}`,
+    );
   }
 
   async delete(user: LoggedInUser, id: string): Promise<void> {
     const weeklyOff = await this.findOne(user, id);
 
-    const activeRuleCount = await this.ruleRepo.countActiveByWeeklyOffId(weeklyOff.id);
+    const activeRuleCount = await this.ruleRepo.countActiveByWeeklyOffId(
+      weeklyOff.id,
+    );
     if (activeRuleCount > 0) {
       throw new ConflictException(
         'Cannot delete weekly off: it is used in active attendance rules',
@@ -132,6 +170,8 @@ export class WeeklyOffService {
     }
 
     await this.weeklyOffRepo.softDelete(id, user.userId);
-    this.logger.log(`[AUDIT] Weekly off "${weeklyOff.name}" (${id}) deleted by ${user.userId}`);
+    this.logger.log(
+      `[AUDIT] Weekly off "${weeklyOff.name}" (${id}) deleted by ${user.userId}`,
+    );
   }
 }

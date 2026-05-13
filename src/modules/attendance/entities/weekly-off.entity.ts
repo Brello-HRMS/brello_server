@@ -4,7 +4,10 @@ import { DayOfWeek } from '../enums/day-of-week.enum';
 import { SaturdayRule } from '../enums/saturday-rule.enum';
 
 @Entity('weekly_offs')
-@Index(['organization_id', 'name'], { unique: true, where: '"is_deleted" = false' })
+@Index(['organization_id', 'name'], {
+  unique: true,
+  where: '"is_deleted" = false',
+})
 @Index(['organization_id', 'is_deleted'])
 export class WeeklyOff extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })

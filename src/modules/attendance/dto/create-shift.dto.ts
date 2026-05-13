@@ -18,12 +18,16 @@ export class CreateShiftDto {
 
   @IsString()
   @IsNotEmpty({ message: 'Start time is required' })
-  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'start_time must be in HH:mm (24-hour) format' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'start_time must be in HH:mm (24-hour) format',
+  })
   start_time: string;
 
   @IsString()
   @IsNotEmpty({ message: 'End time is required' })
-  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'end_time must be in HH:mm (24-hour) format' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'end_time must be in HH:mm (24-hour) format',
+  })
   end_time: string;
 
   @IsOptional()
@@ -33,7 +37,9 @@ export class CreateShiftDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'auto_checkout_time must be in HH:mm (24-hour) format' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'auto_checkout_time must be in HH:mm (24-hour) format',
+  })
   auto_checkout_time?: string;
 
   @IsOptional()

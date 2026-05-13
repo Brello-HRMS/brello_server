@@ -7,7 +7,9 @@ export class GeoFence extends BaseEntity {
   @Column({ type: 'uuid' })
   rule_id: string;
 
-  @OneToOne(() => AttendanceRule, (rule) => rule.geo_fence, { onDelete: 'CASCADE' })
+  @OneToOne(() => AttendanceRule, (rule) => rule.geo_fence, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'rule_id' })
   rule: AttendanceRule;
 

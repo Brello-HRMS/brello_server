@@ -40,7 +40,9 @@ export class GeoValidationService {
     );
 
     if (!assignment) {
-      throw new NotFoundException('No attendance rule assigned to this employee');
+      throw new NotFoundException(
+        'No attendance rule assigned to this employee',
+      );
     }
 
     const rule = await this.ruleRepository.findOne({
@@ -52,7 +54,9 @@ export class GeoValidationService {
     }
 
     if (!rule.require_geo_fencing) {
-      throw new UnprocessableEntityException('Geo-fencing is not enabled for this rule');
+      throw new UnprocessableEntityException(
+        'Geo-fencing is not enabled for this rule',
+      );
     }
 
     const geoFence = await this.geoFenceRepository.findOne({
@@ -60,7 +64,9 @@ export class GeoValidationService {
     });
 
     if (!geoFence) {
-      throw new NotFoundException('Geo-fence configuration not found for this rule');
+      throw new NotFoundException(
+        'Geo-fence configuration not found for this rule',
+      );
     }
 
     const distance = this.calculateHaversineDistance(
@@ -101,8 +107,10 @@ export class GeoValidationService {
 
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
