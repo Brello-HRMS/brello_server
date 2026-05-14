@@ -195,6 +195,16 @@
       "key": "employee_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "attendance_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "attendance_session_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -2242,6 +2252,41 @@
           ]
         },
         {
+          "name": "Step 8: Activate Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employees/{{user_id}}/activate",
+              "host": ["{{base_url}}"],
+              "path": ["employees", "{{user_id}}", "activate"]
+            },
+            "description": "Admin action to transition employee from INVITED to ACTIVE. Updates both employee_status and user status, enabling the employee to log in."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Employee activated successfully.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
           "name": "Employees",
           "item": [
             {
@@ -2288,6 +2333,11 @@
                     {
                       "key": "status",
                       "value": "ACTIVE",
+                      "disabled": true
+                    },
+                    {
+                      "key": "employeeStatus",
+                      "value": "INVITED",
                       "disabled": true
                     }
                   ]
@@ -7729,6 +7779,424 @@
             "description": "HR can cancel any request — PENDING or APPROVED, even past start_date. Credits days back to balance. Requires `LEAVE_MGMT.delete`."
           },
           "response": []
+        }
+      ]
+    },
+    {
+      "name": "Attendance (Check-In / Check-Out)",
+      "description": "Daily attendance flow: employees punch in/out from web or mobile (Office-In or Remote-In based on geo-fence), HR/admins monitor a real-time daily preview, post manual corrections, and resolve pending remote-attendance approvals. Requires the `ATTENDANCE` module/actions to be granted (see `docs/seeds/grant-module-access.sql`). Employee-facing endpoints only need a valid login.",
+      "item": [
+        {
+          "name": "Employee",
+          "description": "Endpoints for the logged-in employee — no special permission needed beyond authentication.",
+          "item": [
+            {
+              "name": "Check-In (Office)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/check-in",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "check-in"]
+                },
+                "description": "Punch in for the day from inside the office geo-fence.\n\n**Validations**\n- 409 if there is already an open session (`Employee already checked in`)\n- 409 if a record already exists today and the rule does not allow multiple check-ins\n- 400 `GPS_REQUIRED` if geo-fencing is enabled and lat/lng are missing\n- Distance is computed by Haversine. Inside `office_radius_meters` ⇒ `Office-In`, outside ⇒ Remote-In flow\n\n**Response data** includes `attendance_id`, `attendance_session_id`, `shift`, `office`, `is_late`. Auto-saves both ids to collection variables.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"device\": \"WEB\",\n  \"notes\": \"Reached office\"\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    if (response && response.data) {",
+                      "        pm.collectionVariables.set('attendance_id', response.data.attendance_id);",
+                      "        pm.collectionVariables.set('attendance_session_id', response.data.attendance_session_id);",
+                      "        console.log('✅ attendance_id saved:', response.data.attendance_id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check-In (Remote)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/check-in",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "check-in"]
+                },
+                "description": "Punch in from outside the office radius (Remote-In). The body must include `remote_reason` if the rule has `require_remote_reason=true` (default).\n\n**Errors**\n- 400 `REMOTE_ATTENDANCE_DISABLED` if rule has `allow_remote_in=false`\n- 400 `REMOTE_REASON_REQUIRED` if reason missing\n\nIf the rule has `remote_approval_required=true`, the record is created in status `PENDING_APPROVAL` and a row is added to `attendance_remote_approvals` for HR to review.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"latitude\": 19.2,\n  \"longitude\": 72.95,\n  \"device\": \"WEB\",\n  \"remote_reason\": \"Work From Home\",\n  \"notes\": \"WFH today\"\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    if (response && response.data) {",
+                      "        pm.collectionVariables.set('attendance_id', response.data.attendance_id);",
+                      "        pm.collectionVariables.set('attendance_session_id', response.data.attendance_session_id);",
+                      "        console.log('✅ attendance_id (remote) saved:', response.data.attendance_id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check-Out",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/check-out",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "check-out"]
+                },
+                "description": "Close the active check-in session. Recomputes `worked_minutes`, `is_late`, `is_half_day`, `is_overtime`, and final `attendance_status` against the rule's `full_day_hours` / `half_day_hours` / `overtime_after_hours`.\n\nReturns `worked_hours` as `HH:mm`. Returns 404 if there is no open session.\n\nIf the record is `PENDING_APPROVAL`, the status is left untouched until HR approves/rejects.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"notes\": \"Leaving for the day\"\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Today's Status (Live)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/me/today",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "me", "today"]
+                },
+                "description": "Drives the dashboard widget. Returns today's attendance record (or null fields if not yet checked in), the assigned shift, the office, and a live `worked_duration_live` (HH:mm:ss) computed against the open session, plus a `live_session` boolean."
+              },
+              "response": []
+            },
+            {
+              "name": "My Attendance History",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/me/history?page=1&limit=20&month=3&year=2026",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "me", "history"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" },
+                    { "key": "month", "value": "3", "description": "1-12, optional" },
+                    { "key": "year", "value": "2026", "description": "optional" },
+                    { "key": "attendance_mode", "value": "OFFICE_IN", "description": "OFFICE_IN | REMOTE_IN — optional", "disabled": true },
+                    { "key": "attendance_status", "value": "PRESENT", "description": "PRESENT | HALF_DAY | LATE | ABSENT | … — optional", "disabled": true }
+                  ]
+                },
+                "description": "Paginated personal attendance history with optional month/year/mode/status filters. Each row contains date, check-in/out (12-hour), worked hours, mode, status, shift name, and remote reason (if any)."
+              },
+              "response": []
+            },
+            {
+              "name": "My Effective Rules",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/rules",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "rules"]
+                },
+                "description": "Returns the attendance rule that applies to the logged-in employee (resolved from employee-level → department-level assignment). Includes `full_day_hours`, `half_day_hours`, `late_after`, `grace_minutes`, `overtime_after_hours`, `geo_fencing_enabled`, `office_radius_meters`, `allow_remote_in`, `require_remote_reason`, and `remote_approval_required`. Useful for the client to render the right CTA / location prompt before the user clicks Check-In."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Admin",
+          "description": "HR / admin endpoints. All require `RequirePermission('ATTENDANCE', '<action>')` — view/create/update/delete/approve. Run `docs/seeds/grant-module-access.sql` (configured for the ATTENDANCE module) to grant access to a user.",
+          "item": [
+            {
+              "name": "Daily Preview",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/admin/daily-preview?date=2026-05-13&page=1&limit=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "admin", "daily-preview"],
+                  "query": [
+                    { "key": "date", "value": "2026-05-13", "description": "YYYY-MM-DD; defaults to today" },
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" },
+                    { "key": "department_id", "value": "{{department_id}}", "disabled": true },
+                    { "key": "shift_id", "value": "{{shift_id}}", "disabled": true },
+                    { "key": "attendance_status", "value": "PRESENT", "disabled": true },
+                    { "key": "attendance_mode", "value": "OFFICE_IN", "disabled": true },
+                    { "key": "search", "value": "", "description": "Name or employee code (≥2 chars)", "disabled": true }
+                  ]
+                },
+                "description": "Backs the Admin → Daily Preview screen. Returns a `summary` block (total present, absent, late, half-day, on-leave, missed-checkout, office-in, remote-in) + paginated `items` with employee, shift, check-in/out times, worked hours, mode, status, geo info, source, remote reason and notes.\n\nRequires `ATTENDANCE.view`."
+              },
+              "response": []
+            },
+            {
+              "name": "Add Manual Entry",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/admin/manual-entry",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "admin", "manual-entry"]
+                },
+                "description": "Create an attendance record on behalf of an employee (forgot punch, server outage, biometric failure, etc.). Recomputes worked hours / status from the supplied check-in / check-out and the employee's effective rule.\n\nIf `attendance_status_override` is provided, it wins over the computed status. `source` is forced to `MANUAL`. Returns 409 if a record already exists for that employee on that date.\n\nRequires `ATTENDANCE.create`. Auto-saves `attendance_id`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"date\": \"2026-05-12\",\n  \"check_in\": \"09:12\",\n  \"check_out\": \"18:05\",\n  \"attendance_mode\": \"OFFICE_IN\",\n  \"remote_reason\": null,\n  \"notes\": \"Manual correction by HR — forgot to punch out\"\n}"
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    if (response && response.data) {",
+                      "        pm.collectionVariables.set('attendance_id', response.data.attendance_id);",
+                      "        console.log('✅ attendance_id (manual) saved:', response.data.attendance_id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update Attendance",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/admin/{{attendance_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "admin", "{{attendance_id}}"]
+                },
+                "description": "Update an existing attendance record (any combination of check-in, check-out, mode, status override, reason, notes). Recomputes worked hours / status from the new times and writes `STATUS_OVERRIDE` or `MANUAL_UPDATE` to the audit log.\n\nRequires `ATTENDANCE.update`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"check_in\": \"09:30\",\n  \"check_out\": \"18:10\",\n  \"attendance_mode\": \"OFFICE_IN\",\n  \"attendance_status_override\": \"PRESENT\",\n  \"notes\": \"Approved by HR\"\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Attendance",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/admin/{{attendance_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "admin", "{{attendance_id}}"]
+                },
+                "description": "Soft-deletes the attendance record and removes its sessions. Writes `MANUAL_DELETE` to the audit log. Requires `ATTENDANCE.delete`."
+              },
+              "response": []
+            },
+            {
+              "name": "Pending Remote Approvals",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/admin/remote-approvals?page=1&limit=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "admin", "remote-approvals"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                },
+                "description": "Inbox of remote check-ins waiting on manager / HR action. Each item carries `attendance_id`, employee summary, `check_in_time`, `remote_reason`, and `distance_from_office_meters`. Requires `ATTENDANCE.view`."
+              },
+              "response": []
+            },
+            {
+              "name": "Approve Remote Attendance",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/admin/remote-approvals/{{attendance_id}}/approve",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "admin", "remote-approvals", "{{attendance_id}}", "approve"]
+                },
+                "description": "Approves a `PENDING_APPROVAL` remote check-in. Recomputes the final attendance status from worked minutes (Present / Half-Day / Late / Absent) and stamps `REMOTE_APPROVE` in the audit log. Requires `ATTENDANCE.approve`."
+              },
+              "response": []
+            },
+            {
+              "name": "Reject Remote Attendance",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/attendance/admin/remote-approvals/{{attendance_id}}/reject",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "admin", "remote-approvals", "{{attendance_id}}", "reject"]
+                },
+                "description": "Rejects a pending remote check-in. Forces the attendance status to `ABSENT` and records the rejection reason in the audit log. `reason` is mandatory. Requires `ATTENDANCE.approve`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Outside approved work region\"\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Logs",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/attendance/admin/audit-logs?page=1&limit=20",
+                  "host": ["{{base_url}}"],
+                  "path": ["attendance", "admin", "audit-logs"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" },
+                    { "key": "employee_id", "value": "{{employee_id}}", "disabled": true },
+                    { "key": "date", "value": "2026-05-13", "description": "YYYY-MM-DD", "disabled": true },
+                    { "key": "event_type", "value": "CHECK_OUT", "description": "CHECK_IN | CHECK_OUT | OFFICE_IN | REMOTE_IN | GEO_REJECTION | MANUAL_CREATE | MANUAL_UPDATE | MANUAL_DELETE | STATUS_OVERRIDE | REMOTE_APPROVE | REMOTE_REJECT", "disabled": true }
+                  ]
+                },
+                "description": "Audit trail across all attendance events with filters by employee, date and event type. Returns the actor (`performed_by`), `device`, `ip_address`, and `old_value` / `new_value` JSON snapshots for each change. Requires `ATTENDANCE.view`."
+              },
+              "response": []
+            }
+          ]
         }
       ]
     }

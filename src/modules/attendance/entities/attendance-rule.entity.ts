@@ -1,11 +1,21 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index, OneToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  OneToOne,
+} from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { Shift } from './shift.entity';
 import { WeeklyOff } from './weekly-off.entity';
 import { GeoFence } from './geo-fence.entity';
 
 @Entity('attendance_rules')
-@Index(['organization_id', 'name'], { unique: true, where: '"is_deleted" = false' })
+@Index(['organization_id', 'name'], {
+  unique: true,
+  where: '"is_deleted" = false',
+})
 @Index(['organization_id', 'is_deleted'])
 @Index(['shift_id', 'status', 'is_deleted'])
 @Index(['weekly_off_id', 'status', 'is_deleted'])
@@ -44,6 +54,15 @@ export class AttendanceRule extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   require_geo_fencing: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  allow_remote_in: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  require_remote_reason: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  remote_approval_required: boolean;
 
   @OneToOne(() => GeoFence, (geoFence) => geoFence.rule, { cascade: true })
   geo_fence: GeoFence;

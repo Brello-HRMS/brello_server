@@ -16,37 +16,66 @@ export class RuleAssignmentService {
     private readonly ruleRepo: AttendanceRuleRepository,
   ) {}
 
-  async assignToDepartments(user: LoggedInUser, ruleId: string, dto: AssignDepartmentsDto): Promise<void> {
+  async assignToDepartments(
+    user: LoggedInUser,
+    ruleId: string,
+    dto: AssignDepartmentsDto,
+  ): Promise<void> {
     await this.validateRuleExists(user, ruleId);
 
-    await this.assignmentRepo.bulkAssign(ruleId, AssignmentType.DEPARTMENT, dto.department_ids, {
-      organizationId: user.organizationId,
-      enterpriseId: user.enterpriseId,
-      userId: user.userId,
-    });
+    await this.assignmentRepo.bulkAssign(
+      ruleId,
+      AssignmentType.DEPARTMENT,
+      dto.department_ids,
+      {
+        organizationId: user.organizationId,
+        enterpriseId: user.enterpriseId,
+        userId: user.userId,
+      },
+    );
 
-    this.logger.log(`[AUDIT] Rule ${ruleId} → ${dto.department_ids.length} departments by ${user.userId}`);
+    this.logger.log(
+      `[AUDIT] Rule ${ruleId} → ${dto.department_ids.length} departments by ${user.userId}`,
+    );
   }
 
-  async assignToEmployees(user: LoggedInUser, ruleId: string, dto: AssignEmployeesDto): Promise<void> {
+  async assignToEmployees(
+    user: LoggedInUser,
+    ruleId: string,
+    dto: AssignEmployeesDto,
+  ): Promise<void> {
     await this.validateRuleExists(user, ruleId);
 
-    await this.assignmentRepo.bulkAssign(ruleId, AssignmentType.EMPLOYEE, dto.employee_ids, {
-      organizationId: user.organizationId,
-      enterpriseId: user.enterpriseId,
-      userId: user.userId,
-    });
+    await this.assignmentRepo.bulkAssign(
+      ruleId,
+      AssignmentType.EMPLOYEE,
+      dto.employee_ids,
+      {
+        organizationId: user.organizationId,
+        enterpriseId: user.enterpriseId,
+        userId: user.userId,
+      },
+    );
 
-    this.logger.log(`[AUDIT] Rule ${ruleId} → ${dto.employee_ids.length} employees by ${user.userId}`);
+    this.logger.log(
+      `[AUDIT] Rule ${ruleId} → ${dto.employee_ids.length} employees by ${user.userId}`,
+    );
   }
 
-  async getAssignments(user: LoggedInUser, ruleId: string): Promise<RuleAssignment[]> {
+  async getAssignments(
+    user: LoggedInUser,
+    ruleId: string,
+  ): Promise<RuleAssignment[]> {
     await this.validateRuleExists(user, ruleId);
     return this.assignmentRepo.findByRule(ruleId, user.organizationId);
   }
 
-  private async validateRuleExists(user: LoggedInUser, ruleId: string): Promise<void> {
+  private async validateRuleExists(
+    user: LoggedInUser,
+    ruleId: string,
+  ): Promise<void> {
     const rule = await this.ruleRepo.findOneByOrg(ruleId, user.organizationId);
-    if (!rule) throw new NotFoundException(`Attendance rule ${ruleId} not found`);
+    if (!rule)
+      throw new NotFoundException(`Attendance rule ${ruleId} not found`);
   }
 }

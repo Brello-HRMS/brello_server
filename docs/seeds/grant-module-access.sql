@@ -32,8 +32,8 @@ DO $$
 DECLARE
     -- ▼▼▼ CONFIGURE THIS BLOCK ▼▼▼
     v_email           text   := 'b10@admin.com';
-    v_module_code     text   := 'LEAVE_MGMT';
-    v_module_name     text   := 'Leave Management';
+    v_module_code     text   := 'ATTENDANCE';
+    v_module_name     text   := 'Attendance';
     v_action_codes    text[] := ARRAY['view', 'create', 'update', 'approve', 'delete'];
     -- ▲▲▲ ──────────────────── ▲▲▲
 

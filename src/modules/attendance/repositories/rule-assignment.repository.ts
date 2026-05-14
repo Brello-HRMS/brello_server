@@ -22,9 +22,16 @@ export class RuleAssignmentRepository {
     return this.repository.save(assignment);
   }
 
-  async findByRule(ruleId: string, organizationId: string): Promise<RuleAssignment[]> {
+  async findByRule(
+    ruleId: string,
+    organizationId: string,
+  ): Promise<RuleAssignment[]> {
     return this.repository.find({
-      where: { rule_id: ruleId, organization_id: organizationId, is_deleted: false },
+      where: {
+        rule_id: ruleId,
+        organization_id: organizationId,
+        is_deleted: false,
+      },
       order: { assignment_type: 'ASC', created_at: 'DESC' },
     });
   }
@@ -35,7 +42,12 @@ export class RuleAssignmentRepository {
     targetId: string,
   ): Promise<RuleAssignment | null> {
     return this.repository.findOne({
-      where: { organization_id: organizationId, assignment_type: assignmentType, target_id: targetId, is_deleted: false },
+      where: {
+        organization_id: organizationId,
+        assignment_type: assignmentType,
+        target_id: targetId,
+        is_deleted: false,
+      },
       relations: ['rule'],
     });
   }
@@ -45,9 +57,18 @@ export class RuleAssignmentRepository {
     employeeId: string,
     departmentId?: string,
   ): Promise<RuleAssignment | null> {
-    const emp = await this.findActiveByTarget(organizationId, AssignmentType.EMPLOYEE, employeeId);
+    const emp = await this.findActiveByTarget(
+      organizationId,
+      AssignmentType.EMPLOYEE,
+      employeeId,
+    );
     if (emp) return emp;
-    if (departmentId) return this.findActiveByTarget(organizationId, AssignmentType.DEPARTMENT, departmentId);
+    if (departmentId)
+      return this.findActiveByTarget(
+        organizationId,
+        AssignmentType.DEPARTMENT,
+        departmentId,
+      );
     return null;
   }
 
@@ -67,7 +88,11 @@ export class RuleAssignmentRepository {
       await manager
         .createQueryBuilder()
         .update(RuleAssignment)
-        .set({ is_deleted: true, deleted_at: new Date(), deleted_by: ctx.userId })
+        .set({
+          is_deleted: true,
+          deleted_at: new Date(),
+          deleted_by: ctx.userId,
+        })
         .where('organization_id = :orgId', { orgId: ctx.organizationId })
         .andWhere('assignment_type = :type', { type: assignmentType })
         .andWhere('target_id IN (:...ids)', { ids: targetIds })
@@ -99,7 +124,12 @@ export class RuleAssignmentRepository {
     deletedBy?: string,
   ): Promise<void> {
     await this.repository.update(
-      { organization_id: organizationId, assignment_type: assignmentType, target_id: targetId, is_deleted: false },
+      {
+        organization_id: organizationId,
+        assignment_type: assignmentType,
+        target_id: targetId,
+        is_deleted: false,
+      },
       { is_deleted: true, deleted_at: new Date(), deleted_by: deletedBy },
     );
   }
