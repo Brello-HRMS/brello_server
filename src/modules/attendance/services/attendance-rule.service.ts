@@ -30,7 +30,10 @@ export class AttendanceRuleService {
     private readonly geoFenceRepository: Repository<GeoFence>,
   ) {}
 
-  async create(user: LoggedInUser, dto: CreateAttendanceRuleDto): Promise<{ id: string }> {
+  async create(
+    user: LoggedInUser,
+    dto: CreateAttendanceRuleDto,
+  ): Promise<{ id: string }> {
     const { shift } = await this.validateReferences(user, dto);
 
     // Inherit working-hour thresholds from the shift when not explicitly provided
@@ -82,8 +85,14 @@ export class AttendanceRuleService {
   async findAll(
     user: LoggedInUser,
     pagination: PaginationDto,
-  ): Promise<{ data: AttendanceRule[]; pagination: { page: number; limit: number; total: number } }> {
-    const { data, total } = await this.ruleRepo.findAllByOrg(user.organizationId, pagination);
+  ): Promise<{
+    data: AttendanceRule[];
+    pagination: { page: number; limit: number; total: number };
+  }> {
+    const { data, total } = await this.ruleRepo.findAllByOrg(
+      user.organizationId,
+      pagination,
+    );
     return {
       data,
       pagination: {
@@ -102,7 +111,11 @@ export class AttendanceRuleService {
     return rule;
   }
 
-  async update(user: LoggedInUser, id: string, dto: UpdateAttendanceRuleDto): Promise<AttendanceRule> {
+  async update(
+    user: LoggedInUser,
+    id: string,
+    dto: UpdateAttendanceRuleDto,
+  ): Promise<AttendanceRule> {
     const existingRule = await this.findOne(user, id);
 
     if (dto.shift_id || dto.weekly_off_id) {
@@ -112,12 +125,12 @@ export class AttendanceRuleService {
       });
     }
 
-
     if (dto.full_day_hours !== undefined || dto.half_day_hours !== undefined) {
       this.validateHoursRelation({
         full_day_hours: dto.full_day_hours ?? existingRule.full_day_hours,
         half_day_hours: dto.half_day_hours ?? existingRule.half_day_hours,
-        overtime_after_hours: dto.overtime_after_hours ?? existingRule.overtime_after_hours,
+        overtime_after_hours:
+          dto.overtime_after_hours ?? existingRule.overtime_after_hours,
       });
     }
 
@@ -155,13 +168,25 @@ export class AttendanceRuleService {
 
     // Remove geo_fence from the rule update payload
     const { geo_fence, ...ruleUpdateData } = dto;
-    return (await this.ruleRepo.update(id, { ...ruleUpdateData, modified_by: user.userId }))!;
+    return (await this.ruleRepo.update(id, {
+      ...ruleUpdateData,
+      modified_by: user.userId,
+    }))!;
   }
 
-  async changeStatus(user: LoggedInUser, id: string, dto: ChangeStatusDto): Promise<void> {
+  async changeStatus(
+    user: LoggedInUser,
+    id: string,
+    dto: ChangeStatusDto,
+  ): Promise<void> {
     await this.findOne(user, id);
-    await this.ruleRepo.update(id, { status: dto.status, modified_by: user.userId });
-    this.logger.log(`[AUDIT] Attendance rule ${id} status → ${dto.status} by ${user.userId}`);
+    await this.ruleRepo.update(id, {
+      status: dto.status,
+      modified_by: user.userId,
+    });
+    this.logger.log(
+      `[AUDIT] Attendance rule ${id} status → ${dto.status} by ${user.userId}`,
+    );
   }
 
   async delete(user: LoggedInUser, id: string): Promise<void> {
@@ -179,7 +204,9 @@ export class AttendanceRuleService {
     }
 
     await this.ruleRepo.softDelete(id, user.userId);
-    this.logger.log(`[AUDIT] Attendance rule "${rule.name}" (${id}) deleted by ${user.userId}`);
+    this.logger.log(
+      `[AUDIT] Attendance rule "${rule.name}" (${id}) deleted by ${user.userId}`,
+    );
   }
 
   private async validateReferences(
@@ -189,16 +216,24 @@ export class AttendanceRuleService {
     let shift: Shift | null = null;
 
     if (dto.shift_id) {
-      shift = await this.shiftRepo.findOneByOrg(dto.shift_id, user.organizationId);
+      shift = await this.shiftRepo.findOneByOrg(
+        dto.shift_id,
+        user.organizationId,
+      );
       if (!shift) {
         throw new NotFoundException(`Shift ${dto.shift_id} not found`);
       }
     }
 
     if (dto.weekly_off_id) {
-      const weeklyOff = await this.weeklyOffRepo.findOneByOrg(dto.weekly_off_id, user.organizationId);
+      const weeklyOff = await this.weeklyOffRepo.findOneByOrg(
+        dto.weekly_off_id,
+        user.organizationId,
+      );
       if (!weeklyOff) {
-        throw new NotFoundException(`Weekly off ${dto.weekly_off_id} not found`);
+        throw new NotFoundException(
+          `Weekly off ${dto.weekly_off_id} not found`,
+        );
       }
     }
 
@@ -215,7 +250,9 @@ export class AttendanceRuleService {
       dto.half_day_hours !== undefined &&
       dto.full_day_hours <= dto.half_day_hours
     ) {
-      throw new BadRequestException('full_day_hours must be greater than half_day_hours');
+      throw new BadRequestException(
+        'full_day_hours must be greater than half_day_hours',
+      );
     }
 
     if (
@@ -223,7 +260,9 @@ export class AttendanceRuleService {
       dto.full_day_hours !== undefined &&
       dto.overtime_after_hours < dto.full_day_hours
     ) {
-      throw new BadRequestException('overtime_after_hours must be >= full_day_hours');
+      throw new BadRequestException(
+        'overtime_after_hours must be >= full_day_hours',
+      );
     }
   }
 }

@@ -31,13 +31,19 @@ export class WeeklyOffRepository {
     return { data, total };
   }
 
-  async findOneByOrg(id: string, organizationId: string): Promise<WeeklyOff | null> {
+  async findOneByOrg(
+    id: string,
+    organizationId: string,
+  ): Promise<WeeklyOff | null> {
     return this.repository.findOne({
       where: { id, organization_id: organizationId, is_deleted: false },
     });
   }
 
-  async update(id: string, data: Partial<WeeklyOff>): Promise<WeeklyOff | null> {
+  async update(
+    id: string,
+    data: Partial<WeeklyOff>,
+  ): Promise<WeeklyOff | null> {
     await this.repository.update(id, data);
     return this.repository.findOne({ where: { id } });
   }

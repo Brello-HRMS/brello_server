@@ -2,7 +2,10 @@ import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 
 @Entity('shifts')
-@Index(['organization_id', 'name'], { unique: true, where: '"is_deleted" = false' })
+@Index(['organization_id', 'name'], {
+  unique: true,
+  where: '"is_deleted" = false',
+})
 @Index(['organization_id', 'is_deleted'])
 export class Shift extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })

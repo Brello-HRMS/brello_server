@@ -31,7 +31,10 @@ export class ShiftRepository {
     return { data, total };
   }
 
-  async findOneByOrg(id: string, organizationId: string): Promise<Shift | null> {
+  async findOneByOrg(
+    id: string,
+    organizationId: string,
+  ): Promise<Shift | null> {
     return this.repository.findOne({
       where: { id, organization_id: organizationId, is_deleted: false },
     });
