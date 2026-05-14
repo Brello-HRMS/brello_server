@@ -15,6 +15,7 @@ import {
   AnnouncementPublishType,
 } from '../enums/announcement.enum';
 import { User } from '../../user/entities/user.entity';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 
 const EDITABLE_STATUSES: AnnouncementStatus[] = [
   AnnouncementStatus.DRAFT,
@@ -27,6 +28,7 @@ export class AnnouncementService {
     private readonly announcementRepository: AnnouncementRepository,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly searchIndexingService: SearchIndexingService,
   ) {}
 
   async create(
@@ -68,6 +70,9 @@ export class AnnouncementService {
       dto.attachments ?? [],
     );
 
+    if (announcement.ann_status === AnnouncementStatus.PUBLISHED) {
+      this.searchIndexingService.indexAnnouncement(announcement, enterpriseId, orgId);
+    }
     return { id: announcement.id, status: announcement.ann_status };
   }
 
@@ -200,6 +205,7 @@ export class AnnouncementService {
       updated_by: userId,
     });
 
+    this.searchIndexingService.indexAnnouncement(a, a.enterprise_id, a.organization_id);
     return { id: a.id, status: AnnouncementStatus.PUBLISHED };
   }
 
@@ -217,6 +223,7 @@ export class AnnouncementService {
       updated_by: userId,
     });
 
+    this.searchIndexingService.removeAnnouncement(a.id, a.enterprise_id);
     return { id: a.id, status: AnnouncementStatus.ARCHIVED };
   }
 

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { DesignationRepository } from '../repositories/designation.repository';
 import { OrganizationService } from '../../organization/services/organization.service';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { CreateDesignationDto } from '../dto/create-designation.dto';
 import { UpdateDesignationDto } from '../dto/update-designation.dto';
 import { FindDesignationsDto } from '../dto/find-designations.dto';
@@ -25,6 +26,7 @@ export class DesignationService {
     constructor(
         private readonly designationRepository: DesignationRepository,
         private readonly organizationService: OrganizationService,
+        private readonly searchIndexingService: SearchIndexingService,
     ) { }
 
     /**
@@ -34,7 +36,7 @@ export class DesignationService {
      * 1. The target organization must exist.
      * 2. The code must be unique within that organization.
      */
-    async create(orgId: string, dto: CreateDesignationDto): Promise<Designation> {
+    async create(orgId: string, enterpriseId: string, dto: CreateDesignationDto): Promise<Designation> {
         this.logger.log(
             `Creating designation "${dto.code}" for org ${orgId}`,
         );
@@ -57,10 +59,12 @@ export class DesignationService {
         const designation = await this.designationRepository.create({
             ...dto,
             org_id: orgId,
+            enterprise_id: enterpriseId,
             code: dto.code.toUpperCase(),
         });
 
         this.logger.log(`Designation created: ${designation.id}`);
+        this.searchIndexingService.indexDesignation(designation, enterpriseId, orgId);
         return designation;
     }
 
@@ -106,7 +110,7 @@ export class DesignationService {
      * - `code` is immutable — ignored even if provided in the payload.
      * - Only designations belonging to the orgId can be updated.
      */
-    async update(id: string, orgId: string, dto: UpdateDesignationDto): Promise<Designation> {
+    async update(id: string, orgId: string, enterpriseId: string, dto: UpdateDesignationDto): Promise<Designation> {
         this.logger.log(`Updating designation ${id} for org ${orgId}`);
 
         // Verify the designation exists and belongs to the organization
@@ -127,21 +131,17 @@ export class DesignationService {
         }
 
         this.logger.log(`Designation updated: ${id}`);
+        this.searchIndexingService.indexDesignation(updated, enterpriseId, orgId);
         return updated;
     }
 
-    /**
-     * Soft-delete a designation by setting its status to INACTIVE.
-     *
-     * Only designations belonging to the orgId can be deleted.
-     */
-    async remove(id: string, orgId: string): Promise<void> {
+    async remove(id: string, orgId: string, enterpriseId: string): Promise<void> {
         this.logger.log(`Soft-deleting designation ${id} for org ${orgId}`);
 
-        // Ensure the designation exists and belongs to the organization
         await this.findOne(id, orgId);
 
         await this.designationRepository.softDelete(id);
+        this.searchIndexingService.removeDesignation(id, enterpriseId);
 
         this.logger.log(`Designation soft-deleted: ${id}`);
     }

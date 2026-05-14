@@ -12,6 +12,7 @@ import { HolidayQueryDto } from '../dto/holiday-query.dto';
 import { Holiday } from '../entities/holiday.entity';
 import { Status } from '../../../common/enums';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 
 @Injectable()
 export class HolidayService {
@@ -20,6 +21,7 @@ export class HolidayService {
   constructor(
     private readonly holidayRepo: HolidayRepository,
     private readonly calendarRepo: HolidayCalendarRepository,
+    private readonly searchIndexingService: SearchIndexingService,
   ) {}
 
   async create(user: LoggedInUser, calendarId: string, dto: CreateHolidayDto): Promise<Holiday> {
@@ -28,13 +30,15 @@ export class HolidayService {
       throw new NotFoundException(`Calendar ${calendarId} not found`);
     }
 
-    return this.holidayRepo.create({
+    const holiday = await this.holidayRepo.create({
       ...dto,
       calendar_id: calendarId,
       organization_id: user.organizationId,
       enterprise_id: user.enterpriseId,
       modified_by: user.userId,
     });
+    this.searchIndexingService.indexHoliday(holiday, user.enterpriseId, user.organizationId);
+    return holiday;
   }
 
   async findAll(user: LoggedInUser, calendarId: string, query: HolidayQueryDto): Promise<Holiday[]> {
@@ -61,12 +65,15 @@ export class HolidayService {
       throw new BadRequestException('Cannot change holiday date in an active calendar');
     }
 
-    return (await this.holidayRepo.update(id, { ...dto, modified_by: user.userId }))!;
+    const updated = (await this.holidayRepo.update(id, { ...dto, modified_by: user.userId }))!;
+    this.searchIndexingService.indexHoliday(updated, user.enterpriseId, user.organizationId);
+    return updated;
   }
 
   async remove(user: LoggedInUser, id: string): Promise<void> {
     await this.findOne(user, id);
     await this.holidayRepo.softDelete(id, user.userId);
+    this.searchIndexingService.removeHoliday(id, user.enterpriseId);
   }
 
   async getMonthView(user: LoggedInUser, calendarId: string, month: number, year: number): Promise<any> {

@@ -10,10 +10,14 @@ import { CreateReimbursementDto } from '../dto/create-reimbursement.dto';
 import { UpdateReimbursementDto } from '../dto/update-reimbursement.dto';
 import { EmployeeReimbursementQueryDto } from '../dto/employee-query.dto';
 import { ReimbursementStatus } from '../enums/reimbursement.enum';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 
 @Injectable()
 export class ReimbursementService {
-  constructor(private readonly reimbursementRepository: ReimbursementRepository) {}
+  constructor(
+    private readonly reimbursementRepository: ReimbursementRepository,
+    private readonly searchIndexingService: SearchIndexingService,
+  ) {}
 
   async create(
     userId: string,
@@ -44,6 +48,7 @@ export class ReimbursementService {
       dto.document_ids,
     );
 
+    this.searchIndexingService.indexReimbursement(reimbursement, enterpriseId, orgId);
     return reimbursement;
   }
 
@@ -96,13 +101,19 @@ export class ReimbursementService {
     }
     if (dto.amount) changes.amount = dto.amount;
 
-    return this.reimbursementRepository.updateWithAttachments(
+    const updated = await this.reimbursementRepository.updateWithAttachments(
       reimbursement,
       changes,
       dto.add_document_ids ?? [],
       dto.remove_document_ids ?? [],
       userId,
     );
+    this.searchIndexingService.indexReimbursement(
+      updated,
+      reimbursement.enterprise_id,
+      reimbursement.organization_id,
+    );
+    return updated;
   }
 
   async remove(userId: string, id: string) {
@@ -115,6 +126,7 @@ export class ReimbursementService {
     }
 
     await this.reimbursementRepository.softDelete(reimbursement, userId);
+    this.searchIndexingService.removeReimbursement(id, reimbursement.enterprise_id);
     return { success: true };
   }
 }

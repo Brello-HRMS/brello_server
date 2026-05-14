@@ -5,11 +5,13 @@ import { DepartmentController } from './controllers/department.controller';
 import { Department } from './entities/department.entity';
 import { DepartmentRepository } from './repositories/department.repository';
 import { UserModule } from '../user/user.module';
+import { GlobalSearchModule } from '../global-search/global-search.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Department]),
         UserModule,
+        GlobalSearchModule,
     ],
     controllers: [DepartmentController],
     providers: [DepartmentService, DepartmentRepository],

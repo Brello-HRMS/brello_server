@@ -55,6 +55,7 @@ import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { ListEmployeesDto } from '../dto/list-employees.dto';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { ListingHelper } from '../../../common/utils/listing.helper';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 
 @Injectable()
 export class EmployeeService {
@@ -73,6 +74,7 @@ export class EmployeeService {
     private readonly documentRepository: UserDocumentRepository,
     private readonly offboardingRepository: EmployeeOffboardingRepository,
     private readonly auditLogRepository: AuditLogRepository,
+    private readonly searchIndexingService: SearchIndexingService,
   ) {}
 
   private async createAuditLog(
@@ -196,6 +198,16 @@ export class EmployeeService {
       this.logger.log(
         `Created employee aggregate successfully. User ID: ${savedUser.id}`,
       );
+
+      const resolvedEnterpriseId = enterpriseId ?? dto.enterprise_id ?? '';
+      const resolvedOrganizationId = organizationId ?? dto.organization_id ?? '';
+      if (resolvedEnterpriseId) {
+        this.searchIndexingService.indexEmployee(
+          savedUser,
+          resolvedEnterpriseId,
+          resolvedOrganizationId,
+        );
+      }
 
       return {
         id: savedUser.id,
@@ -382,13 +394,21 @@ export class EmployeeService {
     if (dto.departmentId) updateData.department_id = dto.departmentId;
     if (dto.designationId) updateData.designation_id = dto.designationId;
 
-    await this.userRepository.update(id, updateData);
+    const updatedUser = await this.userRepository.update(id, updateData);
 
-    // Attempt sync if phone updated and profile exists
     if (dto.phone && user.user_profile_id) {
       await this.profileRepository.update(user.user_profile_id, {
         phone: dto.phone,
       });
+    }
+
+    const nameChanged = dto.firstName || dto.lastName || dto.middleName;
+    if (nameChanged && updatedUser && updatedUser.enterprise_id) {
+      this.searchIndexingService.indexEmployee(
+        updatedUser,
+        updatedUser.enterprise_id,
+        updatedUser.organization_id ?? '',
+      );
     }
 
     return { success: true };
@@ -950,11 +970,14 @@ export class EmployeeService {
     // Soft delete the User auth record
     await this.userRepository.softDelete(id);
 
-    // Soft delete the profile layer (prevent cascading manually or rely on ORM hooks, manual is safer for soft deletes)
     if (user.user_profile_id) {
       await this.profileRepository.update(user.user_profile_id, {
         status: Status.DELETED,
       });
+    }
+
+    if (user.enterprise_id) {
+      this.searchIndexingService.removeEmployee(id, user.enterprise_id);
     }
 
     return { success: true };

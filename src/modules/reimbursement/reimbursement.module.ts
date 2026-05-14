@@ -8,6 +8,7 @@ import { User } from '../user/entities/user.entity';
 import { UserProfile } from '../user/entities/user-profile.entity';
 import { Document } from '../document/entities/document.entity';
 
+import { GlobalSearchModule } from '../global-search/global-search.module';
 import { ReimbursementRepository } from './repositories/reimbursement.repository';
 import { ReimbursementService } from './services/reimbursement.service';
 import { AdminReimbursementService } from './services/admin-reimbursement.service';
@@ -16,6 +17,7 @@ import { AdminReimbursementController } from './controllers/admin-reimbursement.
 
 @Module({
   imports: [
+    GlobalSearchModule,
     TypeOrmModule.forFeature([
       Reimbursement,
       ReimbursementAttachment,

@@ -16,6 +16,7 @@ import { UserRoleMapController } from './controllers/user-role-map.controller';
 import { RoleRepository } from '../role/repositories/role.repository';
 import { UserRoleMapRepository } from './repositories/user-role-map.repository';
 import { Role } from '../role/entities/role.entity';
+import { GlobalSearchModule } from '../global-search/global-search.module';
 
 /**
  * RbacModule
@@ -31,6 +32,7 @@ import { Role } from '../role/entities/role.entity';
  */
 @Module({
   imports: [
+    GlobalSearchModule,
     TypeOrmModule.forFeature([
       Role,
       UserRoleMap,

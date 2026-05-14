@@ -14,12 +14,16 @@ import { ListRolesDto } from '../dto/list-roles.dto';
 import { ListingHelper } from '../../../common/utils/listing.helper';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { Status } from '../../../common/enums';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 
 @Injectable()
 export class RoleService {
   private readonly logger = new Logger(RoleService.name);
 
-  constructor(private readonly roleRepository: RoleRepository) {}
+  constructor(
+    private readonly roleRepository: RoleRepository,
+    private readonly searchIndexingService: SearchIndexingService,
+  ) {}
 
   async create(
     createRoleDto: CreateRoleDto,
@@ -52,6 +56,7 @@ export class RoleService {
       is_system_role: is_system_defined || false,
     });
     this.logger.log(`Role created successfully: ${role.id}`);
+    this.searchIndexingService.indexRole(role, user.enterpriseId, user.organizationId);
 
     return role;
   }
@@ -181,6 +186,7 @@ export class RoleService {
     }
 
     this.logger.log(`Role updated successfully: ${id}`);
+    this.searchIndexingService.indexRole(updatedRole, user.enterpriseId, user.organizationId);
     return updatedRole;
   }
 
@@ -198,6 +204,7 @@ export class RoleService {
       throw new NotFoundException(`Failed to delete role with ID '${id}'`);
     }
 
+    this.searchIndexingService.removeRole(id, user.enterpriseId);
     this.logger.log(`Role soft deleted successfully: ${id}`);
   }
 

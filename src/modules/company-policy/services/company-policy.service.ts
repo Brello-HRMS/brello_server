@@ -10,6 +10,7 @@ import { CompanyPolicy } from '../entities/company-policy.entity';
 import { CreateCompanyPolicyDto, UpdateCompanyPolicyDto } from '../dto/company-policy.dto';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { Status } from '../../../common/enums';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 
 @Injectable()
 export class CompanyPolicyService {
@@ -18,6 +19,7 @@ export class CompanyPolicyService {
     constructor(
         private readonly policyRepository: CompanyPolicyRepository,
         private readonly typeService: CompanyPolicyTypeService,
+        private readonly searchIndexingService: SearchIndexingService,
     ) { }
 
     async create(user: LoggedInUser, dto: CreateCompanyPolicyDto): Promise<CompanyPolicy> {
@@ -26,13 +28,15 @@ export class CompanyPolicyService {
         // Validate policy type
         const type = await this.typeService.findOne(user, dto.type_id);
 
-        return this.policyRepository.create({
+        const policy = await this.policyRepository.create({
             ...dto,
             organization_id: user.organizationId,
             enterprise_id: user.enterpriseId,
             status: dto.status || Status.ACTIVE,
             modified_by: user.userId,
         });
+        this.searchIndexingService.indexPolicy(policy, user.enterpriseId, user.organizationId);
+        return policy;
     }
 
     async findAll(user: LoggedInUser, onlyActive: boolean = true): Promise<CompanyPolicy[]> {
@@ -92,6 +96,7 @@ export class CompanyPolicyService {
             throw new NotFoundException(`Policy with ID '${id}' not found after update`);
         }
 
+        this.searchIndexingService.indexPolicy(updated, user.enterpriseId, user.organizationId);
         return updated;
     }
 
@@ -99,5 +104,6 @@ export class CompanyPolicyService {
         this.logger.log(`Soft-deleting policy: ${id} for org: ${user.organizationId}`);
         await this.findOne(user, id, false);
         await this.policyRepository.softDelete(id, user.userId);
+        this.searchIndexingService.removePolicy(id, user.enterpriseId);
     }
 }
