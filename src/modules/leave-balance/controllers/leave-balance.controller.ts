@@ -21,7 +21,9 @@ import { InitializeBalanceDto } from '../dto/initialize-balance.dto';
 import { BulkInitializeDto } from '../dto/bulk-initialize.dto';
 import { AdjustBalanceDto } from '../dto/adjust-balance.dto';
 import { ListBalanceQueryDto } from '../dto/list-balance-query.dto';
+import { UpdateBalanceDto } from '../dto/update-balance.dto';
 import { LedgerQueryDto } from '../dto/ledger-query.dto';
+
 import { GetMyBalanceQueryDto } from '../dto/get-my-balance-query.dto';
 
 @Controller('leave-balances')
@@ -87,14 +89,14 @@ export class LeaveBalanceController {
     return this.service.listBalances(user, {
       leaveYear: query.leave_year,
       departmentId: query.department_id,
-      leaveTypeId: query.leave_type_id,
-      employeeId: query.employee_id,
+      sortBy: query.sort_by,
+      sortOrder: query.sort_order,
       search: query.search,
-      status: query.status,
-      lowBalance: query.low_balance,
       page: query.page,
       limit: query.limit,
+      organizationId: user.organizationId,
     });
+
   }
 
   @Get(':id')
@@ -142,4 +144,17 @@ export class LeaveBalanceController {
   ) {
     return this.service.recompute(user, id);
   }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, AccessGuard)
+  @RequirePermission('LEAVE_MGMT', 'update')
+  @HttpCode(HttpStatus.OK)
+  update(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBalanceDto,
+  ) {
+    return this.service.updateBalance(user, id, dto);
+  }
 }
+

@@ -18,29 +18,20 @@ export class ListBalanceQueryDto {
   leave_year?: number;
 
   @IsOptional()
-  @IsUUID()
-  department_id?: string;
-
-  @IsOptional()
-  @IsUUID()
-  leave_type_id?: string;
-
-  @IsOptional()
-  @IsUUID()
-  employee_id?: string;
-
-  @IsOptional()
   @IsString()
   search?: string;
 
   @IsOptional()
-  @IsEnum(Status)
-  status?: Status;
+  @IsUUID()
+  department_id?: string;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
-  @IsBoolean()
-  low_balance?: boolean;
+  @IsEnum(['employee_name', 'department_name', 'total_available', 'total_allocated'])
+  sort_by?: string = 'employee_name';
+
+  @IsOptional()
+  @IsEnum(['ASC', 'DESC'])
+  sort_order?: 'ASC' | 'DESC' = 'ASC';
 
   @IsOptional()
   @Type(() => Number)
@@ -54,3 +45,5 @@ export class ListBalanceQueryDto {
   @Min(1)
   limit?: number = 20;
 }
+
+

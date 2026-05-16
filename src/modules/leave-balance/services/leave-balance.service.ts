@@ -22,7 +22,9 @@ import {
 } from '../repositories/leave-balance.repository';
 import { LeaveBalanceLedgerRepository } from '../repositories/leave-balance-ledger.repository';
 import { AdjustBalanceDto } from '../dto/adjust-balance.dto';
+import { UpdateBalanceDto } from '../dto/update-balance.dto';
 import { BulkInitializeDto, BulkInitScope } from '../dto/bulk-initialize.dto';
+
 import { InitializeBalanceDto } from '../dto/initialize-balance.dto';
 import { LedgerQueryDto } from '../dto/ledger-query.dto';
 import { LeaveRequest } from '../../leave-request/entities/leave-request.entity';
@@ -53,7 +55,31 @@ export interface BalanceView {
   available_days: number | null;
 }
 
+export interface GroupedBalanceView {
+  employee_id: string;
+  employee_name: string;
+  employee_code: string | null;
+  department_name: string | null;
+  employee_avatar_url: string | null;
+  total_allocated: number;
+  total_available: number;
+  designation_name?: string | null;
+  balances: BalanceView[];
+}
+
+
+export interface ListBalanceResponse {
+  data: GroupedBalanceView[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
+
 @Injectable()
+
 export class LeaveBalanceService {
   private readonly logger = new Logger(LeaveBalanceService.name);
 
@@ -306,34 +332,68 @@ export class LeaveBalanceService {
 
   async listBalances(
     user: LoggedInUser,
-    filters: Omit<ListBalanceFilters, 'organizationId'>,
-  ): Promise<{
-    data: Array<{
-      id: string;
-      employee_id: string;
-      employee_code: string | null;
-      employee_name: string;
-      department_name: string | null;
-      leave_type_id: string;
-      leave_type_code: string | null;
-      leave_type_name: string;
-      is_unlimited: boolean;
-      leave_year: number;
-      allocated_days: number | null;
-      available_days: number | null;
-      used_days: number;
-      pending_days: number;
-      consumed_days: number | null;
-    }>;
-    pagination: { page: number; limit: number; total: number };
-  }> {
-    const { rows, total } = await this.balanceRepo.list({
-      ...filters,
-      organizationId: user.organizationId,
-    });
+    filters: ListBalanceFilters,
+  ): Promise<ListBalanceResponse> {
+    const year = filters.leaveYear ?? this.currentLeaveYear();
+
+    const { rows: employees, total } =
+      await this.balanceRepo.listEmployeesWithBalances({
+        ...filters,
+        leaveYear: year,
+      });
+
+    const data: GroupedBalanceView[] = [];
+
+    for (const emp of employees) {
+      const persisted = await this.balanceRepo.findForEmployee(
+        emp.employee_id,
+        user.organizationId,
+        year,
+      );
+
+      const lwpTypes = await this.findLwpLeaveTypes(user.organizationId);
+      const persistedLwpTypeIds = new Set(
+        persisted.filter((b) => b.is_unlimited).map((b) => b.leave_type_id),
+      );
+
+      const balanceViews: BalanceView[] = persisted.map((b) =>
+        this.toBalanceView(b, b.leave_type),
+      );
+
+      for (const lwp of lwpTypes) {
+        if (persistedLwpTypeIds.has(lwp.id)) continue;
+        const usage = await this.aggregateRequestsForLwp(
+          emp.employee_id,
+          lwp.id,
+          year,
+          user.organizationId,
+        );
+        balanceViews.push(this.synthesizeUnlimitedView(lwp, usage));
+      }
+
+      const fullName = [emp.first_name, emp.middle_name, emp.last_name]
+        .filter(Boolean)
+        .join(' ');
+
+      data.push({
+        employee_id: emp.employee_id,
+        employee_name: fullName || 'Unknown',
+        employee_code: emp.code,
+        department_name: emp.department_name,
+        designation_name: emp.designation_name,
+        employee_avatar_url:
+
+          emp.avatar_bucket && emp.avatar_key
+            ? `https://${emp.avatar_bucket}.s3.us-east-1.amazonaws.com/${emp.avatar_key}`
+            : null,
+        total_allocated: Number(emp.total_allocated),
+        total_available: Number(emp.total_available),
+        balances: balanceViews,
+      });
+    }
 
     return {
-      data: rows.map((row) => this.toListRowView(row)),
+      data,
       pagination: {
         page: filters.page ?? 1,
         limit: filters.limit ?? 20,
@@ -341,6 +401,44 @@ export class LeaveBalanceService {
       },
     };
   }
+
+  async updateBalance(
+    user: LoggedInUser,
+    id: string,
+    dto: UpdateBalanceDto,
+  ): Promise<BalanceView> {
+    const balance = await this.balanceRepo.findById(id, user.organizationId);
+    if (!balance) {
+      throw new NotFoundException(`BALANCE_NOT_FOUND: ${id}`);
+    }
+
+    const oldAllocated = Number(balance.allocated_days || 0);
+    const newAllocated = dto.allocated_days;
+
+    await this.balanceRepo.update(id, {
+      allocated_days: this.toDecimalStr(newAllocated),
+      modified_by: user.userId,
+    });
+
+    if (oldAllocated !== newAllocated) {
+      const diff = newAllocated - oldAllocated;
+      await this.ledgerRepo.append({
+        balance_id: id,
+        entry_type: LedgerEntryType.MANUAL_ADJUSTMENT,
+        direction: diff > 0 ? LedgerDirection.CREDIT : LedgerDirection.DEBIT,
+        days: this.toDecimalStr(Math.abs(diff)),
+        reason: `Allocation updated from ${oldAllocated} to ${newAllocated}. Reason: ${dto.reason}`,
+        organization_id: user.organizationId,
+        enterprise_id: user.enterpriseId,
+        modified_by: user.userId,
+      });
+    }
+
+    const updated = (await this.balanceRepo.findById(id, user.organizationId))!;
+    return this.toBalanceView(updated, updated.leave_type);
+  }
+
+
 
   async getBalanceById(user: LoggedInUser, id: string): Promise<BalanceView> {
     const balance = await this.balanceRepo.findById(id, user.organizationId);
@@ -898,6 +996,9 @@ export class LeaveBalanceService {
     employee_code: string | null;
     employee_name: string;
     department_name: string | null;
+    designation_name: string | null;
+    employee_avatar_url: string | null;
+
     leave_type_id: string;
     leave_type_code: string | null;
     leave_type_name: string;
@@ -924,6 +1025,12 @@ export class LeaveBalanceService {
       employee_code: row.employee_code,
       employee_name: fullName || 'Unknown',
       department_name: row.department_name,
+      designation_name: row.designation_name,
+      employee_avatar_url:
+        row.avatar_bucket && row.avatar_key
+
+          ? `https://${row.avatar_bucket}.s3.us-east-1.amazonaws.com/${row.avatar_key}`
+          : null,
       leave_type_id: view.leave_type_id,
       leave_type_code: view.leave_type_code,
       leave_type_name: view.leave_type_name,

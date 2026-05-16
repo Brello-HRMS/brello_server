@@ -13,9 +13,29 @@ export interface ListBalanceFilters {
   search?: string;
   status?: Status;
   lowBalance?: boolean;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
   page?: number;
   limit?: number;
 }
+
+
+export interface EmployeeListRow {
+  employee_id: string;
+  first_name: string | null;
+  middle_name: string | null;
+  last_name: string | null;
+  code: string | null;
+  department_name: string | null;
+  designation_name: string | null;
+  avatar_bucket: string | null;
+  avatar_key: string | null;
+  total_allocated: string;
+  total_available: string;
+}
+
+
+
 
 export interface BalanceListRow {
   balance: LeaveBalance;
@@ -24,7 +44,11 @@ export interface BalanceListRow {
   employee_last_name: string | null;
   employee_code: string | null;
   department_name: string | null;
+  designation_name: string | null;
+  avatar_bucket: string | null;
+  avatar_key: string | null;
 }
+
 
 @Injectable()
 export class LeaveBalanceRepository {
@@ -132,7 +156,11 @@ export class LeaveBalanceRepository {
       .leftJoinAndSelect('b.leave_type', 'lt')
       .leftJoin('users', 'u', 'u.id = b.employee_id')
       .leftJoin('departments', 'd', 'd.id = u.department_id')
+      .leftJoin('user_profile', 'up', 'up.id = u.user_profile_id')
+      .leftJoin('document', 'doc', 'doc.id = up.photo_id')
+      .leftJoin('designations', 'ds', 'ds.id = u.designation_id')
       .where('b.organization_id = :orgId', { orgId: filters.organizationId });
+
 
     if (filters.leaveYear) {
       qb.andWhere('b.leave_year = :year', { year: filters.leaveYear });
@@ -168,6 +196,10 @@ export class LeaveBalanceRepository {
       .addSelect('u.last_name', 'u_last_name')
       .addSelect('u.code', 'u_code')
       .addSelect('d.name', 'd_name')
+      .addSelect('ds.title', 'ds_title')
+      .addSelect('doc.bucket', 'doc_bucket')
+      .addSelect('doc.object_key', 'doc_key')
+
       .orderBy('b.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
@@ -178,6 +210,10 @@ export class LeaveBalanceRepository {
       u_last_name?: string | null;
       u_code?: string | null;
       d_name?: string | null;
+      ds_title?: string | null;
+      doc_bucket?: string | null;
+      doc_key?: string | null;
+
     }
 
     const result = await qb.getRawAndEntities<RawJoin>();
@@ -192,8 +228,103 @@ export class LeaveBalanceRepository {
         employee_last_name: raw.u_last_name ?? null,
         employee_code: raw.u_code ?? null,
         department_name: raw.d_name ?? null,
+        designation_name: raw.ds_title ?? null,
+        avatar_bucket: raw.doc_bucket ?? null,
+        avatar_key: raw.doc_key ?? null,
+
       };
     });
+
+    return { rows, total };
+  }
+
+  async listEmployeesWithBalances(
+    filters: ListBalanceFilters,
+  ): Promise<{ rows: EmployeeListRow[]; total: number }> {
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'employee_name',
+      sortOrder = 'ASC',
+    } = filters;
+
+    const qb = this.repo.manager
+      .createQueryBuilder()
+      .select('u.id', 'employee_id')
+      .addSelect('u.first_name', 'first_name')
+      .addSelect('u.middle_name', 'middle_name')
+      .addSelect('u.last_name', 'last_name')
+      .addSelect('u.code', 'code')
+      .addSelect('d.name', 'department_name')
+      .addSelect('ds.title', 'designation_name')
+      .addSelect('doc.bucket', 'avatar_bucket')
+      .addSelect('doc.object_key', 'avatar_key')
+
+      .addSelect(
+        'SUM(CASE WHEN b.is_unlimited = false THEN COALESCE(b.allocated_days, 0) ELSE 0 END)',
+        'total_allocated',
+      )
+      .addSelect(
+        'SUM(CASE WHEN b.is_unlimited = false THEN (COALESCE(b.accrued_days, 0) + COALESCE(b.carry_forward, 0) + COALESCE(b.adjustment, 0) - COALESCE(b.used_days, 0) - COALESCE(b.pending_days, 0)) ELSE 0 END)',
+        'total_available',
+      )
+
+      .from('users', 'u')
+      .innerJoin('leave_balances', 'b', 'b.employee_id = u.id')
+      .leftJoin('departments', 'd', 'd.id = u.department_id')
+      .leftJoin('designations', 'ds', 'ds.id = u.designation_id')
+      .leftJoin('user_profile', 'up', 'up.id = u.user_profile_id')
+      .leftJoin('document', 'doc', 'doc.id = up.photo_id')
+      .where('u.organization_id = :orgId', { orgId: filters.organizationId })
+
+      .andWhere('b.organization_id = :orgId', { orgId: filters.organizationId });
+
+    if (filters.leaveYear) {
+      qb.andWhere('b.leave_year = :year', { year: filters.leaveYear });
+    }
+
+    if (filters.departmentId) {
+      qb.andWhere('u.department_id = :deptId', {
+        deptId: filters.departmentId,
+      });
+    }
+
+    if (filters.search && filters.search.length >= 2) {
+      qb.andWhere(
+        `(LOWER(u.first_name || ' ' || COALESCE(u.middle_name,'') || ' ' || u.last_name) LIKE :s OR LOWER(u.code) LIKE :s)`,
+        { s: `%${filters.search.toLowerCase()}%` },
+      );
+    }
+
+    qb.groupBy(
+      'u.id, u.first_name, u.middle_name, u.last_name, u.code, d.name, ds.title, doc.bucket, doc.object_key',
+    );
+
+
+    const sortMapping: Record<string, string> = {
+      employee_name: 'u.first_name',
+      department_name: 'd.name',
+      total_allocated: 'total_allocated',
+      total_available: 'total_available',
+    };
+
+    const sortColumn = sortMapping[sortBy] || 'u.first_name';
+    qb.orderBy(sortColumn, sortOrder);
+
+    // Count using subquery for grouped results
+    const totalRaw = await this.repo.manager
+      .createQueryBuilder()
+      .select('COUNT(*)', 'count')
+      .from(`(${qb.getQuery()})`, 'sub')
+      .setParameters(qb.getParameters())
+      .getRawOne();
+
+    const total = Number(totalRaw?.count || 0);
+
+    const rows = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getRawMany<EmployeeListRow>();
 
     return { rows, total };
   }
