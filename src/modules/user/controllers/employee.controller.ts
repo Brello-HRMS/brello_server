@@ -58,6 +58,27 @@ export class EmployeeController {
     return this.employeeService.getDropdown(user);
   }
 
+  @Get('stats')
+  getDashboardStats(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.employeeService.getDashboardStats(user.organizationId);
+  }
+
+  @Get('new-hires')
+  getNewHires(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.employeeService.getNewHires(user.organizationId);
+  }
+
+  @Get('birthdays')
+  getBirthdays(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query('month') month?: string,
+  ) {
+    return this.employeeService.getBirthdays(
+      user.organizationId,
+      month ? Number(month) : undefined,
+    );
+  }
+
   @Get()
   async listEmployees(
     @LoggedInUser() user: LoggedInUserInterface,

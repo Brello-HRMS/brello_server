@@ -97,10 +97,11 @@ export class HolidayService {
     const upcoming = holidays.filter(h => new Date(h.date) >= now);
 
     const format = (h: Holiday) => ({
+      id: h.id,
       name: h.name,
       date: h.date,
       day: new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date(h.date)),
-      type: h.type
+      type: h.type,
     });
 
     return {

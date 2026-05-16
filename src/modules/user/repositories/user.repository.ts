@@ -166,4 +166,44 @@ export class UserRepository {
       order: { first_name: 'ASC' },
     });
   }
+
+  async findBirthdaysThisMonth(organizationId: string, month: number): Promise<User[]> {
+    return this.repository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.user_profile', 'profile')
+      .where('user.organization_id = :organizationId', { organizationId })
+      .andWhere('user.status = :status', { status: Status.ACTIVE })
+      .andWhere('profile.dob IS NOT NULL')
+      .andWhere('EXTRACT(MONTH FROM profile.dob) = :month', { month })
+      .orderBy('EXTRACT(DAY FROM profile.dob)', 'ASC')
+      .getMany();
+  }
+
+  async countActive(organizationId: string): Promise<number> {
+    return this.repository.count({
+      where: { organization_id: organizationId, status: Status.ACTIVE },
+    });
+  }
+
+  async findNewHiresThisMonth(organizationId: string): Promise<User[]> {
+    const now = new Date();
+    // Use calendar month boundaries (local time, padded to avoid UTC-shift edge cases)
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDayDate = new Date(year, month, 0);
+    const lastDay = `${year}-${String(month).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+
+    return this.repository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.user_profile', 'profile')
+      .leftJoinAndSelect('user.department', 'department')
+      .where('user.organization_id = :organizationId', { organizationId })
+      .andWhere('user.status = :status', { status: Status.ACTIVE })
+      .andWhere('profile.joining_date IS NOT NULL')
+      .andWhere('profile.joining_date >= :firstDay', { firstDay })
+      .andWhere('profile.joining_date <= :lastDay', { lastDay })
+      .orderBy('profile.joining_date', 'ASC')
+      .getMany();
+  }
 }

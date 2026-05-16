@@ -118,13 +118,6 @@ export class AttendanceService {
           });
         }
 
-        if (rule.require_remote_reason && !dto.remote_reason) {
-          throw new BadRequestException({
-            message: 'Remote reason is required',
-            error_code: 'REMOTE_REASON_REQUIRED',
-          });
-        }
-
         attendanceMode = AttendanceMode.REMOTE_IN;
         geoStatus = GeoStatus.OUTSIDE_RADIUS;
       }

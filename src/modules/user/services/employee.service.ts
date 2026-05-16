@@ -929,11 +929,14 @@ export class EmployeeService {
       employee_status: EmployeeStatus.ACTIVE,
     });
 
+    // Restore user record to ACTIVE when offboarding is cancelled
+    await this.userRepository.update(id, { status: Status.ACTIVE });
+
     await this.createAuditLog(
       actorId,
       'CANCEL_OFFBOARDING',
-      { status: EmployeeStatus.OFFBOARDING },
-      { status: EmployeeStatus.ACTIVE },
+      { employee_status: EmployeeStatus.OFFBOARDING },
+      { employee_status: EmployeeStatus.ACTIVE, user_status: Status.ACTIVE },
       id,
       'user',
     );
@@ -1060,5 +1063,125 @@ export class EmployeeService {
 
     this.logger.log(`Employee activated successfully: ${id}`);
     return { success: true, status: EmployeeStatus.ACTIVE };
+  }
+
+  async getDashboardStats(organizationId: string) {
+    if (!organizationId) {
+      return {
+        total_employees: 0,
+        employee_trend: '+0.0%',
+        attendance_percent: '0%',
+        attendance_trend: '+0.0%',
+      };
+    }
+
+    const now = new Date();
+    const schema = (this.dataSource.options as any).schema ?? 'public';
+
+    // --- Employee stats ---
+    const totalEmployees = await this.userRepository.countActive(organizationId);
+    const newHiresThisMonth = await this.userRepository.findNewHiresThisMonth(organizationId);
+    const previousCount = totalEmployees - newHiresThisMonth.length;
+    const employeeTrendNum =
+      previousCount > 0 ? (newHiresThisMonth.length / previousCount) * 100 : 0;
+    const employeeTrend = `${employeeTrendNum >= 0 ? '+' : ''}${employeeTrendNum.toFixed(1)}%`;
+
+    // --- Attendance stats ---
+    // Use local date to avoid UTC-shift issues when the server runs in a non-UTC timezone
+    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    const [todayRow] = await this.dataSource.query<
+      { attended: string; total: string }[]
+    >(
+      `SELECT
+        SUM(CASE WHEN attendance_status IN ('PRESENT','LATE','HALF_DAY') THEN 1 ELSE 0 END)::int AS attended,
+        COUNT(*)::int AS total
+       FROM "${schema}".attendance_records
+       WHERE organization_id = $1 AND date = $2 AND is_deleted = false`,
+      [organizationId, localDate],
+    );
+
+    const attended = Number(todayRow?.attended ?? 0);
+    const attendancePercent =
+      totalEmployees > 0
+        ? ((attended / totalEmployees) * 100).toFixed(1) + '%'
+        : '0%';
+
+    // Last month average attendance
+    const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    const lastMonthStart = `${firstOfLastMonth.getFullYear()}-${String(firstOfLastMonth.getMonth() + 1).padStart(2, '0')}-01`;
+    const lastMonthEnd = `${lastOfLastMonth.getFullYear()}-${String(lastOfLastMonth.getMonth() + 1).padStart(2, '0')}-${String(lastOfLastMonth.getDate()).padStart(2, '0')}`;
+
+    const [lastMonthRow] = await this.dataSource.query<{ avg_percent: string }[]>(
+      `SELECT AVG(daily_pct) AS avg_percent
+       FROM (
+         SELECT date,
+           100.0 * SUM(CASE WHEN attendance_status IN ('PRESENT','LATE','HALF_DAY') THEN 1 ELSE 0 END)
+           / NULLIF($1::int, 0) AS daily_pct
+         FROM "${schema}".attendance_records
+         WHERE organization_id = $2 AND date >= $3 AND date <= $4 AND is_deleted = false
+         GROUP BY date
+       ) sub`,
+      [totalEmployees, organizationId, lastMonthStart, lastMonthEnd],
+    );
+
+    const lastMonthAvg = Number(lastMonthRow?.avg_percent ?? 0);
+    const todayNum = totalEmployees > 0 ? (attended / totalEmployees) * 100 : 0;
+    const attendanceTrendNum = todayNum - lastMonthAvg;
+    const attendanceTrend = `${attendanceTrendNum >= 0 ? '+' : ''}${attendanceTrendNum.toFixed(1)}%`;
+
+    return {
+      total_employees: totalEmployees,
+      employee_trend: employeeTrend,
+      attendance_percent: attendancePercent,
+      attendance_trend: attendanceTrend,
+    };
+  }
+
+  async getNewHires(organizationId: string) {
+    const employees = await this.userRepository.findNewHiresThisMonth(organizationId);
+
+    return employees.map((emp) => {
+      const name = [emp.first_name, emp.middle_name, emp.last_name]
+        .filter(Boolean)
+        .join(' ');
+      const joiningDate = emp.user_profile?.joining_date
+        ? new Date(emp.user_profile.joining_date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          })
+        : null;
+      return {
+        id: emp.id,
+        name,
+        employee_id: emp.user_profile?.employee_id ?? null,
+        department: emp.department?.name ?? null,
+        joining_date: joiningDate,
+      };
+    });
+  }
+
+  async getBirthdays(organizationId: string, month?: number) {
+    const targetMonth = month ?? new Date().getMonth() + 1;
+    const employees = await this.userRepository.findBirthdaysThisMonth(
+      organizationId,
+      targetMonth,
+    );
+
+    return employees.map((emp) => {
+      const name = [emp.first_name, emp.middle_name, emp.last_name]
+        .filter(Boolean)
+        .join(' ');
+      const dob = emp.user_profile?.dob
+        ? new Date(emp.user_profile.dob)
+        : null;
+      return {
+        id: emp.id,
+        name,
+        employee_id: emp.user_profile?.employee_id ?? null,
+        birth_day: dob ? dob.getUTCDate() : null,
+      };
+    });
   }
 }
