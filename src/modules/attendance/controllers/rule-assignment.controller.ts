@@ -25,7 +25,7 @@ export class RuleAssignmentController {
 
   @Post(':id/assign/departments')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ATTENDANCE_CONFIG', 'update')
+  @RequirePermission('ATTENDANCE', 'update')
   assignToDepartments(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -36,7 +36,7 @@ export class RuleAssignmentController {
 
   @Post(':id/assign/employees')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ATTENDANCE_CONFIG', 'update')
+  @RequirePermission('ATTENDANCE', 'update')
   assignToEmployees(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -47,7 +47,7 @@ export class RuleAssignmentController {
 
   @Get(':id/assignments')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ATTENDANCE_CONFIG', 'view')
+  @RequirePermission('ATTENDANCE', 'view')
   getAssignments(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,

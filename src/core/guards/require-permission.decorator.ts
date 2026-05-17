@@ -3,7 +3,7 @@ import { SetMetadata } from '@nestjs/common';
 export const PERMISSION_KEY = 'require_permission';
 
 export interface PermissionRequirement {
-  /** Module code (e.g., 'LEAVE_MGMT', 'ATTENDANCE'). WBS is for hierarchy only. */
+  /** Module code (e.g., 'LEAVE', 'ATTENDANCE'). WBS is for hierarchy only. */
   moduleCode: string;
   /** Action name (e.g., 'view', 'create', 'update', 'delete', 'approve') */
   actionName: string;
@@ -15,7 +15,7 @@ export interface PermissionRequirement {
  * Use on any route handler to enforce RBAC access.
  *
  * Example:
- *   @RequirePermission('LEAVE_MGMT', 'view')
+ *   @RequirePermission('LEAVE', 'view')
  *   @RequirePermission('ATTENDANCE', 'approve')
  *
  * Guards: Must be combined with @UseGuards(JwtAuthGuard, AccessGuard)

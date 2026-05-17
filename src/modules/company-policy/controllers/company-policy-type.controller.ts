@@ -25,14 +25,14 @@ export class CompanyPolicyTypeController {
     constructor(private readonly typeService: CompanyPolicyTypeService) { }
 
     @Get()
-    @RequirePermission('COMPANY_POLICY', 'view')
+    @RequirePermission('ORG_POLICIES', 'view')
     @HttpCode(HttpStatus.OK)
     findAll(@LoggedInUser() user: LoggedInUserInterface) {
         return this.typeService.findAll(user);
     }
 
     @Post()
-    @RequirePermission('COMPANY_POLICY', 'create')
+    @RequirePermission('ORG_POLICIES', 'create')
     @HttpCode(HttpStatus.CREATED)
     create(
         @LoggedInUser() user: LoggedInUserInterface,
@@ -42,7 +42,7 @@ export class CompanyPolicyTypeController {
     }
 
     @Patch(':id')
-    @RequirePermission('COMPANY_POLICY', 'edit')
+    @RequirePermission('ORG_POLICIES', 'edit')
     @HttpCode(HttpStatus.OK)
     update(
         @LoggedInUser() user: LoggedInUserInterface,
@@ -53,7 +53,7 @@ export class CompanyPolicyTypeController {
     }
 
     @Delete(':id')
-    @RequirePermission('COMPANY_POLICY', 'delete')
+    @RequirePermission('ORG_POLICIES', 'delete')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @LoggedInUser() user: LoggedInUserInterface,

@@ -35,6 +35,7 @@ import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { PayrollComponent } from '../../payroll/entities/payroll-component.entity';
 import {
   ComponentType,
+  ComponentCategory,
   CalculationType,
 } from '../../payroll/enums/payroll.enum';
 
@@ -214,11 +215,13 @@ export class OrganizationService {
       // Step 7: Create Default Payroll Component (Basic Salary)
       const basicComponent = manager.create(PayrollComponent, {
         name: 'Basic Salary',
-        type: ComponentType.EARNING,
+        component_type: ComponentType.EARNING,
+        category: ComponentCategory.FIXED,
         calculation_type: CalculationType.PERCENTAGE,
-        calculation_value: { base: 'CTC', value: 50 },
+        value: 50,
         is_taxable: true,
-        is_system_defined: true,
+        is_default: true,
+        is_editable: false,
         is_active: true,
         enterprise_id: enterpriseId,
         organization_id: savedOrg.id,

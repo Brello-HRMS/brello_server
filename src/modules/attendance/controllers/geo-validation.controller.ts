@@ -21,7 +21,7 @@ export class GeoValidationController {
 
   @Post('validate')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ATTENDANCE_CONFIG', 'view')
+  @RequirePermission('ATTENDANCE', 'view')
   validate(
     @LoggedInUser() user: LoggedInUserInterface,
     @Body() dto: ValidateGeoDto,

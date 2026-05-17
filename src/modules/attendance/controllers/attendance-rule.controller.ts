@@ -30,7 +30,7 @@ export class AttendanceRuleController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermission('ATTENDANCE_CONFIG', 'create')
+  @RequirePermission('ATTENDANCE', 'create')
   create(
     @LoggedInUser() user: LoggedInUserInterface,
     @Body() dto: CreateAttendanceRuleDto,
@@ -40,7 +40,7 @@ export class AttendanceRuleController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ATTENDANCE_CONFIG', 'view')
+  @RequirePermission('ATTENDANCE', 'view')
   findAll(
     @LoggedInUser() user: LoggedInUserInterface,
     @Query() pagination: PaginationDto,
@@ -50,7 +50,7 @@ export class AttendanceRuleController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ATTENDANCE_CONFIG', 'update')
+  @RequirePermission('ATTENDANCE', 'update')
   update(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -61,7 +61,7 @@ export class AttendanceRuleController {
 
   @Patch(':id/status')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ATTENDANCE_CONFIG', 'activate')
+  @RequirePermission('ATTENDANCE', 'activate')
   changeStatus(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -72,7 +72,7 @@ export class AttendanceRuleController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermission('ATTENDANCE_CONFIG', 'delete')
+  @RequirePermission('ATTENDANCE', 'delete')
   delete(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,

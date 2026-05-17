@@ -62,7 +62,7 @@ export class LeaveRequestController {
 
   @Get('pending-approval')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'approve')
+  @RequirePermission('LEAVE', 'approve')
   @HttpCode(HttpStatus.OK)
   pendingApproval(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -73,7 +73,7 @@ export class LeaveRequestController {
 
   @Get()
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'view')
+  @RequirePermission('LEAVE', 'view')
   @HttpCode(HttpStatus.OK)
   list(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -146,7 +146,7 @@ export class LeaveRequestController {
 
   @Post(':id/approve')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'approve')
+  @RequirePermission('LEAVE', 'approve')
   @HttpCode(HttpStatus.OK)
   approve(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -158,7 +158,7 @@ export class LeaveRequestController {
 
   @Post(':id/reject')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'approve')
+  @RequirePermission('LEAVE', 'approve')
   @HttpCode(HttpStatus.OK)
   reject(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -170,7 +170,7 @@ export class LeaveRequestController {
 
   @Post(':id/admin-cancel')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'delete')
+  @RequirePermission('LEAVE', 'delete')
   @HttpCode(HttpStatus.OK)
   adminCancel(
     @LoggedInUser() user: LoggedInUserInterface,

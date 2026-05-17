@@ -42,7 +42,7 @@ export class LeaveBalanceController {
 
   @Get('employee/:employeeId')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'view')
+  @RequirePermission('LEAVE', 'view')
   @HttpCode(HttpStatus.OK)
   getForEmployee(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -58,7 +58,7 @@ export class LeaveBalanceController {
 
   @Post('initialize')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'create')
+  @RequirePermission('LEAVE', 'create')
   @HttpCode(HttpStatus.CREATED)
   initialize(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -69,7 +69,7 @@ export class LeaveBalanceController {
 
   @Post('initialize/bulk')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'create')
+  @RequirePermission('LEAVE', 'create')
   @HttpCode(HttpStatus.CREATED)
   bulkInitialize(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -80,7 +80,7 @@ export class LeaveBalanceController {
 
   @Get()
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'view')
+  @RequirePermission('LEAVE', 'view')
   @HttpCode(HttpStatus.OK)
   list(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -101,7 +101,7 @@ export class LeaveBalanceController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'view')
+  @RequirePermission('LEAVE', 'view')
   @HttpCode(HttpStatus.OK)
   getById(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -112,7 +112,7 @@ export class LeaveBalanceController {
 
   @Get(':id/ledger')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'view')
+  @RequirePermission('LEAVE', 'view')
   @HttpCode(HttpStatus.OK)
   getLedger(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -124,7 +124,7 @@ export class LeaveBalanceController {
 
   @Patch(':id/adjust')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'update')
+  @RequirePermission('LEAVE', 'update')
   @HttpCode(HttpStatus.OK)
   adjust(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -136,7 +136,7 @@ export class LeaveBalanceController {
 
   @Post(':id/recompute')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'update')
+  @RequirePermission('LEAVE', 'update')
   @HttpCode(HttpStatus.OK)
   recompute(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -147,7 +147,7 @@ export class LeaveBalanceController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('LEAVE_MGMT', 'update')
+  @RequirePermission('LEAVE', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @LoggedInUser() user: LoggedInUserInterface,

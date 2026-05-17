@@ -29,7 +29,7 @@ export class CompanyPolicyController {
     ) { }
 
     @Post()
-    @RequirePermission('COMPANY_POLICY', 'create')
+    @RequirePermission('ORG_POLICIES', 'create')
     @HttpCode(HttpStatus.CREATED)
     create(
         @LoggedInUser() user: LoggedInUserInterface,
@@ -39,26 +39,26 @@ export class CompanyPolicyController {
     }
 
     @Get('grouped')
-    @RequirePermission('COMPANY_POLICY', 'view')
+    @RequirePermission('ORG_POLICIES', 'view')
     @HttpCode(HttpStatus.OK)
     async findGrouped(@LoggedInUser() user: LoggedInUserInterface) {
-        const canEdit = await this.permissionResolver.hasPermission(user, 'COMPANY_POLICY', 'edit');
+        const canEdit = await this.permissionResolver.hasPermission(user, 'ORG_POLICIES', 'edit');
         return this.policyService.findGrouped(user, !canEdit);
     }
 
     @Get(':id')
-    @RequirePermission('COMPANY_POLICY', 'view')
+    @RequirePermission('ORG_POLICIES', 'view')
     @HttpCode(HttpStatus.OK)
     async findOne(
         @LoggedInUser() user: LoggedInUserInterface,
         @Param('id', ParseUUIDPipe) id: string,
     ) {
-        const canEdit = await this.permissionResolver.hasPermission(user, 'COMPANY_POLICY', 'edit');
+        const canEdit = await this.permissionResolver.hasPermission(user, 'ORG_POLICIES', 'edit');
         return this.policyService.findOne(user, id, !canEdit);
     }
 
     @Patch(':id')
-    @RequirePermission('COMPANY_POLICY', 'edit')
+    @RequirePermission('ORG_POLICIES', 'edit')
     @HttpCode(HttpStatus.OK)
     update(
         @LoggedInUser() user: LoggedInUserInterface,
@@ -69,7 +69,7 @@ export class CompanyPolicyController {
     }
 
     @Delete(':id')
-    @RequirePermission('COMPANY_POLICY', 'delete')
+    @RequirePermission('ORG_POLICIES', 'delete')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @LoggedInUser() user: LoggedInUserInterface,
