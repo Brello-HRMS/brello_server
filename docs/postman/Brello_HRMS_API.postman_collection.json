@@ -228,8 +228,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/register",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "register"
+              ]
             },
             "description": "Register as a new lead. Requires a valid `plan_id`."
           },
@@ -264,8 +269,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "verify-otp"
+              ]
             },
             "description": "Verify lead email using OTP. Default dev OTP is `123456`."
           },
@@ -320,8 +330,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Login initially to get the `user_id` for company setup."
           },
@@ -358,8 +373,13 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/setup",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "setup"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "setup"
+              ]
             },
             "description": "The final step of the onboarding flow. Links the user to a new organization."
           },
@@ -409,8 +429,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Authenticate with email and password.\n\n**Auto-saves:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically in the cookie jar."
           },
@@ -466,8 +491,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login/send-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login", "send-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login",
+                "send-otp"
+              ]
             },
             "description": "Initiate OTP-based login. Sends a 6-digit OTP to the provided email.\n\n**Returns:** 204 No Content on success.\n\n**Auto-stages:** `otp_login_email` collection variable, so the follow-up **Login - Verify OTP** request is pre-filled.\n\n**In dev mode:** The OTP is printed to the server console."
           },
@@ -547,8 +578,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login",
+                "verify-otp"
+              ]
             },
             "description": "Verify the OTP sent to the email and complete the OTP-based login.\n\n**Email is auto-filled** from the `otp_login_email` variable set by **Login - Send OTP**. You only need to paste the OTP.\n\n**Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`.\n\n**Refresh token:** Delivered as HttpOnly cookie — stored automatically by Postman's cookie jar.\n\n**OTP rules:** 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -596,8 +633,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/switch-app",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "switch-app"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "switch-app"
+              ]
             },
             "description": "Switch to a different application. Provide the target `appId` (get available apps from the Login response).\n\n**Auto-saves:** New `access_token` scoped to the target app."
           },
@@ -625,8 +667,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/refresh",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Refresh the access token using the HttpOnly cookie.\n\n**No Authorization header needed.** The refresh token is sent automatically as a cookie by the browser (or Postman).\n\n**Auto-saves:** New `access_token` to collection variable. New refresh token cookie is set automatically (token rotation)."
           },
@@ -649,8 +696,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/menu/permissions",
-              "host": ["{{base_url}}"],
-              "path": ["menu", "permissions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "menu",
+                "permissions"
+              ]
             },
             "description": "Returns a flat list of all granted permissions for the logged-in user in the current app context. Includes `module_code` and `action_code` for each permission."
           },
@@ -686,8 +738,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             },
             "description": "Invalidate the current session and clear the refresh token cookie. Returns 204 No Content."
           },
@@ -733,8 +790,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/update-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "update-password"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "update-password"
+              ]
             },
             "description": "Change the authenticated user's password.\n\n**Side effect:** All active sessions are invalidated (user must re-login).\n\n**Password rules:** Min 8 chars, must contain: uppercase, lowercase, digit, special character."
           },
@@ -770,8 +832,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/forgot-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "forgot-password"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
             },
             "description": "Request a password reset OTP. Always returns 204 (even if email doesn't exist, for security).\n\n**In dev mode:** Check the server console for the OTP log."
           },
@@ -806,8 +873,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
             },
             "description": "Verify the OTP received via email and set a new password.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -842,8 +914,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/resend-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "resend-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "resend-otp"
+              ]
             },
             "description": "Unified endpoint to resend an OTP for any purpose (LOGIN, RESET_PASSWORD, PLATFORM_ADMIN_LOGIN, etc).\n\n**Requirement:** An initial OTP request must have already been made for this email and purpose."
           },
@@ -878,8 +955,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "register"
+              ]
             },
             "description": "Initiates the registration flow for a new Platform Admin by securely masking their initial creation and sending an OTP to tech@brello.co.in."
           },
@@ -914,8 +997,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/verify-register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "verify-register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "verify-register"
+              ]
             },
             "description": "Verifies the OTP and activates the Platform Admin account."
           },
@@ -950,8 +1039,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "login"
+              ]
             },
             "description": "Initiates the login flow for an existing Platform Admin by validating credentials and sending an OTP to their email."
           },
@@ -1005,8 +1100,14 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/platform-admin/verify-login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "platform-admin", "verify-login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "platform-admin",
+                "verify-login"
+              ]
             },
             "description": "Verifies the login OTP and formally completes authentication by returning tokens.\n\n**Auto-saves:** `access_token`, `user_id` to collection variables.\n\n**Refresh token:** Delivered as an HttpOnly cookie (`refresh_token`). Postman stores it automatically."
           },
@@ -1034,8 +1135,12 @@
             },
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": ["{{base_url}}"],
-              "path": ["industry-types"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry-types"
+              ]
             }
           },
           "event": [
@@ -1069,8 +1174,12 @@
             },
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": ["{{base_url}}"],
-              "path": ["plans"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans"
+              ]
             }
           },
           "event": [
@@ -1104,8 +1213,12 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises"
+              ]
             }
           },
           "event": [
@@ -1139,8 +1252,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": ["{{base_url}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             }
           },
           "event": [
@@ -1174,8 +1291,13 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/profile",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "profile"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "profile"
+              ]
             }
           },
           "event": [
@@ -1212,8 +1334,12 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             }
           },
           "event": [
@@ -1278,8 +1404,12 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises"
+              ]
             },
             "description": "Create a new enterprise.\n\n**Auto-saves:** `enterprise_id` to collection variables.",
             "auth": {
@@ -1302,8 +1432,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises"
+              ]
             },
             "description": "List all enterprises in the system.",
             "auth": {
@@ -1327,8 +1461,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Get a single enterprise by its UUID.",
             "auth": {
@@ -1361,8 +1500,13 @@
             },
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Partially update an enterprise. All fields are optional.",
             "auth": {
@@ -1386,8 +1530,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/enterprises/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["enterprises", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "enterprises",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Delete an enterprise. Returns 204 No Content.",
             "auth": {
@@ -1441,8 +1590,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": ["{{base_url}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             },
             "description": "Create a new organization under an enterprise.\n\n**Auto-saves:** `organization_id` to collection variables."
           },
@@ -1455,8 +1608,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations",
-              "host": ["{{base_url}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             },
             "description": "List all organizations."
           },
@@ -1470,8 +1627,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Get a single organization by its UUID."
           },
@@ -1485,8 +1647,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/enterprise/{{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "enterprise", "{{enterprise_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "enterprise",
+                "{{enterprise_id}}"
+              ]
             },
             "description": "Get all organizations that belong to a specific enterprise."
           },
@@ -1509,8 +1677,13 @@
             },
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Partially update an organization. All fields are optional."
           },
@@ -1524,8 +1697,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organizations/{{organization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organizations", "{{organization_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organization_id}}"
+              ]
             },
             "description": "Delete an organization. Returns 204 No Content."
           },
@@ -1548,8 +1726,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-profiles",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles"
+              ]
             },
             "description": "Create a new organization profile with legal name, GST, and registration details."
           },
@@ -1579,8 +1761,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Get an organization profile by its UUID."
           },
@@ -1594,7 +1781,9 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/organization/{{organization_id}}",
-              "host": ["{{base_url}}"],
+              "host": [
+                "{{base_url}}"
+              ],
               "path": [
                 "organization-profiles",
                 "organization",
@@ -1622,8 +1811,13 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Partially update an organization profile."
           },
@@ -1637,8 +1831,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/organization-profiles/{{organization_profile_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["organization-profiles", "{{organization_profile_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-profiles",
+                "{{organization_profile_id}}"
+              ]
             },
             "description": "Delete an organization profile. Returns 204 No Content."
           },
@@ -1661,8 +1860,12 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policy-types",
-                  "host": ["{{base_url}}"],
-                  "path": ["policy-types"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policy-types"
+                  ]
                 }
               },
               "event": []
@@ -1683,8 +1886,12 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policy-types",
-                  "host": ["{{base_url}}"],
-                  "path": ["policy-types"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policy-types"
+                  ]
                 }
               },
               "event": [
@@ -1721,8 +1928,13 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policy-types", "{{policy_type_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policy-types",
+                    "{{policy_type_id}}"
+                  ]
                 }
               },
               "event": []
@@ -1734,8 +1946,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policy-types/{{policy_type_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policy-types", "{{policy_type_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policy-types",
+                    "{{policy_type_id}}"
+                  ]
                 }
               },
               "event": []
@@ -1752,8 +1969,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/grouped",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies", "grouped"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies",
+                    "grouped"
+                  ]
                 },
                 "description": "Get all policies grouped by their type. If user is an employee, only active policies are returned. If user can edit, all policies are returned."
               },
@@ -1766,8 +1988,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies", "{{policy_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies",
+                    "{{policy_id}}"
+                  ]
                 }
               },
               "event": []
@@ -1788,8 +2015,12 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policies",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies"
+                  ]
                 }
               },
               "event": [
@@ -1826,8 +2057,13 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies", "{{policy_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies",
+                    "{{policy_id}}"
+                  ]
                 }
               },
               "event": []
@@ -1839,8 +2075,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/policies/{{policy_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["policies", "{{policy_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "policies",
+                    "{{policy_id}}"
+                  ]
                 }
               },
               "event": []
@@ -1902,8 +2143,12 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees"
+                  ]
                 }
               },
               "event": [
@@ -1941,8 +2186,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/employment",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "employment"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "employment"
+                  ]
                 }
               },
               "event": [
@@ -1975,8 +2226,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/payroll",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "payroll"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "payroll"
+                  ]
                 }
               },
               "event": [
@@ -2009,8 +2266,13 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/documents/upload-url",
-                  "host": ["{{base_url}}"],
-                  "path": ["documents", "upload-url"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "documents",
+                    "upload-url"
+                  ]
                 }
               },
               "event": [
@@ -2051,8 +2313,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/documents/{{document_id}}/upload",
-                  "host": ["{{base_url}}"],
-                  "path": ["documents", "{{document_id}}", "upload"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "documents",
+                    "{{document_id}}",
+                    "upload"
+                  ]
                 },
                 "description": "Upload the binary file. In Postman, go to Body -> form-data -> Hover over 'file' key and change type to 'File' -> Select your PDF."
               },
@@ -2086,8 +2354,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/documents",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "documents"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "documents"
+                  ]
                 }
               },
               "event": [
@@ -2120,8 +2394,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/system-access",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "system-access"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "system-access"
+                  ]
                 }
               },
               "event": [
@@ -2154,8 +2434,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "education"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "education"
+                  ]
                 }
               },
               "event": [
@@ -2192,8 +2478,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "experience"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "experience"
+                  ]
                 }
               },
               "event": [
@@ -2230,8 +2522,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/onboard",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "onboard"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "onboard"
+                  ]
                 },
                 "description": "Final step to transition employee from DRAFT to INVITED status."
               },
@@ -2267,8 +2565,14 @@
             },
             "url": {
               "raw": "{{base_url}}/employees/{{user_id}}/activate",
-              "host": ["{{base_url}}"],
-              "path": ["employees", "{{user_id}}", "activate"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employees",
+                "{{user_id}}",
+                "activate"
+              ]
             },
             "description": "Admin action to transition employee from INVITED to ACTIVE. Updates both employee_status and user status, enabling the employee to log in."
           },
@@ -2296,8 +2600,12 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees"
+                  ],
                   "query": [
                     {
                       "key": "page",
@@ -2353,8 +2661,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/dropdown",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "dropdown"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "dropdown"
+                  ]
                 },
                 "description": "Get a simplified list of employees (label/value) for dropdowns, scoped to the current organization."
               },
@@ -2367,8 +2680,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}"
+                  ]
                 },
                 "description": "Get complete employee aggregate data."
               },
@@ -2390,8 +2708,12 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees"
+                  ]
                 },
                 "description": "Minimal request to save an employee as a draft (Step 1). Only first name, last name, and email are strictly required."
               },
@@ -2430,8 +2752,12 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees"
+                  ]
                 }
               },
               "event": [
@@ -2460,8 +2786,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}"
+                  ]
                 }
               },
               "event": []
@@ -2487,8 +2818,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/personal",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "personal"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "personal"
+                  ]
                 }
               },
               "event": [
@@ -2521,8 +2858,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/employment",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "employment"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "employment"
+                  ]
                 }
               },
               "event": [
@@ -2555,8 +2898,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/payroll",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "payroll"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "payroll"
+                  ]
                 }
               },
               "event": [
@@ -2580,8 +2929,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/profile-completion",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "profile-completion"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "profile-completion"
+                  ]
                 }
               },
               "event": []
@@ -2607,8 +2962,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/documents",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "documents"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "documents"
+                  ]
                 }
               },
               "event": [
@@ -2641,8 +3002,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/system-access",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "system-access"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "system-access"
+                  ]
                 }
               },
               "event": [
@@ -2680,8 +3047,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "education"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "education"
+                  ]
                 }
               },
               "event": [
@@ -2718,7 +3091,9 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education/{{edu_id}}",
-                  "host": ["{{base_url}}"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -2748,7 +3123,9 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/education/{{edu_id}}",
-                  "host": ["{{base_url}}"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -2787,8 +3164,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "experience"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "experience"
+                  ]
                 }
               },
               "event": [
@@ -2825,7 +3208,9 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience/{{exp_id}}",
-                  "host": ["{{base_url}}"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -2855,7 +3240,9 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/experience/{{exp_id}}",
-                  "host": ["{{base_url}}"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -2899,7 +3286,9 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding/initiate",
-                  "host": ["{{base_url}}"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
                   "path": [
                     "employees",
                     "{{user_id}}",
@@ -2938,8 +3327,14 @@
                 },
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "offboarding"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "offboarding"
+                  ]
                 }
               },
               "event": [
@@ -2963,8 +3358,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "offboarding"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "offboarding"
+                  ]
                 }
               },
               "event": []
@@ -2976,8 +3377,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/employees/{{user_id}}/offboarding",
-                  "host": ["{{base_url}}"],
-                  "path": ["employees", "{{user_id}}", "offboarding"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "employees",
+                    "{{user_id}}",
+                    "offboarding"
+                  ]
                 }
               },
               "event": []
@@ -3021,8 +3428,12 @@
             },
             "url": {
               "raw": "{{base_url}}/apps",
-              "host": ["{{base_url}}"],
-              "path": ["apps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps"
+              ]
             },
             "description": "Create a new application.\n\n**Auto-saves:** `app_id` to collection variables.\n\n`priority` determines the default app on login (lower = higher priority).",
             "auth": {
@@ -3045,8 +3456,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps",
-              "host": ["{{base_url}}"],
-              "path": ["apps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps"
+              ]
             },
             "description": "List all registered applications, sorted by priority.",
             "auth": {
@@ -3070,8 +3485,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Get a single app by UUID.",
             "auth": {
@@ -3104,8 +3524,13 @@
             },
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Partially update an app.",
             "auth": {
@@ -3129,8 +3554,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/apps/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["apps", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "apps",
+                "{{app_id}}"
+              ]
             },
             "description": "Delete an app. Returns 204 No Content.",
             "auth": {
@@ -3184,8 +3614,12 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "Create a new role scoped to an app.\n\n**Auto-saves:** `role_id` to collection variables."
           },
@@ -3198,8 +3632,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "List all roles with their associated app."
           },
@@ -3213,8 +3651,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Get a single role by UUID."
           },
@@ -3228,8 +3671,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/app/{{app_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "app", "{{app_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "app",
+                "{{app_id}}"
+              ]
             },
             "description": "Get all roles belonging to a specific app."
           },
@@ -3252,8 +3701,13 @@
             },
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Partially update a role."
           },
@@ -3267,8 +3721,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Delete a role. Returns 204 No Content."
           },
@@ -3291,8 +3750,12 @@
             },
             "url": {
               "raw": "{{base_url}}/user-role-maps",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps"
+              ]
             },
             "description": "Assign a role to a user in a specific organization.\n\n**This is required before the user can login!**"
           },
@@ -3318,8 +3781,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps"
+              ]
             },
             "description": "List all user-role assignments."
           },
@@ -3333,8 +3800,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps/user/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps", "user", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps",
+                "user",
+                "{{user_id}}"
+              ]
             },
             "description": "Get all role assignments for a specific user."
           },
@@ -3348,8 +3821,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/user-role-maps/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["user-role-maps", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-role-maps",
+                "{{user_id}}"
+              ]
             },
             "description": "Remove a role assignment. Returns 204 No Content."
           },
@@ -3373,8 +3851,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/menu",
-              "host": ["{{base_url}}"],
-              "path": ["menu"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "menu"
+              ]
             },
             "description": "Returns the authenticated user's accessible module tree for the current app.\n\nThe response is a hierarchical tree where:\n- Each node has `id`, `name`, `wbs_code`, `actions[]`, and `children[]`\n- Only modules the user has permission to access are included\n- Actions are filtered by both role permissions AND plan restrictions\n- Tree is sorted by WBS code at each level"
           },
@@ -3413,8 +3895,13 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/upload-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "upload-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "upload-url"
+              ]
             }
           },
           "response": [],
@@ -3456,8 +3943,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/confirm",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "confirm"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "confirm"
+              ]
             }
           },
           "response": [],
@@ -3492,8 +3985,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             },
             "description": "Get document metadata by UUID."
           },
@@ -3517,8 +4015,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/signed-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "signed-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "signed-url"
+              ]
             },
             "description": "Get a short-lived signed URL for downloading a document."
           },
@@ -3542,8 +4046,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             },
             "description": "Delete a document record."
           },
@@ -3582,8 +4091,12 @@
             },
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": ["{{base_url}}"],
-              "path": ["industry-types"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry-types"
+              ]
             }
           },
           "response": [],
@@ -3620,8 +4133,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/industry-types",
-              "host": ["{{base_url}}"],
-              "path": ["industry-types"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry-types"
+              ]
             }
           },
           "response": [],
@@ -3639,8 +4156,12 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/app-modules",
-              "host": ["{{base_url}}"],
-              "path": ["app-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app-modules"
+              ]
             }
           },
           "event": []
@@ -3661,8 +4182,12 @@
             },
             "url": {
               "raw": "{{base_url}}/app-modules",
-              "host": ["{{base_url}}"],
-              "path": ["app-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "app-modules"
+              ]
             }
           },
           "event": [
@@ -3699,8 +4224,12 @@
             },
             "url": {
               "raw": "{{base_url}}/actions",
-              "host": ["{{base_url}}"],
-              "path": ["actions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "actions"
+              ]
             }
           },
           "event": [
@@ -3737,8 +4266,12 @@
             },
             "url": {
               "raw": "{{base_url}}/module-access",
-              "host": ["{{base_url}}"],
-              "path": ["module-access"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "module-access"
+              ]
             }
           },
           "event": [
@@ -3794,6 +4327,78 @@
               }
             }
           ]
+        },
+        {
+          "name": "Get Role Permissions List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/module-access/role/:roleId/permissions-list",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "module-access",
+                "role",
+                ":roleId",
+                "permissions-list"
+              ],
+              "variable": [
+                {
+                  "key": "roleId",
+                  "value": "{{roleId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Role Permissions List",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": [\n    {\n      \"module_id\": \"{{moduleId}}\",\n      \"action_id\": \"{{actionId}}\",\n      \"checked\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/module-access/role/:roleId/permissions-list",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "module-access",
+                "role",
+                ":roleId",
+                "permissions-list"
+              ],
+              "variable": [
+                {
+                  "key": "roleId",
+                  "value": "{{roleId}}"
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -3807,8 +4412,12 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": ["{{base_url}}"],
-              "path": ["plans"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans"
+              ]
             }
           },
           "event": []
@@ -3829,8 +4438,12 @@
             },
             "url": {
               "raw": "{{base_url}}/plans",
-              "host": ["{{base_url}}"],
-              "path": ["plans"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans"
+              ]
             }
           },
           "event": [
@@ -3865,8 +4478,12 @@
             },
             "url": {
               "raw": "{{base_url}}/organization-subscriptions",
-              "host": ["{{base_url}}"],
-              "path": ["organization-subscriptions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "organization-subscriptions"
+              ]
             }
           },
           "event": [
@@ -3903,8 +4520,12 @@
             },
             "url": {
               "raw": "{{base_url}}/plan-modules",
-              "host": ["{{base_url}}"],
-              "path": ["plan-modules"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plan-modules"
+              ]
             }
           },
           "event": [
@@ -3937,8 +4558,12 @@
             },
             "url": {
               "raw": "{{base_url}}/plan-module-actions",
-              "host": ["{{base_url}}"],
-              "path": ["plan-module-actions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plan-module-actions"
+              ]
             }
           },
           "event": [
@@ -3978,8 +4603,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications",
-              "host": ["{{base_url}}"],
-              "path": ["notifications"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications"
+              ]
             },
             "description": "Get all active in-app notifications for the current user."
           },
@@ -4003,8 +4632,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/unread",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "unread"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "unread"
+              ]
             },
             "description": "Get only unread in-app notifications for the current user."
           },
@@ -4028,8 +4662,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/<NOTIFICATION_ID>/read",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "<NOTIFICATION_ID>", "read"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "<NOTIFICATION_ID>",
+                "read"
+              ]
             },
             "description": "Mark a specific notification as read."
           },
@@ -4053,8 +4693,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/notifications/read-all",
-              "host": ["{{base_url}}"],
-              "path": ["notifications", "read-all"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
             },
             "description": "Mark all notifications as read for the current user."
           },
@@ -4083,8 +4728,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/register",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "register"
+              ]
             },
             "description": "Register a new lead. Sends a verification OTP to the provided email.\n\n**No authentication required.**\n\n**In dev mode:** Check the server console for the OTP log.\n\n**Validation:** email (unique), first_name (min 2), last_name (min 2), phone (E.164), password (strong), source (must be 'website')."
           },
@@ -4119,8 +4769,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leads/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["leads", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leads",
+                "verify-otp"
+              ]
             },
             "description": "Verify the OTP sent during lead registration.\n\n**On success:**\n- Lead is marked as verified\n- A User record is created from the lead details (first_name, last_name, email, phone, password_hash)\n- Both operations are wrapped in a transaction — if anything fails, everything rolls back.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
@@ -4192,8 +4847,12 @@
             },
             "url": {
               "raw": "{{base_url}}/roles",
-              "host": ["{{base_url}}"],
-              "path": ["roles"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ]
             },
             "description": "Create a new role. Only platform admins can set `is_system_defined: true`.\n\n**Auto-saves:** `role_id` to collection variables."
           },
@@ -4216,8 +4875,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles?page=1&limit=10&search=&sort_by=created_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["roles"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -4269,8 +4932,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/filter?organization_id={{organization_id}}&enterprise_id={{enterprise_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "filter"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "filter"
+              ],
               "query": [
                 {
                   "key": "organization_id",
@@ -4304,8 +4972,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Get a single role by its UUID."
           },
@@ -4338,8 +5011,13 @@
             },
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Partially update a role. All fields are optional. Only platform admins can modify system-defined roles."
           },
@@ -4363,8 +5041,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/roles/{{role_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["roles", "{{role_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "roles",
+                "{{role_id}}"
+              ]
             },
             "description": "Soft delete a role. Returns 204 No Content. Only platform admins can delete system-defined roles."
           },
@@ -4418,8 +5101,12 @@
             },
             "url": {
               "raw": "{{base_url}}/departments",
-              "host": ["{{base_url}}"],
-              "path": ["departments"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments"
+              ]
             },
             "description": "Create a new department. The organization is resolved from the authenticated user's profile."
           },
@@ -4442,8 +5129,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments?page=1&limit=10&search=&sort_by=name&sort_order=ASC",
-              "host": ["{{base_url}}"],
-              "path": ["departments"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -4494,8 +5185,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["departments", "{{department_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments",
+                "{{department_id}}"
+              ]
             },
             "description": "Fetch details of a single department by its ID."
           },
@@ -4528,8 +5224,13 @@
             },
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["departments", "{{department_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments",
+                "{{department_id}}"
+              ]
             },
             "description": "Update department details. All fields are optional."
           },
@@ -4553,8 +5254,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/departments/{{department_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["departments", "{{department_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments",
+                "{{department_id}}"
+              ]
             },
             "description": "Soft delete a department. Sets status to INACTIVE and is_deleted to true."
           },
@@ -4607,8 +5313,12 @@
             },
             "url": {
               "raw": "{{base_url}}/clients",
-              "host": ["{{base_url}}"],
-              "path": ["clients"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
             }
           },
           "response": []
@@ -4630,8 +5340,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}"
+              ]
             }
           },
           "response": [],
@@ -4663,8 +5378,13 @@
             },
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}"
+              ]
             }
           },
           "response": [],
@@ -4687,8 +5407,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}"
+              ]
             }
           },
           "response": [],
@@ -4711,8 +5436,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients",
-              "host": ["{{base_url}}"],
-              "path": ["clients"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients"
+              ]
             }
           },
           "response": [],
@@ -4740,8 +5469,12 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects?page=1&limit=10&sort_by=created_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["projects"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -4807,8 +5540,14 @@
             },
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}/projects",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}", "projects"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}",
+                "projects"
+              ]
             }
           },
           "response": []
@@ -4830,8 +5569,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/clients/{{client_id}}/projects",
-              "host": ["{{base_url}}"],
-              "path": ["clients", "{{client_id}}", "projects"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "clients",
+                "{{client_id}}",
+                "projects"
+              ]
             }
           },
           "response": [],
@@ -4854,8 +5599,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
             }
           },
           "response": [],
@@ -4887,8 +5637,13 @@
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
             }
           },
           "response": [],
@@ -4911,8 +5666,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}"
+              ]
             }
           },
           "response": [],
@@ -4944,8 +5704,14 @@
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "team"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "team"
+              ]
             }
           },
           "response": [],
@@ -4989,8 +5755,14 @@
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/contract",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "contract"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "contract"
+              ]
             }
           },
           "response": [],
@@ -5025,8 +5797,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "team"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "team"
+              ]
             },
             "description": "Returns a detailed list of team members assigned to the project, including roles and user profiles."
           },
@@ -5050,8 +5828,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/contracts",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "contracts"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "contracts"
+              ]
             },
             "description": "Returns a list of all contract documents uploaded for the project."
           },
@@ -5091,8 +5875,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/team/{{user_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["projects", "{{project_id}}", "team", "{{user_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "{{project_id}}",
+                "team",
+                "{{user_id}}"
+              ]
             },
             "description": "Removes a single team member from the project."
           },
@@ -5116,7 +5907,9 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/contracts/{{contract_id}}",
-              "host": ["{{base_url}}"],
+              "host": [
+                "{{base_url}}"
+              ],
               "path": [
                 "projects",
                 "{{project_id}}",
@@ -5175,8 +5968,13 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars"
+              ]
             }
           },
           "response": []
@@ -5198,8 +5996,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars?year=2026",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars"
+              ],
               "query": [
                 {
                   "key": "year",
@@ -5252,8 +6055,15 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/holidays",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}", "holidays"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}",
+                "holidays"
+              ]
             }
           },
           "response": []
@@ -5275,7 +6085,9 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/month-view?month=1",
-              "host": ["{{base_url}}"],
+              "host": [
+                "{{base_url}}"
+              ],
               "path": [
                 "holidays",
                 "calendars",
@@ -5310,8 +6122,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/activate",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}", "activate"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}",
+                "activate"
+              ]
             }
           },
           "response": [],
@@ -5355,8 +6174,15 @@
             },
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}/clone",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}", "clone"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}",
+                "clone"
+              ]
             }
           },
           "response": [],
@@ -5395,8 +6221,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/employee/holidays",
-              "host": ["{{base_url}}"],
-              "path": ["employee", "holidays"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employee",
+                "holidays"
+              ]
             }
           },
           "response": [],
@@ -5419,8 +6250,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/{{holiday_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "{{holiday_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "{{holiday_id}}"
+              ]
             }
           },
           "response": [],
@@ -5443,8 +6279,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/holidays/calendars/{{calendar_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["holidays", "calendars", "{{calendar_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "holidays",
+                "calendars",
+                "{{calendar_id}}"
+              ]
             }
           },
           "response": [],
@@ -5482,8 +6324,13 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/upload-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "upload-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "upload-url"
+              ]
             }
           },
           "response": [],
@@ -5535,8 +6382,14 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/upload",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "upload"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "upload"
+              ]
             }
           },
           "response": [],
@@ -5580,8 +6433,14 @@
             },
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/confirm",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "confirm"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "confirm"
+              ]
             }
           },
           "response": [],
@@ -5616,8 +6475,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             }
           },
           "response": [],
@@ -5640,8 +6504,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/signed-url",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "signed-url"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "signed-url"
+              ]
             }
           },
           "response": [],
@@ -5664,8 +6534,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/view",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "view"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "view"
+              ]
             }
           },
           "response": [],
@@ -5688,8 +6564,14 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}/download",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}", "download"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}",
+                "download"
+              ]
             }
           },
           "response": [],
@@ -5712,8 +6594,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/documents/{{document_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["documents", "{{document_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "documents",
+                "{{document_id}}"
+              ]
             }
           },
           "response": [],
@@ -6481,18 +7368,34 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "PUT",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"financial_start_month\": \"apr\",\n  \"payout_type\": \"custom\",\n  \"payout_date\": 1,\n  \"payout_day_shift\": \"next\",\n  \"consider_holidays\": true,\n  \"attendance_cutoff_type\": \"days_before_month_end\",\n  \"attendance_cutoff_value\": 4\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/configurations",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "configurations"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "configurations"
+                  ]
                 },
                 "description": "Create or update the organization's payroll cycle settings. financial_end_month and financial_year_label are auto-derived from financial_start_month.\n\npayout_type options: last_working_day | first_working_day | custom\nattendance_cutoff_type options: days_before_month_end | fixed_date\nfinancial_start_month options: jan | feb | mar | apr | may | jun | jul | aug | sep | oct | nov | dec"
               },
@@ -6503,14 +7406,25 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/configurations",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "configurations"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "configurations"
+                  ]
                 },
                 "description": "Get current payroll settings for the organization."
               },
@@ -6526,14 +7440,25 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/component-master",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "component-master"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "component-master"
+                  ]
                 },
                 "description": "Returns all active components sorted by calculation_priority. Auto-seeds the 5 default components on first call:\n- CTC (virtual root, priority 0)\n- Basic Salary (50% of CTC, priority 1)\n- PF Employee (12% of Basic, priority 2)\n- PF Employer (12% of Basic, priority 3)\n- Special Allowance (residual, priority 99)"
               },
@@ -6544,18 +7469,34 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"name\": \"HRA\",\n  \"component_type\": \"earning\",\n  \"category\": \"fixed\",\n  \"calculation_type\": \"percentage\",\n  \"calculate_from\": \"{{payroll_component_id}}\",\n  \"value\": 40,\n  \"is_taxable\": false,\n  \"is_residual\": false,\n  \"calculation_priority\": 5\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/component-master",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "component-master"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "component-master"
+                  ]
                 },
                 "description": "Creates a custom salary component.\n\ncomponent_type: earning | deduction | bonus\ncategory: fixed | variable | statutory\ncalculation_type: fixed | percentage | residual\n\nRules:\n- calculate_from must be the UUID of another component (use Basic Salary's UUID for % of Basic)\n- is_residual: only ONE allowed per org\n- Default components cannot be created via this endpoint\n\nAuto-saves: payroll_component_id"
               },
@@ -6581,18 +7522,35 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "PUT",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"value\": 45,\n  \"calculation_priority\": 5,\n  \"is_taxable\": true\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/component-master/{{payroll_component_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "component-master", "{{payroll_component_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "component-master",
+                    "{{payroll_component_id}}"
+                  ]
                 },
                 "description": "Updates a component. For default components (is_default: true), only value and calculation_priority can be changed."
               },
@@ -6603,14 +7561,26 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "DELETE",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/component-master/{{payroll_component_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "component-master", "{{payroll_component_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "component-master",
+                    "{{payroll_component_id}}"
+                  ]
                 },
                 "description": "Deletes a custom component.\n\nFails if:\n- Component is a default (is_default: true)\n- Component is used in any salary template"
               },
@@ -6626,18 +7596,34 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "PUT",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"employee_contribution\": 12.0,\n  \"employer_contribution\": 12.0,\n  \"minimum_salary_threshold\": 15000,\n  \"is_enabled\": true,\n  \"effective_from\": \"2026-04-01\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/statutory-pf-config",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "statutory-pf-config"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "statutory-pf-config"
+                  ]
                 },
                 "description": "Creates a new versioned PF config. The current active config is automatically closed (effective_to = new effective_from − 1 day).\n\nNote: effective_from must be after the current active config's effective_from date.\nNote: Wage ceiling has been removed from this version."
               },
@@ -6648,14 +7634,25 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/statutory-pf-config",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "statutory-pf-config"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "statutory-pf-config"
+                  ]
                 },
                 "description": "Returns the currently active PF config (where effective_to is null)."
               },
@@ -6666,14 +7663,26 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/statutory-pf-config/history",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "statutory-pf-config", "history"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "statutory-pf-config",
+                    "history"
+                  ]
                 },
                 "description": "Returns all PF config versions ordered by effective_from DESC."
               },
@@ -6689,18 +7698,34 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"name\": \"Standard Software Engineer\",\n  \"description\": \"For mid-level engineers\",\n  \"components\": [\n    {\n      \"component_id\": \"{{payroll_component_id}}\",\n      \"sort_order\": 5\n    }\n  ]\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/salary-templates",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "salary-templates"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "salary-templates"
+                  ]
                 },
                 "description": "Creates a salary template. CTC, Basic Salary, and Special Allowance are auto-included even if not listed.\n\nValidations:\n- No circular component dependencies (DAG check)\n- Each component's dependency must be included in the template\n- sort_order of a dependent must be higher than its base component\n\nAuto-saves: salary_template_id"
               },
@@ -6726,14 +7751,25 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/salary-templates",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "salary-templates"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "salary-templates"
+                  ]
                 },
                 "description": "Returns all salary templates for the organization with their components."
               },
@@ -6744,14 +7780,26 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/salary-templates/{{salary_template_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "salary-templates", "{{salary_template_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "salary-templates",
+                    "{{salary_template_id}}"
+                  ]
                 },
                 "description": "Returns a single template with full component and base_component relations."
               },
@@ -6764,18 +7812,35 @@
           "request": {
             "auth": {
               "type": "bearer",
-              "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
             },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"template_id\": \"{{salary_template_id}}\",\n  \"ctc\": 1200000,\n  \"bonus\": 50000,\n  \"loan_emi\": 5000,\n  \"lwp_days\": 2,\n  \"other_deductions\": 1000\n}"
             },
             "url": {
               "raw": "{{base_url}}/payroll/simulations/dry-run",
-              "host": ["{{base_url}}"],
-              "path": ["payroll", "simulations", "dry-run"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "payroll",
+                "simulations",
+                "dry-run"
+              ]
             },
             "description": "Simulates the full salary breakdown against a template and CTC without saving anything. Uses the same calculation engine as actual assignment.\n\nReturns gross, deductions_total, net, employer_contribution, earnings[], deductions[], warnings[], and metadata."
           },
@@ -6789,18 +7854,34 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"template_id\": \"{{salary_template_id}}\",\n  \"ctc\": 1200000,\n  \"effective_from\": \"2026-04-01\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/employee-salary-assignments",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "employee-salary-assignments"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "employee-salary-assignments"
+                  ]
                 },
                 "description": "Assigns a salary template to an employee. Creates version 1 or increments to the next version. Previous version is automatically closed with effective_to = effective_from − 1 day.\n\nStores a full component snapshot — changes to the template after assignment do NOT affect the employee."
               },
@@ -6811,18 +7892,35 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"user_ids\": [\n    \"{{user_id}}\"\n  ],\n  \"template_id\": \"{{salary_template_id}}\",\n  \"ctc\": 800000,\n  \"effective_from\": \"2026-04-01\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/employee-salary-assignments/bulk",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "employee-salary-assignments", "bulk"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "employee-salary-assignments",
+                    "bulk"
+                  ]
                 },
                 "description": "Assigns the same template and CTC to multiple employees at once. Returns { assigned: N, failed: [] } — failed contains user IDs that could not be processed."
               },
@@ -6833,19 +7931,44 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/employees?page=1&limit=10",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "employees"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "employees"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "10" },
-                    { "key": "search", "value": "", "disabled": true },
-                    { "key": "department_id", "value": "", "disabled": true }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "department_id",
+                      "value": "",
+                      "disabled": true
+                    }
                   ]
                 },
                 "description": "Paginated list of employees with name, employee code, and department."
@@ -6857,14 +7980,27 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "employees", "{{user_id}}", "salary"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "employees",
+                    "{{user_id}}",
+                    "salary"
+                  ]
                 },
                 "description": "Returns the active salary version with full component breakdown including version number and effective date."
               },
@@ -6875,14 +8011,28 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary/history",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "employees", "{{user_id}}", "salary", "history"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "employees",
+                    "{{user_id}}",
+                    "salary",
+                    "history"
+                  ]
                 },
                 "description": "Returns all past salary versions for the employee ordered by version number descending."
               },
@@ -6893,18 +8043,36 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "PUT",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"components\": [\n    {\n      \"component_name\": \"HRA\",\n      \"value\": 18000\n    }\n  ],\n  \"effective_from\": \"2026-05-01\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/employees/{{user_id}}/salary",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "employees", "{{user_id}}", "salary"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "employees",
+                    "{{user_id}}",
+                    "salary"
+                  ]
                 },
                 "description": "Creates a new salary version with updated component values. The residual component (Special Allowance) is recalculated automatically. Always creates a new version — never mutates history.\n\nNote: use component_name (not code) to identify components."
               },
@@ -6920,16 +8088,31 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/payroll/propagation/preview?component_id={{payroll_component_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "propagation", "preview"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "propagation",
+                    "preview"
+                  ],
                   "query": [
-                    { "key": "component_id", "value": "{{payroll_component_id}}" }
+                    {
+                      "key": "component_id",
+                      "value": "{{payroll_component_id}}"
+                    }
                   ]
                 },
                 "description": "Returns the number of salary templates and active employee salaries that contain this component. Use this before applying propagation to understand the blast radius."
@@ -6941,18 +8124,35 @@
               "request": {
                 "auth": {
                   "type": "bearer",
-                  "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
                 },
                 "method": "POST",
-                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"component_id\": \"{{payroll_component_id}}\",\n  \"scope\": \"selected_employees\",\n  \"employee_ids\": [\n    \"{{user_id}}\"\n  ],\n  \"effective_from\": \"2026-05-01\"\n}"
                 },
                 "url": {
                   "raw": "{{base_url}}/payroll/propagation/apply",
-                  "host": ["{{base_url}}"],
-                  "path": ["payroll", "propagation", "apply"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "propagation",
+                    "apply"
+                  ]
                 },
                 "description": "Pushes an updated component value to selected employees by creating new salary versions.\n\nscope options:\n- future_only: update master component only, no employee impact (safe default)\n- selected_employees: create new salary versions for selected employees\n\neffective_from must not be in the past.\n\nReturns { updated: N, skipped: N }."
               },
@@ -7087,17 +8287,29 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-balances/me?leave_year=2026",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances", "me"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances",
+                "me"
+              ],
               "query": [
-                { "key": "leave_year", "value": "2026" }
+                {
+                  "key": "leave_year",
+                  "value": "2026"
+                }
               ]
             },
             "description": "Self-service. Returns the caller's balance for the requested year. LWP rows are always present with `is_unlimited: true` and null balance fields."
@@ -7134,17 +8346,30 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-balances/employee/{{employee_id}}?leave_year=2026",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances", "employee", "{{employee_id}}"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances",
+                "employee",
+                "{{employee_id}}"
+              ],
               "query": [
-                { "key": "leave_year", "value": "2026" }
+                {
+                  "key": "leave_year",
+                  "value": "2026"
+                }
               ]
             },
             "description": "HR / manager view. Requires `LEAVE_MGMT.view`."
@@ -7157,12 +8382,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7170,8 +8402,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-balances/initialize",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances", "initialize"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances",
+                "initialize"
+              ]
             },
             "description": "Creates one balance row per LeaveType in the active LeaveConfig. Idempotent — second call returns 409 ALREADY_INITIALIZED. Requires `LEAVE_MGMT.create`."
           },
@@ -7202,12 +8439,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7215,8 +8459,14 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-balances/initialize/bulk",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances", "initialize", "bulk"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances",
+                "initialize",
+                "bulk"
+              ]
             },
             "description": "Initializes balances for all employees in scope. `scope`: `ORGANIZATION` | `DEPARTMENT` (with `department_ids[]`) | `EMPLOYEES` (with `employee_ids[]`). Already-initialized employees are skipped, not failed. Requires `LEAVE_MGMT.create`."
           },
@@ -7228,24 +8478,63 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-balances?leave_year=2026&page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances"
+              ],
               "query": [
-                { "key": "leave_year", "value": "2026" },
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "search", "value": "", "disabled": true, "description": "Free-text on employee name OR employee code (>= 2 chars)" },
-                { "key": "department_id", "value": "", "disabled": true },
-                { "key": "leave_type_id", "value": "", "disabled": true },
-                { "key": "employee_id", "value": "", "disabled": true },
-                { "key": "low_balance", "value": "true", "disabled": true, "description": "Filter rows where available_days <= 2" }
+                {
+                  "key": "leave_year",
+                  "value": "2026"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Free-text on employee name OR employee code (>= 2 chars)"
+                },
+                {
+                  "key": "department_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "leave_type_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "employee_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "low_balance",
+                  "value": "true",
+                  "disabled": true,
+                  "description": "Filter rows where available_days <= 2"
+                }
               ]
             },
             "description": "Paginated HR list with filters. Requires `LEAVE_MGMT.view`."
@@ -7258,15 +8547,24 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-balances/{{leave_balance_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances", "{{leave_balance_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances",
+                "{{leave_balance_id}}"
+              ]
             },
             "description": "Single balance row. Requires `LEAVE_MGMT.view`."
           },
@@ -7278,20 +8576,44 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-balances/{{leave_balance_id}}/ledger?page=1&limit=50",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances", "{{leave_balance_id}}", "ledger"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances",
+                "{{leave_balance_id}}",
+                "ledger"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "50" },
-                { "key": "from_date", "value": "", "disabled": true },
-                { "key": "to_date", "value": "", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "from_date",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to_date",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             },
             "description": "Immutable audit trail of credits/debits for a balance row. Requires `LEAVE_MGMT.view`."
@@ -7304,12 +8626,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7317,8 +8646,14 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-balances/{{leave_balance_id}}/adjust",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances", "{{leave_balance_id}}", "adjust"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances",
+                "{{leave_balance_id}}",
+                "adjust"
+              ]
             },
             "description": "Manual credit/debit. `days` must be in 0.5 increments. Reason is mandatory. Returns 422 UNLIMITED_TYPE_NOT_ADJUSTABLE for LWP. Requires `LEAVE_MGMT.update`."
           },
@@ -7330,15 +8665,25 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-balances/{{leave_balance_id}}/recompute",
-              "host": ["{{base_url}}"],
-              "path": ["leave-balances", "{{leave_balance_id}}", "recompute"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-balances",
+                "{{leave_balance_id}}",
+                "recompute"
+              ]
             },
             "description": "Self-heal: recomputes used/pending from leave_requests. No-op for unlimited types. Requires `LEAVE_MGMT.update`."
           },
@@ -7356,12 +8701,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7369,8 +8721,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests/validate",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "validate"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "validate"
+              ]
             },
             "description": "Dry-run validation. Returns `is_valid`, computed days breakdown, balance_before/after — without persisting anything. Use this to power a 'Days: X' counter in the Apply Leave UI."
           },
@@ -7382,12 +8739,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7395,8 +8759,12 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests"
+              ]
             },
             "description": "Creates a leave request. With `submit: true` (default) it goes straight to PENDING and the balance is held. Set `submit: false` to save as DRAFT for editing later. The server computes `total_days` — never trust client-side computation."
           },
@@ -7423,12 +8791,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7436,8 +8811,12 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests"
+              ]
             },
             "description": "Saves as DRAFT (no balance hold, no PENDING transition). Edit freely with PATCH, then call /submit when ready."
           },
@@ -7464,24 +8843,64 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-requests/me?page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "me"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "me"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "status", "value": "PENDING,APPROVED", "disabled": true, "description": "Comma-separated" },
-                { "key": "leave_type_id", "value": "", "disabled": true },
-                { "key": "from_date", "value": "", "disabled": true },
-                { "key": "to_date", "value": "", "disabled": true },
-                { "key": "sort_by", "value": "submitted_at", "disabled": true },
-                { "key": "sort_order", "value": "DESC", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDING,APPROVED",
+                  "disabled": true,
+                  "description": "Comma-separated"
+                },
+                {
+                  "key": "leave_type_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from_date",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to_date",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "sort_by",
+                  "value": "submitted_at",
+                  "disabled": true
+                },
+                {
+                  "key": "sort_order",
+                  "value": "DESC",
+                  "disabled": true
+                }
               ]
             },
             "description": "Caller's own requests. Includes `manager_note` per row (resolves to approver_comment / rejection_reason / admin cancel reason based on status)."
@@ -7494,15 +8913,24 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_request_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_request_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_request_id}}"
+              ]
             },
             "description": "Full detail view. Owner OR `LEAVE_MGMT.view`."
           },
@@ -7514,15 +8942,25 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/history",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_request_id}}", "history"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_request_id}}",
+                "history"
+              ]
             },
             "description": "Append-only audit trail of state transitions (Applied → PENDING → APPROVED, etc.). Powers the request-detail timeline UI."
           },
@@ -7534,12 +8972,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7547,8 +8992,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_request_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_request_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_request_id}}"
+              ]
             },
             "description": "On PENDING only `reason` and `attachment_ids` are editable. To change dates, cancel and re-create. On DRAFT, all fields are editable."
           },
@@ -7560,12 +9010,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7573,8 +9030,13 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_draft_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_draft_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_draft_id}}"
+              ]
             },
             "description": "On DRAFT: all fields editable. The server recomputes `total_days` and `computed_days_breakdown` on every PATCH."
           },
@@ -7586,15 +9048,25 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_draft_id}}/submit",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_draft_id}}", "submit"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_draft_id}}",
+                "submit"
+              ]
             },
             "description": "Transitions DRAFT → PENDING. Re-runs all validations (overlap, balance, max-per-month, backdated)."
           },
@@ -7606,12 +9078,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7619,8 +9098,14 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/cancel",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_request_id}}", "cancel"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_request_id}}",
+                "cancel"
+              ]
             },
             "description": "Allowed if status is DRAFT, PENDING, or APPROVED (and from_date > today). Returns 422 ALREADY_CONSUMED otherwise."
           },
@@ -7632,15 +9117,24 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "DELETE",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_draft_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_draft_id}}"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_draft_id}}"
+              ]
             },
             "description": "Hard-deletes a DRAFT only. 422 INVALID_STATE for any other status."
           },
@@ -7652,26 +9146,71 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-requests?page=1&limit=20&sort_by=submitted_at&sort_order=DESC",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "sort_by", "value": "submitted_at" },
-                { "key": "sort_order", "value": "DESC" },
-                { "key": "search", "value": "", "disabled": true, "description": "Employee name or code" },
-                { "key": "status", "value": "PENDING", "disabled": true },
-                { "key": "department_id", "value": "", "disabled": true },
-                { "key": "leave_type_id", "value": "", "disabled": true },
-                { "key": "from_date", "value": "", "disabled": true },
-                { "key": "to_date", "value": "", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "submitted_at"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "DESC"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Employee name or code"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDING",
+                  "disabled": true
+                },
+                {
+                  "key": "department_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "leave_type_id",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from_date",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to_date",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             },
             "description": "HR list with full filters. Requires `LEAVE_MGMT.view`."
@@ -7684,18 +9223,33 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{base_url}}/leave-requests/pending-approval?page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "pending-approval"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "pending-approval"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
               ]
             },
             "description": "All PENDING requests in the org that the caller is authorized to approve. v1: any user with `LEAVE_MGMT.approve` sees all pending requests in the org (manager-of routing is a v2 task)."
@@ -7708,12 +9262,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7721,8 +9282,14 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/approve",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_request_id}}", "approve"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_request_id}}",
+                "approve"
+              ]
             },
             "description": "PENDING → APPROVED. Self-approval forbidden. Re-validates balance to prevent stale-PENDING approvals. Atomic with row-lock on the balance row."
           },
@@ -7734,12 +9301,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7747,8 +9321,14 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/reject",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_request_id}}", "reject"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_request_id}}",
+                "reject"
+              ]
             },
             "description": "PENDING → REJECTED. Releases held days back to available. `rejection_reason` is mandatory."
           },
@@ -7760,12 +9340,19 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{access_token}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
               ]
             },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -7773,8 +9360,14 @@
             },
             "url": {
               "raw": "{{base_url}}/leave-requests/{{leave_request_id}}/admin-cancel",
-              "host": ["{{base_url}}"],
-              "path": ["leave-requests", "{{leave_request_id}}", "admin-cancel"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "leave-requests",
+                "{{leave_request_id}}",
+                "admin-cancel"
+              ]
             },
             "description": "HR can cancel any request — PENDING or APPROVED, even past start_date. Credits days back to balance. Requires `LEAVE_MGMT.delete`."
           },
@@ -7796,17 +9389,29 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "url": {
                   "raw": "{{base_url}}/attendance/check-in",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "check-in"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "check-in"
+                  ]
                 },
                 "description": "Punch in for the day from inside the office geo-fence.\n\n**Validations**\n- 409 if there is already an open session (`Employee already checked in`)\n- 409 if a record already exists today and the rule does not allow multiple check-ins\n- 400 `GPS_REQUIRED` if geo-fencing is enabled and lat/lng are missing\n- Distance is computed by Haversine. Inside `office_radius_meters` ⇒ `Office-In`, outside ⇒ Remote-In flow\n\n**Response data** includes `attendance_id`, `attendance_session_id`, `shift`, `office`, `is_late`. Auto-saves both ids to collection variables.",
                 "body": {
@@ -7840,17 +9445,29 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "url": {
                   "raw": "{{base_url}}/attendance/check-in",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "check-in"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "check-in"
+                  ]
                 },
                 "description": "Punch in from outside the office radius (Remote-In). The body must include `remote_reason` if the rule has `require_remote_reason=true` (default).\n\n**Errors**\n- 400 `REMOTE_ATTENDANCE_DISABLED` if rule has `allow_remote_in=false`\n- 400 `REMOTE_REASON_REQUIRED` if reason missing\n\nIf the rule has `remote_approval_required=true`, the record is created in status `PENDING_APPROVAL` and a row is added to `attendance_remote_approvals` for HR to review.",
                 "body": {
@@ -7884,17 +9501,29 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "url": {
                   "raw": "{{base_url}}/attendance/check-out",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "check-out"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "check-out"
+                  ]
                 },
                 "description": "Close the active check-in session. Recomputes `worked_minutes`, `is_late`, `is_half_day`, `is_overtime`, and final `attendance_status` against the rule's `full_day_hours` / `half_day_hours` / `overtime_after_hours`.\n\nReturns `worked_hours` as `HH:mm`. Returns 404 if there is no open session.\n\nIf the record is `PENDING_APPROVAL`, the status is left untouched until HR approves/rejects.",
                 "body": {
@@ -7910,15 +9539,25 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/attendance/me/today",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "me", "today"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "me",
+                    "today"
+                  ]
                 },
                 "description": "Drives the dashboard widget. Returns today's attendance record (or null fields if not yet checked in), the assigned shift, the office, and a live `worked_duration_live` (HH:mm:ss) computed against the open session, plus a `live_session` boolean."
               },
@@ -7930,22 +9569,56 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/attendance/me/history?page=1&limit=20&month=3&year=2026",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "me", "history"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "me",
+                    "history"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "20" },
-                    { "key": "month", "value": "3", "description": "1-12, optional" },
-                    { "key": "year", "value": "2026", "description": "optional" },
-                    { "key": "attendance_mode", "value": "OFFICE_IN", "description": "OFFICE_IN | REMOTE_IN — optional", "disabled": true },
-                    { "key": "attendance_status", "value": "PRESENT", "description": "PRESENT | HALF_DAY | LATE | ABSENT | … — optional", "disabled": true }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "month",
+                      "value": "3",
+                      "description": "1-12, optional"
+                    },
+                    {
+                      "key": "year",
+                      "value": "2026",
+                      "description": "optional"
+                    },
+                    {
+                      "key": "attendance_mode",
+                      "value": "OFFICE_IN",
+                      "description": "OFFICE_IN | REMOTE_IN — optional",
+                      "disabled": true
+                    },
+                    {
+                      "key": "attendance_status",
+                      "value": "PRESENT",
+                      "description": "PRESENT | HALF_DAY | LATE | ABSENT | … — optional",
+                      "disabled": true
+                    }
                   ]
                 },
                 "description": "Paginated personal attendance history with optional month/year/mode/status filters. Each row contains date, check-in/out (12-hour), worked hours, mode, status, shift name, and remote reason (if any)."
@@ -7958,15 +9631,24 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/attendance/rules",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "rules"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "rules"
+                  ]
                 },
                 "description": "Returns the attendance rule that applies to the logged-in employee (resolved from employee-level → department-level assignment). Includes `full_day_hours`, `half_day_hours`, `late_after`, `grace_minutes`, `overtime_after_hours`, `geo_fencing_enabled`, `office_radius_meters`, `allow_remote_in`, `require_remote_reason`, and `remote_approval_required`. Useful for the client to render the right CTA / location prompt before the user clicks Check-In."
               },
@@ -7984,24 +9666,65 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/attendance/admin/daily-preview?date=2026-05-13&page=1&limit=20",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "admin", "daily-preview"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "admin",
+                    "daily-preview"
+                  ],
                   "query": [
-                    { "key": "date", "value": "2026-05-13", "description": "YYYY-MM-DD; defaults to today" },
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "20" },
-                    { "key": "department_id", "value": "{{department_id}}", "disabled": true },
-                    { "key": "shift_id", "value": "{{shift_id}}", "disabled": true },
-                    { "key": "attendance_status", "value": "PRESENT", "disabled": true },
-                    { "key": "attendance_mode", "value": "OFFICE_IN", "disabled": true },
-                    { "key": "search", "value": "", "description": "Name or employee code (≥2 chars)", "disabled": true }
+                    {
+                      "key": "date",
+                      "value": "2026-05-13",
+                      "description": "YYYY-MM-DD; defaults to today"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "department_id",
+                      "value": "{{department_id}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "shift_id",
+                      "value": "{{shift_id}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "attendance_status",
+                      "value": "PRESENT",
+                      "disabled": true
+                    },
+                    {
+                      "key": "attendance_mode",
+                      "value": "OFFICE_IN",
+                      "disabled": true
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "description": "Name or employee code (≥2 chars)",
+                      "disabled": true
+                    }
                   ]
                 },
                 "description": "Backs the Admin → Daily Preview screen. Returns a `summary` block (total present, absent, late, half-day, on-leave, missed-checkout, office-in, remote-in) + paginated `items` with employee, shift, check-in/out times, worked hours, mode, status, geo info, source, remote reason and notes.\n\nRequires `ATTENDANCE.view`."
@@ -8014,17 +9737,30 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "url": {
                   "raw": "{{base_url}}/attendance/admin/manual-entry",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "admin", "manual-entry"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "admin",
+                    "manual-entry"
+                  ]
                 },
                 "description": "Create an attendance record on behalf of an employee (forgot punch, server outage, biometric failure, etc.). Recomputes worked hours / status from the supplied check-in / check-out and the employee's effective rule.\n\nIf `attendance_status_override` is provided, it wins over the computed status. `source` is forced to `MANUAL`. Returns 409 if a record already exists for that employee on that date.\n\nRequires `ATTENDANCE.create`. Auto-saves `attendance_id`.",
                 "body": {
@@ -8057,17 +9793,30 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "PUT",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "url": {
                   "raw": "{{base_url}}/attendance/admin/{{attendance_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "admin", "{{attendance_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "admin",
+                    "{{attendance_id}}"
+                  ]
                 },
                 "description": "Update an existing attendance record (any combination of check-in, check-out, mode, status override, reason, notes). Recomputes worked hours / status from the new times and writes `STATUS_OVERRIDE` or `MANUAL_UPDATE` to the audit log.\n\nRequires `ATTENDANCE.update`.",
                 "body": {
@@ -8083,15 +9832,25 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "DELETE",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/attendance/admin/{{attendance_id}}",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "admin", "{{attendance_id}}"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "admin",
+                    "{{attendance_id}}"
+                  ]
                 },
                 "description": "Soft-deletes the attendance record and removes its sessions. Writes `MANUAL_DELETE` to the audit log. Requires `ATTENDANCE.delete`."
               },
@@ -8103,18 +9862,34 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/attendance/admin/remote-approvals?page=1&limit=20",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "admin", "remote-approvals"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "admin",
+                    "remote-approvals"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "20" }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
                   ]
                 },
                 "description": "Inbox of remote check-ins waiting on manager / HR action. Each item carries `attendance_id`, employee summary, `check_in_time`, `remote_reason`, and `distance_from_office_meters`. Requires `ATTENDANCE.view`."
@@ -8127,17 +9902,32 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "url": {
                   "raw": "{{base_url}}/attendance/admin/remote-approvals/{{attendance_id}}/approve",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "admin", "remote-approvals", "{{attendance_id}}", "approve"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "admin",
+                    "remote-approvals",
+                    "{{attendance_id}}",
+                    "approve"
+                  ]
                 },
                 "description": "Approves a `PENDING_APPROVAL` remote check-in. Recomputes the final attendance status from worked minutes (Present / Half-Day / Late / Absent) and stamps `REMOTE_APPROVE` in the audit log. Requires `ATTENDANCE.approve`."
               },
@@ -8149,17 +9939,32 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "POST",
                 "header": [
-                  { "key": "Content-Type", "value": "application/json" }
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
                 ],
                 "url": {
                   "raw": "{{base_url}}/attendance/admin/remote-approvals/{{attendance_id}}/reject",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "admin", "remote-approvals", "{{attendance_id}}", "reject"]
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "admin",
+                    "remote-approvals",
+                    "{{attendance_id}}",
+                    "reject"
+                  ]
                 },
                 "description": "Rejects a pending remote check-in. Forces the attendance status to `ABSENT` and records the rejection reason in the audit log. `reason` is mandatory. Requires `ATTENDANCE.approve`.",
                 "body": {
@@ -8175,21 +9980,51 @@
                 "auth": {
                   "type": "bearer",
                   "bearer": [
-                    { "key": "token", "value": "{{access_token}}", "type": "string" }
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
                   ]
                 },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{base_url}}/attendance/admin/audit-logs?page=1&limit=20",
-                  "host": ["{{base_url}}"],
-                  "path": ["attendance", "admin", "audit-logs"],
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "attendance",
+                    "admin",
+                    "audit-logs"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "20" },
-                    { "key": "employee_id", "value": "{{employee_id}}", "disabled": true },
-                    { "key": "date", "value": "2026-05-13", "description": "YYYY-MM-DD", "disabled": true },
-                    { "key": "event_type", "value": "CHECK_OUT", "description": "CHECK_IN | CHECK_OUT | OFFICE_IN | REMOTE_IN | GEO_REJECTION | MANUAL_CREATE | MANUAL_UPDATE | MANUAL_DELETE | STATUS_OVERRIDE | REMOTE_APPROVE | REMOTE_REJECT", "disabled": true }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "employee_id",
+                      "value": "{{employee_id}}",
+                      "disabled": true
+                    },
+                    {
+                      "key": "date",
+                      "value": "2026-05-13",
+                      "description": "YYYY-MM-DD",
+                      "disabled": true
+                    },
+                    {
+                      "key": "event_type",
+                      "value": "CHECK_OUT",
+                      "description": "CHECK_IN | CHECK_OUT | OFFICE_IN | REMOTE_IN | GEO_REJECTION | MANUAL_CREATE | MANUAL_UPDATE | MANUAL_DELETE | STATUS_OVERRIDE | REMOTE_APPROVE | REMOTE_REJECT",
+                      "disabled": true
+                    }
                   ]
                 },
                 "description": "Audit trail across all attendance events with filters by employee, date and event type. Returns the actor (`performed_by`), `device`, `ip_address`, and `old_value` / `new_value` JSON snapshots for each change. Requires `ATTENDANCE.view`."

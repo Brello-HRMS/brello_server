@@ -117,3 +117,28 @@ Associates an Action to an App Module, granting that right to a specific Role.
 ### 6. Delete Module Access
 
 **Method:** `DELETE` `/api/v1/module-access/:id`
+
+### 7. Get Role Permissions List
+
+**Method:** `GET` `/api/v1/module-access/role/:roleId/permissions-list`
+
+Returns a flat list of all permissions (AppModule + Action combinations) available to a role, filtered by the organization's plan, with their `checked` status indicating if they are currently assigned to the role.
+
+### 8. Update Role Permissions List
+
+**Method:** `PUT` `/api/v1/module-access/role/:roleId/permissions-list`
+
+Bulk updates the permissions for a role. Unchecked permissions omitted from the payload or sent as `checked: false` are removed, while new ones are created.
+
+**Request Body:**
+```json
+{
+  "permissions": [
+    {
+      "module_id": "uuid",
+      "action_id": "uuid",
+      "checked": true
+    }
+  ]
+}
+```

@@ -17,16 +17,19 @@ import { CreateRoleDto } from '../dto/create-role.dto';
 import { UpdateRoleDto } from '../dto/update-role.dto';
 import { ListRolesDto } from '../dto/list-roles.dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('roles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @RequirePermission('ACCESS_ROLES', 'create')
   create(
     @Body() createRoleDto: CreateRoleDto,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -36,6 +39,7 @@ export class RoleController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @RequirePermission('ACCESS_ROLES', 'view')
   findAll(
     @LoggedInUser() user: LoggedInUserInterface,
     @Query() query: ListRolesDto,
@@ -45,6 +49,7 @@ export class RoleController {
 
   @Get('filter')
   @HttpCode(HttpStatus.OK)
+  @RequirePermission('ACCESS_ROLES', 'view')
   findByFilter(
     @Query('organization_id', ParseUUIDPipe) organizationId: string,
     @Query('enterprise_id', ParseUUIDPipe) enterpriseId: string,
@@ -55,6 +60,7 @@ export class RoleController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @RequirePermission('ACCESS_ROLES', 'view')
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -64,6 +70,7 @@ export class RoleController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
+  @RequirePermission('ACCESS_ROLES', 'edit')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateRoleDto: UpdateRoleDto,
@@ -74,6 +81,7 @@ export class RoleController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermission('ACCESS_ROLES', 'delete')
   remove(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,

@@ -48,6 +48,15 @@ export class PlanModuleActionRepository {
     });
   }
 
+  async findByPlanId(planId: string): Promise<PlanModuleAction[]> {
+    return this.repository.find({
+      where: {
+        plan_id: planId,
+        status: 'ACTIVE' as any,
+      },
+    });
+  }
+
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
       status: 'DELETED' as any,

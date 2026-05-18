@@ -20,6 +20,8 @@ import { Status } from '../../../common/enums';
 import { OrganizationSubscriptionRepository } from '../../plan/repositories/organization-subscription.repository';
 import { PlanModuleRepository } from '../../plan/repositories/plan-module.repository';
 import { PlanModuleActionRepository } from '../../plan/repositories/plan-module-action.repository';
+import { RoleService } from '../../role/services/role.service';
+import { UpdateRolePermissionsListDto } from '../dto/module-access.dto';
 
 @Injectable()
 export class ModuleAccessService implements OnModuleInit {
@@ -33,6 +35,7 @@ export class ModuleAccessService implements OnModuleInit {
     private readonly organizationSubscriptionRepository: OrganizationSubscriptionRepository,
     private readonly planModuleRepository: PlanModuleRepository,
     private readonly planModuleActionRepository: PlanModuleActionRepository,
+    private readonly roleService: RoleService,
   ) {}
 
   async onModuleInit() {
@@ -190,5 +193,152 @@ export class ModuleAccessService implements OnModuleInit {
   async remove(id: string, user?: LoggedInUser): Promise<void> {
     await this.findOne(id, user);
     await this.moduleAccessRepository.delete(id);
+  }
+
+  async getPermissionsList(roleId: string, user: LoggedInUser) {
+    this.logger.log(`Fetching permissions list for role ${roleId}`);
+    const role = await this.roleService.findOne(roleId, user);
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
+
+    const activeSubscription = await this.organizationSubscriptionRepository.findActiveByOrganization(role.organization_id);
+    const planId = activeSubscription?.plan_id;
+
+    // Fetch all active modules for the app
+    const allModules = await this.appModuleRepository.findByAppId(role.app_id);
+    const moduleIds = allModules.map((m) => m.id);
+
+    // Fetch all active actions
+    const allActions = await this.actionRepository.findAll();
+
+    let enabledModuleIds = new Set(moduleIds);
+    const planActionMap = new Map<string, Set<string>>();
+
+    if (planId) {
+      const planModules = await this.planModuleRepository.findByPlanId(planId);
+      enabledModuleIds = new Set(
+        planModules.filter((pm) => pm.enabled).map((pm) => pm.module_id)
+      );
+
+      const planModuleActions = await this.planModuleActionRepository.findByPlanId(planId);
+      for (const pma of planModuleActions) {
+        if (!pma.enabled) continue;
+        if (!planActionMap.has(pma.module_id)) {
+          planActionMap.set(pma.module_id, new Set());
+        }
+        planActionMap.get(pma.module_id)!.add(pma.action_id);
+      }
+    }
+
+    const existingAccessList = await this.moduleAccessRepository.findByRole(role.id);
+    const accessMap = new Map<string, boolean>();
+    for (const access of existingAccessList) {
+      accessMap.set(`${access.module_id}_${access.action_id}`, access.access_flag);
+    }
+
+    const result: any[] = [];
+    for (const mod of allModules) {
+      if (planId && !enabledModuleIds.has(mod.id)) continue;
+
+      const allowedActionIds = planActionMap.get(mod.id);
+
+      for (const action of allActions) {
+        if (planId && (!allowedActionIds || !allowedActionIds.has(action.id))) {
+          continue;
+        }
+
+        const accessKey = `${mod.id}_${action.id}`;
+        const isChecked = accessMap.get(accessKey) ?? false;
+
+        result.push({
+          id: accessKey,
+          name: `${mod.name} - ${action.name.toUpperCase()}`,
+          category: mod.name,
+          checked: isChecked,
+          appId: mod.app_id,
+          moduleId: mod.id,
+          actionId: action.id,
+        });
+      }
+    }
+
+    return result;
+  }
+
+  async updatePermissionsList(
+    roleId: string,
+    dto: UpdateRolePermissionsListDto,
+    user: LoggedInUser,
+  ) {
+    this.logger.log(`Bulk updating permissions list for role ${roleId}`);
+    const role = await this.roleService.findOne(roleId, user);
+    if (!role) {
+      throw new NotFoundException(`Role with ID ${roleId} not found`);
+    }
+
+    const existingAccessList = await this.moduleAccessRepository.findByRole(role.id);
+    const accessMap = new Map<string, ModuleAccess>();
+    for (const access of existingAccessList) {
+      accessMap.set(`${access.module_id}_${access.action_id}`, access);
+    }
+
+    const updates: ModuleAccess[] = [];
+    const inserts: Partial<ModuleAccess>[] = [];
+
+    for (const item of dto.permissions) {
+      const key = `${item.module_id}_${item.action_id}`;
+      const existing = accessMap.get(key);
+
+      if (existing) {
+        if (existing.access_flag !== item.checked) {
+          existing.access_flag = item.checked;
+          updates.push(existing);
+        }
+      } else if (item.checked) {
+        inserts.push({
+          role_id: role.id,
+          module_id: item.module_id,
+          action_id: item.action_id,
+          access_flag: true,
+        });
+      }
+    }
+
+    // Unchecked items that exist in DB can be updated to access_flag = false or deleted.
+    // Deleting them is cleaner.
+    const itemKeys = new Set(dto.permissions.map((p) => `${p.module_id}_${p.action_id}`));
+    const toDeleteIds: string[] = [];
+
+    for (const existing of existingAccessList) {
+      const key = `${existing.module_id}_${existing.action_id}`;
+      // If it's not in the request payload or explicitly checked=false in the request
+      const payloadItem = dto.permissions.find(p => `${p.module_id}_${p.action_id}` === key);
+      if (!payloadItem || !payloadItem.checked) {
+         toDeleteIds.push(existing.id);
+      }
+    }
+
+    if (toDeleteIds.length > 0) {
+      this.logger.log(`Deleting ${toDeleteIds.length} unchecked module access records.`);
+      await Promise.all(toDeleteIds.map(id => this.moduleAccessRepository.delete(id)));
+    }
+
+    if (updates.length > 0) {
+      this.logger.log(`Updating ${updates.length} module access records.`);
+      for (const update of updates) {
+        await this.moduleAccessRepository.save(update);
+      }
+    }
+
+    if (inserts.length > 0) {
+      this.logger.log(`Inserting ${inserts.length} module access records.`);
+      for (const insert of inserts) {
+        const newRecord = this.moduleAccessRepository.create(insert);
+        await this.moduleAccessRepository.save(newRecord);
+      }
+    }
+
+    return { success: true };
   }
 }
