@@ -16,19 +16,9 @@
  *   npx ts-node src/seeds/seed-brello-v2-base.ts
  */
 
-import { Client } from 'pg';
-import * as fs from 'fs';
+import { createClient, getSchema } from './_db';
 
-const SCHEMA = 'brello_v2';
-
-const DB = {
-  host: 'brello-service-test-brello.c.aivencloud.com',
-  port: 21789,
-  user: 'avnadmin',
-  password: 'AVNS_6fF5sDvxo5vO1kGlzuQ',
-  database: 'defaultdb',
-  ssl: { ca: fs.readFileSync('./certs/ca.pem').toString() },
-};
+const SCHEMA = getSchema();
 
 const ACTIONS = [
   'View',
@@ -135,7 +125,7 @@ const DEFAULT_ROLES = [
   { app: 'EMPLOYEE', name: 'EMPLOYEE' },
 ];
 
-const client = new Client(DB);
+const client = createClient();
 
 async function q<T = any>(sql: string, params: any[] = []): Promise<T[]> {
   const r = await client.query(sql, params);
