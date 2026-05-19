@@ -9,6 +9,7 @@ import { CompanyPolicyService } from './services/company-policy.service';
 import { CompanyPolicyTypeController } from './controllers/company-policy-type.controller';
 import { CompanyPolicyController } from './controllers/company-policy.controller';
 import { RbacModule } from '../rbac/rbac.module';
+import { GlobalSearchModule } from '../global-search/global-search.module';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { RbacModule } from '../rbac/rbac.module';
             CompanyPolicy,
         ]),
         RbacModule,
+        GlobalSearchModule,
     ],
     controllers: [
         CompanyPolicyTypeController,

@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ClientRepository } from '../repositories/client.repository';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { CreateClientDto } from '../dto/create-client.dto';
 import { UpdateClientDto } from '../dto/update-client.dto';
 import { ListClientsDto } from '../dto/list-clients.dto';
@@ -17,7 +18,10 @@ import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 export class ClientService {
   private readonly logger = new Logger(ClientService.name);
 
-  constructor(private readonly clientRepository: ClientRepository) {}
+  constructor(
+    private readonly clientRepository: ClientRepository,
+    private readonly searchIndexingService: SearchIndexingService,
+  ) {}
 
   async create(dto: CreateClientDto, user: LoggedInUser): Promise<Client> {
     this.logger.log(`Creating client: ${dto.name}`);
@@ -43,7 +47,9 @@ export class ClientService {
       created_by: user.userId,
     };
 
-    return this.clientRepository.create(clientData as any);
+    const client = await this.clientRepository.create(clientData as any);
+    this.searchIndexingService.indexClient(client, user.enterpriseId, user.organizationId);
+    return client;
   }
 
   async findAll(
@@ -100,18 +106,21 @@ export class ClientService {
       );
     }
 
+    this.searchIndexingService.indexClient(updatedClient, user.enterpriseId, user.organizationId);
     return updatedClient;
   }
 
   async remove(id: string): Promise<void> {
     this.logger.log(`Deleting client: ${id}`);
 
-    await this.findOne(id);
+    const client = await this.findOne(id);
 
     const success = await this.clientRepository.delete(id);
 
     if (!success) {
       throw new NotFoundException(`Failed to delete client with ID "${id}"`);
     }
+
+    this.searchIndexingService.removeClient(id, client.enterprise_id);
   }
 }

@@ -5,6 +5,7 @@ import { DesignationRepository } from './repositories/designation.repository';
 import { DesignationService } from './services/designation.service';
 import { DesignationController } from './controllers/designation.controller';
 import { OrganizationModule } from '../organization/organization.module';
+import { GlobalSearchModule } from '../global-search/global-search.module';
 
 /**
  * Designation Module
@@ -22,7 +23,8 @@ import { OrganizationModule } from '../organization/organization.module';
 @Module({
     imports: [
         TypeOrmModule.forFeature([Designation]),
-        OrganizationModule, // Provides OrganizationService for cross-module validation
+        OrganizationModule,
+        GlobalSearchModule, // Provides OrganizationService for cross-module validation
     ],
     controllers: [DesignationController],
     providers: [DesignationService, DesignationRepository],

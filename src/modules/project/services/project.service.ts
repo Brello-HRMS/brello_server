@@ -19,6 +19,7 @@ import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { DocumentService } from '../../document/services/document.service';
 import { FolderType } from '../../document/enums/document.enum';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { ProjectContract } from '../entities/project-contract.entity';
 
 @Injectable()
@@ -29,6 +30,7 @@ export class ProjectService {
     private readonly projectRepository: ProjectRepository,
     private readonly clientService: ClientService,
     private readonly documentService: DocumentService,
+    private readonly searchIndexingService: SearchIndexingService,
   ) {}
 
   async create(
@@ -75,7 +77,9 @@ export class ProjectService {
       created_by: user.userId,
     };
 
-    return this.projectRepository.create(projectData as DeepPartial<Project>);
+    const project = await this.projectRepository.create(projectData as DeepPartial<Project>);
+    this.searchIndexingService.indexProject(project, user.enterpriseId, user.organizationId);
+    return project;
   }
 
   async findAllByClient(
@@ -183,6 +187,7 @@ export class ProjectService {
       );
     }
 
+    this.searchIndexingService.indexProject(updatedProject, user.enterpriseId, user.organizationId);
     return updatedProject;
   }
 
@@ -192,6 +197,7 @@ export class ProjectService {
     await this.findOne(id, user);
 
     await this.projectRepository.softDelete(id);
+    this.searchIndexingService.removeProject(id, user.enterpriseId);
   }
 
   async assignTeam(

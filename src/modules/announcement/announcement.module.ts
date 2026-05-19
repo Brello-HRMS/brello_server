@@ -7,6 +7,7 @@ import { AnnouncementRead } from './entities/announcement-read.entity';
 import { AnnouncementAttachment } from './entities/announcement-attachment.entity';
 import { User } from '../user/entities/user.entity';
 
+import { GlobalSearchModule } from '../global-search/global-search.module';
 import { AnnouncementRepository } from './repositories/announcement.repository';
 import { AnnouncementService } from './services/announcement.service';
 import { EmployeeAnnouncementService } from './services/employee-announcement.service';
@@ -15,6 +16,7 @@ import { EmployeeAnnouncementController } from './controllers/employee-announcem
 
 @Module({
   imports: [
+    GlobalSearchModule,
     TypeOrmModule.forFeature([
       Announcement,
       AnnouncementTarget,
