@@ -24,11 +24,15 @@ import { ActionController } from './controllers/action.controller';
 import { ModuleAccessController } from './controllers/module-access.controller';
 
 import { PlanModule } from '../plan/plan.module';
+import { RoleModule } from '../role/role.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AppModuleEntity, Action, ModuleAccess, UserRoleMap]),
     PlanModule,
+    RoleModule,
+    RbacModule,
   ],
   controllers: [AppModuleController, ActionController, ModuleAccessController],
   providers: [

@@ -27,6 +27,13 @@ export class AppModuleRepository {
     });
   }
 
+  async findByAppId(appId: string): Promise<AppModule[]> {
+    return this.repository.find({
+      where: { app_id: appId, status: 'ACTIVE' as any },
+      order: { wbs_code: 'ASC' },
+    });
+  }
+
   async findOneById(id: string): Promise<AppModule | null> {
     return this.repository.findOne({ where: { id } });
   }

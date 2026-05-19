@@ -1,4 +1,5 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class AssignModuleAccessByCodeDto {
   @IsString()
@@ -36,4 +37,25 @@ export class UpdateModuleAccessDto {
   @IsBoolean()
   @IsNotEmpty()
   access_flag: boolean;
+}
+
+export class UpdateRolePermissionItemDto {
+  @IsUUID('4')
+  @IsNotEmpty()
+  module_id: string;
+
+  @IsUUID('4')
+  @IsNotEmpty()
+  action_id: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  checked: boolean;
+}
+
+export class UpdateRolePermissionsListDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateRolePermissionItemDto)
+  permissions: UpdateRolePermissionItemDto[];
 }
