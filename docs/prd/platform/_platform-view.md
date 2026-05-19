@@ -30,11 +30,10 @@ PLATFORM
     L2: Organization List     — all orgs under this enterprise
     L2: Organization Details  — drill-down: users, plan, subscription, status
 
-  L1: Organization Setup      — global templates orgs clone from
+  L1: Organization Setup      — system defaults orgs clone from
     L2: Department Templates
     L2: Designation Templates
-    L2: Policy Templates
-    L2: Holiday Templates
+    (Policies and Holidays are org-managed; not surfaced at the platform level)
 
   L1: HR Letters              — global letter templates
     L2: External Offer Letter Templates
@@ -76,8 +75,6 @@ are not possible — but the prefix keeps cross-app logs and queries readable.)
 | 03   | PLAT_ORG_SETUP              | Organization Setup                |
 | 03.1 | PLAT_DEPT_TEMPLATES         | Department Templates              |
 | 03.2 | PLAT_DESIGNATION_TEMPLATES  | Designation Templates             |
-| 03.3 | PLAT_POLICY_TEMPLATES       | Policy Templates                  |
-| 03.4 | PLAT_HOLIDAY_TEMPLATES      | Holiday Templates                 |
 | 04   | PLAT_HR_LETTERS             | HR Letters                        |
 | 04.1 | PLAT_OFFER_TEMPLATES        | External Offer Letter Templates   |
 | 04.2 | PLAT_INTERNAL_TEMPLATES     | Internal HR Letter Templates      |
@@ -111,7 +108,7 @@ These tables don't exist yet — to be added as each section gets implemented:
 
 | Module                | Table(s) needed |
 |-----------------------|-----------------|
-| Organization Setup    | `department_template`, `designation_template`, `policy_template`, `holiday_template` (or repurpose existing tables with `organization_id IS NULL`) |
+| Organization Setup    | none — reuses existing `departments` and `designations` with `organization_id IS NULL` meaning "template". Requires making `designations.org_id` nullable and adding an `is_default` column to both tables. |
 | HR Letters            | `hr_letter_template`, `hr_letter` (per-org actual letters) |
 | Subscription & Billing | `invoice`, `payment` |
 | Feature Management    | `organization_feature_override` |
