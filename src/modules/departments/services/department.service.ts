@@ -9,6 +9,7 @@ import {
 import { DepartmentRepository } from '../repositories/department.repository';
 import { UserService } from '../../user/services/user.service';
 import { UserRepository } from '../../user/repositories/user.repository';
+import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { CreateDepartmentDto } from '../dto/create-department.dto';
 import { UpdateDepartmentDto } from '../dto/update-department.dto';
 import { ListDepartmentsDto } from '../dto/list-departments.dto';
@@ -26,6 +27,7 @@ export class DepartmentService {
         private readonly departmentRepository: DepartmentRepository,
         private readonly userService: UserService,
         private readonly userRepository: UserRepository,
+        private readonly searchIndexingService: SearchIndexingService,
     ) { }
 
     // Simplified: resolveOrgId is no longer needed as organizationId is in LoggedInUser
@@ -63,6 +65,7 @@ export class DepartmentService {
             `[AUDIT] Department created | id=${department.id} | code=${department.code} | org=${organizationId} | by=${user.userId}`,
         );
 
+        this.searchIndexingService.indexDepartment(department, user.enterpriseId, organizationId);
         return department;
     }
 
@@ -142,6 +145,7 @@ export class DepartmentService {
             `[AUDIT] Department updated | id=${id} | by=${user.userId} | fields=${Object.keys(safeUpdate).join(', ')}`,
         );
 
+        this.searchIndexingService.indexDepartment(updated, user.enterpriseId, user.organizationId);
         return updated;
     }
 
@@ -159,6 +163,7 @@ export class DepartmentService {
         // }
 
         await this.departmentRepository.softDelete(id);
+        this.searchIndexingService.removeDepartment(id, user.enterpriseId);
 
         this.logger.log(
             `[AUDIT] Department soft-deleted | id=${id} | by=${user.userId}`,

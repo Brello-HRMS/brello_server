@@ -35,6 +35,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 import { EnterpriseModule } from '../enterprise/enterprise.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { GlobalSearchModule } from '../global-search/global-search.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { OrganizationModule } from '../organization/organization.module';
     ScheduleModule.forRoot(),
     EnterpriseModule,
     forwardRef(() => OrganizationModule),
+    GlobalSearchModule,
   ],
   controllers: [UserController, EmployeeController],
   providers: [

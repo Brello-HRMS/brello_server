@@ -8,6 +8,7 @@ import { ProjectService } from './services/project.service';
 import { ProjectController } from './controllers/project.controller';
 import { ClientProjectController } from './controllers/client-project.controller';
 import { ClientModule } from '../client/client.module';
+import { GlobalSearchModule } from '../global-search/global-search.module';
 import { UserModule } from '../user/user.module';
 import { DocumentModule } from '../document/document.module';
 
@@ -17,6 +18,7 @@ import { DocumentModule } from '../document/document.module';
     forwardRef(() => ClientModule),
     UserModule,
     DocumentModule,
+    GlobalSearchModule,
   ],
   controllers: [ProjectController, ClientProjectController],
   providers: [ProjectService, ProjectRepository],

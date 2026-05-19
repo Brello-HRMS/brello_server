@@ -36,9 +36,10 @@ export class DesignationController {
     @HttpCode(HttpStatus.CREATED)
     create(
         @CurrentUser('organizationId') orgId: string,
+        @CurrentUser('enterpriseId') enterpriseId: string,
         @Body() createDesignationDto: CreateDesignationDto,
     ) {
-        return this.designationService.create(orgId, createDesignationDto);
+        return this.designationService.create(orgId, enterpriseId, createDesignationDto);
     }
 
     /**
@@ -69,19 +70,20 @@ export class DesignationController {
     @HttpCode(HttpStatus.OK)
     update(
         @CurrentUser('organizationId') orgId: string,
+        @CurrentUser('enterpriseId') enterpriseId: string,
         @Param('id', ParseUUIDPipe) id: string,
         @Body() updateDesignationDto: UpdateDesignationDto,
     ) {
-        return this.designationService.update(id, orgId, updateDesignationDto);
+        return this.designationService.update(id, orgId, enterpriseId, updateDesignationDto);
     }
 
-    // Soft-delete a designation
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @CurrentUser('organizationId') orgId: string,
+        @CurrentUser('enterpriseId') enterpriseId: string,
         @Param('id', ParseUUIDPipe) id: string,
     ) {
-        return this.designationService.remove(id, orgId);
+        return this.designationService.remove(id, orgId, enterpriseId);
     }
 }

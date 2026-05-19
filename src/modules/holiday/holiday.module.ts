@@ -10,11 +10,13 @@ import { HolidayCalendarController } from './controllers/holiday-calendar.contro
 import { HolidayController } from './controllers/holiday.controller';
 import { EmployeeHolidayController } from './controllers/employee-holiday.controller';
 import { RbacModule } from '../rbac/rbac.module';
+import { GlobalSearchModule } from '../global-search/global-search.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([HolidayCalendar, Holiday]),
     RbacModule,
+    GlobalSearchModule,
   ],
   controllers: [
     HolidayCalendarController,
