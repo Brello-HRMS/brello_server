@@ -249,6 +249,73 @@ export class AttendanceService {
     };
   }
 
+  async preCheckCheckIn(user: LoggedInUser, lat?: number, lng?: number) {
+    let rule, shift, geoFence;
+    try {
+      const resolved = await this.ruleResolver.resolveForEmployee(
+        user.organizationId,
+        user.userId,
+      );
+      rule = resolved.rule;
+      shift = resolved.shift;
+      geoFence = resolved.geoFence;
+    } catch {
+      // If no rule is assigned, we can't determine if they are late or remote
+      return {
+        is_late: false,
+        late_minutes: 0,
+        is_remote: false,
+        require_remote_reason: false,
+        distance_meters: null,
+        office_name: null,
+        office_latitude: null,
+        office_longitude: null,
+        radius_meters: null,
+        shift_start: null,
+        current_time: new Date().toISOString(),
+      };
+    }
+
+    const checkInAt = new Date();
+    const { isLate, lateMinutes } = isCheckInLate(checkInAt, shift);
+
+    let isRemote = false;
+    let distanceMeters: number | null = null;
+
+    if (rule.require_geo_fencing) {
+      if (lat != null && lng != null && geoFence) {
+        distanceMeters = Math.round(
+          haversineDistance(
+            lat,
+            lng,
+            Number(geoFence.latitude),
+            Number(geoFence.longitude),
+          ),
+        );
+        if (distanceMeters > geoFence.radius_meters) {
+          isRemote = true;
+        }
+      } else {
+        // Missing GPS or geoFence, can't verify distance
+        isRemote = true;
+      }
+    }
+
+    return {
+      is_late: isLate,
+      late_minutes: lateMinutes || 0,
+      is_remote: isRemote,
+      require_remote_reason: rule.require_remote_reason,
+      distance_meters: distanceMeters,
+      office_name: geoFence?.office_name ?? null,
+      office_latitude: geoFence?.latitude ? Number(geoFence.latitude) : null,
+      office_longitude: geoFence?.longitude ? Number(geoFence.longitude) : null,
+      radius_meters: geoFence?.radius_meters ?? null,
+      shift_start: shift.start_time,
+      current_time: checkInAt.toISOString(),
+    };
+  }
+
   async checkOut(user: LoggedInUser, dto: CheckOutDto, ipAddress?: string) {
     const session = await this.sessionRepo.findOpenSession(
       user.organizationId,

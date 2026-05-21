@@ -187,12 +187,18 @@ export class UserRepository {
 
   async findNewHiresThisMonth(organizationId: string): Promise<User[]> {
     const now = new Date();
-    // Use calendar month boundaries (local time, padded to avoid UTC-shift edge cases)
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
-    const lastDayDate = new Date(year, month, 0);
-    const lastDay = `${year}-${String(month).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(now.getMonth() - 1);
+
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const firstDay = formatDate(oneMonthAgo);
+    const lastDay = formatDate(now);
 
     return this.repository
       .createQueryBuilder('user')
