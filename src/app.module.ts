@@ -30,6 +30,8 @@ import { LeaveRequestModule } from './modules/leave-request/leave-request.module
 import { ReimbursementModule } from './modules/reimbursement/reimbursement.module';
 import { AnnouncementModule } from './modules/announcement/announcement.module';
 import { GlobalSearchModule } from './modules/global-search/global-search.module';
+import { OrgSetupModule } from './modules/org-setup/org-setup.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.interceptor';
@@ -45,6 +47,7 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
       inject: [ConfigService],
       useFactory: databaseConfigFactory,
     }),
+    ScheduleModule.forRoot(),
 
     // Feature modules — loaded in dependency order
     // (EnterpriseModule first because OrganizationModule depends on it)
@@ -76,6 +79,7 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     ReimbursementModule,
     AnnouncementModule,
     GlobalSearchModule,
+    OrgSetupModule,
   ],
   providers: [
     {
