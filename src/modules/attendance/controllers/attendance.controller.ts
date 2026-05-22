@@ -33,6 +33,17 @@ export class AttendanceController {
     return this.attendanceService.checkIn(user, dto, req.ip);
   }
 
+  @Get('check-in/pre-check')
+  preCheck(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query('latitude') latitude?: string,
+    @Query('longitude') longitude?: string,
+  ) {
+    const lat = latitude ? parseFloat(latitude) : undefined;
+    const lng = longitude ? parseFloat(longitude) : undefined;
+    return this.attendanceService.preCheckCheckIn(user, lat, lng);
+  }
+
   @Post('check-out')
   @HttpCode(HttpStatus.OK)
   checkOut(
