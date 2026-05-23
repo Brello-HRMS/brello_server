@@ -15,6 +15,7 @@ import { PlanService } from '../services/plan.service';
 import { CreatePlanDto, UpdatePlanDto } from '../dto/plan.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import { Public } from '../../../common/decorators/public.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('plans')
@@ -32,6 +33,7 @@ export class PlanController {
   }
 
   @Get()
+  @Public()
   @HttpCode(HttpStatus.OK)
   findAll(@LoggedInUser() user: LoggedInUserInterface) {
     return this.planService.findAll(user);

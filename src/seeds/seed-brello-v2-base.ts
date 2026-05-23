@@ -116,8 +116,51 @@ const EMPLOYEE_MODULES: Mod[] = [
 ];
 
 const PLANS = [
-  { name: 'STANDARD', price: 999, description: 'Standard plan — all modules and actions included.' },
-  { name: 'PREMIUM', price: 1999, description: 'Premium plan — all modules and actions included.' },
+  {
+    name: 'Free',
+    price: 0,
+    description: 'Perfect for exploring Brello and managing basic HR needs.',
+    feature: [
+      'Employee directory & profiles',
+      'Basic attendance tracking',
+      'Leave management',
+      'Holiday calendar',
+      '1 admin user',
+      'Email support'
+    ]
+  },
+  {
+    name: 'Standard',
+    price: 99,
+    description: 'Everything you need to run HR for a growing company.',
+    feature: [
+      'Everything in Free',
+      'Payroll processing',
+      'Statutory compliance (PF, ESI, TDS)',
+      'Geofencing attendance',
+      'Custom leave policies',
+      'Reimbursements',
+      'Advanced reports & exports',
+      '5 admin users',
+      'Priority support'
+    ]
+  },
+  {
+    name: 'Premium',
+    price: 149,
+    description: 'For larger teams with complex HR and payroll needs.',
+    feature: [
+      'Everything in Standard',
+      'Multiple payroll cycles',
+      'Department-wise policies',
+      'Role-based access control',
+      'API access',
+      'Biometric integration',
+      '15 admin users',
+      'Dedicated account manager',
+      'SLA guarantee'
+    ]
+  }
 ];
 
 const DEFAULT_ROLES = [
@@ -205,12 +248,15 @@ async function upsertPlan(p: typeof PLANS[number]): Promise<string> {
     `SELECT id FROM ${SCHEMA}.plan WHERE name = $1 AND deleted_at IS NULL`,
     [p.name],
   );
-  if (existing.length) return existing[0].id;
+  if (existing.length) {
+    await client.query(`UPDATE ${SCHEMA}.plan SET price = $2, description = $3, feature = $4 WHERE id = $1`, [existing[0].id, p.price, p.description, p.feature]);
+    return existing[0].id;
+  }
   const [row] = await q<{ id: string }>(
     `INSERT INTO ${SCHEMA}.plan (name, price, description, discount, feature, status, created_at, updated_at)
-     VALUES ($1, $2, $3, 0, '{}', 'ACTIVE', NOW(), NOW())
+     VALUES ($1, $2, $3, 0, $4, 'ACTIVE', NOW(), NOW())
      RETURNING id`,
-    [p.name, p.price, p.description],
+    [p.name, p.price, p.description, p.feature],
   );
   return row.id;
 }
@@ -308,13 +354,44 @@ async function run() {
   const empGranted = await grantAll(roleIds.EMPLOYEE, empModuleIds, actionIds);
   console.log(`Access:  SUPER_ADMIN +${adminGranted}, EMPLOYEE +${empGranted} module_access rows`);
 
-  // 6. Plans + plan_app + plan_module + plan_module_action (both plans = full)
+  // 6. Plans + plan_app + plan_module + plan_module_action
   const allAppIds = Object.values(appIds);
-  const allModuleIds = [...adminModuleIds, ...empModuleIds];
+  const freeWbs = [
+    '01', // Dashboard
+    '02', '02.1', '02.2', // Employee
+    '03', '03.1', // Attendance
+    '04', '04.1', '04.2', // Leave
+    '05', // Holiday
+    '10', // Announcement
+    '11', '11.1', '11.2', '11.4', '11.5', // Org (basic)
+    '12', '12.1', '12.2', // Access basic
+    '13', '13.1', '13.2', '13.3', // Billing
+  ];
+  const standardWbs = [
+    ...freeWbs,
+    '06', '06.1', '06.2', '06.3', // Payroll
+    '07', // Reimbursement
+    '11.3', '11.6', // Org advanced
+  ];
+  const premiumWbs = [
+    ...standardWbs,
+    '08', '08.1', '08.2', // Project
+    '09', '09.1', '09.2', // HR Letters
+    '12.3', // Access Permissions
+  ];
+
   for (const p of PLANS) {
     const planId = await upsertPlan(p);
-    await planLink(planId, allAppIds, allModuleIds, actionIds);
-    console.log(`Plan ${p.name}: linked ${allAppIds.length} apps, ${allModuleIds.length} modules, ${actionIds.length} actions each`);
+    
+    let allowedAdminWbs = premiumWbs;
+    if (p.name === 'Free') allowedAdminWbs = freeWbs;
+    if (p.name === 'Standard') allowedAdminWbs = standardWbs;
+
+    const allowedAdminModules = allowedAdminWbs.map(w => adminModuleMap[w]).filter(Boolean);
+    const planModuleIds = [...allowedAdminModules, ...empModuleIds];
+    
+    await planLink(planId, allAppIds, planModuleIds, actionIds);
+    console.log(`Plan ${p.name}: linked ${allAppIds.length} apps, ${planModuleIds.length} modules, ${actionIds.length} actions each`);
   }
 
   console.log('\nDone.');
