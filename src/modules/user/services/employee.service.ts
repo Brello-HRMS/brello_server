@@ -81,6 +81,16 @@ export class EmployeeService {
     private readonly documentService: DocumentService,
   ) {}
 
+  // Convert blank strings on a unique-constrained payload to null so empty values
+  // don't collide on Postgres unique indexes (which treat '' as a distinct value).
+  private nullifyBlanks<T extends Record<string, any>>(input: T): T {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(input)) {
+      out[k] = typeof v === 'string' && v.trim() === '' ? null : v;
+    }
+    return out as T;
+  }
+
   private buildDocumentUrl(doc: Document | null | undefined): string | null {
     if (!doc) return null;
     if (doc.storage_provider === StorageProvider.S3) {
@@ -605,9 +615,11 @@ export class EmployeeService {
 
     if (dto.bank_info) {
       await this.bankInfoRepository.upsert({
-        account_number: dto.bank_info.accountNumber,
-        ifsc_code: dto.bank_info.ifscCode,
-        bank_name: dto.bank_info.bankName,
+        ...this.nullifyBlanks({
+          account_number: dto.bank_info.accountNumber,
+          ifsc_code: dto.bank_info.ifscCode,
+          bank_name: dto.bank_info.bankName,
+        }),
         user_profile_id: profile.id,
         enterprise_id: profile.enterprise_id,
         organization_id: profile.organization_id,
@@ -617,12 +629,14 @@ export class EmployeeService {
 
     if (dto.gov_info) {
       await this.govInfoRepository.upsert({
-        pan: dto.gov_info.pan,
-        aadhaar: dto.gov_info.aadhaar,
-        uan: dto.gov_info.uan,
-        esi: dto.gov_info.esi,
-        passport: dto.gov_info.passport,
-        driving_licence: dto.gov_info.drivingLicence,
+        ...this.nullifyBlanks({
+          pan: dto.gov_info.pan,
+          aadhaar: dto.gov_info.aadhaar,
+          uan: dto.gov_info.uan,
+          esi: dto.gov_info.esi,
+          passport: dto.gov_info.passport,
+          driving_licence: dto.gov_info.drivingLicence,
+        }),
         user_profile_id: profile.id,
         enterprise_id: profile.enterprise_id,
         organization_id: profile.organization_id,
