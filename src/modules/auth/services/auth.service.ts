@@ -18,6 +18,8 @@ import {
 } from '../utils';
 import { TokenService } from './token.service';
 import { UserService } from '../../user/services/user.service';
+import { EmployeeService } from '../../user/services/employee.service';
+import { EmployeeStatus } from '../../user/enums/user.enum';
 import { SessionRepository } from '../repositories/session.repository';
 import { OtpRepository } from '../repositories/otp.repository';
 import {
@@ -61,6 +63,7 @@ export class AuthService {
     @InjectRepository(UserRoleMap)
     private readonly userRoleMapRepository: Repository<UserRoleMap>,
     private readonly notificationService: NotificationService,
+    private readonly employeeService: EmployeeService,
   ) {}
 
   // ---------- Password Login Flow ----------
@@ -120,7 +123,7 @@ export class AuthService {
   async loginWithOtp(dto: VerifyLoginOtpDto): Promise<AuthResponseDto> {
     this.logger.log(`OTP verification for login: ${dto.email}`);
 
-    const user = await this.findActiveUserByEmail(dto.email);
+    let user = await this.findActiveUserByEmail(dto.email);
 
     const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
       dto.email,
@@ -157,6 +160,22 @@ export class AuthService {
     }
 
     await this.otpRepository.delete(otpRecord.id);
+
+    // First-login auto-activation: an INVITED employee's user.status is still
+    // PENDING. Verifying their OTP proves email ownership, so flip them to
+    // ACTIVE before issuing tokens.
+    if (user.status === Status.PENDING) {
+      try {
+        await this.employeeService.activateEmployee(user.id, user.id);
+        const refreshed = await this.userService.findByEmail(dto.email);
+        if (refreshed) user = refreshed;
+      } catch (err) {
+        this.logger.warn(
+          `Auto-activation failed for ${dto.email}: ${(err as Error).message}`,
+        );
+      }
+    }
+
     const isSetupRequired = !user.organization_id && !user.is_platform_admin;
 
     return this.buildAuthResponse(
@@ -174,13 +193,23 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (user.status !== Status.ACTIVE) {
-      throw new UnauthorizedException(
-        'Account is inactive. Contact your administrator.',
-      );
+    if (user.status === Status.ACTIVE) {
+      return user;
     }
 
-    return user;
+    // Invited employees haven't been activated yet (user.status is PENDING),
+    // but they should be allowed to log in for the first time. The first
+    // successful login auto-activates them in loginWithOtp.
+    if (user.status === Status.PENDING && user.user_profile_id) {
+      const profile = await this.employeeService.findProfileByUserId(user.id);
+      if (profile?.employee_status === EmployeeStatus.INVITED) {
+        return user;
+      }
+    }
+
+    throw new UnauthorizedException(
+      'Account is inactive. Contact your administrator.',
+    );
   }
 
   private async validatePassword(

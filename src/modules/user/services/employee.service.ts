@@ -59,6 +59,9 @@ import { SearchIndexingService } from '../../global-search/services/search-index
 import { DocumentService } from '../../document/services/document.service';
 import { FolderType } from '../../document/enums/document.enum';
 import { Document } from '../../document/entities/document.entity';
+import { NotificationService } from '../../notification/services/notification.service';
+import { NotificationType } from '../../../common/enums/notification-type.enum';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmployeeService {
@@ -79,6 +82,8 @@ export class EmployeeService {
     private readonly auditLogRepository: AuditLogRepository,
     private readonly searchIndexingService: SearchIndexingService,
     private readonly documentService: DocumentService,
+    private readonly notificationService: NotificationService,
+    private readonly configService: ConfigService,
   ) {}
 
   // Convert blank strings on a unique-constrained payload to null so empty values
@@ -1085,7 +1090,44 @@ export class EmployeeService {
       'user',
     );
 
+    // Fire-and-forget invite email. We don't block the response on delivery —
+    // NotificationService logs failures internally.
+    void this.sendInviteEmail(id);
+
     return { success: true, status: EmployeeStatus.INVITED };
+  }
+
+  private async sendInviteEmail(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user?.email) {
+      this.logger.warn(
+        `Skipping invite email for user ${userId}: no email on record`,
+      );
+      return;
+    }
+
+    const publicUrl =
+      this.configService.get<string>('app.publicUrl') ?? 'http://localhost:5173';
+    const loginUrl = `${publicUrl.replace(/\/$/, '')}/auth/login`;
+    const displayName = user.first_name || 'there';
+
+    await this.notificationService.send({
+      user_id: userId,
+      target_email: user.email,
+      title: "You've been invited to Brello",
+      message:
+        `Hi ${displayName},\n\n` +
+        `Your team has invited you to Brello. Sign in with your work email ` +
+        `(${user.email}) to get started:\n\n${loginUrl}\n\n` +
+        `You'll receive a one-time password by email when you sign in. ` +
+        `If you weren't expecting this, you can ignore the message.`,
+      type: NotificationType.EMAIL,
+    });
+  }
+
+  /** Public accessor for the auth flow to check an employee's lifecycle state. */
+  async findProfileByUserId(userId: string): Promise<UserProfile | null> {
+    return this.profileRepository.findByUserId(userId);
   }
 
   async activateEmployee(id: string, actorId: string): Promise<any> {
