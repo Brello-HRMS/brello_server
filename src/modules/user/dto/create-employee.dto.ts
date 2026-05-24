@@ -11,7 +11,7 @@ import {
   IsDateString,
   IsInt,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   UserType,
   MaritalStatus,
@@ -97,6 +97,9 @@ export class CreateEmployeeDto {
 
   @IsString()
   @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value,
+  )
   @Matches(/^\+?[1-9]\d{1,14}$/, {
     message: 'Valid E.164 phone number required',
   })
