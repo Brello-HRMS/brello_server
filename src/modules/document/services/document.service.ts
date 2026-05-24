@@ -18,6 +18,10 @@ import { Status } from '../../../common/enums';
 import { Document } from '../entities/document.entity';
 import { Organization } from 'src/modules/organization/entities/organization.entity';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import {
+  appendSignatureToPath,
+  signDocumentView,
+} from '../utils/document-signature.util';
 
 @Injectable()
 export class DocumentService {
@@ -39,6 +43,30 @@ export class DocumentService {
 
     // Default to DATABASE for development if S3 is not explicitly configured
     return StorageProvider.DATABASE;
+  }
+
+  /**
+   * Build a URL the browser can fetch directly. For S3 we return the public
+   * object URL; for DB-backed storage we return the view route signed with a
+   * short-lived HMAC so the route works without an Authorization header
+   * (which `<img>` tags can't send).
+   */
+  buildViewUrl(document: Document): string {
+    if (document.storage_provider === StorageProvider.S3) {
+      const region = 'us-east-1';
+      return `https://${document.bucket}.s3.${region}.amazonaws.com/${document.object_key}`;
+    }
+    const secret = this.configService.get<string>('auth.JWT_SECRET');
+    if (!secret) {
+      // Without a secret we can't sign — fall back to the unsigned path
+      // (will fail auth but at least produces a deterministic URL).
+      return `/api/v1/documents/${document.id}/view`;
+    }
+    const signed = signDocumentView(document.id, secret);
+    return appendSignatureToPath(
+      `/api/v1/documents/${document.id}/view`,
+      signed,
+    );
   }
 
   private slugify(text: string): string {
@@ -222,14 +250,7 @@ export class DocumentService {
       modified_by: user.userId,
     });
 
-    // Construct public URL
-    let url = '';
-    if (document.storage_provider === StorageProvider.S3) {
-      const region = 'us-east-1'; // Grab from config in real app
-      url = `https://${document.bucket}.s3.${region}.amazonaws.com/${document.object_key}`;
-    } else {
-      url = `/api/v1/documents/${document.id}/view`;
-    }
+    const url = this.buildViewUrl(document);
 
     return {
       id: updatedDoc!.id,
@@ -244,13 +265,7 @@ export class DocumentService {
       throw new NotFoundException(`Document ${id} not found`);
     }
 
-    let url = '';
-    if (document.storage_provider === StorageProvider.S3) {
-      const region = 'us-east-1'; // Grab from config in real app
-      url = `https://${document.bucket}.s3.${region}.amazonaws.com/${document.object_key}`;
-    } else {
-      url = `/api/v1/documents/${document.id}/view`;
-    }
+    const url = this.buildViewUrl(document);
 
     return {
       id: document.id,
@@ -277,7 +292,7 @@ export class DocumentService {
     }
 
     if (document.storage_provider === StorageProvider.DATABASE) {
-      return { url: `/api/v1/documents/${id}/view` };
+      return { url: this.buildViewUrl(document) };
     }
 
     const url = await this.storageService.generatePresignedDownloadUrl(
