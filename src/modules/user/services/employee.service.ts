@@ -57,7 +57,7 @@ import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { ListingHelper } from '../../../common/utils/listing.helper';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { DocumentService } from '../../document/services/document.service';
-import { FolderType, StorageProvider } from '../../document/enums/document.enum';
+import { FolderType } from '../../document/enums/document.enum';
 import { Document } from '../../document/entities/document.entity';
 
 @Injectable()
@@ -93,11 +93,7 @@ export class EmployeeService {
 
   private buildDocumentUrl(doc: Document | null | undefined): string | null {
     if (!doc) return null;
-    if (doc.storage_provider === StorageProvider.S3) {
-      const region = 'us-east-1';
-      return `https://${doc.bucket}.s3.${region}.amazonaws.com/${doc.object_key}`;
-    }
-    return `/api/v1/documents/${doc.id}/view`;
+    return this.documentService.buildViewUrl(doc);
   }
 
   private async createAuditLog(
