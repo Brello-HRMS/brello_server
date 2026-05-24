@@ -56,6 +56,9 @@ import { ListEmployeesDto } from '../dto/list-employees.dto';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { ListingHelper } from '../../../common/utils/listing.helper';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
+import { DocumentService } from '../../document/services/document.service';
+import { FolderType, StorageProvider } from '../../document/enums/document.enum';
+import { Document } from '../../document/entities/document.entity';
 
 @Injectable()
 export class EmployeeService {
@@ -75,7 +78,17 @@ export class EmployeeService {
     private readonly offboardingRepository: EmployeeOffboardingRepository,
     private readonly auditLogRepository: AuditLogRepository,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly documentService: DocumentService,
   ) {}
+
+  private buildDocumentUrl(doc: Document | null | undefined): string | null {
+    if (!doc) return null;
+    if (doc.storage_provider === StorageProvider.S3) {
+      const region = 'us-east-1';
+      return `https://${doc.bucket}.s3.${region}.amazonaws.com/${doc.object_key}`;
+    }
+    return `/api/v1/documents/${doc.id}/view`;
+  }
 
   private async createAuditLog(
     actorId: string,
@@ -248,6 +261,7 @@ export class EmployeeService {
       email: user.email,
       phone: user.phone,
       reportsTo: user.reports_to_id,
+      avatar: this.buildDocumentUrl(profileData?.photo),
       profile: profileData
         ? {
             employeeId: profileData.employee_id,
@@ -345,12 +359,7 @@ export class EmployeeService {
     });
 
     const items = response.data.map((userInstance) => {
-      const photo = userInstance.user_profile?.photo;
-      let avatarUrl: string | null = null;
-      if (photo) {
-        const region = 'us-east-1'; // fallback
-        avatarUrl = `https://${photo.bucket}.s3.${region}.amazonaws.com/${photo.object_key}`;
-      }
+      const avatarUrl = this.buildDocumentUrl(userInstance.user_profile?.photo);
 
       return {
         id: userInstance.id,
@@ -888,6 +897,9 @@ export class EmployeeService {
       reason: dto.reason,
       last_working_day: new Date(dto.last_working_day),
       notice_period: dto.notice_period || profile.notice_period,
+      handover_to_user_id: dto.handover_to_user_id ?? null,
+      assets_to_recover: dto.assets_to_recover ?? null,
+      schedule_exit_interview: dto.schedule_exit_interview ?? false,
     });
 
     await this.profileRepository.update(profile.id, {
@@ -969,6 +981,48 @@ export class EmployeeService {
     if (!offboarding) throw new NotFoundException('Offboarding not initiated');
 
     return offboarding;
+  }
+
+  async setEmployeePhoto(
+    actor: LoggedInUser,
+    id: string,
+    file: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+      size: number;
+    },
+  ): Promise<{ avatar: string | null }> {
+    if (!file) {
+      throw new BadRequestException('Photo file is required');
+    }
+    if (!file.mimetype?.startsWith('image/')) {
+      throw new BadRequestException('Uploaded file must be an image');
+    }
+
+    const profile = await this.validateProfileAccess(id);
+
+    const document = await this.documentService.uploadDocument(
+      actor,
+      file,
+      FolderType.EMPLOYEE_IMAGE,
+      id,
+    );
+
+    await this.profileRepository.update(profile.id, {
+      photo_id: document.id,
+    });
+
+    await this.createAuditLog(
+      actor.userId,
+      'UPDATE_PROFILE_PHOTO',
+      { photo_id: profile.photo_id },
+      { photo_id: document.id },
+      id,
+      'user',
+    );
+
+    return { avatar: this.buildDocumentUrl(document) };
   }
 
   async softDeleteEmployee(id: string): Promise<any> {
