@@ -9,9 +9,13 @@ import {
   Query,
   Put,
   HttpCode,
+  HttpStatus,
   ParseUUIDPipe,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { EmployeeService } from '../services/employee.service';
 import {
   CreateEmployeeDto,
@@ -99,6 +103,23 @@ export class EmployeeController {
     @LoggedInUser() actor: LoggedInUserInterface,
   ) {
     return this.employeeService.updatePersonalDetails(id, dto, actor.userId);
+  }
+
+  @Post(':id/photo')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadPhoto(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile()
+    file: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+      size: number;
+    },
+    @LoggedInUser() actor: LoggedInUserInterface,
+  ) {
+    return this.employeeService.setEmployeePhoto(actor, id, file);
   }
 
   @Patch(':id/employment')

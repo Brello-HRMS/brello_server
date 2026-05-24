@@ -8,6 +8,7 @@ import {
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { AdminDailyPreviewQueryDto } from '../dto/admin-daily-preview-query.dto';
 import { AuditLogsQueryDto } from '../dto/audit-logs-query.dto';
+import { EmployeeHistoryQueryDto } from '../dto/employee-history-query.dto';
 import { ManualEntryDto } from '../dto/manual-entry.dto';
 import { UpdateAttendanceDto } from '../dto/update-attendance.dto';
 import { AttendanceAuditLog } from '../entities/attendance-audit-log.entity';
@@ -309,6 +310,55 @@ export class AdminAttendanceService {
     });
 
     return { success: true };
+  }
+
+  async getEmployeeHistory(
+    user: LoggedInUser,
+    employeeId: string,
+    query: EmployeeHistoryQueryDto,
+  ) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+
+    const { data, total } = await this.recordRepo.listForEmployee(
+      user.organizationId,
+      employeeId,
+      {
+        month: query.month,
+        year: query.year,
+        attendanceMode: query.attendance_mode,
+        attendanceStatus: query.attendance_status,
+        page,
+        limit,
+      },
+    );
+
+    let shiftName: string | null = null;
+    try {
+      const { shift } = await this.ruleResolver.resolveForEmployee(
+        user.organizationId,
+        employeeId,
+      );
+      shiftName = shift.name;
+    } catch {
+      shiftName = null;
+    }
+
+    return {
+      items: data.map((r) => ({
+        attendance_id: r.id,
+        date: r.date,
+        check_in: formatTime12(r.first_check_in_at),
+        check_out: formatTime12(r.last_check_out_at),
+        worked_hours: formatHmm(r.worked_minutes),
+        worked_minutes: r.worked_minutes,
+        attendance_mode: r.attendance_mode,
+        attendance_status: r.attendance_status,
+        shift: shiftName,
+        remote_reason: r.remote_reason,
+      })),
+      pagination: { page, limit, total },
+    };
   }
 
   async listAuditLogs(user: LoggedInUser, query: AuditLogsQueryDto) {

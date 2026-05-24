@@ -448,6 +448,60 @@ GET /admin/daily-preview
 
 ---
 
+# 23.1 Admin Employee Attendance History API
+
+## Endpoint
+
+```http
+GET /admin/employees/{employeeId}/history
+```
+
+---
+
+## Query Params
+
+```http
+?page=1
+&limit=20
+&month=3
+&year=2026
+&attendance_mode=Remote-In
+&attendance_status=Present
+```
+
+---
+
+## Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "attendance_id": "ATT-1001",
+        "date": "2026-03-10",
+        "check_in": "09:12 AM",
+        "check_out": "06:05 PM",
+        "worked_hours": "08:53",
+        "worked_minutes": 533,
+        "attendance_mode": "Office-In",
+        "attendance_status": "Present",
+        "shift": "General Shift",
+        "remote_reason": null
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 22
+    }
+  }
+}
+```
+
+---
+
 # 24. Add Manual Attendance Entry
 
 ## Endpoint
