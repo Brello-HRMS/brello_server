@@ -16,6 +16,7 @@ import { AdminAttendanceService } from '../services/admin-attendance.service';
 import { RemoteApprovalService } from '../services/remote-approval.service';
 import { AdminDailyPreviewQueryDto } from '../dto/admin-daily-preview-query.dto';
 import { AuditLogsQueryDto } from '../dto/audit-logs-query.dto';
+import { EmployeeHistoryQueryDto } from '../dto/employee-history-query.dto';
 import { ManualEntryDto } from '../dto/manual-entry.dto';
 import { UpdateAttendanceDto } from '../dto/update-attendance.dto';
 import { RejectRemoteDto } from '../dto/reject-remote.dto';
@@ -41,6 +42,16 @@ export class AdminAttendanceController {
     @Query() query: AdminDailyPreviewQueryDto,
   ) {
     return this.adminService.dailyPreview(user, query);
+  }
+
+  @Get('employees/:employeeId/history')
+  @RequirePermission('ATTENDANCE', 'view')
+  employeeHistory(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('employeeId', ParseUUIDPipe) employeeId: string,
+    @Query() query: EmployeeHistoryQueryDto,
+  ) {
+    return this.adminService.getEmployeeHistory(user, employeeId, query);
   }
 
   @Post('manual-entry')
