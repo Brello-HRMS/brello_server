@@ -199,17 +199,18 @@ export class OrganizationService {
       user.enterprise_id = enterpriseId; // Use the local enterpriseId
       await manager.save(user);
 
-      // Step 6: Create OrganizationSubscription
+      // Step 6: Create OrganizationSubscription (14-day trial)
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 14);
       const subscription = manager.create(OrganizationSubscription, {
         organization_id: savedOrg.id,
         plan_id: user.plan_id,
-        sub_status: SubscriptionStatus.ACTIVE,
+        sub_status: SubscriptionStatus.TRIAL,
+        is_trial: true,
         start_date: new Date(),
+        end_date: trialEndDate,
+        next_renewal_date: trialEndDate,
       });
-
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
-      subscription.end_date = trialEndDate;
       await manager.save(subscription);
 
       // Step 7: Create Default Payroll Component (Basic Salary)

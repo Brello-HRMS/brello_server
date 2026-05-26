@@ -205,6 +205,36 @@
       "key": "attendance_session_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "invoice_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "payment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "razorpay_order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "razorpay_payment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "razorpay_signature",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "billing_profile_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -10028,6 +10058,649 @@
                   ]
                 },
                 "description": "Audit trail across all attendance events with filters by employee, date and event type. Returns the actor (`performed_by`), `device`, `ip_address`, and `old_value` / `new_value` JSON snapshots for each change. Requires `ATTENDANCE.view`."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "description": "Plan & Subscription experience: dashboard, plan comparison, upgrade/downgrade, invoices, Razorpay checkout, payment history, and GST billing profile. All endpoints require `JwtAuthGuard` except `webhooks/razorpay` (Razorpay-signed).",
+      "item": [
+        {
+          "name": "Overview & Plans",
+          "item": [
+            {
+              "name": "Get Billing Overview (Dashboard)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/overview",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "overview"
+                  ]
+                },
+                "description": "Single call powering the billing dashboard (screen 5.1). Returns: current subscription + plan + cycle + status, trial state (`is_trial`, `days_remaining`, `banner_level` 7/3/1), live employee billing (active count, price/employee, subtotal, GST 18%, estimated total), 5-step timeline (TRIAL_STARTED → TRIAL_ENDS → INVOICE_GENERATED → PAYMENT_DUE → SUBSCRIPTION_RENEWED), and `open_invoice_id` for the Pay Invoice CTA."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.open_invoice_id) {",
+                      "    pm.collectionVariables.set('invoice_id', body.data.open_invoice_id);",
+                      "    console.log('✅ invoice_id saved:', body.data.open_invoice_id);",
+                      "  }",
+                      "  if (body.data && body.data.subscription && body.data.subscription.id) {",
+                      "    pm.collectionVariables.set('subscription_id', body.data.subscription.id);",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "Compare Plans (Cards)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/plans?cycle=Monthly",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "plans"
+                  ],
+                  "query": [
+                    {
+                      "key": "cycle",
+                      "value": "Monthly",
+                      "description": "`Monthly` (default) | `Annual`. Drives the per-cycle estimated totals."
+                    }
+                  ]
+                },
+                "description": "Plan comparison cards (screen 5.1 section 2). For each plan returns monthly + annual per-employee price, `annual_discount_percent`, estimated totals at current headcount, `is_current`, `is_current_cycle`, and the CTA label (`Current Plan` / `Upgrade Now` / `Downgrade Next Cycle` / `Switch to Annual` / `Switch to Monthly` / `Choose Plan`)."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Subscription (Upgrade / Downgrade)",
+          "item": [
+            {
+              "name": "Change Plan (Upgrade or Downgrade)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"plan_id\": \"{{plan_id}}\",\n  \"billing_cycle\": \"Monthly\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/billing/subscriptions/change-plan",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "subscriptions",
+                    "change-plan"
+                  ]
+                },
+                "description": "Upgrade or downgrade (screen 5.2). Server decides: tier upgrade / cycle upgrade (Monthly→Annual) / trial→paid → applied **immediate** and a prorated invoice is generated; tier or cycle downgrade → deferred to next renewal (`applied: 'next_cycle'`). Response: `{ subscription, invoice, applied }`."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.subscription && body.data.subscription.id) {",
+                      "    pm.collectionVariables.set('subscription_id', body.data.subscription.id);",
+                      "  }",
+                      "  if (body.data && body.data.invoice && body.data.invoice.id) {",
+                      "    pm.collectionVariables.set('invoice_id', body.data.invoice.id);",
+                      "    console.log('✅ invoice_id saved:', body.data.invoice.id);",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "Cancel Pending Plan Change",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/subscriptions/cancel-pending-change",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "subscriptions",
+                    "cancel-pending-change"
+                  ]
+                },
+                "description": "Cancels a deferred downgrade (clears `pending_plan_id` / `pending_billing_cycle`). Subscription keeps current plan + cycle on next renewal. 400 if no pending change exists."
+              },
+              "response": []
+            },
+            {
+              "name": "Cancel Subscription",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/subscriptions/cancel",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "subscriptions",
+                    "cancel"
+                  ]
+                },
+                "description": "Cancels the active subscription immediately. `sub_status` flips to `Cancelled`, `end_date` set to now. Org becomes Expired-blocked after access expires."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Invoices",
+          "item": [
+            {
+              "name": "Get Current Invoice",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/invoices/current",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "invoices",
+                    "current"
+                  ]
+                },
+                "description": "Returns the org's open invoice — status in [`Pending`, `Failed`, `Overdue`]. Powers screen 5.3 (Current Invoice). Includes `line_items`, `subtotal`, `gst_rate`, `gst_amount`, `total`, and the frozen `billing_profile_snapshot`. 404 if nothing is open."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.id) {",
+                      "    pm.collectionVariables.set('invoice_id', body.data.id);",
+                      "    console.log('✅ invoice_id saved:', body.data.id);",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "List Invoices (Payment History)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/invoices?page=1&limit=20",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "invoices"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "invoice_status",
+                      "value": "Paid",
+                      "description": "`Pending` | `Paid` | `Failed` | `Overdue` | `Cancelled`",
+                      "disabled": true
+                    },
+                    {
+                      "key": "from",
+                      "value": "2026-01-01",
+                      "description": "YYYY-MM-DD — inclusive lower bound on `invoice_date`",
+                      "disabled": true
+                    },
+                    {
+                      "key": "to",
+                      "value": "2026-12-31",
+                      "description": "YYYY-MM-DD — inclusive upper bound on `invoice_date`",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Paginated invoice history (screen 5.5). Returns `{ data, total, page, limit }` ordered by `invoice_date` DESC. Filter by status + date range."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Invoice by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/invoices/{{invoice_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "invoices",
+                    "{{invoice_id}}"
+                  ]
+                },
+                "description": "Full invoice detail by ID — same shape as `current`. 404 if invoice is in a different org."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Invoice PDF (Signed URL)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/invoices/{{invoice_id}}/pdf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "invoices",
+                    "{{invoice_id}}",
+                    "pdf"
+                  ]
+                },
+                "description": "Returns `{ url, expires_in_seconds: 900 }` — a presigned S3 download URL. PDF is lazily generated (pdfkit) on first request and cached in S3. Layout follows section §8 of the design spec (header, line table, GST summary, footer)."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Payments (Razorpay)",
+          "item": [
+            {
+              "name": "Initiate Payment (Create Razorpay Order)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"invoice_id\": \"{{invoice_id}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/billing/payments/initiate",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "payments",
+                    "initiate"
+                  ]
+                },
+                "description": "Creates a Razorpay order for the invoice's `total` (in paise). Persists a `Payment` row with status `Initiated`. Response includes `razorpay_order_id`, `razorpay_key_id`, `amount` (paise), and `invoice_number` — hand these to the Razorpay JS checkout."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data) {",
+                      "    if (body.data.payment_id) pm.collectionVariables.set('payment_id', body.data.payment_id);",
+                      "    if (body.data.razorpay_order_id) pm.collectionVariables.set('razorpay_order_id', body.data.razorpay_order_id);",
+                      "    console.log('✅ razorpay_order_id saved');",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "Verify Payment (Razorpay Callback)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"razorpay_order_id\": \"{{razorpay_order_id}}\",\n  \"razorpay_payment_id\": \"{{razorpay_payment_id}}\",\n  \"razorpay_signature\": \"{{razorpay_signature}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/billing/payments/verify",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "payments",
+                    "verify"
+                  ]
+                },
+                "description": "Verifies the HMAC signature returned by Razorpay's JS checkout. On success: payment → `Success`, invoice → `Paid`, subscription `end_date` extended by one billing cycle (+1mo or +12mo), `pending_plan_id` / `pending_billing_cycle` applied if set, `sub_status` → `Active`, grace cleared. Idempotent: replaying a successful verify returns the same state."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Payment by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/payments/{{payment_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "payments",
+                    "{{payment_id}}"
+                  ]
+                },
+                "description": "Polled by the 'Verifying your payment securely...' UI (screen 5.4) while the webhook lands. Returns the current `payment_status` (`Initiated` / `Processing` / `Success` / `Failed`)."
+              },
+              "response": []
+            },
+            {
+              "name": "Razorpay Webhook (Public, HMAC-Signed)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Razorpay-Signature",
+                    "value": "<hmac-sha256-of-raw-body-with-webhook-secret>",
+                    "description": "HMAC SHA256 of the raw body using `RAZORPAY_WEBHOOK_SECRET`. Required."
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_TestPaymentId\",\n        \"order_id\": \"{{razorpay_order_id}}\",\n        \"status\": \"captured\",\n        \"amount\": 439550,\n        \"currency\": \"INR\"\n      }\n    }\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/billing/webhooks/razorpay",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "webhooks",
+                    "razorpay"
+                  ]
+                },
+                "description": "**Public endpoint** — no JWT. Razorpay calls this on `payment.captured`, `payment.failed`, `order.paid`. Server verifies the `X-Razorpay-Signature` header against the raw body; mismatched signature → 401. Idempotent on `razorpay_payment_id`. Configure the URL + secret in your Razorpay dashboard."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Billing Profile (GST)",
+          "item": [
+            {
+              "name": "Get Billing Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/billing/profile",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "profile"
+                  ]
+                },
+                "description": "Returns the org's `BillingProfile` (screen 5.6). Auto-creates on first read, seeded from `OrganizationProfile` (name, gst_no, address, etc.)."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  const body = pm.response.json();",
+                      "  if (body.data && body.data.id) {",
+                      "    pm.collectionVariables.set('billing_profile_id', body.data.id);",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "response": []
+            },
+            {
+              "name": "Update Billing Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"legal_business_name\": \"Acme Pvt Ltd\",\n  \"gst_number\": \"22AAAAA0000A1Z5\",\n  \"billing_address\": \"123 MG Road, Indiranagar\",\n  \"state\": \"Karnataka\",\n  \"country\": \"India\",\n  \"pincode\": \"560038\",\n  \"billing_email\": \"finance@acme.in\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/billing/profile",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "profile"
+                  ]
+                },
+                "description": "Upserts the GST-compliant billing profile. `gst_number` is auto-uppercased and validated against the 15-char GSTIN regex `^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9][A-Z][0-9A-Z]$`. Pincode must be 6 digits. The profile is snapshotted into each future invoice's `billing_profile_snapshot`."
               },
               "response": []
             }

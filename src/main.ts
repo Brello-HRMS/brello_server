@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 
 // Bootstrap Application - Initializes and configures the NestJS application
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Cookie parser — required for reading HttpOnly refresh token cookies
   app.use(cookieParser());
