@@ -25,6 +25,15 @@ export class EmployeeOffboarding extends BaseEntity {
   @Column({ type: 'int', default: 30 })
   notice_period: number;
 
+  @Column({ type: 'uuid', nullable: true })
+  handover_to_user_id: string | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  assets_to_recover: string[] | null;
+
+  @Column({ type: 'boolean', default: false })
+  schedule_exit_interview: boolean;
+
   @Column({ type: 'boolean', default: false })
   is_cancelled: boolean;
 }

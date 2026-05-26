@@ -197,6 +197,18 @@ export class InitiateOffboardingDto {
   @IsInt()
   @IsOptional()
   notice_period?: number;
+
+  @IsUUID()
+  @IsOptional()
+  handover_to_user_id?: string;
+
+  @IsOptional()
+  @IsString({ each: true })
+  assets_to_recover?: string[];
+
+  @IsBoolean()
+  @IsOptional()
+  schedule_exit_interview?: boolean;
 }
 
 export class UpdateOffboardingDto {

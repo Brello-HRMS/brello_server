@@ -56,6 +56,12 @@ import { ListEmployeesDto } from '../dto/list-employees.dto';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { ListingHelper } from '../../../common/utils/listing.helper';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
+import { DocumentService } from '../../document/services/document.service';
+import { FolderType } from '../../document/enums/document.enum';
+import { Document } from '../../document/entities/document.entity';
+import { NotificationService } from '../../notification/services/notification.service';
+import { NotificationType } from '../../../common/enums/notification-type.enum';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmployeeService {
@@ -75,7 +81,25 @@ export class EmployeeService {
     private readonly offboardingRepository: EmployeeOffboardingRepository,
     private readonly auditLogRepository: AuditLogRepository,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly documentService: DocumentService,
+    private readonly notificationService: NotificationService,
+    private readonly configService: ConfigService,
   ) {}
+
+  // Convert blank strings on a unique-constrained payload to null so empty values
+  // don't collide on Postgres unique indexes (which treat '' as a distinct value).
+  private nullifyBlanks<T extends Record<string, any>>(input: T): T {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(input)) {
+      out[k] = typeof v === 'string' && v.trim() === '' ? null : v;
+    }
+    return out as T;
+  }
+
+  private buildDocumentUrl(doc: Document | null | undefined): string | null {
+    if (!doc) return null;
+    return this.documentService.buildViewUrl(doc);
+  }
 
   private async createAuditLog(
     actorId: string,
@@ -248,6 +272,7 @@ export class EmployeeService {
       email: user.email,
       phone: user.phone,
       reportsTo: user.reports_to_id,
+      avatar: this.buildDocumentUrl(profileData?.photo),
       profile: profileData
         ? {
             employeeId: profileData.employee_id,
@@ -345,12 +370,7 @@ export class EmployeeService {
     });
 
     const items = response.data.map((userInstance) => {
-      const photo = userInstance.user_profile?.photo;
-      let avatarUrl: string | null = null;
-      if (photo) {
-        const region = 'us-east-1'; // fallback
-        avatarUrl = `https://${photo.bucket}.s3.${region}.amazonaws.com/${photo.object_key}`;
-      }
+      const avatarUrl = this.buildDocumentUrl(userInstance.user_profile?.photo);
 
       return {
         id: userInstance.id,
@@ -596,9 +616,11 @@ export class EmployeeService {
 
     if (dto.bank_info) {
       await this.bankInfoRepository.upsert({
-        account_number: dto.bank_info.accountNumber,
-        ifsc_code: dto.bank_info.ifscCode,
-        bank_name: dto.bank_info.bankName,
+        ...this.nullifyBlanks({
+          account_number: dto.bank_info.accountNumber,
+          ifsc_code: dto.bank_info.ifscCode,
+          bank_name: dto.bank_info.bankName,
+        }),
         user_profile_id: profile.id,
         enterprise_id: profile.enterprise_id,
         organization_id: profile.organization_id,
@@ -608,12 +630,14 @@ export class EmployeeService {
 
     if (dto.gov_info) {
       await this.govInfoRepository.upsert({
-        pan: dto.gov_info.pan,
-        aadhaar: dto.gov_info.aadhaar,
-        uan: dto.gov_info.uan,
-        esi: dto.gov_info.esi,
-        passport: dto.gov_info.passport,
-        driving_licence: dto.gov_info.drivingLicence,
+        ...this.nullifyBlanks({
+          pan: dto.gov_info.pan,
+          aadhaar: dto.gov_info.aadhaar,
+          uan: dto.gov_info.uan,
+          esi: dto.gov_info.esi,
+          passport: dto.gov_info.passport,
+          driving_licence: dto.gov_info.drivingLicence,
+        }),
         user_profile_id: profile.id,
         enterprise_id: profile.enterprise_id,
         organization_id: profile.organization_id,
@@ -888,6 +912,9 @@ export class EmployeeService {
       reason: dto.reason,
       last_working_day: new Date(dto.last_working_day),
       notice_period: dto.notice_period || profile.notice_period,
+      handover_to_user_id: dto.handover_to_user_id ?? null,
+      assets_to_recover: dto.assets_to_recover ?? null,
+      schedule_exit_interview: dto.schedule_exit_interview ?? false,
     });
 
     await this.profileRepository.update(profile.id, {
@@ -971,6 +998,48 @@ export class EmployeeService {
     return offboarding;
   }
 
+  async setEmployeePhoto(
+    actor: LoggedInUser,
+    id: string,
+    file: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+      size: number;
+    },
+  ): Promise<{ avatar: string | null }> {
+    if (!file) {
+      throw new BadRequestException('Photo file is required');
+    }
+    if (!file.mimetype?.startsWith('image/')) {
+      throw new BadRequestException('Uploaded file must be an image');
+    }
+
+    const profile = await this.validateProfileAccess(id);
+
+    const document = await this.documentService.uploadDocument(
+      actor,
+      file,
+      FolderType.EMPLOYEE_IMAGE,
+      id,
+    );
+
+    await this.profileRepository.update(profile.id, {
+      photo_id: document.id,
+    });
+
+    await this.createAuditLog(
+      actor.userId,
+      'UPDATE_PROFILE_PHOTO',
+      { photo_id: profile.photo_id },
+      { photo_id: document.id },
+      id,
+      'user',
+    );
+
+    return { avatar: this.buildDocumentUrl(document) };
+  }
+
   async softDeleteEmployee(id: string): Promise<any> {
     const user = await this.userRepository.findById(id);
     if (!user) {
@@ -1021,7 +1090,44 @@ export class EmployeeService {
       'user',
     );
 
+    // Fire-and-forget invite email. We don't block the response on delivery —
+    // NotificationService logs failures internally.
+    void this.sendInviteEmail(id);
+
     return { success: true, status: EmployeeStatus.INVITED };
+  }
+
+  private async sendInviteEmail(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user?.email) {
+      this.logger.warn(
+        `Skipping invite email for user ${userId}: no email on record`,
+      );
+      return;
+    }
+
+    const publicUrl =
+      this.configService.get<string>('app.publicUrl') ?? 'http://localhost:5173';
+    const loginUrl = `${publicUrl.replace(/\/$/, '')}/auth/login`;
+    const displayName = user.first_name || 'there';
+
+    await this.notificationService.send({
+      user_id: userId,
+      target_email: user.email,
+      title: "You've been invited to Brello",
+      message:
+        `Hi ${displayName},\n\n` +
+        `Your team has invited you to Brello. Sign in with your work email ` +
+        `(${user.email}) to get started:\n\n${loginUrl}\n\n` +
+        `You'll receive a one-time password by email when you sign in. ` +
+        `If you weren't expecting this, you can ignore the message.`,
+      type: NotificationType.EMAIL,
+    });
+  }
+
+  /** Public accessor for the auth flow to check an employee's lifecycle state. */
+  async findProfileByUserId(userId: string): Promise<UserProfile | null> {
+    return this.profileRepository.findByUserId(userId);
   }
 
   async activateEmployee(id: string, actorId: string): Promise<any> {

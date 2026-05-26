@@ -75,20 +75,6 @@ export class DocumentController {
     return this.documentService.getSignedUrl(id, user);
   }
 
-  @Get(':id/view')
-  async view(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Res() res: Response,
-    @LoggedInUser() user: LoggedInUserInterface,
-  ) {
-    const { buffer, mimeType, fileName } =
-      await this.documentService.getFileData(id);
-
-    res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
-    res.send(buffer);
-  }
-
   @Get(':id/download')
   async download(
     @Param('id', ParseUUIDPipe) id: string,

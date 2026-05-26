@@ -5,6 +5,10 @@ http:
 brello:
   environment: 'dev' # dev, uat, prod
 
+app:
+  # Public URL of the webapp; used to build the invite link sent to new employees.
+  publicUrl: 'http://localhost:5173'
+
 auth:
   JWT_SECRET: jwtsecretstring
   JWT_REFRESH_SECRET: jwtrefreshsecretstring
