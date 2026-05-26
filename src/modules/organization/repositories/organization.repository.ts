@@ -44,6 +44,13 @@ export class OrganizationRepository {
     });
   }
 
+  async findByWebsiteUrl(websiteUrl: string): Promise<Organization[]> {
+    return this.repository.find({
+      where: { website_url: websiteUrl },
+      order: { created_at: 'DESC' },
+    });
+  }
+
   async findByName(name: string): Promise<Organization | null> {
     return this.repository.findOne({
       where: { name },

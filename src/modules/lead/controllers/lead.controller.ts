@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, Query } from '@nestjs/common';
 import { LeadService } from '../services/lead.service';
 import { CreateLeadDto } from '../dto/create-lead.dto';
 import { VerifyLeadOtpDto } from '../dto/verify-lead-otp.dto';
@@ -25,5 +25,14 @@ export class LeadController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.leadService.verifyLeadOtp(verifyLeadOtpDto, user);
+  }
+
+  @Get('check-availability')
+  @HttpCode(HttpStatus.OK)
+  async checkAvailability(
+    @Query('email') email?: string,
+    @Query('phone') phone?: string,
+  ) {
+    return this.leadService.checkAvailability(email, phone);
   }
 }

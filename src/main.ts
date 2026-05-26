@@ -44,6 +44,9 @@ async function bootstrap() {
 
   const PORT: number | undefined = config.get<number>('http.port');
 
+  // Enable shutdown hooks to properly close database connections on hot reload/termination
+  app.enableShutdownHooks();
+
   await app.listen(PORT ?? 8000);
   console.log(`
   🚀 Application is running on: http://localhost:${PORT}

@@ -16,7 +16,7 @@ export class SetupCompanyDto {
   name: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'Subdomain is required' })
+  @IsOptional()
   @Length(2, 255, {
     message: 'Subdomain must be between 2 and 255 characters',
   })
@@ -25,6 +25,13 @@ export class SetupCompanyDto {
       'Subdomain can only contain lowercase letters, numbers, and hyphens',
   })
   subdomain: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Website URL is required' })
+  @Length(2, 255, {
+    message: 'Website URL must be between 2 and 255 characters',
+  })
+  website_url: string;
 
   @IsUUID()
   @IsNotEmpty({ message: 'Business type ID is required' })

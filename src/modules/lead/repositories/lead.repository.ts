@@ -27,4 +27,14 @@ export class LeadRepository {
     await this.repository.update(id, data);
     return this.findById(id);
   }
+
+  async emailExists(email: string): Promise<boolean> {
+    const count = await this.repository.count({ where: { email } });
+    return count > 0;
+  }
+
+  async phoneExists(phone: string): Promise<boolean> {
+    const count = await this.repository.count({ where: { phone } });
+    return count > 0;
+  }
 }

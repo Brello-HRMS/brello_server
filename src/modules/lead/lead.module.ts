@@ -8,6 +8,7 @@ import { LeadController } from './controllers/lead.controller';
 import { LeadService } from './services/lead.service';
 import { LeadRepository } from './repositories/lead.repository';
 import { OtpRepository } from '../auth/repositories/otp.repository';
+import { UserModule } from '../user/user.module';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { NotificationModule } from '../notification/notification.module';
     TypeOrmModule.forFeature([Lead, Otp, User]),
     ConfigModule,
     NotificationModule,
+    UserModule,
   ],
   controllers: [LeadController],
   providers: [LeadService, LeadRepository, OtpRepository],

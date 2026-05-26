@@ -10,7 +10,10 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { OrganizationService } from '../services/organization.service';
 import { UpdateOrganizationDto } from '../dto/update-organization.dto';
 import { SetupCompanyDto } from '../dto/setup-company.dto';
@@ -24,8 +27,12 @@ export class OrganizationController {
 
   @Post('setup')
   @HttpCode(HttpStatus.OK)
-  async setupCompany(@Body() dto: SetupCompanyDto) {
-    return this.organizationService.setupCompany(dto);
+  @UseInterceptors(FileInterceptor('logo'))
+  async setupCompany(
+    @Body() dto: SetupCompanyDto,
+    @UploadedFile() logo?: any,
+  ) {
+    return this.organizationService.setupCompany(dto, logo);
   }
 
   @Get()

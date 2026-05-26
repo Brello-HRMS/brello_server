@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { LeadRepository } from '../repositories/lead.repository';
+import { UserRepository } from '../../user/repositories/user.repository';
 import { OtpRepository } from '../../auth/repositories/otp.repository';
 import { NotificationService } from '../../notification/services/notification.service';
 import { CreateLeadDto } from '../dto/create-lead.dto';
@@ -29,6 +30,7 @@ export class LeadService {
 
   constructor(
     private readonly leadRepository: LeadRepository,
+    private readonly userRepository: UserRepository,
     private readonly otpRepository: OtpRepository,
     private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
@@ -44,7 +46,13 @@ export class LeadService {
       `Lead registration initiated for email: ${createLeadDto.email}`,
     );
 
-    await this.ensureEmailNotTaken(createLeadDto.email);
+    const { emailAvailable, phoneAvailable } = await this.checkAvailability(createLeadDto.email, createLeadDto.phone);
+    if (!emailAvailable) {
+      throw new ConflictException(`Email '${createLeadDto.email}' is already registered`);
+    }
+    if (!phoneAvailable) {
+      throw new ConflictException(`Phone '${createLeadDto.phone}' is already registered`);
+    }
 
     const passwordHash = await this.hashValue(createLeadDto.password);
 
@@ -89,11 +97,23 @@ export class LeadService {
 
   // --- Private Helpers ---
 
-  private async ensureEmailNotTaken(email: string): Promise<void> {
-    const existingLead = await this.leadRepository.findByEmail(email);
-    if (existingLead) {
-      throw new ConflictException(`Lead with email '${email}' already exists`);
+  public async checkAvailability(email?: string, phone?: string): Promise<{ emailAvailable: boolean; phoneAvailable: boolean }> {
+    let emailAvailable = true;
+    let phoneAvailable = true;
+
+    if (email) {
+      const emailInLead = await this.leadRepository.emailExists(email);
+      const emailInUser = await this.userRepository.emailExists(email);
+      emailAvailable = !emailInLead && !emailInUser;
     }
+
+    if (phone) {
+      const phoneInLead = await this.leadRepository.phoneExists(phone);
+      const phoneInUser = await this.userRepository.phoneExists(phone);
+      phoneAvailable = !phoneInLead && !phoneInUser;
+    }
+
+    return { emailAvailable, phoneAvailable };
   }
 
   private async findLeadByEmailOrFail(email: string): Promise<Lead> {

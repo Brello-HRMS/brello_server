@@ -56,7 +56,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       switch (dbError.code) {
         case '23505': // Unique Violation
           status = HttpStatus.CONFLICT;
-          message = 'A record with this value already exists.';
+          message = dbError.detail ? `A record with this value already exists. ${dbError.detail}` : 'A record with this value already exists.';
           errorCode = 'UNIQUE_VIOLATION';
           break;
         case '23502': // Not Null Violation

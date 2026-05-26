@@ -9,6 +9,9 @@ export class Organization extends BaseEntity {
   name: string;
 
   @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
+  website_url: string;
+
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
   subdomain: string;
 
   @ManyToOne(() => Enterprise, { eager: false })
