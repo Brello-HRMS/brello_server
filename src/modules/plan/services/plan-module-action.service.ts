@@ -32,6 +32,10 @@ export class PlanModuleActionService {
     return this.planModuleActionRepository.findOneById(id);
   }
 
+  async findByPlan(planId: string, user?: LoggedInUser): Promise<PlanModuleAction[]> {
+    return this.planModuleActionRepository.findByPlanId(planId);
+  }
+
   async findByPlanAndModule(
     planId: string,
     moduleId: string,

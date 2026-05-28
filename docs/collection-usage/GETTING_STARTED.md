@@ -32,6 +32,7 @@
 | `organization_id`  | _(empty)_                      | Auto-populated on login                      |
 | `default_app_id`   | _(empty)_                      | Auto-populated on login                      |
 | `app_id`           | _(empty)_                      | Set after creating an App                    |
+| `module_id`        | _(empty)_                      | Set after creating an App Module             |
 | `role_id`          | _(empty)_                      | Set after creating a Role                    |
 | `plan_id`          | _(empty)_                      | Set after creating a Plan                    |
 | `industry_type_id` | _(empty)_                      | Set after creating an Industry Type          |
@@ -394,6 +395,49 @@ Authorization: Bearer {{access_token}}
 ✅ **Save the `id`** — this is your `app_id`.
 
 > 💡 `priority` determines the default app on login (lower = higher priority).
+
+### Step 7.5 — Create App Modules (Optional but recommended)
+
+Define the module tree for the app. Modules are used for sidebar navigation and RBAC permission assignment.
+
+> **Folder:** App Module → Create App Module
+
+**Create a root module (MOD):**
+
+```
+POST /api/v1/app-modules
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Dashboard",
+  "code": "DASHBOARD",
+  "app_id": "{{app_id}}",
+  "wbs_code": "1",
+  "type": "mod",
+  "icon": "LayoutDashboard",
+  "path": "/dashboard"
+}
+```
+
+**Create a sub-module (SUBMOD):**
+
+```json
+{
+  "name": "Leave Balance",
+  "code": "LEAVE_BALANCE",
+  "app_id": "{{app_id}}",
+  "wbs_code": "2.1",
+  "parent_id": "<leave_module_id>",
+  "type": "submod",
+  "path": "/leave/balance"
+}
+```
+
+> **WBS codes** use dot-notation for ordering: `1`, `2`, `2.1`, `2.2`, `3`. The UI auto-computes the next available WBS code, but you can set it manually here.
+
+> **`/menu`** returns an empty array until modules and module-access entries are configured. Create modules here, then assign permissions via `PUT /api/v1/module-access/role/:roleId/permissions-list`.
 
 ---
 

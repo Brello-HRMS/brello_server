@@ -1,6 +1,6 @@
 # Brello HRMS — Architecture Guide
 
-> **Last updated:** February 2026
+> **Last updated:** May 2026
 > A comprehensive guide for new developers joining the team.
 
 ---
@@ -108,8 +108,10 @@ brello_server/
 │       ├── industry-type/               ← System master lookup for industries
 │       ├── auth/                        ← Authentication (JWT, sessions, OTP, passwords)
 │       ├── app/                         ← Multi-app registry (HRMS, CRM, LMS, etc.)
+│       ├── app-module/                  ← Module/permission taxonomy (AppModule, Action, ModuleAccess)
 │       ├── rbac/                        ← Role-Based Access Control engine
-│       └── plan/                        ← Subscription plans & feature gating
+│       ├── plan/                        ← Subscription plans & feature gating
+│       └── platform/                    ← Platform admin CRUD (departments, designations defaults)
 │
 ├── .env.example                         ← Legacy reference (config now uses YAML)
 ├── nest-cli.json                        ← NestJS CLI config (asset copying for YAML)
@@ -621,6 +623,31 @@ Applied in `main.ts` before any route handler executes:
 | Method | Endpoint | Auth | Description                                  |
 | ------ | -------- | ---- | -------------------------------------------- |
 | GET    | `/`      | JWT  | Get RBAC-resolved menu tree for current user |
+
+### App Modules (`/api/v1/app-modules`)
+
+| Method | Endpoint           | Auth        | Description                              |
+| ------ | ------------------ | ----------- | ---------------------------------------- |
+| POST   | `/`                | JWT         | Create module or sub-module              |
+| GET    | `/?app_id=<uuid>`  | JWT         | List modules for an app                  |
+| GET    | `/:id`             | JWT         | Get module by ID                         |
+| PATCH  | `/:id`             | JWT         | Update module                            |
+| DELETE | `/:id`             | JWT         | Soft-delete module                       |
+
+### Platform Admin (`/api/v1/platform-admin`)
+
+All endpoints guarded by `JwtAuthGuard` + `PlatformAdminGuard`.
+
+| Method | Endpoint                            | Description                       |
+| ------ | ----------------------------------- | --------------------------------- |
+| GET    | `/platform-admin/departments`       | List all default departments      |
+| POST   | `/platform-admin/departments`       | Create default department         |
+| PATCH  | `/platform-admin/departments/:id`   | Update default department         |
+| DELETE | `/platform-admin/departments/:id`   | Soft-delete default department    |
+| GET    | `/platform-admin/designations`      | List all default designations     |
+| POST   | `/platform-admin/designations`      | Create default designation        |
+| PATCH  | `/platform-admin/designations/:id`  | Update default designation        |
+| DELETE | `/platform-admin/designations/:id`  | Soft-delete default designation   |
 
 ### Payroll (`payroll`)
 

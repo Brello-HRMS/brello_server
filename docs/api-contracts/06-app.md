@@ -19,7 +19,9 @@ Manages application definitions in the multi-app architecture (e.g., HRMS, CRM, 
 
 | Field             | Type          | Required | Validation        | Description                                               |
 | ----------------- | ------------- | -------- | ----------------- | --------------------------------------------------------- |
-| `name`            | string        | ✅       | 2–100 characters  | App name (must be unique)                                 |
+| `name`            | string        | ✅       | 2–100 characters  | App name (must be globally unique)                        |
+| `description`     | string        | ✅       | max 100 chars     | Short description of the app's purpose                    |
+| `icon`            | string        | ❌       | max 100 chars     | Lucide icon name (e.g., LayoutDashboard)                  |
 | `priority`        | integer       | ❌       | ≥ 1, default: 999 | Lower = higher priority (determines default app on login) |
 | `enterprise_id`   | string (UUID) | ✅       | Valid UUID v4     | Enterprise this app belongs to                            |
 | `organization_id` | string (UUID) | ✅       | Valid UUID v4     | Organization this app belongs to                          |
@@ -27,6 +29,8 @@ Manages application definitions in the multi-app architecture (e.g., HRMS, CRM, 
 ```json
 {
   "name": "HRMS",
+  "description": "Human Resource Management System",
+  "icon": "LayoutDashboard",
   "priority": 1,
   "enterprise_id": "550e8400-e29b-41d4-a716-446655440000",
   "organization_id": "770e8400-e29b-41d4-a716-446655440002"
@@ -41,6 +45,8 @@ Manages application definitions in the multi-app architecture (e.g., HRMS, CRM, 
   "data": {
     "id": "880e8400-e29b-41d4-a716-446655440003",
     "name": "HRMS",
+    "description": "Human Resource Management System",
+    "icon": "LayoutDashboard",
     "priority": 1,
     "enterprise_id": "550e8400-...",
     "organization_id": "770e8400-...",
@@ -107,14 +113,18 @@ Returns all apps, sorted by `priority` ascending.
 
 **Request Body:** (all fields optional)
 
-| Field      | Type    | Validation       | Description      |
-| ---------- | ------- | ---------------- | ---------------- |
-| `name`     | string  | 2–100 characters | Updated app name |
-| `priority` | integer | ≥ 1              | Updated priority |
+| Field         | Type    | Validation       | Description             |
+| ------------- | ------- | ---------------- | ----------------------- |
+| `name`        | string  | 2–100 characters | Updated app name        |
+| `description` | string  | max 100 chars    | Updated description     |
+| `icon`        | string  | max 100 chars    | Updated icon name       |
+| `priority`    | integer | ≥ 1              | Updated priority        |
 
 ```json
 {
   "name": "HRMS Pro",
+  "description": "Full-featured HRMS",
+  "icon": "Briefcase",
   "priority": 1
 }
 ```

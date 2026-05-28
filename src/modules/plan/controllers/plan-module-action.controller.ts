@@ -42,6 +42,15 @@ export class PlanModuleActionController {
     return this.planModuleActionService.findAll(user);
   }
 
+  @Get('plan/:planId')
+  @HttpCode(HttpStatus.OK)
+  findByPlan(
+    @Param('planId', ParseUUIDPipe) planId: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.planModuleActionService.findByPlan(planId, user);
+  }
+
   @Get('plan/:planId/module/:moduleId')
   @HttpCode(HttpStatus.OK)
   findByPlanAndModule(
