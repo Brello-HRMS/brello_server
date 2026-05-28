@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Plan } from '../entities/plan.entity';
+import { Status } from '../../../common/enums';
 
 @Injectable()
 export class PlanRepository {
@@ -18,10 +19,12 @@ export class PlanRepository {
     return this.repository.save(plan);
   }
 
-  async findAll(): Promise<Plan[]> {
+  async findAll(isPlatformAdmin = false): Promise<Plan[]> {
     return this.repository.find({
       order: { price: 'ASC' },
-      where: { status: 'ACTIVE' as any },
+      where: isPlatformAdmin
+        ? { status: Not(Status.DELETED) }
+        : { status: Status.ACTIVE },
     });
   }
 

@@ -283,7 +283,7 @@ Authorization: Bearer {{access_token}}
 
 ### Step 4 — Create Plan
 
-> **Folder:** Plan → Create Plan
+> **Folder:** Platform Admin Post-Creation Setup → Create Plan
 
 ```
 POST /api/v1/plans
@@ -293,14 +293,27 @@ Authorization: Bearer {{access_token}}
 ```json
 {
   "name": "Enterprise Pro",
-  "price": 99.99,
-  "description": "Premium tier plan with all features",
+  "price": 499.00,
+  "price_per_employee_annual": 4990.00,
+  "annual_discount_percent": 20,
+  "tier_rank": 2,
+  "billing_cycle_default": "Monthly",
+  "description": "Premium tier plan with all features.",
   "discount": 0,
-  "feature": ["HRMS", "CRM", "Payroll"]
+  "feature": ["HRMS", "CRM", "Payroll", "Attendance", "Leave", "Reimbursement"],
+  "status": "ACTIVE"
 }
 ```
 
-✅ **Save the `id`** — this is your `plan_id`.
+> **Field guide:**
+> - `tier_rank` — `0` = Free, `1` = Standard, `2` = Premium (controls upgrade/downgrade logic)
+> - `billing_cycle_default` — `"Monthly"` or `"Annual"` (shown as default on pricing page)
+> - `annual_discount_percent` — discount applied when customer selects annual billing
+> - `status` — `"ACTIVE"` makes it visible on the public website immediately
+
+✅ **Save the `id`** — this is your `plan_id`. The test script saves it to `{{plan_id}}` automatically.
+
+> 💡 Plans created here are immediately visible on `GET /plans` (public endpoint). Set `"status": "INACTIVE"` to hide a plan from the website while still keeping it in the system.
 
 ### Step 5 — Create Enterprise
 

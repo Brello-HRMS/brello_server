@@ -1209,7 +1209,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Enterprise Pro\",\n  \"price\": 99.99,\n  \"description\": \"Premium tier plan with all features\",\n  \"discount\": 0,\n  \"feature\": [\"HRMS\", \"CRM\", \"Payroll\"]\n}"
+              "raw": "{\n  \"name\": \"Enterprise Pro\",\n  \"price\": 499.00,\n  \"price_per_employee_annual\": 4990.00,\n  \"annual_discount_percent\": 20,\n  \"tier_rank\": 2,\n  \"billing_cycle_default\": \"Monthly\",\n  \"description\": \"Premium tier plan with all features.\",\n  \"discount\": 0,\n  \"feature\": [\"HRMS\", \"CRM\", \"Payroll\", \"Attendance\", \"Leave\", \"Reimbursement\"],\n  \"status\": \"ACTIVE\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/plans",
@@ -4449,6 +4449,13 @@
           "name": "Get All Plans",
           "request": {
             "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/plans",
               "host": [
@@ -4459,7 +4466,19 @@
               ]
             }
           },
-          "event": []
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Platform admins see all non-deleted plans.",
+                  "// Public (no token) sees only ACTIVE plans.",
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Create Plan",
@@ -4473,7 +4492,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Starter\",\n  \"price\": 500.00,\n  \"description\": \"Starter plan\",\n  \"feature\": [\"Leave\", \"Attendance\"]\n}"
+              "raw": "{\n  \"name\": \"Professional\",\n  \"price\": 149.00,\n  \"price_per_employee_annual\": 1490.00,\n  \"annual_discount_percent\": 20,\n  \"tier_rank\": 1,\n  \"billing_cycle_default\": \"Monthly\",\n  \"description\": \"For growing teams that need full HRMS capabilities.\",\n  \"discount\": 0,\n  \"feature\": [\"Leave Management\", \"Attendance\", \"Payroll\", \"Employee Directory\"],\n  \"status\": \"ACTIVE\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/plans",
@@ -4492,7 +4511,7 @@
                 "exec": [
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) {",
-                  "    pm.collectionVariables.set(\"plan_id\", jsonData.data.id);",
+                  "    pm.collectionVariables.set('plan_id', jsonData.data.id);",
                   "    console.log('\u2705 Plan ID saved:', jsonData.data.id);",
                   "}"
                 ],
@@ -4500,6 +4519,81 @@
               }
             }
           ]
+        },
+        {
+          "name": "Get Plan by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/plans/{{plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans",
+                "{{plan_id}}"
+              ]
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Update Plan",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 199.00,\n  \"annual_discount_percent\": 25,\n  \"feature\": [\"Leave Management\", \"Attendance\", \"Payroll\", \"Employee Directory\", \"Reimbursement\"],\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/plans/{{plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans",
+                "{{plan_id}}"
+              ]
+            }
+          },
+          "event": []
+        },
+        {
+          "name": "Delete Plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/plans/{{plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "plans",
+                "{{plan_id}}"
+              ]
+            }
+          },
+          "event": []
         },
         {
           "name": "Create Organization Subscription",

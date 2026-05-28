@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -33,8 +34,11 @@ export class AppModuleController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll(@LoggedInUser() user: LoggedInUserInterface) {
-    return this.appModuleService.findAll(user);
+  findAll(
+    @Query('app_id') appId: string | undefined,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.appModuleService.findAll(user, appId);
   }
 
   @Get(':id')

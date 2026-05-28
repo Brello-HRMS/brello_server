@@ -28,7 +28,8 @@ export class AppModuleService {
     }
   }
 
-  async findAll(user?: LoggedInUser): Promise<AppModule[]> {
+  async findAll(user?: LoggedInUser, appId?: string): Promise<AppModule[]> {
+    if (appId) return this.appModuleRepository.findByAppId(appId);
     return this.appModuleRepository.findAll();
   }
 

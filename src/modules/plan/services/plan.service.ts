@@ -24,7 +24,7 @@ export class PlanService {
   }
 
   async findAll(user?: LoggedInUser): Promise<Plan[]> {
-    return this.planRepository.findAll();
+    return this.planRepository.findAll(user?.isPlatformAdmin ?? false);
   }
 
   async findOne(id: string, user?: LoggedInUser): Promise<Plan> {
