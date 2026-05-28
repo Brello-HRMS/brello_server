@@ -192,6 +192,26 @@ POST /api/v1/users
 
 ### Step 2 — Login as Platform Admin (Request OTP)
 
+There are two ways to log in as a Platform Admin. Both produce the same token.
+
+**Option A — Unified Login (same UI as regular users):**
+
+> **Folder:** Auth → Login - Send OTP
+
+```
+POST /api/v1/auth/login/send-otp
+```
+
+```json
+{
+  "email": "admin@brello.com"
+}
+```
+
+The server automatically detects the user is a platform admin and issues a `PLATFORM_ADMIN_LOGIN` OTP. ✅ Check the **server console** for the OTP (dev mode).
+
+**Option B — Dedicated Endpoint (Postman/API only, requires password):**
+
 > **Folder:** Auth → Platform Admin Login (Request OTP)
 
 ```
@@ -209,6 +229,26 @@ POST /api/v1/auth/platform-admin/login
 
 ### Step 2.5 — Verify Login (Get Token)
 
+**If you used Option A (unified flow):**
+
+> **Folder:** Auth → Login - Verify OTP
+
+```
+POST /api/v1/auth/login/verify-otp
+```
+
+```json
+{
+  "email": "admin@brello.com",
+  "otp": "123456",
+  "device_fingerprint": "postman-dev"
+}
+```
+
+The response will include `"is_platform_admin": true` in the user object. The frontend automatically routes to `/platform/dashboard`.
+
+**If you used Option B (dedicated endpoint):**
+
 > **Folder:** Auth → Platform Admin Verify Login (Returns Token)
 
 ```
@@ -222,7 +262,7 @@ POST /api/v1/auth/platform-admin/verify-login
 }
 ```
 
-✅ **Save the `access_token`**
+✅ **Save the `access_token`** — it contains `isPlatformAdmin: true` in the JWT payload.
 
 ### Step 3 — Create Industry Type
 
@@ -468,6 +508,25 @@ The `otp_login_email` staging variable is cleaned up (unset) automatically after
 | `otp`        | Exactly 6 digits                     |
 | Max attempts | 5 attempts before OTP is invalidated |
 | Expiry       | 10 minutes                           |
+
+---
+
+### Step 8d — Resend OTP (if needed)
+
+> **Folder:** Auth → Resend OTP
+
+```
+POST /api/v1/auth/resend-otp
+```
+
+```json
+{
+  "email": "john.doe@example.com",
+  "purpose": "LOGIN"
+}
+```
+
+✅ A fresh OTP is generated and sent even if the previous OTP expired or was never issued. Use `"purpose": "LOGIN"` for both regular users and platform admins on the unified flow.
 
 ---
 
@@ -719,8 +778,8 @@ Authorization: Bearer {{access_token}}
 | Step | Method | Endpoint                            | Prerequisite                            |
 | ---- | ------ | ----------------------------------- | --------------------------------------- |
 | 1    | POST   | `/users`                            | enterprise_id, organization_id (seeded) |
-| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists              |
-| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                         |
+| 2    | POST   | `/auth/login/send-otp` *(unified)* OR `/auth/platform-admin/login` *(dedicated)* | Platform Admin User exists |
+| 2.5  | POST   | `/auth/login/verify-otp` *(unified)* OR `/auth/platform-admin/verify-login` *(dedicated)* | OTP from step 2 |
 | 3    | POST   | `/industry-types`                   | access_token (Platform Admin)           |
 | 4    | POST   | `/plans`                            | access_token (Platform Admin)           |
 | 5    | POST   | `/enterprises`                      | access_token (Platform Admin)           |
@@ -729,6 +788,7 @@ Authorization: Bearer {{access_token}}
 | 7    | POST   | `/apps`                             | access_token (Platform Admin)           |
 | 8    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  |
 | 9    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       |
+| 8d   | POST   | `/auth/resend-otp`                  | Email exists (no prior OTP required)    |
 | 10   | POST   | `/auth/login`                       | User + Role + App exist                 |
 | 11   | GET    | `/menu`                             | access_token                            |
 | 12   | POST   | `/auth/refresh`                     | HttpOnly cookie (auto)                  |

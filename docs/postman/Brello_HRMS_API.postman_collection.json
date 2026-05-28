@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "brello-hrms-collection-v1",
     "name": "Brello HRMS API",
-    "description": "Complete API collection for the Brello HRMS multi-tenant, multi-app backend.\n\n## Setup\n1. Set the `base_url` variable to your server address (default: `http://localhost:8000`)\n2. Start with the **Login** request to get tokens\n3. Access token is auto-saved to collection variables. Refresh token is delivered as an HttpOnly cookie (`refresh_token`).\n\n## Authentication Flow\n1. Login → saves `access_token`, refresh token is set as HttpOnly cookie\n2. Use authenticated endpoints (access token is auto-injected)\n3. Switch App → saves new `access_token`\n4. Refresh → browser/Postman sends cookie automatically, rotates both tokens",
+    "description": "Complete API collection for the Brello HRMS multi-tenant, multi-app backend.\n\n## Setup\n1. Set the `base_url` variable to your server address (default: `http://localhost:8000`)\n2. Start with the **Login** request to get tokens\n3. Access token is auto-saved to collection variables. Refresh token is delivered as an HttpOnly cookie (`refresh_token`).\n\n## Authentication Flow\n1. Login \u2192 saves `access_token`, refresh token is set as HttpOnly cookie\n2. Use authenticated endpoints (access token is auto-injected)\n3. Switch App \u2192 saves new `access_token`\n4. Refresh \u2192 browser/Postman sends cookie automatically, rotates both tokens",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -275,7 +275,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Lead registered. Check console for OTP successful.');",
+                  "    console.log('\u2705 Lead registered. Check console for OTP successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -316,7 +316,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ OTP verified successful.');",
+                  "    console.log('\u2705 OTP verified successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -339,7 +339,7 @@
                   "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
                   "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
                   "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
-                  "    console.log('✅ Access token and IDs saved.');",
+                  "    console.log('\u2705 Access token and IDs saved.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -382,7 +382,7 @@
                   "if (pm.response.code === 201 || pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('organization_id', response.data.user.organization_id);",
-                  "    console.log('✅ Organization ID saved:', response.data.user.organization_id);",
+                  "    console.log('\u2705 Organization ID saved:', response.data.user.organization_id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -436,7 +436,7 @@
                   "    pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
                   "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
                   "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
-                  "    console.log('✅ Access token saved. Refresh token is in HttpOnly cookie.');",
+                  "    console.log('\u2705 Access token saved. Refresh token is in HttpOnly cookie.');",
                   "    console.log('Default app:', data.defaultAppId);",
                   "    console.log('Available apps:', JSON.stringify(data.availableApps));",
                   "}"
@@ -481,7 +481,7 @@
                   "// Store the email from request body so Verify OTP can reuse it.",
                   "const body = JSON.parse(pm.request.body.raw);",
                   "pm.collectionVariables.set('otp_login_email', body.email);",
-                  "console.log('📧 OTP login email staged:', body.email);"
+                  "console.log('\ud83d\udce7 OTP login email staged:', body.email);"
                 ],
                 "type": "text/javascript"
               }
@@ -494,8 +494,8 @@
                   "    pm.response.to.have.status(204);",
                   "});",
                   "if (pm.response.code === 204) {",
-                  "    console.log('✅ OTP sent. Check server console for the OTP in dev mode.');",
-                  "    console.log('📌 Next step: run \"Login - Verify OTP\" with the OTP from your email/console.');",
+                  "    console.log('\u2705 OTP sent. Check server console for the OTP in dev mode.');",
+                  "    console.log('\ud83d\udccc Next step: run \"Login - Verify OTP\" with the OTP from your email/console.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -530,7 +530,7 @@
                 "send-otp"
               ]
             },
-            "description": "Initiate OTP-based login. Sends a 6-digit OTP to the provided email.\n\n**Returns:** 204 No Content on success.\n\n**Auto-stages:** `otp_login_email` collection variable, so the follow-up **Login - Verify OTP** request is pre-filled.\n\n**In dev mode:** The OTP is printed to the server console."
+            "description": "Initiate OTP-based login. Sends a 6-digit OTP to the provided email.\n\n**Works for both regular users and Platform Admins.** The server automatically detects the user type and stores the OTP under the correct purpose (`LOGIN` or `PLATFORM_ADMIN_LOGIN`) \u2014 no extra flag needed.\n\n**Returns:** 204 No Content on success.\n\n**Auto-stages:** `otp_login_email` collection variable, so the follow-up **Login - Verify OTP** request is pre-filled.\n\n**In dev mode:** The OTP is printed to the server console."
           },
           "response": []
         },
@@ -547,9 +547,9 @@
                   "    const body = JSON.parse(pm.request.body.raw);",
                   "    body.email = stagedEmail;",
                   "    pm.request.body.update({ mode: 'raw', raw: JSON.stringify(body, null, 4) });",
-                  "    console.log('📧 Email auto-filled from otp_login_email:', stagedEmail);",
+                  "    console.log('\ud83d\udce7 Email auto-filled from otp_login_email:', stagedEmail);",
                   "} else {",
-                  "    console.warn('⚠️  otp_login_email not set. Run \"Login - Send OTP\" first, or fill email manually.');",
+                  "    console.warn('\u26a0\ufe0f  otp_login_email not set. Run \"Login - Send OTP\" first, or fill email manually.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -573,16 +573,21 @@
                   "    pm.collectionVariables.set('organization_id', data.user.organization_id);",
                   "    pm.collectionVariables.set('default_app_id', data.defaultAppId);",
                   "",
-                  "    // Clean up the staging variable after successful login.",
                   "    pm.collectionVariables.unset('otp_login_email');",
                   "",
-                  "    console.log('✅ OTP login successful. Access token saved.');",
-                  "    console.log('✅ Refresh token delivered as HttpOnly cookie.');",
-                  "    console.log('Default app:', data.defaultAppId);",
-                  "    console.log('Available apps:', JSON.stringify(data.availableApps));",
+                  "    if (data.user.is_platform_admin) {",
+                  "        console.log('\\u2705 Platform Admin login successful. Token saved.');",
+                  "        console.log('\\ud83d\\udd00 Frontend redirects to: /platform/dashboard');",
+                  "    } else {",
+                  "        console.log('\\u2705 OTP login successful. Access token saved.');",
+                  "        console.log('Default app:', data.defaultAppId);",
+                  "        console.log('Available apps:', JSON.stringify(data.availableApps));",
+                  "    }",
+                  "    console.log('\\u2705 Refresh token delivered as HttpOnly cookie.');",
+                  "    console.log('is_platform_admin:', data.user.is_platform_admin || false);",
                   "} else {",
                   "    const errorBody = pm.response.json();",
-                  "    console.error('❌ OTP verification failed:', errorBody.message || pm.response.status);",
+                  "    console.error('\\u274c OTP verification failed:', errorBody.message || pm.response.status);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -617,7 +622,7 @@
                 "verify-otp"
               ]
             },
-            "description": "Verify the OTP sent to the email and complete the OTP-based login.\n\n**Email is auto-filled** from the `otp_login_email` variable set by **Login - Send OTP**. You only need to paste the OTP.\n\n**Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`.\n\n**Refresh token:** Delivered as HttpOnly cookie — stored automatically by Postman's cookie jar.\n\n**OTP rules:** 6 digits, max 5 attempts, expires in 10 minutes."
+            "description": "Verify the OTP sent to the email and complete the OTP-based login.\n\n**Email is auto-filled** from the `otp_login_email` variable set by **Login - Send OTP**. You only need to paste the OTP.\n\n**Auto-saves on success:** `access_token`, `user_id`, `enterprise_id`, `organization_id`, `default_app_id`.\n\n**Refresh token:** Delivered as HttpOnly cookie \u2014 stored automatically by Postman's cookie jar.\n\n**OTP rules:** 6 digits, max 5 attempts, expires in 10 minutes."
           },
           "response": []
         },
@@ -632,7 +637,7 @@
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('access_token', response.data.access_token);",
                   "    pm.collectionVariables.set('default_app_id', response.data.appId);",
-                  "    console.log('✅ Switched to app:', response.data.appId);",
+                  "    console.log('\u2705 Switched to app:', response.data.appId);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -685,7 +690,7 @@
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('access_token', response.data.access_token);",
-                  "    console.log('✅ Access token rotated. Refresh token cookie also rotated.');",
+                  "    console.log('\u2705 Access token rotated. Refresh token cookie also rotated.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -743,7 +748,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ Permissions fetched successful.');",
+                  "    console.log('\u2705 Permissions fetched successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -786,7 +791,7 @@
                 "exec": [
                   "if (pm.response.code === 204 || pm.response.code === 200) {",
                   "    pm.collectionVariables.set('access_token', '');",
-                  "    console.log('✅ Logged out. Access token cleared.');",
+                  "    console.log('\u2705 Logged out. Access token cleared.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -838,7 +843,7 @@
                 "exec": [
                   "if (pm.response.code === 200 || pm.response.code === 204) {",
                   "    pm.collectionVariables.set('access_token', '');",
-                  "    console.log('✅ Password updated. All sessions invalidated — please re-login.');",
+                  "    console.log('\u2705 Password updated. All sessions invalidated \u2014 please re-login.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -879,7 +884,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 204) {",
-                  "    console.log('✅ Password reset OTP sent. Check server console for OTP successful.');",
+                  "    console.log('\u2705 Password reset OTP sent. Check server console for OTP successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -920,7 +925,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ Password reset successful. Please re-login successful.');",
+                  "    console.log('\u2705 Password reset successful. Please re-login successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -952,7 +957,7 @@
                 "resend-otp"
               ]
             },
-            "description": "Unified endpoint to resend an OTP for any purpose (LOGIN, RESET_PASSWORD, PLATFORM_ADMIN_LOGIN, etc).\n\n**Requirement:** An initial OTP request must have already been made for this email and purpose."
+            "description": "Re-sends a fresh OTP for any in-progress flow.\n\n**No prior OTP required** \u2014 if no existing OTP is found for the given email + purpose, a new one is generated and sent anyway. This makes it safe to call even when the previous OTP expired.\n\n**Returns:** 204 No Content on success.\n\n**Purpose values:** `LOGIN`, `PLATFORM_ADMIN_LOGIN`, `PLATFORM_ADMIN_REGISTER`, `RESET_PASSWORD`, `LEAD_VERIFICATION`\n\n**Platform admin unified flow:** Use `purpose: LOGIN` \u2014 the server identifies the user by email and applies the correct OTP purpose automatically."
           },
           "response": [],
           "event": [
@@ -960,8 +965,12 @@
               "listen": "test",
               "script": {
                 "exec": [
+                  "pm.test('Resend OTP responded with 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
                   "if (pm.response.code === 204) {",
-                  "    console.log('✅ OTP resent. Check server console for OTP successful.');",
+                  "    console.log('\u2705 OTP resent. Check server console or email for the new OTP.');",
+                  "    console.log('\ud83d\udccc Next step: run \"Login - Verify OTP\" with the new OTP.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1003,7 +1012,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Platform Admin registration OTP sent successful.');",
+                  "    console.log('\u2705 Platform Admin registration OTP sent successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1045,7 +1054,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ Platform Admin account activated successful.');",
+                  "    console.log('\u2705 Platform Admin account activated successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1087,7 +1096,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 204) {",
-                  "    console.log('✅ Platform Admin login OTP sent. Check console successful.');",
+                  "    console.log('\u2705 Platform Admin login OTP sent. Check console successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1109,7 +1118,7 @@
                   "    pm.collectionVariables.set('user_id', data.user.id);",
                   "    if (data.user.enterprise_id) pm.collectionVariables.set('enterprise_id', data.user.enterprise_id);",
                   "    if (data.user.organization_id) pm.collectionVariables.set('organization_id', data.user.organization_id);",
-                  "    console.log('✅ Access token saved. Refresh token in HttpOnly cookie.');",
+                  "    console.log('\u2705 Access token saved. Refresh token in HttpOnly cookie.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1339,7 +1348,7 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.id) {",
                   "        pm.collectionVariables.set('organization_profile_id', body.data.id);",
-                  "        console.log('✅ organization_profile_id saved:', body.data.id);",
+                  "        console.log('\u2705 organization_profile_id saved:', body.data.id);",
                   "    }",
                   "}"
                 ],
@@ -1413,7 +1422,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('enterprise_id', response.data.id);",
-                  "    console.log('✅ Enterprise created:', response.data.id);",
+                  "    console.log('\u2705 Enterprise created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1599,7 +1608,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('organization_id', response.data.id);",
-                  "    console.log('✅ Organization created:', response.data.id);",
+                  "    console.log('\u2705 Organization created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -1775,7 +1784,7 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.id) {",
                   "        pm.collectionVariables.set('organization_profile_id', body.data.id);",
-                  "        console.log('✅ organization_profile_id saved:', body.data.id);",
+                  "        console.log('\u2705 organization_profile_id saved:', body.data.id);",
                   "    }",
                   "}"
                 ],
@@ -1933,7 +1942,7 @@
                       "    const body = pm.response.json();",
                       "    if (body.data && body.data.id) {",
                       "        pm.collectionVariables.set('policy_type_id', body.data.id);",
-                      "        console.log('✅ policy_type_id saved:', body.data.id);",
+                      "        console.log('\u2705 policy_type_id saved:', body.data.id);",
                       "    }",
                       "}"
                     ],
@@ -2062,7 +2071,7 @@
                       "    const body = pm.response.json();",
                       "    if (body.data && body.data.id) {",
                       "        pm.collectionVariables.set('policy_id', body.data.id);",
-                      "        console.log('✅ policy_id saved:', body.data.id);",
+                      "        console.log('\u2705 policy_id saved:', body.data.id);",
                       "    }",
                       "}"
                     ],
@@ -2191,7 +2200,7 @@
                       "    const val = body.data.id;",
                       "    if (val) {",
                       "        pm.collectionVariables.set('user_id', val);",
-                      "        console.log('✅ Employee draft user_id saved:', val);",
+                      "        console.log('\u2705 Employee draft user_id saved:', val);",
                       "    }",
                       "}"
                     ],
@@ -2232,7 +2241,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Employment details updated successful.');",
+                      "    console.log('\u2705 Employment details updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -2272,7 +2281,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Payroll info saved successful.');",
+                      "    console.log('\u2705 Payroll info saved successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -2314,10 +2323,10 @@
                       "    const body = pm.response.json();",
                       "    if (body.data && body.data.id) {",
                       "        pm.collectionVariables.set('document_id', body.data.id);",
-                      "        console.log('✅ document_id saved:', body.data.id);",
+                      "        console.log('\u2705 document_id saved:', body.data.id);",
                       "    }",
                       "    if (body.data && body.data.uploadUrl) {",
-                      "        console.log('📎 Upload URL:', body.data.uploadUrl);",
+                      "        console.log('\ud83d\udcce Upload URL:', body.data.uploadUrl);",
                       "    }",
                       "}"
                     ],
@@ -2360,7 +2369,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Binary upload completed successful.');",
+                      "    console.log('\u2705 Binary upload completed successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -2400,7 +2409,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Documents linked to employee successful.');",
+                      "    console.log('\u2705 Documents linked to employee successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -2440,7 +2449,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ System access updated successful.');",
+                      "    console.log('\u2705 System access updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -2483,7 +2492,7 @@
                       "    const body = pm.response.json();",
                       "    if (body.data && body.data.id) {",
                       "        pm.collectionVariables.set('edu_id', body.data.id);",
-                      "        console.log('✅ edu_id saved:', body.data.id);",
+                      "        console.log('\u2705 edu_id saved:', body.data.id);",
                       "    }",
                       "}"
                     ],
@@ -2527,7 +2536,7 @@
                       "    const body = pm.response.json();",
                       "    if (body.data && body.data.id) {",
                       "        pm.collectionVariables.set('exp_id', body.data.id);",
-                      "        console.log('✅ exp_id saved:', body.data.id);",
+                      "        console.log('\u2705 exp_id saved:', body.data.id);",
                       "    }",
                       "}"
                     ],
@@ -2569,7 +2578,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Employee onboarded & invite sent successful.');",
+                      "    console.log('\u2705 Employee onboarded & invite sent successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -2612,7 +2621,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ Employee activated successfully.');",
+                  "    console.log('\u2705 Employee activated successfully.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -2757,7 +2766,7 @@
                       "    const val = body.data.id;",
                       "    if (val) {",
                       "        pm.collectionVariables.set('user_id', val);",
-                      "        console.log('✅ Employee draft user_id saved:', val);",
+                      "        console.log('\u2705 Employee draft user_id saved:', val);",
                       "    }",
                       "}"
                     ],
@@ -2800,7 +2809,7 @@
                       "    const val = body.data.id;",
                       "    if (val) {",
                       "        pm.collectionVariables.set('user_id', val);",
-                      "        console.log('✅ Employee user_id saved:', val);",
+                      "        console.log('\u2705 Employee user_id saved:', val);",
                       "    }",
                       "}"
                     ],
@@ -2864,7 +2873,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Personal details updated successful.');",
+                      "    console.log('\u2705 Personal details updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -2904,7 +2913,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Employment details updated successful.');",
+                      "    console.log('\u2705 Employment details updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -2944,7 +2953,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Payroll info updated successful.');",
+                      "    console.log('\u2705 Payroll info updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3008,7 +3017,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Documents uploaded successful.');",
+                      "    console.log('\u2705 Documents uploaded successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3048,7 +3057,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ System access updated successful.');",
+                      "    console.log('\u2705 System access updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3096,7 +3105,7 @@
                       "    const body = pm.response.json();",
                       "    if (body.data && body.data.id) {",
                       "        pm.collectionVariables.set('edu_id', body.data.id);",
-                      "        console.log('✅ edu_id saved:', body.data.id);",
+                      "        console.log('\u2705 edu_id saved:', body.data.id);",
                       "    }",
                       "}"
                     ],
@@ -3138,7 +3147,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Education updated successful.');",
+                      "    console.log('\u2705 Education updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3170,7 +3179,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Education deleted successful.');",
+                      "    console.log('\u2705 Education deleted successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3213,7 +3222,7 @@
                       "    const body = pm.response.json();",
                       "    if (body.data && body.data.id) {",
                       "        pm.collectionVariables.set('exp_id', body.data.id);",
-                      "        console.log('✅ exp_id saved:', body.data.id);",
+                      "        console.log('\u2705 exp_id saved:', body.data.id);",
                       "    }",
                       "}"
                     ],
@@ -3255,7 +3264,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Experience updated successful.');",
+                      "    console.log('\u2705 Experience updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3287,7 +3296,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Experience deleted successful.');",
+                      "    console.log('\u2705 Experience deleted successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3333,7 +3342,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 201) {",
-                      "    console.log('✅ Offboarding initiated successful.');",
+                      "    console.log('\u2705 Offboarding initiated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3373,7 +3382,7 @@
                   "script": {
                     "exec": [
                       "if (pm.response.code === 200) {",
-                      "    console.log('✅ Offboarding updated successful.');",
+                      "    console.log('\u2705 Offboarding updated successful.');",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -3425,7 +3434,7 @@
     },
     {
       "name": "App",
-      "description": "Application management — register apps in the multi-app architecture",
+      "description": "Application management \u2014 register apps in the multi-app architecture",
       "item": [
         {
           "name": "Create App",
@@ -3437,7 +3446,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('app_id', response.data.id);",
-                  "    console.log('✅ App created:', response.data.id);",
+                  "    console.log('\u2705 App created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -3611,7 +3620,7 @@
     },
     {
       "name": "RBAC",
-      "description": "Role-Based Access Control — roles, user-role assignments, and menu",
+      "description": "Role-Based Access Control \u2014 roles, user-role assignments, and menu",
       "item": [
         {
           "name": "Create Role",
@@ -3623,7 +3632,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('role_id', response.data.id);",
-                  "    console.log('✅ Role created:', response.data.id);",
+                  "    console.log('\u2705 Role created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -3796,7 +3805,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Role assigned to user successful.');",
+                  "    console.log('\u2705 Role assigned to user successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -3944,10 +3953,10 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.id) {",
                   "        pm.collectionVariables.set('document_id', body.data.id);",
-                  "        console.log('✅ document_id saved:', body.data.id);",
+                  "        console.log('\u2705 document_id saved:', body.data.id);",
                   "    }",
                   "    if (body.data && body.data.uploadUrl) {",
-                  "        console.log('📎 Upload URL:', body.data.uploadUrl);",
+                  "        console.log('\ud83d\udcce Upload URL:', body.data.uploadUrl);",
                   "    }",
                   "}"
                 ],
@@ -3990,7 +3999,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ Upload confirmed successful.');",
+                  "    console.log('\u2705 Upload confirmed successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -4138,7 +4147,7 @@
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) {",
                   "    pm.collectionVariables.set(\"industry_type_id\", jsonData.data.id);",
-                  "    console.log('✅ Industry Type ID saved:', jsonData.data.id);",
+                  "    console.log('\u2705 Industry Type ID saved:', jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -4229,7 +4238,7 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.id) {",
                   "        pm.collectionVariables.set('module_id', body.data.id);",
-                  "        console.log('✅ module_id saved:', body.data.id);",
+                  "        console.log('\u2705 module_id saved:', body.data.id);",
                   "    }",
                   "}"
                 ],
@@ -4271,7 +4280,7 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.id) {",
                   "        pm.collectionVariables.set('action_id', body.data.id);",
-                  "        console.log('✅ action_id saved:', body.data.id);",
+                  "        console.log('\u2705 action_id saved:', body.data.id);",
                   "    }",
                   "}"
                 ],
@@ -4310,7 +4319,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Module access granted successful.');",
+                  "    console.log('\u2705 Module access granted successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -4350,7 +4359,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Module access by code granted successfully.');",
+                  "    console.log('\u2705 Module access by code granted successfully.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -4484,7 +4493,7 @@
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.id) {",
                   "    pm.collectionVariables.set(\"plan_id\", jsonData.data.id);",
-                  "    console.log('✅ Plan ID saved:', jsonData.data.id);",
+                  "    console.log('\u2705 Plan ID saved:', jsonData.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -4525,7 +4534,7 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.id) {",
                   "        pm.collectionVariables.set('subscription_id', body.data.id);",
-                  "        console.log('✅ subscription_id saved:', body.data.id);",
+                  "        console.log('\u2705 subscription_id saved:', body.data.id);",
                   "    }",
                   "}"
                 ],
@@ -4564,7 +4573,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Plan module created successful.');",
+                  "    console.log('\u2705 Plan module created successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -4602,7 +4611,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Plan module action created successful.');",
+                  "    console.log('\u2705 Plan module action created successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -4775,7 +4784,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Lead registered. Check server console for OTP successful.');",
+                  "    console.log('\u2705 Lead registered. Check server console for OTP successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -4807,7 +4816,7 @@
                 "verify-otp"
               ]
             },
-            "description": "Verify the OTP sent during lead registration.\n\n**On success:**\n- Lead is marked as verified\n- A User record is created from the lead details (first_name, last_name, email, phone, password_hash)\n- Both operations are wrapped in a transaction — if anything fails, everything rolls back.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
+            "description": "Verify the OTP sent during lead registration.\n\n**On success:**\n- Lead is marked as verified\n- A User record is created from the lead details (first_name, last_name, email, phone, password_hash)\n- Both operations are wrapped in a transaction \u2014 if anything fails, everything rolls back.\n\n**OTP rules:** Exactly 6 digits, max 5 attempts, expires in 10 minutes."
           },
           "response": [],
           "event": [
@@ -4819,9 +4828,9 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.user_id) {",
                   "        pm.collectionVariables.set('user_id', body.data.user_id);",
-                  "        console.log('✅ Lead verified. user_id saved:', body.data.user_id);",
+                  "        console.log('\u2705 Lead verified. user_id saved:', body.data.user_id);",
                   "    } else {",
-                  "        console.log('✅ Lead OTP verified.');",
+                  "        console.log('\u2705 Lead OTP verified.');",
                   "    }",
                   "}"
                 ],
@@ -4834,7 +4843,7 @@
     },
     {
       "name": "Role",
-      "description": "Role management — CRUD for platform and organization roles",
+      "description": "Role management \u2014 CRUD for platform and organization roles",
       "item": [
         {
           "name": "Create Role",
@@ -4846,7 +4855,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('role_id', response.data.id);",
-                  "    console.log('✅ Role created:', response.data.id);",
+                  "    console.log('\u2705 Role created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -5100,7 +5109,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('department_id', response.data.id);",
-                  "    console.log('✅ Department created:', response.data.id);",
+                  "    console.log('\u2705 Department created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -5312,7 +5321,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('client_id', response.data.id);",
-                  "    console.log('✅ Client created:', response.data.id);",
+                  "    console.log('\u2705 Client created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -5539,7 +5548,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('project_id', response.data.id);",
-                  "    console.log('✅ Project created:', response.data.id);",
+                  "    console.log('\u2705 Project created:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -5751,7 +5760,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Team assigned to project successful.');",
+                  "    console.log('\u2705 Team assigned to project successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -5802,7 +5811,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 201) {",
-                  "    console.log('✅ Contract linked successful.');",
+                  "    console.log('\u2705 Contract linked successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -5879,7 +5888,7 @@
                   "    const response = pm.response.json();",
                   "    if (response.length > 0) {",
                   "        pm.collectionVariables.set('contract_id', response[0].id);",
-                  "        console.log('✅ Contract ID saved:', response[0].id);",
+                  "        console.log('\u2705 Contract ID saved:', response[0].id);",
                   "    }",
                   "}"
                 ],
@@ -5967,7 +5976,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('calendar_id', response.data.id);",
-                  "    console.log('✅ Calendar ID saved:', response.data.id);",
+                  "    console.log('\u2705 Calendar ID saved:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -6054,7 +6063,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('holiday_id', response.data.id);",
-                  "    console.log('✅ Holiday ID saved:', response.data.id);",
+                  "    console.log('\u2705 Holiday ID saved:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -6170,7 +6179,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ Calendar activated successful.');",
+                  "    console.log('\u2705 Calendar activated successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -6225,7 +6234,7 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.id) {",
                   "        pm.collectionVariables.set('calendar_id', body.data.id);",
-                  "        console.log('✅ Cloned calendar_id saved:', body.data.id);",
+                  "        console.log('\u2705 Cloned calendar_id saved:', body.data.id);",
                   "    }",
                   "}"
                 ],
@@ -6373,10 +6382,10 @@
                   "    const body = pm.response.json();",
                   "    if (body.data && body.data.id) {",
                   "        pm.collectionVariables.set('document_id', body.data.id);",
-                  "        console.log('✅ document_id saved:', body.data.id);",
+                  "        console.log('\u2705 document_id saved:', body.data.id);",
                   "    }",
                   "    if (body.data && body.data.uploadUrl) {",
-                  "        console.log('📎 Upload URL:', body.data.uploadUrl);",
+                  "        console.log('\ud83d\udcce Upload URL:', body.data.uploadUrl);",
                   "    }",
                   "}"
                 ],
@@ -6429,7 +6438,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ Binary file uploaded successful.');",
+                  "    console.log('\u2705 Binary file uploaded successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -6480,7 +6489,7 @@
               "script": {
                 "exec": [
                   "if (pm.response.code === 200) {",
-                  "    console.log('✅ S3 Upload confirmed successful.');",
+                  "    console.log('\u2705 S3 Upload confirmed successful.');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -6690,7 +6699,7 @@
                       "if (pm.response.code === 201) {",
                       "    const response = pm.response.json();",
                       "    pm.collectionVariables.set('shift_id', response.data.id);",
-                      "    console.log('✅ shift_id saved:', response.data.id);",
+                      "    console.log('\u2705 shift_id saved:', response.data.id);",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -6869,7 +6878,7 @@
                       "if (pm.response.code === 201) {",
                       "    const response = pm.response.json();",
                       "    pm.collectionVariables.set('weekly_off_id', response.data.id);",
-                      "    console.log('✅ weekly_off_id saved:', response.data.id);",
+                      "    console.log('\u2705 weekly_off_id saved:', response.data.id);",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -7048,7 +7057,7 @@
                       "if (pm.response.code === 201) {",
                       "    const response = pm.response.json();",
                       "    pm.collectionVariables.set('attendance_rule_id', response.data.id);",
-                      "    console.log('✅ attendance_rule_id saved:', response.data.id);",
+                      "    console.log('\u2705 attendance_rule_id saved:', response.data.id);",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -7539,7 +7548,7 @@
                       "if (pm.response.code === 201) {",
                       "    const response = pm.response.json();",
                       "    pm.collectionVariables.set('payroll_component_id', response.data.id);",
-                      "    console.log('✅ payroll_component_id saved:', response.data.id);",
+                      "    console.log('\u2705 payroll_component_id saved:', response.data.id);",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -7655,7 +7664,7 @@
                     "statutory-pf-config"
                   ]
                 },
-                "description": "Creates a new versioned PF config. The current active config is automatically closed (effective_to = new effective_from − 1 day).\n\nNote: effective_from must be after the current active config's effective_from date.\nNote: Wage ceiling has been removed from this version."
+                "description": "Creates a new versioned PF config. The current active config is automatically closed (effective_to = new effective_from \u2212 1 day).\n\nNote: effective_from must be after the current active config's effective_from date.\nNote: Wage ceiling has been removed from this version."
               },
               "response": []
             },
@@ -7768,7 +7777,7 @@
                       "if (pm.response.code === 201) {",
                       "    const response = pm.response.json();",
                       "    pm.collectionVariables.set('salary_template_id', response.data.id);",
-                      "    console.log('✅ salary_template_id saved:', response.data.id);",
+                      "    console.log('\u2705 salary_template_id saved:', response.data.id);",
                       "}"
                     ],
                     "type": "text/javascript"
@@ -7913,7 +7922,7 @@
                     "employee-salary-assignments"
                   ]
                 },
-                "description": "Assigns a salary template to an employee. Creates version 1 or increments to the next version. Previous version is automatically closed with effective_to = effective_from − 1 day.\n\nStores a full component snapshot — changes to the template after assignment do NOT affect the employee."
+                "description": "Assigns a salary template to an employee. Creates version 1 or increments to the next version. Previous version is automatically closed with effective_to = effective_from \u2212 1 day.\n\nStores a full component snapshot \u2014 changes to the template after assignment do NOT affect the employee."
               },
               "response": []
             },
@@ -7952,7 +7961,7 @@
                     "bulk"
                   ]
                 },
-                "description": "Assigns the same template and CTC to multiple employees at once. Returns { assigned: N, failed: [] } — failed contains user IDs that could not be processed."
+                "description": "Assigns the same template and CTC to multiple employees at once. Returns { assigned: N, failed: [] } \u2014 failed contains user IDs that could not be processed."
               },
               "response": []
             },
@@ -8104,7 +8113,7 @@
                     "salary"
                   ]
                 },
-                "description": "Creates a new salary version with updated component values. The residual component (Special Allowance) is recalculated automatically. Always creates a new version — never mutates history.\n\nNote: use component_name (not code) to identify components."
+                "description": "Creates a new salary version with updated component values. The residual component (Special Allowance) is recalculated automatically. Always creates a new version \u2014 never mutates history.\n\nNote: use component_name (not code) to identify components."
               },
               "response": []
             }
@@ -8206,7 +8215,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('leave_config_id', response.data.id);",
-                  "    console.log('✅ Leave Config ID saved:', response.data.id);",
+                  "    console.log('\u2705 Leave Config ID saved:', response.data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -8355,12 +8364,12 @@
                   "    if (casual) {",
                   "        pm.collectionVariables.set('leave_balance_id', casual.id);",
                   "        pm.collectionVariables.set('leave_type_id', casual.leave_type_id);",
-                  "        console.log('✅ leave_balance_id + leave_type_id saved.');",
+                  "        console.log('\u2705 leave_balance_id + leave_type_id saved.');",
                   "    }",
                   "    const lwp = balances.find(b => b.leave_type_code === 'LWP');",
                   "    if (lwp) {",
                   "        pm.collectionVariables.set('lwp_leave_type_id', lwp.leave_type_id);",
-                  "        console.log('✅ lwp_leave_type_id saved.');",
+                  "        console.log('\u2705 lwp_leave_type_id saved.');",
                   "    }",
                   "}"
                 ],
@@ -8440,7 +8449,7 @@
                 "initialize"
               ]
             },
-            "description": "Creates one balance row per LeaveType in the active LeaveConfig. Idempotent — second call returns 409 ALREADY_INITIALIZED. Requires `LEAVE_MGMT.create`."
+            "description": "Creates one balance row per LeaveType in the active LeaveConfig. Idempotent \u2014 second call returns 409 ALREADY_INITIALIZED. Requires `LEAVE_MGMT.create`."
           },
           "event": [
             {
@@ -8453,7 +8462,7 @@
                   "    if (first) {",
                   "        pm.collectionVariables.set('leave_balance_id', first.id);",
                   "        pm.collectionVariables.set('leave_type_id', first.leave_type_id);",
-                  "        console.log('✅ Balance initialized.');",
+                  "        console.log('\u2705 Balance initialized.');",
                   "    }",
                   "}"
                 ],
@@ -8723,7 +8732,7 @@
     },
     {
       "name": "Leave Request",
-      "description": "Per-employee leave application lifecycle (DRAFT → PENDING → APPROVED | REJECTED | CANCELLED). Employee endpoints (`/me`, create, cancel own) need only JWT; HR endpoints require `LEAVE_MGMT.{view|approve|delete}`.",
+      "description": "Per-employee leave application lifecycle (DRAFT \u2192 PENDING \u2192 APPROVED | REJECTED | CANCELLED). Employee endpoints (`/me`, create, cancel own) need only JWT; HR endpoints require `LEAVE_MGMT.{view|approve|delete}`.",
       "item": [
         {
           "name": "Validate (Dry-Run)",
@@ -8759,7 +8768,7 @@
                 "validate"
               ]
             },
-            "description": "Dry-run validation. Returns `is_valid`, computed days breakdown, balance_before/after — without persisting anything. Use this to power a 'Days: X' counter in the Apply Leave UI."
+            "description": "Dry-run validation. Returns `is_valid`, computed days breakdown, balance_before/after \u2014 without persisting anything. Use this to power a 'Days: X' counter in the Apply Leave UI."
           },
           "response": []
         },
@@ -8796,7 +8805,7 @@
                 "leave-requests"
               ]
             },
-            "description": "Creates a leave request. With `submit: true` (default) it goes straight to PENDING and the balance is held. Set `submit: false` to save as DRAFT for editing later. The server computes `total_days` — never trust client-side computation."
+            "description": "Creates a leave request. With `submit: true` (default) it goes straight to PENDING and the balance is held. Set `submit: false` to save as DRAFT for editing later. The server computes `total_days` \u2014 never trust client-side computation."
           },
           "event": [
             {
@@ -8806,7 +8815,7 @@
                   "if (pm.response.code === 201) {",
                   "    const data = pm.response.json().data;",
                   "    pm.collectionVariables.set('leave_request_id', data.id);",
-                  "    console.log('✅ leave_request_id saved:', data.id, 'status:', data.status);",
+                  "    console.log('\u2705 leave_request_id saved:', data.id, 'status:', data.status);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -8837,7 +8846,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"leave_type_id\": \"{{leave_type_id}}\",\n    \"from_date\": \"2026-06-15\",\n    \"to_date\": \"2026-06-16\",\n    \"reason\": \"Tentative — pending confirmation.\",\n    \"submit\": false\n}"
+              "raw": "{\n    \"leave_type_id\": \"{{leave_type_id}}\",\n    \"from_date\": \"2026-06-15\",\n    \"to_date\": \"2026-06-16\",\n    \"reason\": \"Tentative \u2014 pending confirmation.\",\n    \"submit\": false\n}"
             },
             "url": {
               "raw": "{{base_url}}/leave-requests",
@@ -8858,7 +8867,7 @@
                   "if (pm.response.code === 201) {",
                   "    const data = pm.response.json().data;",
                   "    pm.collectionVariables.set('leave_draft_id', data.id);",
-                  "    console.log('✅ leave_draft_id saved:', data.id);",
+                  "    console.log('\u2705 leave_draft_id saved:', data.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -8992,12 +9001,12 @@
                 "history"
               ]
             },
-            "description": "Append-only audit trail of state transitions (Applied → PENDING → APPROVED, etc.). Powers the request-detail timeline UI."
+            "description": "Append-only audit trail of state transitions (Applied \u2192 PENDING \u2192 APPROVED, etc.). Powers the request-detail timeline UI."
           },
           "response": []
         },
         {
-          "name": "Update My Request (PENDING — limited)",
+          "name": "Update My Request (PENDING \u2014 limited)",
           "request": {
             "auth": {
               "type": "bearer",
@@ -9098,7 +9107,7 @@
                 "submit"
               ]
             },
-            "description": "Transitions DRAFT → PENDING. Re-runs all validations (overlap, balance, max-per-month, backdated)."
+            "description": "Transitions DRAFT \u2192 PENDING. Re-runs all validations (overlap, balance, max-per-month, backdated)."
           },
           "response": []
         },
@@ -9321,7 +9330,7 @@
                 "approve"
               ]
             },
-            "description": "PENDING → APPROVED. Self-approval forbidden. Re-validates balance to prevent stale-PENDING approvals. Atomic with row-lock on the balance row."
+            "description": "PENDING \u2192 APPROVED. Self-approval forbidden. Re-validates balance to prevent stale-PENDING approvals. Atomic with row-lock on the balance row."
           },
           "response": []
         },
@@ -9360,7 +9369,7 @@
                 "reject"
               ]
             },
-            "description": "PENDING → REJECTED. Releases held days back to available. `rejection_reason` is mandatory."
+            "description": "PENDING \u2192 REJECTED. Releases held days back to available. `rejection_reason` is mandatory."
           },
           "response": []
         },
@@ -9399,7 +9408,7 @@
                 "admin-cancel"
               ]
             },
-            "description": "HR can cancel any request — PENDING or APPROVED, even past start_date. Credits days back to balance. Requires `LEAVE_MGMT.delete`."
+            "description": "HR can cancel any request \u2014 PENDING or APPROVED, even past start_date. Credits days back to balance. Requires `LEAVE_MGMT.delete`."
           },
           "response": []
         }
@@ -9411,7 +9420,7 @@
       "item": [
         {
           "name": "Employee",
-          "description": "Endpoints for the logged-in employee — no special permission needed beyond authentication.",
+          "description": "Endpoints for the logged-in employee \u2014 no special permission needed beyond authentication.",
           "item": [
             {
               "name": "Check-In (Office)",
@@ -9443,7 +9452,7 @@
                     "check-in"
                   ]
                 },
-                "description": "Punch in for the day from inside the office geo-fence.\n\n**Validations**\n- 409 if there is already an open session (`Employee already checked in`)\n- 409 if a record already exists today and the rule does not allow multiple check-ins\n- 400 `GPS_REQUIRED` if geo-fencing is enabled and lat/lng are missing\n- Distance is computed by Haversine. Inside `office_radius_meters` ⇒ `Office-In`, outside ⇒ Remote-In flow\n\n**Response data** includes `attendance_id`, `attendance_session_id`, `shift`, `office`, `is_late`. Auto-saves both ids to collection variables.",
+                "description": "Punch in for the day from inside the office geo-fence.\n\n**Validations**\n- 409 if there is already an open session (`Employee already checked in`)\n- 409 if a record already exists today and the rule does not allow multiple check-ins\n- 400 `GPS_REQUIRED` if geo-fencing is enabled and lat/lng are missing\n- Distance is computed by Haversine. Inside `office_radius_meters` \u21d2 `Office-In`, outside \u21d2 Remote-In flow\n\n**Response data** includes `attendance_id`, `attendance_session_id`, `shift`, `office`, `is_late`. Auto-saves both ids to collection variables.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"device\": \"WEB\",\n  \"notes\": \"Reached office\"\n}"
@@ -9460,7 +9469,7 @@
                       "    if (response && response.data) {",
                       "        pm.collectionVariables.set('attendance_id', response.data.attendance_id);",
                       "        pm.collectionVariables.set('attendance_session_id', response.data.attendance_session_id);",
-                      "        console.log('✅ attendance_id saved:', response.data.attendance_id);",
+                      "        console.log('\u2705 attendance_id saved:', response.data.attendance_id);",
                       "    }",
                       "}"
                     ],
@@ -9516,7 +9525,7 @@
                       "    if (response && response.data) {",
                       "        pm.collectionVariables.set('attendance_id', response.data.attendance_id);",
                       "        pm.collectionVariables.set('attendance_session_id', response.data.attendance_session_id);",
-                      "        console.log('✅ attendance_id (remote) saved:', response.data.attendance_id);",
+                      "        console.log('\u2705 attendance_id (remote) saved:', response.data.attendance_id);",
                       "    }",
                       "}"
                     ],
@@ -9640,13 +9649,13 @@
                     {
                       "key": "attendance_mode",
                       "value": "OFFICE_IN",
-                      "description": "OFFICE_IN | REMOTE_IN — optional",
+                      "description": "OFFICE_IN | REMOTE_IN \u2014 optional",
                       "disabled": true
                     },
                     {
                       "key": "attendance_status",
                       "value": "PRESENT",
-                      "description": "PRESENT | HALF_DAY | LATE | ABSENT | … — optional",
+                      "description": "PRESENT | HALF_DAY | LATE | ABSENT | \u2026 \u2014 optional",
                       "disabled": true
                     }
                   ]
@@ -9680,7 +9689,7 @@
                     "rules"
                   ]
                 },
-                "description": "Returns the attendance rule that applies to the logged-in employee (resolved from employee-level → department-level assignment). Includes `full_day_hours`, `half_day_hours`, `late_after`, `grace_minutes`, `overtime_after_hours`, `geo_fencing_enabled`, `office_radius_meters`, `allow_remote_in`, `require_remote_reason`, and `remote_approval_required`. Useful for the client to render the right CTA / location prompt before the user clicks Check-In."
+                "description": "Returns the attendance rule that applies to the logged-in employee (resolved from employee-level \u2192 department-level assignment). Includes `full_day_hours`, `half_day_hours`, `late_after`, `grace_minutes`, `overtime_after_hours`, `geo_fencing_enabled`, `office_radius_meters`, `allow_remote_in`, `require_remote_reason`, and `remote_approval_required`. Useful for the client to render the right CTA / location prompt before the user clicks Check-In."
               },
               "response": []
             }
@@ -9688,7 +9697,7 @@
         },
         {
           "name": "Admin",
-          "description": "HR / admin endpoints. All require `RequirePermission('ATTENDANCE', '<action>')` — view/create/update/delete/approve. Run `docs/seeds/grant-module-access.sql` (configured for the ATTENDANCE module) to grant access to a user.",
+          "description": "HR / admin endpoints. All require `RequirePermission('ATTENDANCE', '<action>')` \u2014 view/create/update/delete/approve. Run `docs/seeds/grant-module-access.sql` (configured for the ATTENDANCE module) to grant access to a user.",
           "item": [
             {
               "name": "Daily Preview",
@@ -9752,12 +9761,12 @@
                     {
                       "key": "search",
                       "value": "",
-                      "description": "Name or employee code (≥2 chars)",
+                      "description": "Name or employee code (\u22652 chars)",
                       "disabled": true
                     }
                   ]
                 },
-                "description": "Backs the Admin → Daily Preview screen. Returns a `summary` block (total present, absent, late, half-day, on-leave, missed-checkout, office-in, remote-in) + paginated `items` with employee, shift, check-in/out times, worked hours, mode, status, geo info, source, remote reason and notes.\n\nRequires `ATTENDANCE.view`."
+                "description": "Backs the Admin \u2192 Daily Preview screen. Returns a `summary` block (total present, absent, late, half-day, on-leave, missed-checkout, office-in, remote-in) + paginated `items` with employee, shift, check-in/out times, worked hours, mode, status, geo info, source, remote reason and notes.\n\nRequires `ATTENDANCE.view`."
               },
               "response": []
             },
@@ -9795,7 +9804,7 @@
                 "description": "Create an attendance record on behalf of an employee (forgot punch, server outage, biometric failure, etc.). Recomputes worked hours / status from the supplied check-in / check-out and the employee's effective rule.\n\nIf `attendance_status_override` is provided, it wins over the computed status. `source` is forced to `MANUAL`. Returns 409 if a record already exists for that employee on that date.\n\nRequires `ATTENDANCE.create`. Auto-saves `attendance_id`.",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"date\": \"2026-05-12\",\n  \"check_in\": \"09:12\",\n  \"check_out\": \"18:05\",\n  \"attendance_mode\": \"OFFICE_IN\",\n  \"remote_reason\": null,\n  \"notes\": \"Manual correction by HR — forgot to punch out\"\n}"
+                  "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"date\": \"2026-05-12\",\n  \"check_in\": \"09:12\",\n  \"check_out\": \"18:05\",\n  \"attendance_mode\": \"OFFICE_IN\",\n  \"remote_reason\": null,\n  \"notes\": \"Manual correction by HR \u2014 forgot to punch out\"\n}"
                 }
               },
               "response": [],
@@ -9808,7 +9817,7 @@
                       "    const response = pm.response.json();",
                       "    if (response && response.data) {",
                       "        pm.collectionVariables.set('attendance_id', response.data.attendance_id);",
-                      "        console.log('✅ attendance_id (manual) saved:', response.data.attendance_id);",
+                      "        console.log('\u2705 attendance_id (manual) saved:', response.data.attendance_id);",
                       "    }",
                       "}"
                     ],
@@ -10097,7 +10106,7 @@
                     "overview"
                   ]
                 },
-                "description": "Single call powering the billing dashboard (screen 5.1). Returns: current subscription + plan + cycle + status, trial state (`is_trial`, `days_remaining`, `banner_level` 7/3/1), live employee billing (active count, price/employee, subtotal, GST 18%, estimated total), 5-step timeline (TRIAL_STARTED → TRIAL_ENDS → INVOICE_GENERATED → PAYMENT_DUE → SUBSCRIPTION_RENEWED), and `open_invoice_id` for the Pay Invoice CTA."
+                "description": "Single call powering the billing dashboard (screen 5.1). Returns: current subscription + plan + cycle + status, trial state (`is_trial`, `days_remaining`, `banner_level` 7/3/1), live employee billing (active count, price/employee, subtotal, GST 18%, estimated total), 5-step timeline (TRIAL_STARTED \u2192 TRIAL_ENDS \u2192 INVOICE_GENERATED \u2192 PAYMENT_DUE \u2192 SUBSCRIPTION_RENEWED), and `open_invoice_id` for the Pay Invoice CTA."
               },
               "event": [
                 {
@@ -10108,7 +10117,7 @@
                       "  const body = pm.response.json();",
                       "  if (body.data && body.data.open_invoice_id) {",
                       "    pm.collectionVariables.set('invoice_id', body.data.open_invoice_id);",
-                      "    console.log('✅ invoice_id saved:', body.data.open_invoice_id);",
+                      "    console.log('\u2705 invoice_id saved:', body.data.open_invoice_id);",
                       "  }",
                       "  if (body.data && body.data.subscription && body.data.subscription.id) {",
                       "    pm.collectionVariables.set('subscription_id', body.data.subscription.id);",
@@ -10197,7 +10206,7 @@
                     "change-plan"
                   ]
                 },
-                "description": "Upgrade or downgrade (screen 5.2). Server decides: tier upgrade / cycle upgrade (Monthly→Annual) / trial→paid → applied **immediate** and a prorated invoice is generated; tier or cycle downgrade → deferred to next renewal (`applied: 'next_cycle'`). Response: `{ subscription, invoice, applied }`."
+                "description": "Upgrade or downgrade (screen 5.2). Server decides: tier upgrade / cycle upgrade (Monthly\u2192Annual) / trial\u2192paid \u2192 applied **immediate** and a prorated invoice is generated; tier or cycle downgrade \u2192 deferred to next renewal (`applied: 'next_cycle'`). Response: `{ subscription, invoice, applied }`."
               },
               "event": [
                 {
@@ -10211,7 +10220,7 @@
                       "  }",
                       "  if (body.data && body.data.invoice && body.data.invoice.id) {",
                       "    pm.collectionVariables.set('invoice_id', body.data.invoice.id);",
-                      "    console.log('✅ invoice_id saved:', body.data.invoice.id);",
+                      "    console.log('\u2705 invoice_id saved:', body.data.invoice.id);",
                       "  }",
                       "}"
                     ],
@@ -10312,7 +10321,7 @@
                     "current"
                   ]
                 },
-                "description": "Returns the org's open invoice — status in [`Pending`, `Failed`, `Overdue`]. Powers screen 5.3 (Current Invoice). Includes `line_items`, `subtotal`, `gst_rate`, `gst_amount`, `total`, and the frozen `billing_profile_snapshot`. 404 if nothing is open."
+                "description": "Returns the org's open invoice \u2014 status in [`Pending`, `Failed`, `Overdue`]. Powers screen 5.3 (Current Invoice). Includes `line_items`, `subtotal`, `gst_rate`, `gst_amount`, `total`, and the frozen `billing_profile_snapshot`. 404 if nothing is open."
               },
               "event": [
                 {
@@ -10323,7 +10332,7 @@
                       "  const body = pm.response.json();",
                       "  if (body.data && body.data.id) {",
                       "    pm.collectionVariables.set('invoice_id', body.data.id);",
-                      "    console.log('✅ invoice_id saved:', body.data.id);",
+                      "    console.log('\u2705 invoice_id saved:', body.data.id);",
                       "  }",
                       "}"
                     ],
@@ -10375,13 +10384,13 @@
                     {
                       "key": "from",
                       "value": "2026-01-01",
-                      "description": "YYYY-MM-DD — inclusive lower bound on `invoice_date`",
+                      "description": "YYYY-MM-DD \u2014 inclusive lower bound on `invoice_date`",
                       "disabled": true
                     },
                     {
                       "key": "to",
                       "value": "2026-12-31",
-                      "description": "YYYY-MM-DD — inclusive upper bound on `invoice_date`",
+                      "description": "YYYY-MM-DD \u2014 inclusive upper bound on `invoice_date`",
                       "disabled": true
                     }
                   ]
@@ -10416,7 +10425,7 @@
                     "{{invoice_id}}"
                   ]
                 },
-                "description": "Full invoice detail by ID — same shape as `current`. 404 if invoice is in a different org."
+                "description": "Full invoice detail by ID \u2014 same shape as `current`. 404 if invoice is in a different org."
               },
               "response": []
             },
@@ -10447,7 +10456,7 @@
                     "pdf"
                   ]
                 },
-                "description": "Returns `{ url, expires_in_seconds: 900 }` — a presigned S3 download URL. PDF is lazily generated (pdfkit) on first request and cached in S3. Layout follows section §8 of the design spec (header, line table, GST summary, footer)."
+                "description": "Returns `{ url, expires_in_seconds: 900 }` \u2014 a presigned S3 download URL. PDF is lazily generated (pdfkit) on first request and cached in S3. Layout follows section \u00a78 of the design spec (header, line table, GST summary, footer)."
               },
               "response": []
             }
@@ -10491,7 +10500,7 @@
                     "initiate"
                   ]
                 },
-                "description": "Creates a Razorpay order for the invoice's `total` (in paise). Persists a `Payment` row with status `Initiated`. Response includes `razorpay_order_id`, `razorpay_key_id`, `amount` (paise), and `invoice_number` — hand these to the Razorpay JS checkout."
+                "description": "Creates a Razorpay order for the invoice's `total` (in paise). Persists a `Payment` row with status `Initiated`. Response includes `razorpay_order_id`, `razorpay_key_id`, `amount` (paise), and `invoice_number` \u2014 hand these to the Razorpay JS checkout."
               },
               "event": [
                 {
@@ -10503,7 +10512,7 @@
                       "  if (body.data) {",
                       "    if (body.data.payment_id) pm.collectionVariables.set('payment_id', body.data.payment_id);",
                       "    if (body.data.razorpay_order_id) pm.collectionVariables.set('razorpay_order_id', body.data.razorpay_order_id);",
-                      "    console.log('✅ razorpay_order_id saved');",
+                      "    console.log('\u2705 razorpay_order_id saved');",
                       "  }",
                       "}"
                     ],
@@ -10548,7 +10557,7 @@
                     "verify"
                   ]
                 },
-                "description": "Verifies the HMAC signature returned by Razorpay's JS checkout. On success: payment → `Success`, invoice → `Paid`, subscription `end_date` extended by one billing cycle (+1mo or +12mo), `pending_plan_id` / `pending_billing_cycle` applied if set, `sub_status` → `Active`, grace cleared. Idempotent: replaying a successful verify returns the same state."
+                "description": "Verifies the HMAC signature returned by Razorpay's JS checkout. On success: payment \u2192 `Success`, invoice \u2192 `Paid`, subscription `end_date` extended by one billing cycle (+1mo or +12mo), `pending_plan_id` / `pending_billing_cycle` applied if set, `sub_status` \u2192 `Active`, grace cleared. Idempotent: replaying a successful verify returns the same state."
               },
               "response": []
             },
@@ -10612,7 +10621,7 @@
                     "razorpay"
                   ]
                 },
-                "description": "**Public endpoint** — no JWT. Razorpay calls this on `payment.captured`, `payment.failed`, `order.paid`. Server verifies the `X-Razorpay-Signature` header against the raw body; mismatched signature → 401. Idempotent on `razorpay_payment_id`. Configure the URL + secret in your Razorpay dashboard."
+                "description": "**Public endpoint** \u2014 no JWT. Razorpay calls this on `payment.captured`, `payment.failed`, `order.paid`. Server verifies the `X-Razorpay-Signature` header against the raw body; mismatched signature \u2192 401. Idempotent on `razorpay_payment_id`. Configure the URL + secret in your Razorpay dashboard."
               },
               "response": []
             }

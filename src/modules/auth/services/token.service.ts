@@ -64,7 +64,7 @@ export class TokenService {
       login_time: new Date(),
       last_activity: new Date(),
       expires_at: calculateSessionExpiration(this.configService),
-      app_id: params.appId,
+      app_id: params.appId || undefined,
     });
 
     const tokenPayload: JwtPayload = {
