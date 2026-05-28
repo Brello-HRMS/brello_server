@@ -38,6 +38,8 @@ import {
   ComponentCategory,
   CalculationType,
 } from '../../payroll/enums/payroll.enum';
+import { Department } from '../../departments/entities/department.entity';
+import { Designation } from '../../designations/entities/designation.entity';
 
 @Injectable()
 export class OrganizationService {
@@ -228,6 +230,44 @@ export class OrganizationService {
         organization_id: savedOrg.id,
       });
       await manager.save(basicComponent);
+
+      // Step 8: Copy platform default departments to the new org
+      const defaultDepts = await manager.find(Department, {
+        where: { is_default: true, is_deleted: false },
+      });
+      for (const dept of defaultDepts) {
+        const orgDept = manager.create(Department, {
+          name: dept.name,
+          code: dept.code,
+          description: dept.description,
+          icon: dept.icon,
+          status: dept.status,
+          enterprise_id: enterpriseId,
+          organization_id: savedOrg.id,
+          is_default: false,
+          is_deleted: false,
+        });
+        await manager.save(orgDept);
+      }
+
+      // Step 9: Copy platform default designations to the new org
+      const defaultDesigs = await manager.find(Designation, {
+        where: { is_default: true, is_deleted: false },
+      });
+      for (const desig of defaultDesigs) {
+        const orgDesig = manager.create(Designation, {
+          title: desig.title,
+          code: desig.code,
+          description: desig.description,
+          status: desig.status,
+          enterprise_id: enterpriseId,
+          organization_id: savedOrg.id,
+          org_id: savedOrg.id,
+          is_default: false,
+          is_deleted: false,
+        });
+        await manager.save(orgDesig);
+      }
 
       await queryRunner.commitTransaction();
       this.logger.log(

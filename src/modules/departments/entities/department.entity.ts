@@ -13,4 +13,7 @@ export class Department extends BaseEntity {
 
     @Column({ type: 'boolean', default: false })
     is_deleted: boolean;
+
+    @Column({ type: 'boolean', default: false })
+    is_default: boolean;
 }

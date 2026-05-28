@@ -99,6 +99,13 @@ export class IndustryTypeService {
 
     await this.findOne(id);
 
+    const inUse = await this.industryTypeRepository.countOrgsUsing(id);
+    if (inUse > 0) {
+      throw new ConflictException(
+        `This industry type is assigned to ${inUse} organization(s) and cannot be deleted`,
+      );
+    }
+
     const deleted = await this.industryTypeRepository.softDelete(id);
     if (!deleted) {
       throw new NotFoundException(
