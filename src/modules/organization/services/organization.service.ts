@@ -373,6 +373,14 @@ export class OrganizationService {
 
     this.logger.log(`Organization deleted successfully: ${id}`);
   }
+  async getStats(id: string, user?: LoggedInUser): Promise<{ employee_count: number }> {
+    await this.findOne(id, user);
+    const employee_count = await this.dataSource
+      .getRepository(User)
+      .count({ where: { organization_id: id } });
+    return { employee_count };
+  }
+
   async debugUser(email: string): Promise<any> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) return { error: 'User not found' };

@@ -1,4 +1,4 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 
 export enum BillingCycle {
@@ -7,9 +7,8 @@ export enum BillingCycle {
 }
 
 @Entity('plan')
-@Index(['name'], { unique: true })
 export class Plan extends BaseEntity {
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100 })
   name: string;
 
   // Per-employee monthly price in rupees. Historical name kept for back-compat.

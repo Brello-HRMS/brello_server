@@ -55,6 +55,16 @@ export class OrganizationSubscriptionRepository {
     });
   }
 
+  async findByOrganizationId(
+    organizationId: string,
+  ): Promise<OrganizationSubscription[]> {
+    return this.repository.find({
+      where: { organization_id: organizationId },
+      relations: ['plan'],
+      order: { created_at: 'DESC' },
+    });
+  }
+
   async softDelete(id: string): Promise<boolean> {
     const result = await this.repository.update(id, {
       status: 'DELETED' as any,

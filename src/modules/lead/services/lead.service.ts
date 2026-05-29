@@ -61,6 +61,7 @@ export class LeadService {
       lead_status: LeadStatus.NEW,
       is_verified: false,
       plan_id: createLeadDto.plan_id,
+      enterprise_id: createLeadDto.enterprise_id,
     });
 
     await this.generateAndSendOtp(lead.email);

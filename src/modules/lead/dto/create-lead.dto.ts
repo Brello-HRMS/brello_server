@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsEmail,
   IsOptional,
+  IsUUID,
   Length,
   Matches,
   IsIn,
@@ -59,4 +60,8 @@ export class CreateLeadDto {
   @IsString()
   @IsNotEmpty({ message: 'Plan ID is required' })
   plan_id: string;
+
+  @IsUUID()
+  @IsOptional()
+  enterprise_id?: string;
 }

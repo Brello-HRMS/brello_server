@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -35,8 +36,11 @@ export class PlanController {
   @Get()
   @Public()
   @HttpCode(HttpStatus.OK)
-  findAll(@LoggedInUser() user: LoggedInUserInterface) {
-    return this.planService.findAll(user);
+  findAll(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query('enterprise_id') enterpriseId?: string,
+  ) {
+    return this.planService.findAll(user, enterpriseId ? { enterprise_id: enterpriseId } : undefined);
   }
 
   @Get(':id')

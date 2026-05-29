@@ -58,6 +58,16 @@ export class OrganizationController {
     return this.organizationService.findByEnterpriseId(enterpriseId, user);
   }
 
+  @Get(':id/stats')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  getStats(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.organizationService.getStats(id, user);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)

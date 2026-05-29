@@ -6,6 +6,7 @@ import {
   IsArray,
   IsOptional,
   IsEnum,
+  IsUUID,
   Length,
 } from 'class-validator';
 import { BillingCycle } from '../entities/plan.entity';
@@ -53,6 +54,10 @@ export class CreatePlanDto {
   @IsString({ each: true })
   @IsOptional()
   feature?: string[];
+
+  @IsUUID()
+  @IsOptional()
+  enterprise_id?: string;
 
   @IsEnum(Status)
   @IsOptional()
