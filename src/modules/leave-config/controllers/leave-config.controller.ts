@@ -26,7 +26,7 @@ export class LeaveConfigController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermission('ORG_LEAVE', 'create')
+  @RequirePermission('LEAVE_SETUP', 'create')
   create(
     @LoggedInUser() user: LoggedInUserInterface,
     @Body() dto: CreateLeaveConfigDto,
@@ -36,14 +36,14 @@ export class LeaveConfigController {
 
   @Get('current')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ORG_LEAVE', 'view')
+  @RequirePermission('LEAVE_SETUP', 'view')
   findCurrent(@LoggedInUser() user: LoggedInUserInterface) {
     return this.leaveConfigService.findCurrent(user);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ORG_LEAVE', 'view')
+  @RequirePermission('LEAVE_SETUP', 'view')
   findOne(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -53,7 +53,7 @@ export class LeaveConfigController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ORG_LEAVE', 'update')
+  @RequirePermission('LEAVE_SETUP', 'update')
   update(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -64,7 +64,7 @@ export class LeaveConfigController {
 
   @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('ORG_LEAVE', 'activate')
+  @RequirePermission('LEAVE_SETUP', 'activate')
   activate(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,

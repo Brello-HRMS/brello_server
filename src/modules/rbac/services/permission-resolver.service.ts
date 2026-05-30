@@ -184,10 +184,10 @@ export class PermissionResolverService {
   ): Promise<string | null> {
     const now = new Date();
     const sub = await this.subscriptionRepo.findOne({
-      where: {
-        organization_id: organizationId,
-        sub_status: SubscriptionStatus.ACTIVE,
-      },
+      where: [
+        { organization_id: organizationId, sub_status: SubscriptionStatus.ACTIVE },
+        { organization_id: organizationId, sub_status: SubscriptionStatus.TRIAL },
+      ],
       order: { start_date: 'DESC' },
     });
     if (!sub || sub.end_date < now) return null;

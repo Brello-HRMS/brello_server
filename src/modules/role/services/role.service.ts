@@ -113,7 +113,7 @@ export class RoleService {
   async findByFilter(
     organizationId: string,
     enterpriseId: string,
-    user: LoggedInUser,
+    _user: LoggedInUser,
   ): Promise<Role[]> {
     this.logger.log(
       `Fetching roles for org: ${organizationId}, enterprise: ${enterpriseId}`,
@@ -127,6 +127,11 @@ export class RoleService {
     const role = await this.roleRepository.findById(id);
     if (!role) {
       throw new NotFoundException(`Role with ID '${id}' not found`);
+    }
+
+    // Platform admins can access any role (including platform system roles with no org)
+    if (user.isPlatformAdmin) {
+      return role;
     }
 
     // Security check: ensure user only accesses roles within their context
@@ -206,6 +211,57 @@ export class RoleService {
 
     this.searchIndexingService.removeRole(id, user.enterpriseId);
     this.logger.log(`Role soft deleted successfully: ${id}`);
+  }
+
+  async findPlatformRoles(user: LoggedInUser): Promise<Role[]> {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform administrators can view platform roles');
+    }
+    return this.roleRepository.findPlatformSystemRoles();
+  }
+
+  async createPlatformRole(createRoleDto: CreateRoleDto, user: LoggedInUser): Promise<Role> {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform administrators can manage platform roles');
+    }
+    const role = await this.roleRepository.create({
+      name: createRoleDto.name.trim(),
+      description: createRoleDto.description,
+      code: createRoleDto.code,
+      app_id: createRoleDto.app_id,
+      is_system_role: true,
+      is_default: createRoleDto.is_system_defined ?? true,
+      status: Status.ACTIVE,
+    });
+    this.logger.log(`Platform role created: ${role.id}`);
+    return role;
+  }
+
+  async updatePlatformRole(id: string, dto: UpdateRoleDto, user: LoggedInUser): Promise<Role> {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform administrators can manage platform roles');
+    }
+    const role = await this.roleRepository.findPlatformRoleById(id);
+    if (!role) throw new NotFoundException(`Platform role with ID '${id}' not found`);
+
+    const updated = await this.roleRepository.update(id, {
+      ...(dto.name && { name: dto.name.trim() }),
+      ...(dto.description !== undefined && { description: dto.description }),
+      ...(dto.code !== undefined && { code: dto.code }),
+      ...(dto.is_system_defined !== undefined && { is_default: dto.is_system_defined }),
+    });
+    this.logger.log(`Platform role updated: ${id}`);
+    return updated!;
+  }
+
+  async deletePlatformRole(id: string, user: LoggedInUser): Promise<void> {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException('Only platform administrators can manage platform roles');
+    }
+    const role = await this.roleRepository.findPlatformRoleById(id);
+    if (!role) throw new NotFoundException(`Platform role with ID '${id}' not found`);
+    await this.roleRepository.softDelete(id);
+    this.logger.log(`Platform role deleted: ${id}`);
   }
 
   private validateSystemRoleAccess(

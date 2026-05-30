@@ -1,5 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { Plan } from '../entities/plan.entity';
+import { PlanApp } from '../entities/plan-app.entity';
 import { PlanRepository } from '../repositories/plan.repository';
 import { PlanAppRepository } from '../repositories/plan-app.repository';
 import { CreatePlanDto, UpdatePlanDto } from '../dto/plan.dto';
@@ -23,7 +24,10 @@ export class PlanService {
     }
   }
 
-  async findAll(user?: LoggedInUser, filters?: { enterprise_id?: string }): Promise<Plan[]> {
+  async findAll(
+    user?: LoggedInUser,
+    filters?: { enterprise_id?: string },
+  ): Promise<Plan[]> {
     return this.planRepository.findAll(user?.isPlatformAdmin ?? false, filters);
   }
 
@@ -31,7 +35,11 @@ export class PlanService {
     return this.planRepository.findOneById(id);
   }
 
-  async update(id: string, dto: UpdatePlanDto, user?: LoggedInUser): Promise<Plan> {
+  async update(
+    id: string,
+    dto: UpdatePlanDto,
+    user?: LoggedInUser,
+  ): Promise<Plan> {
     const plan = await this.findOne(id, user);
     Object.assign(plan, dto);
 
@@ -49,8 +57,16 @@ export class PlanService {
     await this.planRepository.softDelete(id);
   }
 
-  async assignAppsToPlan(planId: string, appIds: string[], user?: LoggedInUser): Promise<void> {
+  async getAppsForPlan(planId: string, _user?: LoggedInUser): Promise<PlanApp[]> {
+    return this.planAppRepository.getAppsForPlan(planId);
+  }
+
+  async assignAppsToPlan(
+    planId: string,
+    appIds: string[],
+    user?: LoggedInUser,
+  ): Promise<void> {
     await this.findOne(planId, user);
-    await this.planAppRepository.assignAppsToPlan(planId, appIds);
+    await this.planAppRepository.syncAppsForPlan(planId, appIds);
   }
 }

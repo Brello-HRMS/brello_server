@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { PlanApp } from '../entities/plan-app.entity';
 import { Status } from '../../../common/enums';
 
@@ -11,39 +11,34 @@ export class PlanAppRepository {
     private readonly repository: Repository<PlanApp>,
   ) {}
 
-  async assignAppsToPlan(planId: string, appIds: string[]): Promise<void> {
-    if (!appIds || appIds.length === 0) return;
+  async syncAppsForPlan(planId: string, appIds: string[]): Promise<void> {
+    const all = await this.repository.find({ where: { plan_id: planId } });
+    const newSet = new Set(appIds);
+    const existingMap = new Map(all.map((e) => [e.app_id, e]));
 
-    const existing = await this.repository.find({
-      where: {
-        plan_id: planId,
-        app_id: In(appIds),
-      },
-    });
+    for (const existing of all) {
+      if (!newSet.has(existing.app_id) && existing.is_active) {
+        await this.repository.update(existing.id, { is_active: false });
+      }
+    }
 
-    const existingAppIds = new Set(existing.map((e) => e.app_id));
-    const toCreate = appIds
-      .filter((id) => !existingAppIds.has(id))
-      .map((appId) =>
-        this.repository.create({
-          plan_id: planId,
-          app_id: appId,
-          is_active: true,
-        }),
-      );
-
-    if (toCreate.length > 0) {
-      await this.repository.save(toCreate);
+    for (const appId of appIds) {
+      const existing = existingMap.get(appId);
+      if (existing) {
+        if (!existing.is_active) {
+          await this.repository.update(existing.id, { is_active: true });
+        }
+      } else {
+        await this.repository.save(
+          this.repository.create({ plan_id: planId, app_id: appId, is_active: true }),
+        );
+      }
     }
   }
 
   async getAppsForPlan(planId: string): Promise<PlanApp[]> {
     return this.repository.find({
-      where: {
-        plan_id: planId,
-        is_active: true,
-        status: Status.ACTIVE,
-      },
+      where: { plan_id: planId, is_active: true, status: Status.ACTIVE },
     });
   }
 }

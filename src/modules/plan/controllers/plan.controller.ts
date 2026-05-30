@@ -44,6 +44,7 @@ export class PlanController {
   }
 
   @Get(':id')
+  @Public()
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -69,6 +70,15 @@ export class PlanController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.planService.remove(id, user);
+  }
+
+  @Get(':id/apps')
+  @HttpCode(HttpStatus.OK)
+  getApps(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.planService.getAppsForPlan(id, user);
   }
 
   @Post(':id/apps')
