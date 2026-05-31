@@ -38,6 +38,8 @@ import {
   ComponentCategory,
   CalculationType,
 } from '../../payroll/enums/payroll.enum';
+import { Department } from '../../departments/entities/department.entity';
+import { Designation } from '../../designations/entities/designation.entity';
 
 @Injectable()
 export class OrganizationService {
@@ -199,17 +201,18 @@ export class OrganizationService {
       user.enterprise_id = enterpriseId; // Use the local enterpriseId
       await manager.save(user);
 
-      // Step 6: Create OrganizationSubscription
+      // Step 6: Create OrganizationSubscription (14-day trial)
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 14);
       const subscription = manager.create(OrganizationSubscription, {
         organization_id: savedOrg.id,
         plan_id: user.plan_id,
-        sub_status: SubscriptionStatus.ACTIVE,
+        sub_status: SubscriptionStatus.TRIAL,
+        is_trial: true,
         start_date: new Date(),
+        end_date: trialEndDate,
+        next_renewal_date: trialEndDate,
       });
-
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
-      subscription.end_date = trialEndDate;
       await manager.save(subscription);
 
       // Step 7: Create Default Payroll Component (Basic Salary)
@@ -227,6 +230,44 @@ export class OrganizationService {
         organization_id: savedOrg.id,
       });
       await manager.save(basicComponent);
+
+      // Step 8: Copy platform default departments to the new org
+      const defaultDepts = await manager.find(Department, {
+        where: { is_default: true, is_deleted: false },
+      });
+      for (const dept of defaultDepts) {
+        const orgDept = manager.create(Department, {
+          name: dept.name,
+          code: dept.code,
+          description: dept.description,
+          icon: dept.icon,
+          status: dept.status,
+          enterprise_id: enterpriseId,
+          organization_id: savedOrg.id,
+          is_default: false,
+          is_deleted: false,
+        });
+        await manager.save(orgDept);
+      }
+
+      // Step 9: Copy platform default designations to the new org
+      const defaultDesigs = await manager.find(Designation, {
+        where: { is_default: true, is_deleted: false },
+      });
+      for (const desig of defaultDesigs) {
+        const orgDesig = manager.create(Designation, {
+          title: desig.title,
+          code: desig.code,
+          description: desig.description,
+          status: desig.status,
+          enterprise_id: enterpriseId,
+          organization_id: savedOrg.id,
+          org_id: savedOrg.id,
+          is_default: false,
+          is_deleted: false,
+        });
+        await manager.save(orgDesig);
+      }
 
       await queryRunner.commitTransaction();
       this.logger.log(
@@ -332,6 +373,14 @@ export class OrganizationService {
 
     this.logger.log(`Organization deleted successfully: ${id}`);
   }
+  async getStats(id: string, user?: LoggedInUser): Promise<{ employee_count: number }> {
+    await this.findOne(id, user);
+    const employee_count = await this.dataSource
+      .getRepository(User)
+      .count({ where: { organization_id: id } });
+    return { employee_count };
+  }
+
   async debugUser(email: string): Promise<any> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) return { error: 'User not found' };

@@ -53,6 +53,11 @@ export class AccessGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<{ user: JwtPayload }>();
     const user = request.user;
 
+    // Platform admins bypass all role-based permission checks
+    if (user?.isPlatformAdmin) {
+      return true;
+    }
+
     if (!user?.userId || !user?.organizationId || !user?.appId) {
       throw new ForbiddenException('Authentication context is missing.');
     }

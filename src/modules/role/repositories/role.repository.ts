@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, SelectQueryBuilder } from 'typeorm';
+import { Repository, Not, IsNull, SelectQueryBuilder } from 'typeorm';
 import { Role } from '../entities/role.entity';
 import { Status } from '../../../common/enums';
 
@@ -56,6 +56,30 @@ export class RoleRepository {
     });
   }
 
+  async findPlatformSystemRoles(): Promise<Role[]> {
+    return this.repository.find({
+      where: {
+        is_system_role: true,
+        organization_id: IsNull(),
+        status: Not(Status.DELETED),
+      },
+      relations: ['app'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  async findPlatformRoleById(id: string): Promise<Role | null> {
+    return this.repository.findOne({
+      where: {
+        id,
+        is_system_role: true,
+        organization_id: IsNull(),
+        status: Not(Status.DELETED),
+      },
+      relations: ['app'],
+    });
+  }
+
   async update(id: string, updateData: Partial<Role>): Promise<Role | null> {
     await this.repository.update(id, updateData);
     return this.findById(id);
@@ -66,5 +90,16 @@ export class RoleRepository {
       status: Status.DELETED,
     });
     return (result.affected ?? 0) > 0;
+  }
+
+  async findOrgRolesByAppId(appId: string): Promise<Role[]> {
+    return this.repository.find({
+      where: {
+        app_id: appId,
+        is_system_role: false,
+        organization_id: Not(IsNull()),
+        status: Not(Status.DELETED),
+      },
+    });
   }
 }

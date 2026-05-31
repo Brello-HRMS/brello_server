@@ -23,11 +23,16 @@ export class MenuController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async getMenu(@LoggedInUser() user: LoggedInUserInterface): Promise<MenuItem[]> {
+  async getMenu(
+    @LoggedInUser() user: LoggedInUserInterface,
+  ): Promise<MenuItem[]> {
     const resolved = await this.permissionResolver.resolve(user);
 
     // Build flat lookup
-    const nodeMap = new Map<string, MenuItem & { id: string; wbs_code: string; parent_id: string | null }>();
+    const nodeMap = new Map<
+      string,
+      MenuItem & { id: string; wbs_code: string; parent_id: string | null }
+    >();
     for (const mod of resolved.modules) {
       nodeMap.set(mod.id, {
         id: mod.id,

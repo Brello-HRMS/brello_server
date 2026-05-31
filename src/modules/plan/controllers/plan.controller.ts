@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -35,11 +36,15 @@ export class PlanController {
   @Get()
   @Public()
   @HttpCode(HttpStatus.OK)
-  findAll(@LoggedInUser() user: LoggedInUserInterface) {
-    return this.planService.findAll(user);
+  findAll(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query('enterprise_id') enterpriseId?: string,
+  ) {
+    return this.planService.findAll(user, enterpriseId ? { enterprise_id: enterpriseId } : undefined);
   }
 
   @Get(':id')
+  @Public()
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -65,6 +70,15 @@ export class PlanController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.planService.remove(id, user);
+  }
+
+  @Get(':id/apps')
+  @HttpCode(HttpStatus.OK)
+  getApps(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.planService.getAppsForPlan(id, user);
   }
 
   @Post(':id/apps')

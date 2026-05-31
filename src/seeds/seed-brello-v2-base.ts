@@ -119,6 +119,9 @@ const PLANS = [
   {
     name: 'Free',
     price: 0,
+    price_per_employee_annual: 0,
+    annual_discount_percent: 0,
+    tier_rank: 0,
     description: 'Perfect for exploring Brello and managing basic HR needs.',
     feature: [
       'Employee directory & profiles',
@@ -132,6 +135,10 @@ const PLANS = [
   {
     name: 'Standard',
     price: 99,
+    // 10 months billed annually (2 months free) → 99 × 10 = 990 / 12 = 82.50 per employee per month equivalent.
+    price_per_employee_annual: 990,
+    annual_discount_percent: 16.67,
+    tier_rank: 1,
     description: 'Everything you need to run HR for a growing company.',
     feature: [
       'Everything in Free',
@@ -148,6 +155,9 @@ const PLANS = [
   {
     name: 'Premium',
     price: 149,
+    price_per_employee_annual: 1490,
+    annual_discount_percent: 16.67,
+    tier_rank: 2,
     description: 'For larger teams with complex HR and payroll needs.',
     feature: [
       'Everything in Standard',
@@ -249,14 +259,26 @@ async function upsertPlan(p: typeof PLANS[number]): Promise<string> {
     [p.name],
   );
   if (existing.length) {
-    await client.query(`UPDATE ${SCHEMA}.plan SET price = $2, description = $3, feature = $4 WHERE id = $1`, [existing[0].id, p.price, p.description, p.feature]);
+    await client.query(
+      `UPDATE ${SCHEMA}.plan
+         SET price = $2,
+             price_per_employee_annual = $3,
+             annual_discount_percent = $4,
+             tier_rank = $5,
+             description = $6,
+             feature = $7
+       WHERE id = $1`,
+      [existing[0].id, p.price, p.price_per_employee_annual, p.annual_discount_percent, p.tier_rank, p.description, p.feature],
+    );
     return existing[0].id;
   }
   const [row] = await q<{ id: string }>(
-    `INSERT INTO ${SCHEMA}.plan (name, price, description, discount, feature, status, created_at, updated_at)
-     VALUES ($1, $2, $3, 0, $4, 'ACTIVE', NOW(), NOW())
+    `INSERT INTO ${SCHEMA}.plan
+       (name, price, price_per_employee_annual, annual_discount_percent, tier_rank,
+        billing_cycle_default, description, discount, feature, status, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, 'Monthly', $6, 0, $7, 'ACTIVE', NOW(), NOW())
      RETURNING id`,
-    [p.name, p.price, p.description, p.feature],
+    [p.name, p.price, p.price_per_employee_annual, p.annual_discount_percent, p.tier_rank, p.description, p.feature],
   );
   return row.id;
 }

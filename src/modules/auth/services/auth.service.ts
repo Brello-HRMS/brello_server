@@ -267,6 +267,7 @@ export class AuthService {
         last_name: user.last_name,
         enterprise_id: user.enterprise_id,
         organization_id: user.organization_id,
+        is_platform_admin: user.is_platform_admin,
       },
       expires_in: tokens.expires_in,
       defaultAppId: defaultAppId || '',
@@ -548,47 +549,46 @@ export class AuthService {
       `OTP resend request for email: ${dto.email} (Purpose: ${dto.purpose})`,
     );
 
-    // 1. Check if an OTP record exists for this email + purpose
+    // 1. Look up existing OTP record for this email + purpose
     const existingOtp = await this.otpRepository.findByIdentifierAndPurpose(
       dto.email,
       dto.purpose,
     );
 
-    if (!existingOtp) {
-      throw new BadRequestException(
-        'No active OTP request found. Please initiate the flow first (e.g., click Login or Forgot Password).',
-      );
+    // 2. Resolve user_id — from existing OTP if present, otherwise look up from DB
+    let userId: string;
+    if (existingOtp) {
+      userId = existingOtp.user_id;
+    } else {
+      const user = await this.userService.findByEmail(dto.email);
+      if (!user) {
+        throw new BadRequestException('No account found for this email.');
+      }
+      userId = user.id;
     }
 
-    // 2. Clear old OTP
-    await this.otpRepository.deleteByIdentifierAndPurpose(
-      dto.email,
-      dto.purpose,
-    );
+    // 3. Clear old OTP (if any)
+    await this.otpRepository.deleteByIdentifierAndPurpose(dto.email, dto.purpose);
 
-    // 3. Generate new OTP
+    // 4. Generate new OTP
     const otp = generateOtp();
     const otpHash = await hashValue(otp);
 
-    // 4. Save new OTP
+    // 5. Save new OTP
     await this.otpRepository.create({
       identifier: dto.email,
       otp_hash: otpHash,
-      user_id: existingOtp.user_id,
+      user_id: userId,
       purpose: dto.purpose,
       expires_at: calculateOtpExpiration(this.configService),
       attempts_count: 0,
     });
 
-    // 5. Build dynamic notification based on purpose
-    const notification = this.getNotificationDetails(
-      dto.purpose,
-      dto.email,
-      otp,
-    );
+    // 6. Build dynamic notification based on purpose
+    const notification = this.getNotificationDetails(dto.purpose, dto.email, otp);
 
     this.notificationService.send({
-      user_id: existingOtp.user_id,
+      user_id: userId,
       target_email: dto.email,
       title: notification.title,
       message: notification.message,

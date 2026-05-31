@@ -29,7 +29,7 @@ export class HolidayCalendarController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermission('HOLIDAY', 'create')
+  @RequirePermission('LEAVE_HOLIDAYS', 'create')
   create(
     @LoggedInUser() user: LoggedInUserInterface,
     @Body() dto: CreateHolidayCalendarDto,
@@ -39,7 +39,7 @@ export class HolidayCalendarController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'view')
+  @RequirePermission('LEAVE_HOLIDAYS', 'view')
   findAll(
     @LoggedInUser() user: LoggedInUserInterface,
     @Query() query: ListCalendarsDto,
@@ -49,7 +49,7 @@ export class HolidayCalendarController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'view')
+  @RequirePermission('LEAVE_HOLIDAYS', 'view')
   findOne(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -59,7 +59,7 @@ export class HolidayCalendarController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'update')
+  @RequirePermission('LEAVE_HOLIDAYS', 'update')
   update(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -70,7 +70,7 @@ export class HolidayCalendarController {
 
   @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'activate')
+  @RequirePermission('LEAVE_HOLIDAYS', 'activate')
   activate(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -80,7 +80,7 @@ export class HolidayCalendarController {
 
   @Post(':id/deactivate')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'activate')
+  @RequirePermission('LEAVE_HOLIDAYS', 'activate')
   deactivate(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -90,7 +90,7 @@ export class HolidayCalendarController {
 
   @Post(':id/clone')
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermission('HOLIDAY', 'clone')
+  @RequirePermission('LEAVE_HOLIDAYS', 'clone')
   clone(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -101,7 +101,7 @@ export class HolidayCalendarController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermission('HOLIDAY', 'delete')
+  @RequirePermission('LEAVE_HOLIDAYS', 'delete')
   remove(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,

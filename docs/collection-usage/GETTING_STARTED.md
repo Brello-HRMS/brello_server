@@ -32,6 +32,7 @@
 | `organization_id`  | _(empty)_                      | Auto-populated on login                      |
 | `default_app_id`   | _(empty)_                      | Auto-populated on login                      |
 | `app_id`           | _(empty)_                      | Set after creating an App                    |
+| `module_id`        | _(empty)_                      | Set after creating an App Module             |
 | `role_id`          | _(empty)_                      | Set after creating a Role                    |
 | `plan_id`          | _(empty)_                      | Set after creating a Plan                    |
 | `industry_type_id` | _(empty)_                      | Set after creating an Industry Type          |
@@ -192,6 +193,26 @@ POST /api/v1/users
 
 ### Step 2 — Login as Platform Admin (Request OTP)
 
+There are two ways to log in as a Platform Admin. Both produce the same token.
+
+**Option A — Unified Login (same UI as regular users):**
+
+> **Folder:** Auth → Login - Send OTP
+
+```
+POST /api/v1/auth/login/send-otp
+```
+
+```json
+{
+  "email": "admin@brello.com"
+}
+```
+
+The server automatically detects the user is a platform admin and issues a `PLATFORM_ADMIN_LOGIN` OTP. ✅ Check the **server console** for the OTP (dev mode).
+
+**Option B — Dedicated Endpoint (Postman/API only, requires password):**
+
 > **Folder:** Auth → Platform Admin Login (Request OTP)
 
 ```
@@ -209,6 +230,26 @@ POST /api/v1/auth/platform-admin/login
 
 ### Step 2.5 — Verify Login (Get Token)
 
+**If you used Option A (unified flow):**
+
+> **Folder:** Auth → Login - Verify OTP
+
+```
+POST /api/v1/auth/login/verify-otp
+```
+
+```json
+{
+  "email": "admin@brello.com",
+  "otp": "123456",
+  "device_fingerprint": "postman-dev"
+}
+```
+
+The response will include `"is_platform_admin": true` in the user object. The frontend automatically routes to `/platform/dashboard`.
+
+**If you used Option B (dedicated endpoint):**
+
 > **Folder:** Auth → Platform Admin Verify Login (Returns Token)
 
 ```
@@ -222,7 +263,7 @@ POST /api/v1/auth/platform-admin/verify-login
 }
 ```
 
-✅ **Save the `access_token`**
+✅ **Save the `access_token`** — it contains `isPlatformAdmin: true` in the JWT payload.
 
 ### Step 3 — Create Industry Type
 
@@ -243,7 +284,7 @@ Authorization: Bearer {{access_token}}
 
 ### Step 4 — Create Plan
 
-> **Folder:** Plan → Create Plan
+> **Folder:** Platform Admin Post-Creation Setup → Create Plan
 
 ```
 POST /api/v1/plans
@@ -253,14 +294,27 @@ Authorization: Bearer {{access_token}}
 ```json
 {
   "name": "Enterprise Pro",
-  "price": 99.99,
-  "description": "Premium tier plan with all features",
+  "price": 499.00,
+  "price_per_employee_annual": 4990.00,
+  "annual_discount_percent": 20,
+  "tier_rank": 2,
+  "billing_cycle_default": "Monthly",
+  "description": "Premium tier plan with all features.",
   "discount": 0,
-  "feature": ["HRMS", "CRM", "Payroll"]
+  "feature": ["HRMS", "CRM", "Payroll", "Attendance", "Leave", "Reimbursement"],
+  "status": "ACTIVE"
 }
 ```
 
-✅ **Save the `id`** — this is your `plan_id`.
+> **Field guide:**
+> - `tier_rank` — `0` = Free, `1` = Standard, `2` = Premium (controls upgrade/downgrade logic)
+> - `billing_cycle_default` — `"Monthly"` or `"Annual"` (shown as default on pricing page)
+> - `annual_discount_percent` — discount applied when customer selects annual billing
+> - `status` — `"ACTIVE"` makes it visible on the public website immediately
+
+✅ **Save the `id`** — this is your `plan_id`. The test script saves it to `{{plan_id}}` automatically.
+
+> 💡 Plans created here are immediately visible on `GET /plans` (public endpoint). Set `"status": "INACTIVE"` to hide a plan from the website while still keeping it in the system.
 
 ### Step 5 — Create Enterprise
 
@@ -341,6 +395,49 @@ Authorization: Bearer {{access_token}}
 ✅ **Save the `id`** — this is your `app_id`.
 
 > 💡 `priority` determines the default app on login (lower = higher priority).
+
+### Step 7.5 — Create App Modules (Optional but recommended)
+
+Define the module tree for the app. Modules are used for sidebar navigation and RBAC permission assignment.
+
+> **Folder:** App Module → Create App Module
+
+**Create a root module (MOD):**
+
+```
+POST /api/v1/app-modules
+Authorization: Bearer {{access_token}}
+```
+
+```json
+{
+  "name": "Dashboard",
+  "code": "DASHBOARD",
+  "app_id": "{{app_id}}",
+  "wbs_code": "1",
+  "type": "mod",
+  "icon": "LayoutDashboard",
+  "path": "/dashboard"
+}
+```
+
+**Create a sub-module (SUBMOD):**
+
+```json
+{
+  "name": "Leave Balance",
+  "code": "LEAVE_BALANCE",
+  "app_id": "{{app_id}}",
+  "wbs_code": "2.1",
+  "parent_id": "<leave_module_id>",
+  "type": "submod",
+  "path": "/leave/balance"
+}
+```
+
+> **WBS codes** use dot-notation for ordering: `1`, `2`, `2.1`, `2.2`, `3`. The UI auto-computes the next available WBS code, but you can set it manually here.
+
+> **`/menu`** returns an empty array until modules and module-access entries are configured. Create modules here, then assign permissions via `PUT /api/v1/module-access/role/:roleId/permissions-list`.
 
 ---
 
@@ -468,6 +565,25 @@ The `otp_login_email` staging variable is cleaned up (unset) automatically after
 | `otp`        | Exactly 6 digits                     |
 | Max attempts | 5 attempts before OTP is invalidated |
 | Expiry       | 10 minutes                           |
+
+---
+
+### Step 8d — Resend OTP (if needed)
+
+> **Folder:** Auth → Resend OTP
+
+```
+POST /api/v1/auth/resend-otp
+```
+
+```json
+{
+  "email": "john.doe@example.com",
+  "purpose": "LOGIN"
+}
+```
+
+✅ A fresh OTP is generated and sent even if the previous OTP expired or was never issued. Use `"purpose": "LOGIN"` for both regular users and platform admins on the unified flow.
 
 ---
 
@@ -719,8 +835,8 @@ Authorization: Bearer {{access_token}}
 | Step | Method | Endpoint                            | Prerequisite                            |
 | ---- | ------ | ----------------------------------- | --------------------------------------- |
 | 1    | POST   | `/users`                            | enterprise_id, organization_id (seeded) |
-| 2    | POST   | `/auth/platform-admin/login`        | Platform Admin User exists              |
-| 2.5  | POST   | `/auth/platform-admin/verify-login` | OTP from step 2                         |
+| 2    | POST   | `/auth/login/send-otp` *(unified)* OR `/auth/platform-admin/login` *(dedicated)* | Platform Admin User exists |
+| 2.5  | POST   | `/auth/login/verify-otp` *(unified)* OR `/auth/platform-admin/verify-login` *(dedicated)* | OTP from step 2 |
 | 3    | POST   | `/industry-types`                   | access_token (Platform Admin)           |
 | 4    | POST   | `/plans`                            | access_token (Platform Admin)           |
 | 5    | POST   | `/enterprises`                      | access_token (Platform Admin)           |
@@ -729,6 +845,7 @@ Authorization: Bearer {{access_token}}
 | 7    | POST   | `/apps`                             | access_token (Platform Admin)           |
 | 8    | POST   | `/roles`                            | app_id, enterprise_id, organization_id  |
 | 9    | POST   | `/user-role-maps`                   | user_id, role_id, organization_id       |
+| 8d   | POST   | `/auth/resend-otp`                  | Email exists (no prior OTP required)    |
 | 10   | POST   | `/auth/login`                       | User + Role + App exist                 |
 | 11   | GET    | `/menu`                             | access_token                            |
 | 12   | POST   | `/auth/refresh`                     | HttpOnly cookie (auto)                  |

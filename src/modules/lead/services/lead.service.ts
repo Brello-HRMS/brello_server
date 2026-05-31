@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   BadRequestException,
+  NotFoundException,
   Logger,
   InternalServerErrorException,
 } from '@nestjs/common';
@@ -60,6 +61,7 @@ export class LeadService {
       lead_status: LeadStatus.NEW,
       is_verified: false,
       plan_id: createLeadDto.plan_id,
+      enterprise_id: createLeadDto.enterprise_id,
     });
 
     await this.generateAndSendOtp(lead.email);
@@ -85,6 +87,39 @@ export class LeadService {
     await this.verifyLeadAndCreateUser(lead);
 
     this.logger.log(`Lead ${lead.id} verified and user created successfully`);
+  }
+
+  // --- Admin Methods ---
+
+  async findAll(
+    filters?: { status?: LeadStatus; source?: LeadSource },
+    _user?: LoggedInUser,
+  ): Promise<Omit<Lead, 'password_hash' | 'verification_token'>[]> {
+    const leads = await this.leadRepository.findAll(filters);
+    return leads.map(({ password_hash, verification_token, ...rest }) => rest);
+  }
+
+  async findOne(
+    id: string,
+    _user?: LoggedInUser,
+  ): Promise<Omit<Lead, 'password_hash' | 'verification_token'>> {
+    const lead = await this.leadRepository.findById(id);
+    if (!lead) throw new NotFoundException(`Lead ${id} not found`);
+    const { password_hash, verification_token, ...rest } = lead;
+    return rest;
+  }
+
+  async updateStatus(
+    id: string,
+    status: LeadStatus,
+    _user?: LoggedInUser,
+  ): Promise<Omit<Lead, 'password_hash' | 'verification_token'>> {
+    await this.findOne(id);
+    const updated = await this.leadRepository.update(id, {
+      lead_status: status,
+    });
+    const { password_hash, verification_token, ...rest } = updated!;
+    return rest;
   }
 
   // --- Private Helpers ---
@@ -205,6 +240,7 @@ export class LeadService {
           password_hash: lead.password_hash,
           status: Status.ACTIVE,
           plan_id: lead.plan_id,
+          enterprise_id: lead.enterprise_id,
         });
         await userRepo.save(newUser);
       });

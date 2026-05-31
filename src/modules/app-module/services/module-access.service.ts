@@ -21,6 +21,7 @@ import { OrganizationSubscriptionRepository } from '../../plan/repositories/orga
 import { PlanModuleRepository } from '../../plan/repositories/plan-module.repository';
 import { PlanModuleActionRepository } from '../../plan/repositories/plan-module-action.repository';
 import { RoleService } from '../../role/services/role.service';
+import { RoleRepository } from '../../role/repositories/role.repository';
 import { UpdateRolePermissionsListDto } from '../dto/module-access.dto';
 
 @Injectable()
@@ -36,6 +37,7 @@ export class ModuleAccessService implements OnModuleInit {
     private readonly planModuleRepository: PlanModuleRepository,
     private readonly planModuleActionRepository: PlanModuleActionRepository,
     private readonly roleService: RoleService,
+    private readonly roleRepository: RoleRepository,
   ) {}
 
   async onModuleInit() {
@@ -307,7 +309,6 @@ export class ModuleAccessService implements OnModuleInit {
 
     // Unchecked items that exist in DB can be updated to access_flag = false or deleted.
     // Deleting them is cleaner.
-    const itemKeys = new Set(dto.permissions.map((p) => `${p.module_id}_${p.action_id}`));
     const toDeleteIds: string[] = [];
 
     for (const existing of existingAccessList) {
@@ -339,6 +340,53 @@ export class ModuleAccessService implements OnModuleInit {
       }
     }
 
+    // When a platform role's permissions change, propagate new grants to all cloned org roles.
+    // We only ADD new entries — we never remove from org roles, preserving any custom config.
+    if (!role.organization_id && role.is_system_role) {
+      this.propagateToOrgRoles(role.id, role.app_id, dto.permissions).catch((err) =>
+        this.logger.error(`Failed to propagate platform role permissions: ${err.message}`),
+      );
+    }
+
     return { success: true };
+  }
+
+  private async propagateToOrgRoles(
+    platformRoleId: string,
+    appId: string,
+    permissions: Array<{ module_id: string; action_id: string; checked: boolean }>,
+  ): Promise<void> {
+    const checkedPerms = permissions.filter((p) => p.checked);
+    if (!checkedPerms.length) return;
+
+    const orgRoles = await this.roleRepository.findOrgRolesByAppId(appId);
+    if (!orgRoles.length) return;
+
+    this.logger.log(
+      `Propagating ${checkedPerms.length} permissions from platform role ${platformRoleId} to ${orgRoles.length} org roles`,
+    );
+
+    for (const orgRole of orgRoles) {
+      const existing = await this.moduleAccessRepository.findByRole(orgRole.id);
+      const existingKeys = new Set(existing.map((e) => `${e.module_id}_${e.action_id}`));
+
+      const toInsert = checkedPerms.filter(
+        (p) => !existingKeys.has(`${p.module_id}_${p.action_id}`),
+      );
+
+      for (const perm of toInsert) {
+        const record = this.moduleAccessRepository.create({
+          role_id: orgRole.id,
+          module_id: perm.module_id,
+          action_id: perm.action_id,
+          access_flag: true,
+        });
+        await this.moduleAccessRepository.save(record);
+      }
+
+      if (toInsert.length) {
+        this.logger.log(`Added ${toInsert.length} new permissions to org role ${orgRole.id}`);
+      }
+    }
   }
 }

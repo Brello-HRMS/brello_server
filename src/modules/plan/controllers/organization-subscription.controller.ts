@@ -61,6 +61,14 @@ export class OrganizationSubscriptionController {
     return this.subscriptionService.update(id, updateSubscriptionDto, user);
   }
 
+  @Get('organization/:orgId')
+  @HttpCode(HttpStatus.OK)
+  findByOrganization(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+  ) {
+    return this.subscriptionService.findByOrganizationId(orgId);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(

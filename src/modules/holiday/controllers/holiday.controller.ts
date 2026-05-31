@@ -29,7 +29,7 @@ export class HolidayController {
 
   @Post('calendars/:calendarId/holidays')
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermission('HOLIDAY', 'create')
+  @RequirePermission('LEAVE_HOLIDAYS', 'create')
   create(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('calendarId', ParseUUIDPipe) calendarId: string,
@@ -40,7 +40,7 @@ export class HolidayController {
 
   @Get('calendars/:calendarId/holidays')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'view')
+  @RequirePermission('LEAVE_HOLIDAYS', 'view')
   findAll(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('calendarId', ParseUUIDPipe) calendarId: string,
@@ -51,7 +51,7 @@ export class HolidayController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'view')
+  @RequirePermission('LEAVE_HOLIDAYS', 'view')
   findOne(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -61,7 +61,7 @@ export class HolidayController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'update')
+  @RequirePermission('LEAVE_HOLIDAYS', 'update')
   update(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -72,7 +72,7 @@ export class HolidayController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermission('HOLIDAY', 'delete')
+  @RequirePermission('LEAVE_HOLIDAYS', 'delete')
   remove(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -82,7 +82,7 @@ export class HolidayController {
 
   @Get('calendars/:calendarId/month-view')
   @HttpCode(HttpStatus.OK)
-  @RequirePermission('HOLIDAY', 'view')
+  @RequirePermission('LEAVE_HOLIDAYS', 'view')
   getMonthView(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('calendarId', ParseUUIDPipe) calendarId: string,

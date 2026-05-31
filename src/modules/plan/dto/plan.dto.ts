@@ -5,8 +5,12 @@ import {
   Min,
   IsArray,
   IsOptional,
+  IsEnum,
+  IsUUID,
   Length,
 } from 'class-validator';
+import { BillingCycle } from '../entities/plan.entity';
+import { Status } from '../../../common/enums';
 
 export class CreatePlanDto {
   @IsString()
@@ -17,6 +21,25 @@ export class CreatePlanDto {
   @IsNumber()
   @Min(0)
   price: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  price_per_employee_annual?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  annual_discount_percent?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  tier_rank?: number;
+
+  @IsEnum(BillingCycle)
+  @IsOptional()
+  billing_cycle_default?: BillingCycle;
 
   @IsString()
   @IsOptional()
@@ -31,6 +54,14 @@ export class CreatePlanDto {
   @IsString({ each: true })
   @IsOptional()
   feature?: string[];
+
+  @IsUUID()
+  @IsOptional()
+  enterprise_id?: string;
+
+  @IsEnum(Status)
+  @IsOptional()
+  status?: Status;
 }
 
 export class UpdatePlanDto {
@@ -44,6 +75,25 @@ export class UpdatePlanDto {
   @IsOptional()
   price?: number;
 
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  price_per_employee_annual?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  annual_discount_percent?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  tier_rank?: number;
+
+  @IsEnum(BillingCycle)
+  @IsOptional()
+  billing_cycle_default?: BillingCycle;
+
   @IsString()
   @IsOptional()
   description?: string;
@@ -57,4 +107,8 @@ export class UpdatePlanDto {
   @IsString({ each: true })
   @IsOptional()
   feature?: string[];
+
+  @IsEnum(Status)
+  @IsOptional()
+  status?: Status;
 }

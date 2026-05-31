@@ -96,6 +96,12 @@ export class OrganizationSubscriptionService {
     return this.orgSubRepository.save(subscription);
   }
 
+  async findByOrganizationId(
+    organizationId: string,
+  ): Promise<OrganizationSubscription[]> {
+    return this.orgSubRepository.findByOrganizationId(organizationId);
+  }
+
   async remove(id: string, user?: LoggedInUser): Promise<void> {
     await this.findOne(id, user);
     await this.orgSubRepository.softDelete(id);

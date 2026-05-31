@@ -49,4 +49,12 @@ export class IndustryTypeRepository {
     });
     return (result.affected ?? 0) > 0;
   }
+
+  async countOrgsUsing(id: string): Promise<number> {
+    const result = await this.repository.manager.query(
+      'SELECT COUNT(*) FROM organization_profile WHERE industry_type_id = $1',
+      [id],
+    );
+    return parseInt(result[0].count, 10);
+  }
 }
