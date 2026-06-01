@@ -27,6 +27,7 @@ import { Status } from 'src/common/enums';
 import { AppModule } from '../../app-module/entities/app-module.entity';
 import { ModuleAccess } from '../../app-module/entities/module-access.entity';
 import { Role } from 'src/modules/role/entities/role.entity';
+import { RoleApp } from 'src/modules/role/entities/role-app.entity';
 import { App } from 'src/modules/app/entities/app.entity';
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { AuthResponseDto } from 'src/modules/auth/dto/auth-response.dto';
@@ -176,6 +177,17 @@ export class OrganizationService {
               access_flag: perm.access_flag,
             });
             await manager.save(orgPerm);
+          }
+
+          // Clone multi-app associations from role_apps
+          const platformRoleApps = await manager.find(RoleApp, {
+            where: { role_id: platformRole.id },
+          });
+          for (const ra of platformRoleApps) {
+            await manager.save(manager.create(RoleApp, {
+              role_id: savedRole.id,
+              app_id: ra.app_id,
+            }));
           }
         }
       }

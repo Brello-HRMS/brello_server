@@ -22,12 +22,13 @@ import { PlanModuleRepository } from '../../plan/repositories/plan-module.reposi
 import { PlanModuleActionRepository } from '../../plan/repositories/plan-module-action.repository';
 import { RoleService } from '../../role/services/role.service';
 import { RoleRepository } from '../../role/repositories/role.repository';
+import { RoleAppRepository } from '../../role/repositories/role-app.repository';
 import { UpdateRolePermissionsListDto } from '../dto/module-access.dto';
 
 @Injectable()
 export class ModuleAccessService implements OnModuleInit {
   private readonly logger = new Logger(ModuleAccessService.name);
- 
+
   constructor(
     private readonly moduleAccessRepository: ModuleAccessRepository,
     private readonly appModuleRepository: AppModuleRepository,
@@ -38,6 +39,7 @@ export class ModuleAccessService implements OnModuleInit {
     private readonly planModuleActionRepository: PlanModuleActionRepository,
     private readonly roleService: RoleService,
     private readonly roleRepository: RoleRepository,
+    private readonly roleAppRepository: RoleAppRepository,
   ) {}
 
   async onModuleInit() {
@@ -204,11 +206,16 @@ export class ModuleAccessService implements OnModuleInit {
       throw new NotFoundException(`Role with ID ${roleId} not found`);
     }
 
-    const activeSubscription = await this.organizationSubscriptionRepository.findActiveByOrganization(role.organization_id);
+    // Platform template roles (no org) must see all modules — never filter by plan.
+    const activeSubscription = role.organization_id
+      ? await this.organizationSubscriptionRepository.findActiveByOrganization(role.organization_id)
+      : null;
     const planId = activeSubscription?.plan_id;
 
-    // Fetch all active modules for the app
-    const allModules = await this.appModuleRepository.findByAppId(role.app_id);
+    // Fetch modules for all apps the role covers (role_apps wins over primary app_id)
+    const roleApps = await this.roleAppRepository.findByRoleId(role.id);
+    const appIds = roleApps.length ? roleApps.map((ra) => ra.app_id) : [role.app_id];
+    const allModules = await this.appModuleRepository.findByAppIds(appIds);
     const moduleIds = allModules.map((m) => m.id);
 
     // Fetch all active actions

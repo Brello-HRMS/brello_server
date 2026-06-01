@@ -8,6 +8,7 @@ import {
 import { CreateRoleDto } from '../dto/create-role.dto';
 import { UpdateRoleDto } from '../dto/update-role.dto';
 import { RoleRepository } from '../repositories/role.repository';
+import { RoleAppRepository } from '../repositories/role-app.repository';
 import { Role } from '../entities/role.entity';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { ListRolesDto } from '../dto/list-roles.dto';
@@ -22,6 +23,7 @@ export class RoleService {
 
   constructor(
     private readonly roleRepository: RoleRepository,
+    private readonly roleAppRepository: RoleAppRepository,
     private readonly searchIndexingService: SearchIndexingService,
   ) {}
 
@@ -217,7 +219,11 @@ export class RoleService {
     if (!user.isPlatformAdmin) {
       throw new ForbiddenException('Only platform administrators can view platform roles');
     }
-    return this.roleRepository.findPlatformSystemRoles();
+    const roles = await this.roleRepository.findPlatformSystemRoles();
+    for (const role of roles) {
+      role.roleApps = await this.roleAppRepository.findByRoleId(role.id);
+    }
+    return roles;
   }
 
   async createPlatformRole(createRoleDto: CreateRoleDto, user: LoggedInUser): Promise<Role> {
@@ -233,6 +239,14 @@ export class RoleService {
       is_default: createRoleDto.is_system_defined ?? true,
       status: Status.ACTIVE,
     });
+
+    // Sync app associations — use app_ids if provided, otherwise fall back to app_id
+    const appIds = createRoleDto.app_ids?.length
+      ? createRoleDto.app_ids
+      : [createRoleDto.app_id];
+    await this.roleAppRepository.syncAppsForRole(role.id, appIds);
+    role.roleApps = await this.roleAppRepository.findByRoleId(role.id);
+
     this.logger.log(`Platform role created: ${role.id}`);
     return role;
   }
@@ -250,6 +264,12 @@ export class RoleService {
       ...(dto.code !== undefined && { code: dto.code }),
       ...(dto.is_system_defined !== undefined && { is_default: dto.is_system_defined }),
     });
+
+    if (dto.app_ids?.length) {
+      await this.roleAppRepository.syncAppsForRole(id, dto.app_ids);
+    }
+
+    updated!.roleApps = await this.roleAppRepository.findByRoleId(id);
     this.logger.log(`Platform role updated: ${id}`);
     return updated!;
   }
@@ -260,6 +280,7 @@ export class RoleService {
     }
     const role = await this.roleRepository.findPlatformRoleById(id);
     if (!role) throw new NotFoundException(`Platform role with ID '${id}' not found`);
+    await this.roleAppRepository.deleteByRoleId(id);
     await this.roleRepository.softDelete(id);
     this.logger.log(`Platform role deleted: ${id}`);
   }
