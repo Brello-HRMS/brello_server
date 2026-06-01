@@ -276,6 +276,19 @@ export class AuthService {
     };
   }
 
+  async getAvailableAppsForUser(
+    userId: string,
+    organizationId: string,
+    isPlatformAdmin: boolean,
+  ): Promise<{ id: string; name: string; priority: number }[]> {
+    return getUserAvailableApps(
+      userId,
+      organizationId,
+      isPlatformAdmin,
+      this.userRoleMapRepository,
+    );
+  }
+
   async switchApp(
     loggedInUser: JwtPayload,
     switchAppDto: SwitchAppDto,
@@ -284,21 +297,16 @@ export class AuthService {
       `App switch: user ${loggedInUser.userId} → app ${switchAppDto.appId}`,
     );
 
-    // Validate the user has at least one active role in the requested app
-    const hasRole = await this.userRoleMapRepository
-      .createQueryBuilder('urm')
-      .innerJoin('urm.role', 'role')
-      .innerJoin('role.app', 'app')
-      .where('urm.user_id = :userId', { userId: loggedInUser.userId })
-      .andWhere('urm.organization_id = :orgId', {
-        orgId: loggedInUser.organizationId,
-      })
-      .andWhere('app.id = :appId', { appId: switchAppDto.appId })
-      .andWhere('role.status = :roleStatus', { roleStatus: Status.ACTIVE })
-      .andWhere('app.status = :appStatus', { appStatus: Status.ACTIVE })
-      .getCount();
+    // Validate access using the same logic as getAvailableApps (covers role_apps + template role_apps)
+    const availableApps = await getUserAvailableApps(
+      loggedInUser.userId,
+      loggedInUser.organizationId,
+      loggedInUser.isPlatformAdmin,
+      this.userRoleMapRepository,
+    );
+    const hasAccess = availableApps.some((a) => a.id === switchAppDto.appId);
 
-    if (!hasRole && !loggedInUser.isPlatformAdmin) {
+    if (!hasAccess && !loggedInUser.isPlatformAdmin) {
       throw new ForbiddenException(
         'You do not have access to the requested application.',
       );

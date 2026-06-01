@@ -6,6 +6,8 @@ import {
   Length,
   IsUUID,
   IsBoolean,
+  IsArray,
+  ArrayMinSize,
 } from 'class-validator';
 
 export class CreateRoleDto {
@@ -26,6 +28,12 @@ export class CreateRoleDto {
   @IsUUID('4', { message: 'App ID must be a valid UUID' })
   @IsNotEmpty({ message: 'App ID is required' })
   app_id: string;
+
+  @IsArray()
+  @ArrayMinSize(1, { message: 'At least one app must be selected' })
+  @IsUUID('4', { each: true, message: 'Each app ID must be a valid UUID' })
+  @IsOptional()
+  app_ids?: string[];
 
   @IsUUID('4', { message: 'Enterprise ID must be a valid UUID' })
   @IsOptional()
