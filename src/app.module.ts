@@ -33,6 +33,7 @@ import { GlobalSearchModule } from './modules/global-search/global-search.module
 import { OrgSetupModule } from './modules/org-setup/org-setup.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { PlatformModule } from './modules/platform/platform.module';
+import { HrTemplateModule } from './modules/hr-template/hr-template.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -84,6 +85,7 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     OrgSetupModule,
     BillingModule,
     PlatformModule,
+    HrTemplateModule,
   ],
   providers: [
     {
