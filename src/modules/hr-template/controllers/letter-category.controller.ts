@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
@@ -14,6 +15,7 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LetterCategoryService } from '../services/letter-category.service';
 import { CreateLetterCategoryDto, UpdateLetterCategoryDto } from '../dto/letter-category.dto';
+import type { DocumentType } from '../entities/letter-category.entity';
 
 @Controller('letter-categories')
 @UseGuards(JwtAuthGuard)
@@ -22,8 +24,8 @@ export class LetterCategoryController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query('document_type') documentType?: DocumentType) {
+    return this.service.findAll(documentType);
   }
 
   @Get(':id')

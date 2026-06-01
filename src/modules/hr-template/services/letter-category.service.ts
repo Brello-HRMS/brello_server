@@ -1,10 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { LetterCategoryRepository } from '../repositories/letter-category.repository';
-import {
-  CreateLetterCategoryDto,
-  UpdateLetterCategoryDto,
-} from '../dto/letter-category.dto';
+import { CreateLetterCategoryDto, UpdateLetterCategoryDto } from '../dto/letter-category.dto';
 import { LetterCategory } from '../entities/letter-category.entity';
+import type { DocumentType } from '../entities/letter-category.entity';
 
 @Injectable()
 export class LetterCategoryService {
@@ -12,8 +10,8 @@ export class LetterCategoryService {
 
   constructor(private readonly repository: LetterCategoryRepository) {}
 
-  async findAll(): Promise<LetterCategory[]> {
-    return this.repository.findAll();
+  async findAll(documentType?: DocumentType): Promise<LetterCategory[]> {
+    return this.repository.findAll(documentType);
   }
 
   async findOne(id: string): Promise<LetterCategory> {
@@ -29,15 +27,13 @@ export class LetterCategoryService {
     return this.repository.create({
       name: dto.name,
       description: dto.description,
+      document_type: dto.document_type,
       is_system: true,
       is_deleted: false,
     });
   }
 
-  async update(
-    id: string,
-    dto: UpdateLetterCategoryDto,
-  ): Promise<LetterCategory | null> {
+  async update(id: string, dto: UpdateLetterCategoryDto): Promise<LetterCategory | null> {
     await this.findOne(id);
     this.logger.log(`Updating letter category ${id}`);
     return this.repository.update(id, dto);

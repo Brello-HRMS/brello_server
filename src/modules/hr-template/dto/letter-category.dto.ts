@@ -1,4 +1,6 @@
-import { IsString, IsNotEmpty, MaxLength, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength, IsOptional, IsIn } from 'class-validator';
+import { DOCUMENT_TYPES } from '../entities/letter-category.entity';
+import type { DocumentType } from '../entities/letter-category.entity';
 
 export class CreateLetterCategoryDto {
   @IsString()
@@ -10,6 +12,9 @@ export class CreateLetterCategoryDto {
   @IsString()
   @MaxLength(500)
   description?: string;
+
+  @IsIn(DOCUMENT_TYPES, { message: 'Invalid document type' })
+  document_type: DocumentType;
 }
 
 export class UpdateLetterCategoryDto {
