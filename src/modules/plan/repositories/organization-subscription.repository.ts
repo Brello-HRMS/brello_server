@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { OrganizationSubscription } from '../entities/organization-subscription.entity';
+import { Not, Repository } from 'typeorm';
+import {
+  OrganizationSubscription,
+  SubscriptionStatus,
+} from '../entities/organization-subscription.entity';
 import { Status } from 'src/common/enums';
 
 @Injectable()
@@ -42,6 +45,10 @@ export class OrganizationSubscriptionRepository {
     return subscription;
   }
 
+  // Returns the org's currently-effective subscription row.
+  // Excludes terminal CANCELLED rows (an upgrade closes the old sub and creates a new one,
+  // so multiple rows can coexist — newest wins). EXPIRED rows are kept so the
+  // ActiveSubscriptionGuard can detect them and block.
   async findActiveByOrganization(
     organizationId: string,
   ): Promise<OrganizationSubscription | null> {
@@ -49,9 +56,10 @@ export class OrganizationSubscriptionRepository {
       where: {
         organization_id: organizationId,
         status: Status.ACTIVE,
-
+        sub_status: Not(SubscriptionStatus.CANCELLED),
       },
       relations: ['plan'],
+      order: { created_at: 'DESC' },
     });
   }
 

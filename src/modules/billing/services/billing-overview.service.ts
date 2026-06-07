@@ -26,6 +26,14 @@ export interface BillingOverviewResponse {
     pending_billing_cycle: BillingCycle | null;
     renewal_cta: 'Upgrade Plan' | 'Renew Subscription' | 'Pay Invoice' | null;
   };
+  // Set when the user has queued a downgrade or cycle-change for the next renewal.
+  // null otherwise. The dashboard uses this to render a "Downgrading to X on Y" banner.
+  pending_change: {
+    plan: { id: string; name: string; tier_rank: number } | null;
+    billing_cycle: BillingCycle | null;
+    direction: 'tier_downgrade' | 'cycle_change' | null;
+    effective_on: Date | null;
+  } | null;
   trial: {
     is_trial: boolean;
     days_remaining: number | null;
@@ -67,6 +75,9 @@ export class BillingOverviewService {
   async build(organizationId: string): Promise<BillingOverviewResponse> {
     const sub = await this.subRepo.findActiveByOrganization(organizationId);
     const plan = sub ? await this.planRepo.findOneById(sub.plan_id) : null;
+    const pendingPlan = sub?.pending_plan_id
+      ? await this.planRepo.findOneById(sub.pending_plan_id)
+      : null;
     const headcount = await this.employeeCount.getActiveEmployeeCount(organizationId);
     const openInvoice = await this.invoiceService.findCurrent(organizationId);
 
@@ -101,6 +112,7 @@ export class BillingOverviewService {
         pending_billing_cycle: sub?.pending_billing_cycle ?? null,
         renewal_cta: cta,
       },
+      pending_change: this.buildPendingChange(sub, plan, pendingPlan),
       trial: {
         is_trial: sub?.is_trial ?? false,
         days_remaining: daysRemaining,
@@ -117,6 +129,38 @@ export class BillingOverviewService {
       },
       timeline: this.buildTimeline(sub, openInvoice),
       open_invoice_id: openInvoice?.id ?? null,
+    };
+  }
+
+  private buildPendingChange(
+    sub: OrganizationSubscription | null,
+    currentPlan: Plan | null,
+    pendingPlan: Plan | null,
+  ): BillingOverviewResponse['pending_change'] {
+    if (!sub) return null;
+    if (!sub.pending_plan_id && !sub.pending_billing_cycle) return null;
+
+    let direction: 'tier_downgrade' | 'cycle_change' | null = null;
+    if (pendingPlan && currentPlan && pendingPlan.tier_rank !== currentPlan.tier_rank) {
+      direction = 'tier_downgrade';
+    } else if (
+      sub.pending_billing_cycle &&
+      sub.pending_billing_cycle !== sub.billing_cycle
+    ) {
+      direction = 'cycle_change';
+    }
+
+    return {
+      plan: pendingPlan
+        ? {
+            id: pendingPlan.id,
+            name: pendingPlan.name,
+            tier_rank: pendingPlan.tier_rank,
+          }
+        : null,
+      billing_cycle: sub.pending_billing_cycle,
+      direction,
+      effective_on: sub.next_renewal_date,
     };
   }
 
