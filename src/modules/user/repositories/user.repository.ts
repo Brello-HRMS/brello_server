@@ -32,6 +32,7 @@ export class UserRepository {
   async findById(id: string): Promise<User | null> {
     return this.repository.findOne({
       where: { id, status: Not(Status.DELETED) },
+      relations: ['designation', 'user_profile', 'user_profile.photo'],
     });
   }
 
