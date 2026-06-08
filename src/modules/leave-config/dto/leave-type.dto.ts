@@ -26,4 +26,8 @@ export class LeaveTypeDto {
 
   @IsBoolean()
   allowHalfDay: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isPaid?: boolean;
 }

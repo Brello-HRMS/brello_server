@@ -60,4 +60,30 @@ export enum AuditAction {
   CREATE = 'create',
   UPDATE = 'update',
   DELETE = 'delete',
+  PROCESS = 'process',
+  LOCK = 'lock',
+  DISBURSE = 'disburse',
+}
+
+export enum PayoutStatus {
+  PENDING = 'pending',
+  PAID = 'paid',
+}
+
+export enum PayrollRunStatus {
+  DRAFT = 'draft',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  LOCKED = 'locked',
+}
+
+export enum PayrollItemStatus {
+  PENDING = 'pending',
+  PROCESSED = 'processed',
+  ERROR = 'error',
+}
+
+export enum AdjustmentType {
+  BONUS = 'bonus',
+  DEDUCTION = 'deduction',
 }

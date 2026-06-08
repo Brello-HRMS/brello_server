@@ -20,6 +20,9 @@ export class LeaveType extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   allow_half_day: boolean;
 
+  @Column({ type: 'boolean', default: true })
+  is_paid: boolean;
+
   @Column({ type: 'uuid' })
   config_id: string;
 
