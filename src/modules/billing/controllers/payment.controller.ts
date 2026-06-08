@@ -36,6 +36,21 @@ export class PaymentController {
     });
   }
 
+  // Backend-generated hosted payment link. Returns short_url for the frontend
+  // to redirect to — completion is confirmed via the payment_link.paid webhook.
+  @Post('link')
+  @HttpCode(HttpStatus.CREATED)
+  createLink(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Body() dto: InitiatePaymentDto,
+  ) {
+    return this.paymentService.createPaymentLink({
+      invoiceId: dto.invoice_id,
+      organizationId: user.organizationId,
+      enterpriseId: user.enterpriseId ?? null,
+    });
+  }
+
   @Post('verify')
   @HttpCode(HttpStatus.OK)
   verify(

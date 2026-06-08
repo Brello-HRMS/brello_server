@@ -12,6 +12,7 @@ export enum PaymentStatus {
 @Entity('payment')
 @Index(['invoice_id'])
 @Index(['razorpay_order_id'])
+@Index(['razorpay_payment_link_id'])
 @Index(['razorpay_payment_id'], { unique: true, where: 'razorpay_payment_id IS NOT NULL' })
 export class Payment extends BaseEntity {
   @Column({ type: 'uuid' })
@@ -21,8 +22,18 @@ export class Payment extends BaseEntity {
   @JoinColumn({ name: 'invoice_id' })
   invoice: Invoice;
 
-  @Column({ type: 'varchar', length: 100 })
-  razorpay_order_id: string;
+  // Nullable: payment-link payments do not carry an order id we created (the
+  // link generates its own order on the Razorpay side).
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  razorpay_order_id: string | null;
+
+  // Razorpay Payment Link id (plink_xxx) when the backend generated a hosted link.
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  razorpay_payment_link_id: string | null;
+
+  // Hosted payment page URL returned by the Payment Links API.
+  @Column({ type: 'varchar', length: 512, nullable: true })
+  short_url: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   razorpay_payment_id: string | null;

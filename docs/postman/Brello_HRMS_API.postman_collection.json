@@ -237,15 +237,15 @@
       "type": "string"
     },
     {
-      "key": "payroll_run_id",
+      "key": "payment_link_id",
       "value": ""
     },
     {
-      "key": "payroll_item_id",
+      "key": "short_url",
       "value": ""
     },
     {
-      "key": "adjustment_id",
+      "key": "salary_template_id",
       "value": ""
     }
   ],
@@ -7879,14 +7879,13 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
-                      "if (pm.response.code === 201) {",
-                      "    const response = pm.response.json();",
-                      "    pm.collectionVariables.set('salary_template_id', response.data.id);",
-                      "    console.log('✅ salary_template_id saved:', response.data.id);",
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const data = pm.response.json().data || pm.response.json();",
+                      "    if (data && data.id) pm.collectionVariables.set('salary_template_id', data.id);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ]
@@ -7947,6 +7946,75 @@
                   ]
                 },
                 "description": "Returns a single template with full component and base_component relations."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Salary Template",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Standard Software Engineer\",\n  \"description\": \"For mid-level engineers\",\n  \"components\": [\n    {\n      \"component_id\": \"{{payroll_component_id}}\",\n      \"sort_order\": 5\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/salary-templates/{{salary_template_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "salary-templates",
+                    "{{salary_template_id}}"
+                  ]
+                },
+                "description": "Updates a salary template (replace strategy for components)."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Salary Template",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/salary-templates/{{salary_template_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "salary-templates",
+                    "{{salary_template_id}}"
+                  ]
+                },
+                "description": "Deletes a salary template. Returns 204."
               },
               "response": []
             }
@@ -11380,6 +11448,62 @@
               "response": []
             },
             {
+              "name": "Create Payment Link (Backend-generated)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const data = pm.response.json().data || pm.response.json();",
+                      "    pm.collectionVariables.set('payment_id', data.payment_id);",
+                      "    pm.collectionVariables.set('payment_link_id', data.payment_link_id);",
+                      "    pm.collectionVariables.set('short_url', data.short_url);",
+                      "    console.log('✅ Payment link:', data.short_url);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"invoice_id\": \"{{invoice_id}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/billing/payments/link",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "payments",
+                    "link"
+                  ]
+                },
+                "description": "Creates a Razorpay hosted Payment Link for the invoice — fully backend-driven. Returns { payment_id, payment_link_id, short_url, amount (paise), currency, invoice_number, status }. The frontend just redirects the user to short_url; no Razorpay Checkout JS needed. Completion is confirmed asynchronously via the payment_link.paid webhook."
+              },
+              "response": []
+            },
+            {
               "name": "Verify Payment (Razorpay Callback)",
               "request": {
                 "auth": {
@@ -11479,6 +11603,39 @@
                   ]
                 },
                 "description": "**Public endpoint** — no JWT. Razorpay calls this on `payment.captured`, `payment.failed`, `order.paid`. Server verifies the `X-Razorpay-Signature` header against the raw body; mismatched signature → 401. Idempotent on `razorpay_payment_id`. Configure the URL + secret in your Razorpay dashboard."
+              },
+              "response": []
+            },
+            {
+              "name": "Razorpay Webhook — payment_link.paid (Public)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Razorpay-Signature",
+                    "value": "<hmac_sha256_of_raw_body_with_webhook_secret>"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"event\": \"payment_link.paid\",\n  \"payload\": {\n    \"payment_link\": {\n      \"entity\": {\n        \"id\": \"{{payment_link_id}}\",\n        \"reference_id\": \"{{payment_id}}\",\n        \"status\": \"paid\",\n        \"amount\": 439550\n      }\n    },\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_TestPaymentId\",\n        \"status\": \"captured\",\n        \"amount\": 439550,\n        \"currency\": \"INR\"\n      }\n    }\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/billing/webhooks/razorpay",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "billing",
+                    "webhooks",
+                    "razorpay"
+                  ]
+                },
+                "description": "Razorpay posts this when a hosted Payment Link is paid. The backend matches it to the Payment by razorpay_payment_link_id, marks the payment Success + invoice Paid, and renews the subscription. Public endpoint; signature-verified. Idempotent."
               },
               "response": []
             }
