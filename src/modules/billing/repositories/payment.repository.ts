@@ -37,6 +37,12 @@ export class PaymentRepository {
     });
   }
 
+  findByRazorpayPaymentLinkId(linkId: string): Promise<Payment | null> {
+    return this.repository.findOne({
+      where: { razorpay_payment_link_id: linkId, status: Status.ACTIVE },
+    });
+  }
+
   findLatestForInvoice(invoiceId: string): Promise<Payment | null> {
     return this.repository.findOne({
       where: { invoice_id: invoiceId, status: Status.ACTIVE },

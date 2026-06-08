@@ -30,7 +30,11 @@ export class RazorpayWebhookController {
 
     const event = req.body as {
       event: string;
-      payload: { payment?: { entity?: any }; order?: { entity?: any } };
+      payload: {
+        payment?: { entity?: any };
+        order?: { entity?: any };
+        payment_link?: { entity?: any };
+      };
     };
     await this.paymentService.handleWebhookEvent(event);
     return { received: true };

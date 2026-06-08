@@ -37,6 +37,16 @@ export interface VerifyResponse {
   next_renewal_date: Date | null;
 }
 
+export interface PaymentLinkResponse {
+  payment_id: string;
+  payment_link_id: string;
+  short_url: string;
+  amount: number;
+  currency: string;
+  invoice_number: string;
+  status: string;
+}
+
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
@@ -97,6 +107,84 @@ export class PaymentService {
     };
   }
 
+  // Backend-generated hosted payment link. The frontend just opens short_url —
+  // no Razorpay Checkout JS needed. Completion arrives via the payment_link.paid
+  // webhook.
+  async createPaymentLink(args: {
+    invoiceId: string;
+    organizationId: string;
+    enterpriseId: string | null;
+  }): Promise<PaymentLinkResponse> {
+    const invoice = await this.invoiceRepo.findOneById(
+      args.invoiceId,
+      args.organizationId,
+    );
+    if (!invoice) throw new NotFoundException('Invoice not found');
+    if (invoice.invoice_status === InvoiceStatus.PAID) {
+      throw new ConflictException('Invoice is already paid');
+    }
+
+    const amountPaise = Math.round(Number(invoice.total) * 100);
+
+    // Persist the payment first so its id can be the link's unique reference_id.
+    const payment = this.paymentRepo.create({
+      invoice_id: invoice.id,
+      organization_id: args.organizationId,
+      enterprise_id: args.enterpriseId ?? undefined,
+      amount: Number(invoice.total),
+      currency: 'INR',
+      payment_status: PaymentStatus.INITIATED,
+      status: Status.ACTIVE,
+    });
+    const saved = await this.paymentRepo.save(payment);
+
+    const snapshot = (invoice.billing_profile_snapshot ?? {}) as {
+      legal_business_name?: string;
+      billing_email?: string;
+    };
+    const callbackUrl =
+      this.config.get<string>('billing.PAYMENT_CALLBACK_URL') || undefined;
+
+    try {
+      const link = await this.razorpay.createPaymentLink({
+        amountInPaise: amountPaise,
+        currency: 'INR',
+        referenceId: saved.id,
+        description: `Invoice ${invoice.invoice_number}`,
+        customer: {
+          name: snapshot.legal_business_name,
+          email: snapshot.billing_email,
+        },
+        callbackUrl,
+        notes: {
+          invoice_id: invoice.id,
+          organization_id: args.organizationId,
+          payment_id: saved.id,
+        },
+      });
+
+      saved.razorpay_payment_link_id = link.id;
+      saved.short_url = link.short_url;
+      await this.paymentRepo.save(saved);
+
+      return {
+        payment_id: saved.id,
+        payment_link_id: link.id,
+        short_url: link.short_url,
+        amount: amountPaise,
+        currency: 'INR',
+        invoice_number: invoice.invoice_number,
+        status: link.status,
+      };
+    } catch (err) {
+      // Roll the placeholder payment back to FAILED so it isn't left dangling.
+      saved.payment_status = PaymentStatus.FAILED;
+      saved.failure_reason = 'Payment link creation failed';
+      await this.paymentRepo.save(saved);
+      throw err;
+    }
+  }
+
   async verify(args: {
     organizationId: string;
     razorpay_order_id: string;
@@ -153,33 +241,46 @@ export class PaymentService {
     };
   }
 
-  // Webhook handlers — invoked from RazorpayWebhookController after signature verification.
+  // Webhook handlers — invoked from RazorpayWebhookController after signature
+  // verification. Handles both Checkout orders (payment.captured / order.paid)
+  // and hosted Payment Links (payment_link.paid).
   async handleWebhookEvent(event: {
     event: string;
-    payload: { payment?: { entity?: any }; order?: { entity?: any } };
+    payload: {
+      payment?: { entity?: any };
+      order?: { entity?: any };
+      payment_link?: { entity?: any };
+    };
   }): Promise<void> {
     const paymentEntity = event.payload?.payment?.entity;
-    if (!paymentEntity) return;
+    const linkEntity = event.payload?.payment_link?.entity;
+    const paymentId: string | undefined = paymentEntity?.id;
 
-    const orderId: string = paymentEntity.order_id;
-    const paymentId: string = paymentEntity.id;
-    const existingByPayment = paymentId
-      ? await this.paymentRepo.findByRazorpayPaymentId(paymentId)
-      : null;
-    if (existingByPayment?.payment_status === PaymentStatus.SUCCESS) {
-      return; // idempotent
+    // Idempotent: a captured payment id we've already marked succeeded → skip.
+    if (paymentId) {
+      const existing = await this.paymentRepo.findByRazorpayPaymentId(paymentId);
+      if (existing?.payment_status === PaymentStatus.SUCCESS) return;
     }
 
-    const payment = await this.paymentRepo.findByRazorpayOrderId(orderId);
+    const payment = await this.resolvePayment(paymentEntity, linkEntity);
     if (!payment) {
-      this.logger.warn(`Webhook for unknown order ${orderId}`);
+      this.logger.warn(
+        `Webhook ${event.event} could not be matched to a payment ` +
+          `(order=${paymentEntity?.order_id ?? '-'}, link=${linkEntity?.id ?? '-'})`,
+      );
       return;
     }
 
-    payment.razorpay_payment_id = paymentId;
+    if (paymentId) payment.razorpay_payment_id = paymentId;
+    if (linkEntity?.id) payment.razorpay_payment_link_id = linkEntity.id;
     payment.raw_webhook_payload = event as unknown as Record<string, unknown>;
 
-    if (event.event === 'payment.captured' || event.event === 'order.paid') {
+    const isSuccess =
+      event.event === 'payment.captured' ||
+      event.event === 'order.paid' ||
+      event.event === 'payment_link.paid';
+
+    if (isSuccess) {
       payment.payment_status = PaymentStatus.SUCCESS;
       payment.paid_at = new Date();
       await this.paymentRepo.save(payment);
@@ -195,7 +296,7 @@ export class PaymentService {
     } else if (event.event === 'payment.failed') {
       payment.payment_status = PaymentStatus.FAILED;
       payment.failure_reason =
-        paymentEntity.error_description ?? paymentEntity.error_code ?? null;
+        paymentEntity?.error_description ?? paymentEntity?.error_code ?? null;
       await this.paymentRepo.save(payment);
 
       const invoice = await this.invoiceRepo.findOneById(
@@ -204,6 +305,24 @@ export class PaymentService {
       );
       if (invoice) await this.invoiceService.markFailed(invoice);
     }
+  }
+
+  // Match an incoming webhook to our Payment row — by payment-link id first
+  // (link flow), falling back to the order id (Checkout flow).
+  private async resolvePayment(
+    paymentEntity: any,
+    linkEntity: any,
+  ): Promise<Payment | null> {
+    if (linkEntity?.id) {
+      const byLink = await this.paymentRepo.findByRazorpayPaymentLinkId(
+        linkEntity.id,
+      );
+      if (byLink) return byLink;
+    }
+    if (paymentEntity?.order_id) {
+      return this.paymentRepo.findByRazorpayOrderId(paymentEntity.order_id);
+    }
+    return null;
   }
 
   private async renewSubscriptionForInvoice(invoice: Invoice): Promise<Date | null> {
