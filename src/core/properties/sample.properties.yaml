@@ -60,3 +60,5 @@ billing:
   RAZORPAY_KEY_ID: 'rzp_test_xxxxxxxxxxxx'
   RAZORPAY_KEY_SECRET: 'xxxxxxxxxxxx'
   RAZORPAY_WEBHOOK_SECRET: 'whsec_xxxxxxxxxxxx'
+  # Optional: where Razorpay redirects after a hosted payment link is paid.
+  PAYMENT_CALLBACK_URL: ''

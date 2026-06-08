@@ -15,6 +15,12 @@ export interface RazorpayOrder {
   status: string;
 }
 
+export interface RazorpayPaymentLink {
+  id: string;
+  short_url: string;
+  status: string;
+}
+
 @Injectable()
 export class RazorpayService {
   private readonly logger = new Logger(RazorpayService.name);
@@ -62,6 +68,59 @@ export class RazorpayService {
     } catch (err) {
       this.logger.error('Razorpay order creation failed', err as Error);
       throw new InternalServerErrorException('Unable to create payment order');
+    }
+  }
+
+  // Create a hosted Payment Link. Amount in paise. reference_id must be unique
+  // (we use the Payment record id) so Razorpay rejects duplicates and we can
+  // correlate the webhook back to our payment.
+  async createPaymentLink(args: {
+    amountInPaise: number;
+    currency?: string;
+    referenceId: string;
+    description: string;
+    customer?: { name?: string; email?: string; contact?: string };
+    callbackUrl?: string;
+    notes?: Record<string, string>;
+  }): Promise<RazorpayPaymentLink> {
+    try {
+      const payload: Record<string, unknown> = {
+        amount: args.amountInPaise,
+        currency: args.currency ?? 'INR',
+        reference_id: args.referenceId,
+        description: args.description,
+        notify: { sms: false, email: Boolean(args.customer?.email) },
+        reminder_enable: true,
+        notes: args.notes,
+      };
+      if (args.customer && (args.customer.email || args.customer.contact)) {
+        payload.customer = args.customer;
+      }
+      if (args.callbackUrl) {
+        payload.callback_url = args.callbackUrl;
+        payload.callback_method = 'get';
+      }
+
+      const link = await this.client.paymentLink.create(payload as never);
+      return {
+        id: link.id as string,
+        short_url: link.short_url as string,
+        status: link.status as string,
+      };
+    } catch (err) {
+      this.logger.error('Razorpay payment link creation failed', err as Error);
+      throw new InternalServerErrorException('Unable to create payment link');
+    }
+  }
+
+  // Cancel a hosted Payment Link (e.g. when superseded). Best-effort.
+  async cancelPaymentLink(paymentLinkId: string): Promise<void> {
+    try {
+      await this.client.paymentLink.cancel(paymentLinkId);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to cancel payment link ${paymentLinkId}: ${String(err)}`,
+      );
     }
   }
 
