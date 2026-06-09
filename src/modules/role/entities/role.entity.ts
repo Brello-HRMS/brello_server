@@ -1,6 +1,7 @@
-import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, Index, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { App } from 'src/modules/app/entities/app.entity';
+import { RoleApp } from './role-app.entity';
 
 @Entity('role')
 @Index(['name', 'app_id', 'organization_id'], { unique: true })
@@ -14,6 +15,9 @@ export class Role extends BaseEntity {
   @ManyToOne(() => App, { eager: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'app_id' })
   app: App;
+
+  @OneToMany(() => RoleApp, (ra) => ra.role)
+  roleApps: RoleApp[];
 
   @Column({ type: 'boolean', default: false })
   is_system_role: boolean;

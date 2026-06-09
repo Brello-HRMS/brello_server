@@ -9,6 +9,7 @@ import {
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { UserProfile } from './user-profile.entity';
 import { Department } from '../../departments/entities/department.entity';
+import { Designation } from '../../designations/entities/designation.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -56,9 +57,9 @@ export class User extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   designation_id: string;
 
-  // @ManyToOne(() => Designation)
-  // @JoinColumn({ name: 'designation_id' })
-  // designation: Designation;
+  @ManyToOne(() => Designation)
+  @JoinColumn({ name: 'designation_id' })
+  designation: Designation;
 
   @Column({ type: 'uuid', nullable: true })
   user_profile_id: string;

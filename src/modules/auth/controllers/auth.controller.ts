@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   HttpCode,
@@ -74,6 +75,16 @@ export class AuthController {
 
     const { refresh_token, ...responseBody } = result;
     return responseBody;
+  }
+
+  @Get('apps')
+  @UseGuards(JwtAuthGuard)
+  getAvailableApps(@CurrentUser() user: JwtPayload) {
+    return this.authService.getAvailableAppsForUser(
+      user.userId,
+      user.organizationId,
+      user.isPlatformAdmin,
+    );
   }
 
   @Post('switch-app')

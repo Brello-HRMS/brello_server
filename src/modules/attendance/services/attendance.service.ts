@@ -498,6 +498,41 @@ export class AttendanceService {
     };
   }
 
+  async getPeersToday(user: LoggedInUser) {
+    const date = todayLocalDate();
+
+    const filters = {
+      organizationId: user.organizationId,
+      date,
+      page: 1,
+      limit: 50,
+    };
+
+    const { rows } = await this.recordRepo.dailyPreview(filters);
+
+    const activeStatuses = [
+      AttendanceStatus.PRESENT,
+      AttendanceStatus.LATE,
+      AttendanceStatus.HALF_DAY,
+      AttendanceStatus.PENDING_APPROVAL,
+    ];
+
+    const peers = rows
+      .filter((r) => activeStatuses.includes(r.record.attendance_status as AttendanceStatus))
+      .filter((r) => r.record.employee_id !== user.userId)
+      .map((r) => {
+        const nameParts = [r.first_name, r.middle_name, r.last_name].filter(Boolean);
+        return {
+          id: r.record.employee_id,
+          name: nameParts.join(' '),
+          department: r.department_name,
+          time: formatTime12(r.record.first_check_in_at),
+        };
+      });
+
+    return peers;
+  }
+
   async getEffectiveRules(user: LoggedInUser) {
     const { rule, shift, geoFence } =
       await this.ruleResolver.resolveForEmployee(
