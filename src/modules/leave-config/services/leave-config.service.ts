@@ -57,6 +57,7 @@ export class LeaveConfigService {
     const leaveTypesData = dto.leaveTypes?.map((type) => ({
       ...type,
       allow_half_day: type.allowHalfDay,
+      is_paid: type.isPaid ?? true,
       organization_id: user.organizationId,
       enterprise_id: user.enterpriseId,
       modified_by: user.userId,

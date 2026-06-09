@@ -243,6 +243,10 @@
     {
       "key": "short_url",
       "value": ""
+    },
+    {
+      "key": "salary_template_id",
+      "value": ""
     }
   ],
   "item": [
@@ -7875,14 +7879,13 @@
                 {
                   "listen": "test",
                   "script": {
+                    "type": "text/javascript",
                     "exec": [
-                      "if (pm.response.code === 201) {",
-                      "    const response = pm.response.json();",
-                      "    pm.collectionVariables.set('salary_template_id', response.data.id);",
-                      "    console.log('✅ salary_template_id saved:', response.data.id);",
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "    const data = pm.response.json().data || pm.response.json();",
+                      "    if (data && data.id) pm.collectionVariables.set('salary_template_id', data.id);",
                       "}"
-                    ],
-                    "type": "text/javascript"
+                    ]
                   }
                 }
               ]
@@ -7943,6 +7946,75 @@
                   ]
                 },
                 "description": "Returns a single template with full component and base_component relations."
+              },
+              "response": []
+            },
+            {
+              "name": "Update Salary Template",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Standard Software Engineer\",\n  \"description\": \"For mid-level engineers\",\n  \"components\": [\n    {\n      \"component_id\": \"{{payroll_component_id}}\",\n      \"sort_order\": 5\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/salary-templates/{{salary_template_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "salary-templates",
+                    "{{salary_template_id}}"
+                  ]
+                },
+                "description": "Updates a salary template (replace strategy for components)."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Salary Template",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/salary-templates/{{salary_template_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "salary-templates",
+                    "{{salary_template_id}}"
+                  ]
+                },
+                "description": "Deletes a salary template. Returns 204."
               },
               "response": []
             }
@@ -8302,6 +8374,757 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Payroll Processing",
+      "item": [
+        {
+          "name": "1. Run Lifecycle",
+          "item": [
+            {
+              "name": "Create Payroll Run",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"month\": \"apr\",\n  \"year\": 2026\n}"
+                },
+                "description": "Creates a Draft run for the month/year. 409 if a run already exists. month: jan..dec."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('payroll_run_id', response.data.id);",
+                      "    console.log('✅ payroll_run_id saved:', response.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "List Payroll Runs",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs?status=draft&year=2026",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "draft"
+                    },
+                    {
+                      "key": "year",
+                      "value": "2026"
+                    }
+                  ]
+                },
+                "description": "Lists runs, newest first. Optional filters: status (draft|processing|completed|locked), year."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Payroll Run",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}"
+                  ]
+                },
+                "description": "Run dashboard header + summary totals."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Audit Trail",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/audit",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "audit"
+                  ]
+                },
+                "description": "Full audit trail for the run — every create/prepare/process/lock/disburse plus item reprocess and adjustment add/remove, oldest first. Each entry includes action, changed_by, before/after data and timestamp."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Draft Run",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}"
+                  ]
+                },
+                "description": "Discards a Draft run (cascades items/adjustments). Draft only."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "2. Preparation & Items",
+          "item": [
+            {
+              "name": "Prepare Run",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/prepare",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "prepare"
+                  ]
+                },
+                "description": "Draft-only. Builds a PENDING item per active employee, snapshots working days / present / paid-leave / LOP, flags missing-salary employees as ERROR. Idempotent."
+              },
+              "response": []
+            },
+            {
+              "name": "Validate Run",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/validation",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "validation"
+                  ]
+                },
+                "description": "Pre-process gate: {can_process, counts, blocking[]}."
+              },
+              "response": []
+            },
+            {
+              "name": "List Run Items",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/items?status=pending&page=1&limit=50",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "items"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "pending"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    }
+                  ]
+                },
+                "description": "Employee table (paginated). status: pending|processed|error."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('payroll_item_id', response.data.data && response.data.data[0] && response.data.data[0].id);",
+                      "    console.log('✅ payroll_item_id saved:', response.data.data && response.data.data[0] && response.data.data[0].id);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get Item Detail",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/items/{{payroll_item_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "items",
+                    "{{payroll_item_id}}"
+                  ]
+                },
+                "description": "Single employee detail: attendance snapshot, earnings, deductions, net."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "3. Processing & Lock",
+          "item": [
+            {
+              "name": "Process Run",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/process",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "process"
+                  ]
+                },
+                "description": "Runs the calc engine for every item -> COMPLETED. Returns {processed, errors, totals}. Re-runnable until locked."
+              },
+              "response": []
+            },
+            {
+              "name": "Reprocess Item",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/items/{{payroll_item_id}}/reprocess",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "items",
+                    "{{payroll_item_id}}",
+                    "reprocess"
+                  ]
+                },
+                "description": "Recalculates one employee (after an adjustment / attendance fix) and re-rolls run totals."
+              },
+              "response": []
+            },
+            {
+              "name": "Lock Run",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/lock",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "lock"
+                  ]
+                },
+                "description": "Finalizes the run (only when all items PROCESSED). Marks reimbursements paid, generates payslip PDFs, freezes the run."
+              },
+              "response": []
+            },
+            {
+              "name": "Disburse / Mark Paid",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reference\": \"NEFT-BATCH-2026-04-001\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/disburse",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "disburse"
+                  ]
+                },
+                "description": "Records payout of a LOCKED run. Marks processed items PAID and stamps the run with a payout reference. Pass an optional item_ids array to disburse a subset; omit it to mark all processed employees paid. The run flips to fully disbursed once every processed item is paid. 400 if the run is not locked."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "4. Adjustments",
+          "item": [
+            {
+              "name": "Add Adjustment",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/items/{{payroll_item_id}}/adjustments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "items",
+                    "{{payroll_item_id}}",
+                    "adjustments"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"adjustment_type\": \"bonus\",\n  \"amount\": 5000,\n  \"reason\": \"Diwali bonus\"\n}"
+                },
+                "description": "Adds a bonus/deduction to an employee. adjustment_type: bonus|deduction. Blocked once locked. Run Reprocess Item to apply."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('adjustment_id', response.data.id);",
+                      "    console.log('✅ adjustment_id saved:', response.data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "List Adjustments",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/items/{{payroll_item_id}}/adjustments",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "items",
+                    "{{payroll_item_id}}",
+                    "adjustments"
+                  ]
+                },
+                "description": "Lists an employee's adjustments (oldest first)."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Adjustment",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/adjustments/{{adjustment_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "adjustments",
+                    "{{adjustment_id}}"
+                  ]
+                },
+                "description": "Removes an adjustment. Blocked once locked."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "5. Payslips & Reports",
+          "item": [
+            {
+              "name": "Get Payslip (JSON)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/payslips/{{payroll_item_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "payslips",
+                    "{{payroll_item_id}}"
+                  ]
+                },
+                "description": "Full payslip payload for one employee."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Payslip PDF (signed URL)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/payslips/{{payroll_item_id}}/pdf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "payslips",
+                    "{{payroll_item_id}}",
+                    "pdf"
+                  ]
+                },
+                "description": "Returns a presigned S3 download URL; generates the PDF lazily if missing."
+              },
+              "response": []
+            },
+            {
+              "name": "Run Report",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/runs/{{payroll_run_id}}/report",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "runs",
+                    "{{payroll_run_id}}",
+                    "report"
+                  ]
+                },
+                "description": "Export-ready rows + run totals for every employee."
+              },
+              "response": []
+            },
+            {
+              "name": "My Payslips (self-service)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/payroll/me/payslips",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "payroll",
+                    "me",
+                    "payslips"
+                  ]
+                },
+                "description": "Logged-in employee's own payslips across locked runs."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "Monthly payroll run workflow: create -> prepare -> process -> lock -> payslips. IDs (payroll_run_id, payroll_item_id, adjustment_id) are captured automatically by the Create/List/Add requests."
     },
     {
       "name": "Leave Configuration",
