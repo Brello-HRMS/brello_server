@@ -48,6 +48,17 @@ export class AttendanceRecord extends BaseEntity {
   @Column({ type: 'enum', enum: AttendanceStatus })
   attendance_status: AttendanceStatus;
 
+  /** True when this day's session was closed by the auto-checkout engine. */
+  @Column({ type: 'boolean', default: false })
+  has_auto_checkout: boolean;
+
+  /**
+   * Correction-request lifecycle for an auto-checkout record.
+   * NULL | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED' (window expired).
+   */
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  correction_status: string | null;
+
   @Column({ type: 'enum', enum: AttendanceMode, nullable: true })
   attendance_mode: AttendanceMode | null;
 

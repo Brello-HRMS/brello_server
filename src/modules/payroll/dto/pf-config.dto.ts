@@ -13,6 +13,14 @@ export class UpsertPfConfigDto {
   @Min(0)
   minimum_salary_threshold: number;
 
+  /**
+   * Cap PF base at the wage ceiling (true, statutory default) or contribute on
+   * the full basic (false). Defaults to true when omitted.
+   */
+  @IsOptional()
+  @IsBoolean()
+  restrict_to_ceiling?: boolean;
+
   @IsOptional()
   @IsBoolean()
   is_enabled?: boolean;

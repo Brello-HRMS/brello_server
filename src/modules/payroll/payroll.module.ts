@@ -22,6 +22,7 @@ import { EmployeeSalaryEngine } from './services/employee-salary.service';
 import { PayrollCalculationEngine } from './services/payroll-calculation.service';
 import { DryRunEngine } from './services/dry-run.service';
 import { PayrollReminderCron } from './services/payroll-reminder.cron';
+import { PayrollAutoRunCron } from './services/payroll-auto-run.cron';
 import { ChangePropagationService } from './services/change-propagation.service';
 
 import { PayrollController } from './controllers/payroll.controller';
@@ -102,6 +103,7 @@ import { Reimbursement } from '../reimbursement/entities/reimbursement.entity';
     PayrollCalculationEngine,
     DryRunEngine,
     PayrollReminderCron,
+    PayrollAutoRunCron,
     ChangePropagationService,
   ],
   exports: [
