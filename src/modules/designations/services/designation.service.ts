@@ -11,6 +11,7 @@ import { CreateDesignationDto } from '../dto/create-designation.dto';
 import { UpdateDesignationDto } from '../dto/update-designation.dto';
 import { FindDesignationsDto } from '../dto/find-designations.dto';
 import { Designation } from '../entities/designation.entity';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 /**
  * Designation Service
@@ -27,6 +28,7 @@ export class DesignationService {
         private readonly designationRepository: DesignationRepository,
         private readonly organizationService: OrganizationService,
         private readonly searchIndexingService: SearchIndexingService,
+        private readonly auditContext: AuditContextService,
     ) { }
 
     /**
@@ -114,7 +116,8 @@ export class DesignationService {
         this.logger.log(`Updating designation ${id} for org ${orgId}`);
 
         // Verify the designation exists and belongs to the organization
-        await this.findOne(id, orgId);
+        const existing = await this.findOne(id, orgId);
+        this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
         // Strip immutable fields to enforce the PRD constraint
         const { code: _code, ...allowedUpdates } = dto;
@@ -138,7 +141,8 @@ export class DesignationService {
     async remove(id: string, orgId: string, enterpriseId: string): Promise<void> {
         this.logger.log(`Soft-deleting designation ${id} for org ${orgId}`);
 
-        await this.findOne(id, orgId);
+        const existing = await this.findOne(id, orgId);
+        this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
         await this.designationRepository.softDelete(id);
         this.searchIndexingService.removeDesignation(id, enterpriseId);

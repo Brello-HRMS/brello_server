@@ -16,6 +16,7 @@ import { AttendanceRecordRepository } from '../repositories/attendance-record.re
 import { AttendanceSessionRepository } from '../repositories/attendance-session.repository';
 import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
 import { AttendanceRuleResolverService } from './attendance-rule-resolver.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 import { AttendanceMode } from '../enums/attendance-mode.enum';
 import { AttendanceSource } from '../enums/attendance-source.enum';
 import { GeoStatus } from '../enums/geo-status.enum';
@@ -37,6 +38,7 @@ export class AdminAttendanceService {
     private readonly sessionRepo: AttendanceSessionRepository,
     private readonly auditRepo: AttendanceAuditLogRepository,
     private readonly ruleResolver: AttendanceRuleResolverService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async dailyPreview(user: LoggedInUser, query: AdminDailyPreviewQueryDto) {
@@ -202,6 +204,7 @@ export class AdminAttendanceService {
       user.organizationId,
     );
     if (!record) throw new NotFoundException('Attendance record not found');
+    this.auditContext.setPreValue(record as unknown as Record<string, unknown>);
 
     const { rule, shift } = await this.ruleResolver.resolveForEmployee(
       user.organizationId,
@@ -292,6 +295,7 @@ export class AdminAttendanceService {
     );
     if (!record) throw new NotFoundException('Attendance record not found');
 
+    this.auditContext.setPreValue(record as unknown as Record<string, unknown>);
     await this.sessionRepo.deleteByRecord(record.id);
     await this.recordRepo.softDelete(record.id, user.userId);
 

@@ -21,6 +21,7 @@ import { DocumentService } from '../../document/services/document.service';
 import { FolderType } from '../../document/enums/document.enum';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { ProjectContract } from '../entities/project-contract.entity';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class ProjectService {
@@ -31,6 +32,7 @@ export class ProjectService {
     private readonly clientService: ClientService,
     private readonly documentService: DocumentService,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(
@@ -153,6 +155,7 @@ export class ProjectService {
     this.logger.log(`Updating project: ${id}`);
 
     const project = await this.findOne(id, user);
+    this.auditContext.setPreValue(project as unknown as Record<string, unknown>);
 
     // 1. Validate Uniqueness if name is changing
     if (dto.name && dto.name !== project.name) {
@@ -194,7 +197,8 @@ export class ProjectService {
   async remove(id: string, user: LoggedInUser): Promise<void> {
     this.logger.log(`Deleting project: ${id}`);
 
-    await this.findOne(id, user);
+    const project = await this.findOne(id, user);
+    this.auditContext.setPreValue(project as unknown as Record<string, unknown>);
 
     await this.projectRepository.softDelete(id);
     this.searchIndexingService.removeProject(id, user.enterpriseId);

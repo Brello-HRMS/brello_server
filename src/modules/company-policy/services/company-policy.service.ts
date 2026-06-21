@@ -11,6 +11,7 @@ import { CreateCompanyPolicyDto, UpdateCompanyPolicyDto } from '../dto/company-p
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { Status } from '../../../common/enums';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class CompanyPolicyService {
@@ -20,6 +21,7 @@ export class CompanyPolicyService {
         private readonly policyRepository: CompanyPolicyRepository,
         private readonly typeService: CompanyPolicyTypeService,
         private readonly searchIndexingService: SearchIndexingService,
+        private readonly auditContext: AuditContextService,
     ) { }
 
     async create(user: LoggedInUser, dto: CreateCompanyPolicyDto): Promise<CompanyPolicy> {
@@ -82,6 +84,7 @@ export class CompanyPolicyService {
         this.logger.log(`Updating policy: ${id} for org: ${user.organizationId}`);
 
         const policy = await this.findOne(user, id, false);
+        this.auditContext.setPreValue(policy as unknown as Record<string, unknown>);
 
         if (dto.type_id) {
             await this.typeService.findOne(user, dto.type_id);
@@ -102,7 +105,8 @@ export class CompanyPolicyService {
 
     async remove(user: LoggedInUser, id: string): Promise<void> {
         this.logger.log(`Soft-deleting policy: ${id} for org: ${user.organizationId}`);
-        await this.findOne(user, id, false);
+        const policy = await this.findOne(user, id, false);
+        this.auditContext.setPreValue(policy as unknown as Record<string, unknown>);
         await this.policyRepository.softDelete(id, user.userId);
         this.searchIndexingService.removePolicy(id, user.enterpriseId);
     }

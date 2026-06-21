@@ -18,12 +18,16 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import { Public } from '../../../common/decorators/public.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('plans')
 @UseGuards(JwtAuthGuard)
 export class PlanController {
   constructor(private readonly planService: PlanService) {}
 
+  @AuditLog(AuditLogModule.PLATFORM_PLAN, AuditAction.CREATE, 'plan')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(
@@ -53,6 +57,7 @@ export class PlanController {
     return this.planService.findOne(id, user);
   }
 
+  @AuditLog(AuditLogModule.PLATFORM_PLAN, AuditAction.UPDATE, 'plan')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   update(
@@ -63,6 +68,7 @@ export class PlanController {
     return this.planService.update(id, updatePlanDto, user);
   }
 
+  @AuditLog(AuditLogModule.PLATFORM_PLAN, AuditAction.DELETE, 'plan')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
@@ -81,6 +87,7 @@ export class PlanController {
     return this.planService.getAppsForPlan(id, user);
   }
 
+  @AuditLog(AuditLogModule.PLATFORM_PLAN, AuditAction.ASSIGN, 'plan_app')
   @Post(':id/apps')
   @HttpCode(HttpStatus.OK)
   assignApps(

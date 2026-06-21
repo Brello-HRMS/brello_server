@@ -32,6 +32,7 @@ import { RejectRequestDto } from '../dto/reject-request.dto';
 import { CancelRequestDto } from '../dto/cancel-request.dto';
 import { AdminCancelRequestDto } from '../dto/admin-cancel-request.dto';
 import { ListLeaveRequestQueryDto } from '../dto/list-leave-request-query.dto';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 const LWP_CODE = 'LWP';
 
@@ -57,6 +58,7 @@ export class LeaveRequestService {
   private readonly logger = new Logger(LeaveRequestService.name);
 
   constructor(
+    private readonly auditContext: AuditContextService,
     private readonly dataSource: DataSource,
     private readonly requestRepo: LeaveRequestRepository,
     private readonly historyRepo: LeaveRequestHistoryRepository,
@@ -238,6 +240,7 @@ export class LeaveRequestService {
     dto: UpdateLeaveRequestDto,
   ): Promise<{ id: string; status: LeaveRequestStatus }> {
     const request = await this.requireOwn(user, id);
+    this.auditContext.setPreValue(request as unknown as Record<string, unknown>);
 
     if (
       request.request_status === LeaveRequestStatus.APPROVED ||
@@ -405,6 +408,7 @@ export class LeaveRequestService {
         `INVALID_STATE: only DRAFT can be deleted (current: ${request.request_status})`,
       );
     }
+    this.auditContext.setPreValue(request as unknown as Record<string, unknown>);
     await this.requestRepo.hardDelete(id);
   }
 

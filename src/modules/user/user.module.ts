@@ -38,6 +38,7 @@ import { OrganizationModule } from '../organization/organization.module';
 import { GlobalSearchModule } from '../global-search/global-search.module';
 import { NotificationModule } from '../notification/notification.module';
 import { DocumentModule } from '../document/document.module';
+import { AuditCoreModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { DocumentModule } from '../document/document.module';
     GlobalSearchModule,
     DocumentModule,
     NotificationModule,
+    AuditCoreModule,
   ],
   controllers: [UserController, EmployeeController],
   providers: [

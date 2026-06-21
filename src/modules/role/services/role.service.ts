@@ -16,6 +16,7 @@ import { ListingHelper } from '../../../common/utils/listing.helper';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import { Status } from '../../../common/enums';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class RoleService {
@@ -25,6 +26,7 @@ export class RoleService {
     private readonly roleRepository: RoleRepository,
     private readonly roleAppRepository: RoleAppRepository,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(
@@ -157,6 +159,7 @@ export class RoleService {
     this.logger.log(`Updating role: ${id}`);
 
     const existingRole = await this.findOne(id, user);
+    this.auditContext.setPreValue(existingRole as unknown as Record<string, unknown>);
 
     if (existingRole.is_system_role) {
       this.validateSystemRoleAccess(user, true, existingRole.organization_id);
@@ -201,6 +204,7 @@ export class RoleService {
     this.logger.log(`Soft deleting role: ${id}`);
 
     const role = await this.findOne(id, user);
+    this.auditContext.setPreValue(role as unknown as Record<string, unknown>);
 
     if (role.is_system_role) {
       this.validateSystemRoleAccess(user, true);

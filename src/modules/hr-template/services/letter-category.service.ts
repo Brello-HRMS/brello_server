@@ -11,6 +11,7 @@ import { CreateLetterCategoryDto, UpdateLetterCategoryDto } from '../dto/letter-
 import { LetterCategory } from '../entities/letter-category.entity';
 import type { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import type { DocumentType } from '../entities/letter-category.entity';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class LetterCategoryService {
@@ -19,6 +20,7 @@ export class LetterCategoryService {
   constructor(
     private readonly repository: LetterCategoryRepository,
     private readonly templateRepository: LetterTemplateRepository,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   private assertOrgContext(user: LoggedInUser): void {
@@ -74,6 +76,7 @@ export class LetterCategoryService {
       throw new ForbiddenException('You do not have permission to update this category');
     }
 
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
     this.logger.log(`Updating letter category ${id}`);
     return this.repository.update(id, dto);
   }
@@ -91,6 +94,8 @@ export class LetterCategoryService {
     if (existing.organization_id !== user.organizationId) {
       throw new ForbiddenException('You do not have permission to delete this category');
     }
+
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
     // Cascade soft-delete all org-owned templates in this category before deleting the category
     await this.templateRepository.softDeleteByCategory(id, user.organizationId);

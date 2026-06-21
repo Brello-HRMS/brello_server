@@ -18,6 +18,9 @@ import { UpdateDesignationDto } from '../dto/update-designation.dto';
 import { FindDesignationsDto } from '../dto/find-designations.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 /**
  * Designation Controller
@@ -32,6 +35,7 @@ export class DesignationController {
     constructor(private readonly designationService: DesignationService) { }
 
     // Create a new designation
+    @AuditLog(AuditLogModule.DESIGNATION, AuditAction.CREATE, 'designation')
     @Post()
     @HttpCode(HttpStatus.CREATED)
     create(
@@ -66,6 +70,7 @@ export class DesignationController {
     }
 
     // Partially update a designation (code and org_id are immutable)
+    @AuditLog(AuditLogModule.DESIGNATION, AuditAction.UPDATE, 'designation')
     @Patch(':id')
     @HttpCode(HttpStatus.OK)
     update(
@@ -77,6 +82,7 @@ export class DesignationController {
         return this.designationService.update(id, orgId, enterpriseId, updateDesignationDto);
     }
 
+    @AuditLog(AuditLogModule.DESIGNATION, AuditAction.DELETE, 'designation')
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(

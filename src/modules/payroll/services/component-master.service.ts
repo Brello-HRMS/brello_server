@@ -16,6 +16,7 @@ import {
   ComponentCategory,
   CalculationType,
 } from '../enums/payroll.enum';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class ComponentMasterService {
@@ -24,6 +25,7 @@ export class ComponentMasterService {
     private readonly componentRepository: Repository<PayrollComponent>,
     @InjectRepository(SalaryTemplateComponent)
     private readonly templateComponentRepository: Repository<SalaryTemplateComponent>,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async createComponent(
@@ -60,6 +62,8 @@ export class ComponentMasterService {
       throw new NotFoundException(`Component with ID ${id} not found.`);
     }
 
+    this.auditContext.setPreValue(component as unknown as Record<string, unknown>);
+
     if (component.is_default) {
       const updated = this.componentRepository.merge(component, {
         value: dto.value ?? component.value,
@@ -82,6 +86,8 @@ export class ComponentMasterService {
     if (component.is_default) {
       throw new BadRequestException('Default components cannot be deleted.');
     }
+
+    this.auditContext.setPreValue(component as unknown as Record<string, unknown>);
 
     const usedInTemplate = await this.templateComponentRepository.findOne({
       where: { component_id: id },

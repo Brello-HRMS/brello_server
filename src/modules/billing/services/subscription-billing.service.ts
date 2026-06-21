@@ -15,6 +15,7 @@ import {
 import { InvoiceService } from './invoice.service';
 import { Invoice } from '../entities/invoice.entity';
 import { Status } from 'src/common/enums';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 export type ChangeApplied = 'immediate' | 'next_cycle';
 
@@ -32,6 +33,7 @@ export class SubscriptionBillingService {
     private readonly subRepo: OrganizationSubscriptionRepository,
     private readonly planRepo: PlanRepository,
     private readonly invoiceService: InvoiceService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async getActiveForOrg(organizationId: string): Promise<OrganizationSubscription | null> {
@@ -48,6 +50,7 @@ export class SubscriptionBillingService {
     if (!current) {
       throw new NotFoundException('No active subscription to change');
     }
+    this.auditContext.setPreValue(current as unknown as Record<string, unknown>);
     const newPlan = await this.planRepo.findOneById(args.newPlanId);
     if (!newPlan) throw new NotFoundException('Plan not found');
     const currentPlan = await this.planRepo.findOneById(current.plan_id);

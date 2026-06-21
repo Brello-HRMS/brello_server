@@ -20,6 +20,9 @@ import { ListDepartmentsDto } from '../dto/list-departments.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('departments')
 @UseGuards(JwtAuthGuard)
@@ -28,6 +31,7 @@ export class DepartmentController {
     constructor(private readonly departmentService: DepartmentService) { }
 
     // POST /departments — create a new department under the authenticated user's org
+    @AuditLog(AuditLogModule.DEPARTMENT, AuditAction.CREATE, 'department')
     @Post()
     @HttpCode(HttpStatus.CREATED)
     create(
@@ -57,6 +61,7 @@ export class DepartmentController {
         return this.departmentService.findOne(user, id);
     }
 
+    @AuditLog(AuditLogModule.DEPARTMENT, AuditAction.UPDATE, 'department')
     @Patch(':id')
     @HttpCode(HttpStatus.OK)
     update(
@@ -68,6 +73,7 @@ export class DepartmentController {
     }
 
     // DELETE /departments/:id — soft-delete (sets is_deleted=true, status=INACTIVE)
+    @AuditLog(AuditLogModule.DEPARTMENT, AuditAction.DELETE, 'department')
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(

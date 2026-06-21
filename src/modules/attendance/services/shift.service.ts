@@ -14,6 +14,7 @@ import { Shift } from '../entities/shift.entity';
 import { Status } from '../../../common/enums';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class ShiftService {
@@ -22,6 +23,7 @@ export class ShiftService {
   constructor(
     private readonly shiftRepo: ShiftRepository,
     private readonly ruleRepo: AttendanceRuleRepository,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(
@@ -75,7 +77,8 @@ export class ShiftService {
     id: string,
     dto: UpdateShiftDto,
   ): Promise<Shift> {
-    await this.findOne(user, id);
+    const existing = await this.findOne(user, id);
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
     if (
       dto.start_time ||
@@ -124,6 +127,7 @@ export class ShiftService {
 
   async delete(user: LoggedInUser, id: string): Promise<void> {
     const shift = await this.findOne(user, id);
+    this.auditContext.setPreValue(shift as unknown as Record<string, unknown>);
 
     const activeRuleCount = await this.ruleRepo.countActiveByShiftId(shift.id);
     if (activeRuleCount > 0) {

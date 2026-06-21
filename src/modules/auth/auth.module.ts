@@ -22,6 +22,7 @@ import { Role } from '../role/entities/role.entity';
 import { App } from '../app/entities/app.entity';
 import { SessionRepository } from './repositories/session.repository';
 import { NotificationModule } from '../notification/notification.module';
+import { AuditCoreModule } from '../audit/audit.module';
 
 /**
  * Auth Module
@@ -50,6 +51,7 @@ import { NotificationModule } from '../notification/notification.module';
     ConfigModule,
     ScheduleModule.forRoot(),
     NotificationModule,
+    AuditCoreModule,
   ],
   controllers: [AuthController, PlatformAdminAuthController],
   providers: [

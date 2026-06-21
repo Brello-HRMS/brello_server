@@ -14,6 +14,7 @@ import { PayrollCalculationEngine } from './payroll-calculation.service';
 import { PayrollRunService } from './payroll-run.service';
 import { PayrollAuditService } from './payroll-audit.service';
 import { PayslipPdfService } from './payslip-pdf.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 import { PayrollRun } from '../entities/payroll-run.entity';
 import { PayrollRunItem } from '../entities/payroll-run-item.entity';
 import {
@@ -47,6 +48,7 @@ export class PayrollProcessingService {
     private readonly runService: PayrollRunService,
     private readonly audit: PayrollAuditService,
     private readonly payslipPdf: PayslipPdfService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async process(user: LoggedInUser, runId: string) {
@@ -105,6 +107,8 @@ export class PayrollProcessingService {
     if (!item) {
       throw new BadRequestException('Payroll item not found.');
     }
+
+    this.auditContext.setPreValue(item as unknown as Record<string, unknown>);
 
     await this.computeItem(user, run, item);
 

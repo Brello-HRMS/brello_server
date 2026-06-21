@@ -36,6 +36,9 @@ import { DryRunDto } from '../dto/dry-run.dto';
 
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 interface AuthPayload {
   enterpriseId: string;
@@ -58,6 +61,7 @@ export class PayrollController {
 
   // ─── Payroll Settings ───────────────────────────────────────────────────────
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.UPDATE, 'payroll_config')
   @Put('configurations')
   updateSettings(
     @CurrentUser() user: AuthPayload,
@@ -77,6 +81,7 @@ export class PayrollController {
 
   // ─── Component Master ────────────────────────────────────────────────────────
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.CREATE, 'payroll_component')
   @Post('component-master')
   createComponent(
     @CurrentUser() user: AuthPayload,
@@ -97,6 +102,7 @@ export class PayrollController {
     );
   }
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.UPDATE, 'payroll_component')
   @Put('component-master/:id')
   updateComponent(
     @Param('id') id: string,
@@ -105,6 +111,7 @@ export class PayrollController {
     return this.componentMasterService.updateComponent(id, dto);
   }
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.DELETE, 'payroll_component')
   @Delete('component-master/:id')
   deleteComponent(@Param('id') id: string) {
     return this.componentMasterService.deleteComponent(id);
@@ -112,6 +119,7 @@ export class PayrollController {
 
   // ─── PF Configuration ────────────────────────────────────────────────────────
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.UPDATE, 'pf_config')
   @Put('statutory-pf-config')
   updatePfConfig(
     @CurrentUser() user: AuthPayload,
@@ -136,6 +144,7 @@ export class PayrollController {
 
   // ─── Salary Templates ────────────────────────────────────────────────────────
 
+  @AuditLog(AuditLogModule.SALARY, AuditAction.CREATE, 'salary_template')
   @Post('salary-templates')
   createTemplate(
     @CurrentUser() user: AuthPayload,
@@ -161,6 +170,7 @@ export class PayrollController {
     return this.salaryTemplateEngine.getTemplateById(id);
   }
 
+  @AuditLog(AuditLogModule.SALARY, AuditAction.UPDATE, 'salary_template')
   @Put('salary-templates/:id')
   updateTemplate(
     @CurrentUser() user: AuthPayload,
@@ -175,6 +185,7 @@ export class PayrollController {
     );
   }
 
+  @AuditLog(AuditLogModule.SALARY, AuditAction.DELETE, 'salary_template')
   @Delete('salary-templates/:id')
   @HttpCode(204)
   deleteTemplate(@Param('id') id: string) {
@@ -191,6 +202,7 @@ export class PayrollController {
 
   // ─── Employee Salary ─────────────────────────────────────────────────────────
 
+  @AuditLog(AuditLogModule.SALARY, AuditAction.ASSIGN, 'salary_assignment')
   @Post('employee-salary-assignments')
   assignSalary(
     @CurrentUser() user: AuthPayload,
@@ -203,6 +215,7 @@ export class PayrollController {
     );
   }
 
+  @AuditLog(AuditLogModule.SALARY, AuditAction.ASSIGN, 'salary_assignment')
   @Post('employee-salary-assignments/bulk')
   bulkAssignSalary(
     @CurrentUser() user: AuthPayload,
@@ -232,6 +245,7 @@ export class PayrollController {
     return this.employeeSalaryEngine.getEmployeeSalaryStructure(userId);
   }
 
+  @AuditLog(AuditLogModule.SALARY, AuditAction.UPDATE, 'employee_salary', { entityIdParam: 'userId' })
   @Put('employees/:userId/salary')
   updateEmployeeSalaryStructure(
     @CurrentUser() user: AuthPayload,
@@ -265,6 +279,7 @@ export class PayrollController {
     );
   }
 
+  @AuditLog(AuditLogModule.SALARY, AuditAction.UPDATE, 'salary_propagation')
   @Post('propagation/apply')
   @HttpCode(200)
   applyPropagation(

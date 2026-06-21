@@ -11,6 +11,7 @@ import { PayrollAuditService } from './payroll-audit.service';
 import { CreateAdjustmentDto } from '../dto/payroll-adjustment.dto';
 import { PayrollRunAdjustment } from '../entities/payroll-run-adjustment.entity';
 import { AuditAction, PayrollRunStatus } from '../enums/payroll.enum';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 /**
  * Manual bonus/deduction lines on a run's employees. Mutations are blocked once
@@ -24,6 +25,7 @@ export class PayrollAdjustmentService {
     private readonly itemRepo: PayrollRunItemRepository,
     private readonly runService: PayrollRunService,
     private readonly audit: PayrollAuditService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async addAdjustment(
@@ -98,6 +100,8 @@ export class PayrollAdjustmentService {
     if (!adjustment) {
       throw new NotFoundException('Adjustment not found.');
     }
+
+    this.auditContext.setPreValue(adjustment as unknown as Record<string, unknown>);
 
     await this.audit.record(
       user,

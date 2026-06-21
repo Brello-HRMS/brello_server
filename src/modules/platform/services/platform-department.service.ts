@@ -5,12 +5,14 @@ import { Department } from '../../departments/entities/department.entity';
 import { Status } from '../../../common/enums';
 import { CreatePlatformDepartmentDto } from '../dto/create-platform-department.dto';
 import { UpdatePlatformDepartmentDto } from '../dto/update-platform-department.dto';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class PlatformDepartmentService {
   constructor(
     @InjectRepository(Department)
     private readonly departmentRepository: Repository<Department>,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async findAll(): Promise<Department[]> {
@@ -50,12 +52,14 @@ export class PlatformDepartmentService {
 
   async update(id: string, updateDto: UpdatePlatformDepartmentDto): Promise<Department> {
     const department = await this.findOne(id);
+    this.auditContext.setPreValue(department as unknown as Record<string, unknown>);
     Object.assign(department, updateDto);
     return this.departmentRepository.save(department);
   }
 
   async remove(id: string): Promise<void> {
     const department = await this.findOne(id);
+    this.auditContext.setPreValue(department as unknown as Record<string, unknown>);
     department.is_deleted = true;
     department.status = Status.DELETED;
     await this.departmentRepository.save(department);

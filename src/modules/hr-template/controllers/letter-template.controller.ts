@@ -17,6 +17,9 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 import { LetterTemplateService } from '../services/letter-template.service';
 import { CreateLetterTemplateDto, UpdateLetterTemplateDto } from '../dto/letter-template.dto';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('letter-templates')
 @UseGuards(JwtAuthGuard)
@@ -41,6 +44,7 @@ export class LetterTemplateController {
     return this.service.findOne(user, id);
   }
 
+  @AuditLog(AuditLogModule.HR_TEMPLATE, AuditAction.CREATE, 'letter_template')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(
@@ -50,6 +54,7 @@ export class LetterTemplateController {
     return this.service.create(user, dto);
   }
 
+  @AuditLog(AuditLogModule.HR_TEMPLATE, AuditAction.UPDATE, 'letter_template')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   update(
@@ -60,6 +65,7 @@ export class LetterTemplateController {
     return this.service.update(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.HR_TEMPLATE, AuditAction.DELETE, 'letter_template')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
