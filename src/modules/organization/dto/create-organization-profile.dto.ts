@@ -42,6 +42,36 @@ export class CreateOrganizationProfileDto {
   @MaxLength(100)
   registration_no: string;
 
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  gst_no?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  address?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  state?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(10)
+  zip_code?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  country?: string;
+
   @IsUUID()
   @IsNotEmpty()
   organization_id: string;
