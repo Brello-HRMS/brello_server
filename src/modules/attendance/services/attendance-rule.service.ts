@@ -58,6 +58,7 @@ export class AttendanceRuleService {
       overtime_multiplier: dto.overtime_multiplier,
       allow_multiple_checkins: dto.allow_multiple_checkins,
       require_geo_fencing: dto.require_geo_fencing,
+      regularization_days_allowed: dto.regularization_days_allowed,
       organization_id: user.organizationId,
       enterprise_id: user.enterpriseId,
       modified_by: user.userId,

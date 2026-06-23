@@ -14,6 +14,7 @@ import { AttendanceService } from '../services/attendance.service';
 import { CheckInDto } from '../dto/check-in.dto';
 import { CheckOutDto } from '../dto/check-out.dto';
 import { MeHistoryQueryDto } from '../dto/me-history-query.dto';
+import { RegularizeAttendanceDto } from '../dto/regularize-attendance.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
@@ -75,5 +76,15 @@ export class AttendanceController {
   @Get('rules')
   getRules(@LoggedInUser() user: LoggedInUserInterface) {
     return this.attendanceService.getEffectiveRules(user);
+  }
+
+  @Post('regularize')
+  @HttpCode(HttpStatus.OK)
+  regularize(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Body() dto: RegularizeAttendanceDto,
+    @Req() req: Request,
+  ) {
+    return this.attendanceService.regularize(user, dto, req.ip);
   }
 }

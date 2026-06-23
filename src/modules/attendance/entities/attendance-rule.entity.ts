@@ -64,6 +64,9 @@ export class AttendanceRule extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   remote_approval_required: boolean;
 
+  @Column({ type: 'int', default: 0 })
+  regularization_days_allowed: number;
+
   @OneToOne(() => GeoFence, (geoFence) => geoFence.rule, { cascade: true })
   geo_fence: GeoFence;
 

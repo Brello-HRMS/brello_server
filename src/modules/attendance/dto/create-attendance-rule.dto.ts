@@ -77,6 +77,12 @@ export class CreateAttendanceRuleDto {
   require_geo_fencing?: boolean;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0, { message: 'regularization_days_allowed must be >= 0' })
+  @Max(365, { message: 'regularization_days_allowed must be <= 365' })
+  regularization_days_allowed?: number;
+
+  @IsOptional()
   @ValidateIf((o) => o.require_geo_fencing === true)
   @ValidateNested()
   @Type(() => GeoFenceDto)

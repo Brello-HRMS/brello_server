@@ -51,6 +51,17 @@ export function diffMinutes(start: Date, end: Date): number {
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
 }
 
+export function daysBetween(fromDate: string, toDate: Date = new Date()): number {
+  const [y, m, d] = fromDate.split('-').map(Number);
+  const from = new Date(y, (m ?? 1) - 1, d ?? 1).getTime();
+  const to = new Date(
+    toDate.getFullYear(),
+    toDate.getMonth(),
+    toDate.getDate(),
+  ).getTime();
+  return Math.round((to - from) / (24 * 60 * 60 * 1000));
+}
+
 export function isCheckInLate(
   checkInAt: Date,
   shift: Shift,

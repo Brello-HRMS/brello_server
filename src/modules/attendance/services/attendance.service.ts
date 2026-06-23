@@ -9,6 +9,7 @@ import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { CheckInDto } from '../dto/check-in.dto';
 import { CheckOutDto } from '../dto/check-out.dto';
 import { MeHistoryQueryDto } from '../dto/me-history-query.dto';
+import { RegularizeAttendanceDto } from '../dto/regularize-attendance.dto';
 import { AttendanceRecordRepository } from '../repositories/attendance-record.repository';
 import { AttendanceSessionRepository } from '../repositories/attendance-session.repository';
 import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
@@ -23,6 +24,7 @@ import { ApprovalStatus } from '../enums/approval-status.enum';
 import {
   computeAttendanceStatus,
   ComputedAttendance,
+  daysBetween,
   diffMinutes,
   formatHmm,
   formatTime12,
@@ -599,6 +601,226 @@ export class AttendanceService {
       })),
       pagination: { page, limit, total },
     };
+  }
+
+  async regularize(
+    user: LoggedInUser,
+    dto: RegularizeAttendanceDto,
+    ipAddress?: string,
+  ) {
+    if (!dto.check_in && !dto.check_out) {
+      throw new BadRequestException(
+        'At least one of check_in or check_out must be provided',
+      );
+    }
+
+    const { rule, shift } = await this.ruleResolver.resolveForEmployee(
+      user.organizationId,
+      user.userId,
+    );
+
+    const allowedDays = rule.regularization_days_allowed ?? 0;
+    if (allowedDays <= 0) {
+      throw new BadRequestException({
+        message: 'Regularization is not enabled for your attendance rule',
+        error_code: 'regularizationDisabled',
+      });
+    }
+
+    const recordAgeDays = daysBetween(dto.date);
+    if (recordAgeDays < 0) {
+      throw new BadRequestException('Cannot regularize a future-dated record');
+    }
+    if (recordAgeDays > allowedDays) {
+      throw new BadRequestException({
+        message: `Regularization window has expired. This date is ${recordAgeDays} day(s) old; rule allows up to ${allowedDays} day(s).`,
+        error_code: 'regularizationWindowExpired',
+      });
+    }
+
+    const existing = await this.recordRepo.findForEmployeeOnDate(
+      user.organizationId,
+      user.userId,
+      dto.date,
+    );
+
+    if (existing) {
+      const openSession = await this.sessionRepo.findOpenSession(
+        user.organizationId,
+        user.userId,
+      );
+      if (openSession && openSession.attendance_record_id === existing.id) {
+        throw new ConflictException(
+          'Cannot regularize while an active session is open. Please check-out first.',
+        );
+      }
+    } else if (!dto.check_in) {
+      throw new BadRequestException(
+        'check_in is required when no attendance record exists for this date',
+      );
+    }
+
+    const newCheckIn = dto.check_in
+      ? this.combineDateTime(dto.date, dto.check_in)
+      : (existing?.first_check_in_at ?? null);
+    const newCheckOut = dto.check_out
+      ? this.combineDateTime(dto.date, dto.check_out)
+      : (existing?.last_check_out_at ?? null);
+
+    if (newCheckIn && newCheckOut && newCheckOut <= newCheckIn) {
+      throw new BadRequestException('check_out must be after check_in');
+    }
+
+    const workedMinutes =
+      newCheckIn && newCheckOut
+        ? Math.max(
+            0,
+            Math.round((newCheckOut.getTime() - newCheckIn.getTime()) / 60000),
+          )
+        : 0;
+
+    const { isLate, lateMinutes } = newCheckIn
+      ? isCheckInLate(newCheckIn, shift)
+      : {
+          isLate: existing?.is_late ?? false,
+          lateMinutes: existing?.late_minutes ?? 0,
+        };
+
+    const computed = computeAttendanceStatus(workedMinutes, rule, isLate);
+
+    let recordId: string;
+
+    if (existing) {
+      const oldSnapshot = {
+        check_in: existing.first_check_in_at,
+        check_out: existing.last_check_out_at,
+        attendance_status: existing.attendance_status,
+        worked_minutes: existing.worked_minutes,
+      };
+
+      await this.recordRepo.update(existing.id, {
+        first_check_in_at: newCheckIn,
+        last_check_out_at: newCheckOut,
+        worked_minutes: computed.worked_minutes,
+        overtime_minutes: computed.overtime_minutes,
+        is_late: isLate,
+        late_minutes: lateMinutes || null,
+        is_half_day: computed.is_half_day,
+        is_overtime: computed.is_overtime,
+        attendance_status: computed.attendance_status,
+        source: AttendanceSource.MANUAL,
+        notes: dto.reason ?? existing.notes,
+        modified_by: user.userId,
+      });
+
+      const sessions = await this.sessionRepo.findByRecord(existing.id);
+      if (sessions.length === 1 && newCheckIn && newCheckOut) {
+        const session = sessions[0];
+        await this.sessionRepo.update(session.id, {
+          check_in_at: newCheckIn,
+          check_out_at: newCheckOut,
+          worked_minutes: workedMinutes,
+          source: AttendanceSource.MANUAL,
+          modified_by: user.userId,
+        });
+      }
+
+      recordId = existing.id;
+
+      await this.audit(user, {
+        attendance_record_id: existing.id,
+        employee_id: user.userId,
+        event_type: AuditEventType.REGULARIZE,
+        ip_address: ipAddress,
+        old_value: oldSnapshot,
+        new_value: {
+          check_in: newCheckIn,
+          check_out: newCheckOut,
+          attendance_status: computed.attendance_status,
+          worked_minutes: computed.worked_minutes,
+          reason: dto.reason,
+        },
+      });
+    } else {
+      const created = await this.recordRepo.create({
+        employee_id: user.userId,
+        organization_id: user.organizationId,
+        enterprise_id: user.enterpriseId,
+        date: dto.date,
+        shift_id: shift.id,
+        rule_id: rule.id,
+        first_check_in_at: newCheckIn,
+        last_check_out_at: newCheckOut,
+        worked_minutes: computed.worked_minutes,
+        overtime_minutes: computed.overtime_minutes,
+        is_late: isLate,
+        late_minutes: lateMinutes || null,
+        is_half_day: computed.is_half_day,
+        is_overtime: computed.is_overtime,
+        attendance_status: computed.attendance_status,
+        attendance_mode: AttendanceMode.OFFICE_IN,
+        source: AttendanceSource.MANUAL,
+        notes: dto.reason ?? null,
+        modified_by: user.userId,
+      });
+
+      await this.sessionRepo.create({
+        attendance_record_id: created.id,
+        employee_id: user.userId,
+        organization_id: user.organizationId,
+        enterprise_id: user.enterpriseId,
+        check_in_at: newCheckIn!,
+        check_out_at: newCheckOut,
+        worked_minutes: workedMinutes,
+        attendance_mode: AttendanceMode.OFFICE_IN,
+        source: AttendanceSource.MANUAL,
+        notes: dto.reason ?? null,
+        check_in_ip: ipAddress ?? null,
+        check_out_ip: newCheckOut ? (ipAddress ?? null) : null,
+        modified_by: user.userId,
+      });
+
+      recordId = created.id;
+
+      await this.audit(user, {
+        attendance_record_id: created.id,
+        employee_id: user.userId,
+        event_type: AuditEventType.REGULARIZE,
+        ip_address: ipAddress,
+        new_value: {
+          date: dto.date,
+          check_in: newCheckIn,
+          check_out: newCheckOut,
+          attendance_status: computed.attendance_status,
+          worked_minutes: computed.worked_minutes,
+          reason: dto.reason,
+          created: true,
+        },
+      });
+    }
+
+    return {
+      attendance_id: recordId,
+      date: dto.date,
+      check_in_time: newCheckIn ? newCheckIn.toISOString() : null,
+      check_out_time: newCheckOut ? newCheckOut.toISOString() : null,
+      worked_hours: formatHmm(computed.worked_minutes),
+      worked_minutes: computed.worked_minutes,
+      attendance_status: computed.attendance_status,
+      is_late: isLate,
+      is_half_day: computed.is_half_day,
+      is_overtime: computed.is_overtime,
+      overtime_minutes: computed.overtime_minutes,
+      regularization_days_allowed: allowedDays,
+      record_age_days: recordAgeDays,
+      created: !existing,
+    };
+  }
+
+  private combineDateTime(date: string, time: string): Date {
+    const [y, m, d] = date.split('-').map(Number);
+    const [hh, mm] = time.split(':').map(Number);
+    return new Date(y, (m ?? 1) - 1, d, hh ?? 0, mm ?? 0, 0, 0);
   }
 
   private async audit(
