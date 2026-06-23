@@ -43,6 +43,7 @@ export class PfConfigService {
       employee_contribution: dto.employee_contribution,
       employer_contribution: dto.employer_contribution,
       minimum_salary_threshold: dto.minimum_salary_threshold,
+      restrict_to_ceiling: dto.restrict_to_ceiling ?? true,
       is_enabled: dto.is_enabled ?? true,
       effective_from: newEffectiveFrom,
       enterprise_id: enterpriseId,

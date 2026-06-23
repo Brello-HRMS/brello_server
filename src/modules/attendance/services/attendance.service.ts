@@ -14,6 +14,10 @@ import { AttendanceSessionRepository } from '../repositories/attendance-session.
 import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
 import { RemoteApprovalRepository } from '../repositories/remote-approval.repository';
 import { AttendanceRuleResolverService } from './attendance-rule-resolver.service';
+import { AttendanceRecord } from '../entities/attendance-record.entity';
+import { AttendanceSession } from '../entities/attendance-session.entity';
+import { AttendanceRule } from '../entities/attendance-rule.entity';
+import { Shift } from '../entities/shift.entity';
 import { AttendanceMode } from '../enums/attendance-mode.enum';
 import { AttendanceSource } from '../enums/attendance-source.enum';
 import { AttendanceStatus } from '../enums/attendance-status.enum';
@@ -339,56 +343,17 @@ export class AttendanceService {
     );
 
     const checkOutAt = new Date();
-    const sessionMinutes = diffMinutes(session.check_in_at, checkOutAt);
-
-    await this.sessionRepo.update(session.id, {
-      check_out_at: checkOutAt,
-      worked_minutes: sessionMinutes,
-      check_out_latitude: dto.latitude ?? null,
-      check_out_longitude: dto.longitude ?? null,
-      check_out_ip: ipAddress ?? null,
-      notes: dto.notes ?? session.notes,
-      modified_by: user.userId,
-    });
-
-    const allSessions = await this.sessionRepo.findByRecord(record.id);
-    const totalWorkedMinutes = allSessions.reduce(
-      (sum, s) =>
-        sum +
-        (s.id === session.id
-          ? sessionMinutes
-          : s.check_out_at
-            ? s.worked_minutes
-            : 0),
-      0,
-    );
-
-    const { isLate } = isCheckInLate(
-      record.first_check_in_at ?? session.check_in_at,
+    const computed = await this.applyCheckout({
+      session,
+      record,
+      rule,
       shift,
-    );
-
-    // If approval is pending, don't override status
-    const computed: ComputedAttendance =
-      record.attendance_status === AttendanceStatus.PENDING_APPROVAL
-        ? {
-            worked_minutes: totalWorkedMinutes,
-            overtime_minutes: 0,
-            is_half_day: false,
-            is_overtime: false,
-            attendance_status: AttendanceStatus.PENDING_APPROVAL,
-          }
-        : computeAttendanceStatus(totalWorkedMinutes, rule, isLate);
-
-    await this.recordRepo.update(record.id, {
-      last_check_out_at: checkOutAt,
-      worked_minutes: computed.worked_minutes,
-      overtime_minutes: computed.overtime_minutes,
-      is_half_day: computed.is_half_day,
-      is_overtime: computed.is_overtime,
-      is_late: isLate,
-      attendance_status: computed.attendance_status,
-      modified_by: user.userId,
+      checkOutAt,
+      performedBy: user.userId,
+      checkOutLat: dto.latitude ?? null,
+      checkOutLng: dto.longitude ?? null,
+      checkOutIp: ipAddress ?? null,
+      notes: dto.notes ?? null,
     });
 
     await this.audit(user, {
@@ -415,6 +380,98 @@ export class AttendanceService {
       is_overtime: computed.is_overtime,
       overtime_minutes: computed.overtime_minutes,
     };
+  }
+
+  /**
+   * Shared checkout core used by the employee-triggered checkOut() and the
+   * AutoCheckoutService. Closes the session at `checkOutAt`, re-aggregates the
+   * day's worked minutes across sessions, recomputes status (preserving
+   * PENDING_APPROVAL), and writes the result onto the record. Does NOT write an
+   * audit log or notify — the caller owns those, since the event/source differ.
+   */
+  async applyCheckout(params: {
+    session: AttendanceSession;
+    record: AttendanceRecord;
+    rule: AttendanceRule;
+    shift: Shift;
+    checkOutAt: Date;
+    performedBy: string;
+    isAutoCheckout?: boolean;
+    checkOutLat?: number | null;
+    checkOutLng?: number | null;
+    checkOutIp?: string | null;
+    notes?: string | null;
+  }): Promise<ComputedAttendance> {
+    const {
+      session,
+      record,
+      rule,
+      shift,
+      checkOutAt,
+      performedBy,
+      isAutoCheckout,
+    } = params;
+
+    const sessionMinutes = diffMinutes(session.check_in_at, checkOutAt);
+
+    const sessionUpdate: Partial<AttendanceSession> = {
+      check_out_at: checkOutAt,
+      worked_minutes: sessionMinutes,
+      check_out_latitude: params.checkOutLat ?? null,
+      check_out_longitude: params.checkOutLng ?? null,
+      check_out_ip: params.checkOutIp ?? null,
+      notes: params.notes ?? session.notes,
+      modified_by: performedBy,
+    };
+    if (isAutoCheckout) {
+      sessionUpdate.source = AttendanceSource.AUTO;
+      sessionUpdate.is_auto_checkout = true;
+    }
+    await this.sessionRepo.update(session.id, sessionUpdate);
+
+    const allSessions = await this.sessionRepo.findByRecord(record.id);
+    const totalWorkedMinutes = allSessions.reduce(
+      (sum, s) =>
+        sum +
+        (s.id === session.id
+          ? sessionMinutes
+          : s.check_out_at
+            ? s.worked_minutes
+            : 0),
+      0,
+    );
+
+    const { isLate } = isCheckInLate(
+      record.first_check_in_at ?? session.check_in_at,
+      shift,
+    );
+
+    // If remote approval is pending, don't override the PENDING_APPROVAL status.
+    const computed: ComputedAttendance =
+      record.attendance_status === AttendanceStatus.PENDING_APPROVAL
+        ? {
+            worked_minutes: totalWorkedMinutes,
+            overtime_minutes: 0,
+            is_half_day: false,
+            is_overtime: false,
+            attendance_status: AttendanceStatus.PENDING_APPROVAL,
+          }
+        : computeAttendanceStatus(totalWorkedMinutes, rule, isLate);
+
+    const recordUpdate: Partial<AttendanceRecord> = {
+      last_check_out_at: checkOutAt,
+      worked_minutes: computed.worked_minutes,
+      overtime_minutes: computed.overtime_minutes,
+      is_half_day: computed.is_half_day,
+      is_overtime: computed.is_overtime,
+      is_late: isLate,
+      attendance_status: computed.attendance_status,
+      modified_by: performedBy,
+    };
+    if (isAutoCheckout) recordUpdate.has_auto_checkout = true;
+    await this.recordRepo.update(record.id, recordUpdate);
+
+    return computed;
   }
 
   async getToday(user: LoggedInUser) {

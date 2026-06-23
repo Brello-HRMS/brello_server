@@ -298,6 +298,13 @@ export class PayrollProcessingService {
 
     const adjustments = await this.adjustmentRepo.sumForUser(run.id, item.user_id);
 
+    // Per-employee statutory override (PF applicability / override base), as of
+    // the pay-period end.
+    const statutoryOverride = await this.salaryRepo.findActiveStatutoryOverride(
+      item.user_id,
+      run.pay_period_to,
+    );
+
     const result = await this.calcEngine.calculate(
       user.enterpriseId,
       user.organizationId,
@@ -307,6 +314,12 @@ export class PayrollProcessingService {
         lwp_days: item.lop_days || undefined,
         total_working_days: item.total_working_days || undefined,
       },
+      statutoryOverride
+        ? {
+            pf_applicable: statutoryOverride.pf_applicable,
+            pf_override_salary: statutoryOverride.pf_override_salary ?? null,
+          }
+        : undefined,
     );
 
     // Manual deduction adjustments (applied after the engine, like dry-run).

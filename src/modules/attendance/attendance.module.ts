@@ -9,7 +9,21 @@ import { AttendanceRecord } from './entities/attendance-record.entity';
 import { AttendanceSession } from './entities/attendance-session.entity';
 import { AttendanceAuditLog } from './entities/attendance-audit-log.entity';
 import { RemoteApproval } from './entities/remote-approval.entity';
+import { AttendanceCorrectionRequest } from './entities/attendance-correction-request.entity';
 import { User } from '../user/entities/user.entity';
+import { UserProfile } from '../user/entities/user-profile.entity';
+import { Holiday } from '../holiday/entities/holiday.entity';
+import { LeaveRequest } from '../leave-request/entities/leave-request.entity';
+import { NotificationModule } from '../notification/notification.module';
+import { AttendanceMaterializationService } from './services/attendance-materialization.service';
+import { AttendanceCronService } from './services/attendance-cron.service';
+import { AutoCheckoutService } from './services/auto-checkout.service';
+import { CorrectionRequestService } from './services/correction-request.service';
+import { AttendanceCorrectionRequestRepository } from './repositories/attendance-correction-request.repository';
+import {
+  MyCorrectionRequestController,
+  AdminCorrectionRequestController,
+} from './controllers/correction-request.controller';
 import { ShiftRepository } from './repositories/shift.repository';
 import { WeeklyOffRepository } from './repositories/weekly-off.repository';
 import { AttendanceRuleRepository } from './repositories/attendance-rule.repository';
@@ -48,9 +62,14 @@ import { RbacModule } from '../rbac/rbac.module';
       AttendanceSession,
       AttendanceAuditLog,
       RemoteApproval,
+      AttendanceCorrectionRequest,
       User,
+      UserProfile,
+      Holiday,
+      LeaveRequest,
     ]),
     RbacModule,
+    NotificationModule,
   ],
   controllers: [
     ShiftController,
@@ -60,6 +79,8 @@ import { RbacModule } from '../rbac/rbac.module';
     GeoValidationController,
     AttendanceController,
     AdminAttendanceController,
+    MyCorrectionRequestController,
+    AdminCorrectionRequestController,
   ],
   providers: [
     ShiftService,
@@ -71,6 +92,11 @@ import { RbacModule } from '../rbac/rbac.module';
     AdminAttendanceService,
     RemoteApprovalService,
     AttendanceRuleResolverService,
+    AttendanceMaterializationService,
+    AttendanceCronService,
+    AutoCheckoutService,
+    CorrectionRequestService,
+    AttendanceCorrectionRequestRepository,
     ShiftRepository,
     WeeklyOffRepository,
     AttendanceRuleRepository,
@@ -87,6 +113,7 @@ import { RbacModule } from '../rbac/rbac.module';
     RuleAssignmentService,
     GeoValidationService,
     AttendanceService,
+    AttendanceMaterializationService,
   ],
 })
 export class AttendanceModule {}

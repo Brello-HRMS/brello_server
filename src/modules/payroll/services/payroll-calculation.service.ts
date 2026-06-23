@@ -15,6 +15,16 @@ export class PayrollCalculationEngine {
       lwp_days?: number;
       total_working_days?: number;
     },
+    /**
+     * Optional per-employee statutory overrides (from EmployeeStatutoryOverride).
+     * `pf_applicable=false` excludes the employee from PF (e.g. an above-ceiling
+     * new joiner with no prior PF account). `pf_override_salary`, when set,
+     * replaces the Basic component as the PF wage base.
+     */
+    employee?: {
+      pf_applicable?: boolean;
+      pf_override_salary?: number | null;
+    },
   ) {
     const { earnings, deductions } = salaryStructure;
     let gross = 0;
@@ -60,14 +70,26 @@ export class PayrollCalculationEngine {
       });
     }
 
-    // Process Statutory (PF)
+    // ── Statutory: Provident Fund (EPF) ──────────────────────────────────────
+    // Government rule (EPFO): PF is computed on "PF wages" (Basic + DA) and the
+    // statutory wage ceiling is ₹15,000/month. By default contributions are
+    // restricted to that ceiling — PF base = min(basic, ceiling) — which is the
+    // compliant minimum and the default in Zoho Payroll / greytHR / Keka. An
+    // employer may instead contribute on the full basic ("PF on actual"), exposed
+    // via PfConfig.restrict_to_ceiling = false (mirrors those platforms' toggle).
+    //
+    // NOTE: `minimum_salary_threshold` holds the EPF wage *ceiling* (15,000), not
+    // a floor. (Column name kept for compatibility — renaming it to
+    // `pf_wage_ceiling` is a recommended follow-up.)
+    const warnings: string[] = [];
     let employerContribution = 0;
+
     const pfConfig = await this.pfConfigService.getConfig(
       enterpriseId,
       organizationId,
     );
 
-    if (!pfConfig) {
+    if (!pfConfig || !pfConfig.is_enabled) {
       return {
         gross,
         deductions_total: totalDeductions,
@@ -75,7 +97,26 @@ export class PayrollCalculationEngine {
         employer_contribution: employerContribution,
         earnings: calculatedEarnings,
         deductions: calculatedDeductions,
-        warnings: ['PF configuration missing. Skipping PF calculation.'],
+        warnings: [
+          pfConfig
+            ? 'PF is disabled for this organization. Skipping PF calculation.'
+            : 'PF configuration missing. Skipping PF calculation.',
+        ],
+      };
+    }
+
+    // Per-employee statutory exclusion (e.g. above-ceiling new joiner, no prior
+    // PF account) takes precedence over the org-level config.
+    if (employee?.pf_applicable === false) {
+      warnings.push('PF not applicable for this employee (statutory override).');
+      return {
+        gross,
+        deductions_total: totalDeductions,
+        net: gross - totalDeductions,
+        employer_contribution: employerContribution,
+        earnings: calculatedEarnings,
+        deductions: calculatedDeductions,
+        warnings,
       };
     }
 
@@ -85,16 +126,24 @@ export class PayrollCalculationEngine {
         earningComponent.name.toLowerCase() === 'basic salary',
     );
 
-    if (
-      basicComp &&
-      basicComp.calculated_value >= pfConfig.minimum_salary_threshold
-    ) {
-      const applicableSalary = basicComp.calculated_value;
+    // PF wage base: an explicit per-employee override wins; otherwise the Basic
+    // component. PF is mandatory for every enrolled employee at/below the ceiling.
+    const overrideBasis =
+      employee?.pf_override_salary != null
+        ? Number(employee.pf_override_salary)
+        : undefined;
+    const basicForPf = overrideBasis ?? basicComp?.calculated_value;
 
-      const employeePf =
-        (applicableSalary * pfConfig.employee_contribution) / 100;
-      const employerPf =
-        (applicableSalary * pfConfig.employer_contribution) / 100;
+    if (basicForPf != null) {
+      const ceiling = Number(pfConfig.minimum_salary_threshold);
+      const restrictToCeiling = pfConfig.restrict_to_ceiling ?? true;
+      const pfBase =
+        restrictToCeiling && ceiling > 0
+          ? Math.min(basicForPf, ceiling)
+          : basicForPf;
+
+      const employeePf = (pfBase * Number(pfConfig.employee_contribution)) / 100;
+      const employerPf = (pfBase * Number(pfConfig.employer_contribution)) / 100;
 
       calculatedDeductions.push({
         name: 'PF',
@@ -104,6 +153,10 @@ export class PayrollCalculationEngine {
       });
       totalDeductions += employeePf;
       employerContribution = employerPf;
+    } else {
+      warnings.push(
+        'No "Basic" component found in the salary structure. Skipping PF calculation.',
+      );
     }
 
     const net = gross - totalDeductions;
@@ -115,7 +168,7 @@ export class PayrollCalculationEngine {
       employer_contribution: employerContribution,
       earnings: calculatedEarnings,
       deductions: calculatedDeductions,
-      warnings: [],
+      warnings,
     };
   }
 }
