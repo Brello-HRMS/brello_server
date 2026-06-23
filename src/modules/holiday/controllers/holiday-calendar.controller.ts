@@ -21,12 +21,16 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('holidays/calendars')
 @UseGuards(JwtAuthGuard, AccessGuard)
 export class HolidayCalendarController {
   constructor(private readonly calendarService: HolidayCalendarService) {}
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.CREATE, 'holiday_calendar')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('LEAVE_HOLIDAYS', 'create')
@@ -57,6 +61,7 @@ export class HolidayCalendarController {
     return this.calendarService.findOne(user, id);
   }
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.UPDATE, 'holiday_calendar')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('LEAVE_HOLIDAYS', 'update')
@@ -68,6 +73,7 @@ export class HolidayCalendarController {
     return this.calendarService.update(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.ACTIVATE, 'holiday_calendar')
   @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('LEAVE_HOLIDAYS', 'activate')
@@ -78,6 +84,7 @@ export class HolidayCalendarController {
     return this.calendarService.activate(user, id);
   }
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.DEACTIVATE, 'holiday_calendar')
   @Post(':id/deactivate')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('LEAVE_HOLIDAYS', 'activate')
@@ -88,6 +95,7 @@ export class HolidayCalendarController {
     return this.calendarService.deactivate(user, id);
   }
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.CREATE, 'holiday_calendar')
   @Post(':id/clone')
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('LEAVE_HOLIDAYS', 'clone')
@@ -99,6 +107,7 @@ export class HolidayCalendarController {
     return this.calendarService.clone(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.DELETE, 'holiday_calendar')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission('LEAVE_HOLIDAYS', 'delete')

@@ -11,12 +11,16 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 import { SubscriptionBillingService } from '../services/subscription-billing.service';
 import { ChangePlanDto } from '../dto/change-plan.dto';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('billing/subscriptions')
 @UseGuards(JwtAuthGuard)
 export class SubscriptionController {
   constructor(private readonly subService: SubscriptionBillingService) {}
 
+  @AuditLog(AuditLogModule.SUBSCRIPTION, AuditAction.UPDATE, 'subscription')
   @Post('change-plan')
   @HttpCode(HttpStatus.OK)
   changePlan(
@@ -31,12 +35,14 @@ export class SubscriptionController {
     });
   }
 
+  @AuditLog(AuditLogModule.SUBSCRIPTION, AuditAction.CANCEL, 'subscription')
   @Post('cancel-pending-change')
   @HttpCode(HttpStatus.OK)
   cancelPending(@LoggedInUser() user: LoggedInUserInterface) {
     return this.subService.cancelPendingChange(user.organizationId);
   }
 
+  @AuditLog(AuditLogModule.SUBSCRIPTION, AuditAction.CANCEL, 'subscription')
   @Post('cancel')
   @HttpCode(HttpStatus.OK)
   cancel(@LoggedInUser() user: LoggedInUserInterface) {

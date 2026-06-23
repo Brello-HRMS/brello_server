@@ -32,6 +32,9 @@ import { RejectRequestDto } from '../dto/reject-request.dto';
 import { CancelRequestDto } from '../dto/cancel-request.dto';
 import { AdminCancelRequestDto } from '../dto/admin-cancel-request.dto';
 import { ListLeaveRequestQueryDto } from '../dto/list-leave-request-query.dto';
+import { AuditContextService } from '../../audit/services/audit-context.service';
+import { Holiday } from '../../holiday/entities/holiday.entity';
+import { AttendanceMaterializationService } from '../../attendance/services/attendance-materialization.service';
 
 const LWP_CODE = 'LWP';
 
@@ -57,6 +60,7 @@ export class LeaveRequestService {
   private readonly logger = new Logger(LeaveRequestService.name);
 
   constructor(
+    private readonly auditContext: AuditContextService,
     private readonly dataSource: DataSource,
     private readonly requestRepo: LeaveRequestRepository,
     private readonly historyRepo: LeaveRequestHistoryRepository,
@@ -69,6 +73,9 @@ export class LeaveRequestService {
     private readonly leaveRulesRepo: Repository<LeaveRules>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Holiday)
+    private readonly holidayRepo: Repository<Holiday>,
+    private readonly materialization: AttendanceMaterializationService,
   ) {}
 
   // ─── Public: Create / Submit / Update / Cancel / Delete ────────────────
@@ -238,6 +245,7 @@ export class LeaveRequestService {
     dto: UpdateLeaveRequestDto,
   ): Promise<{ id: string; status: LeaveRequestStatus }> {
     const request = await this.requireOwn(user, id);
+    this.auditContext.setPreValue(request as unknown as Record<string, unknown>);
 
     if (
       request.request_status === LeaveRequestStatus.APPROVED ||
@@ -405,6 +413,7 @@ export class LeaveRequestService {
         `INVALID_STATE: only DRAFT can be deleted (current: ${request.request_status})`,
       );
     }
+    this.auditContext.setPreValue(request as unknown as Record<string, unknown>);
     await this.requestRepo.hardDelete(id);
   }
 
@@ -595,7 +604,7 @@ export class LeaveRequestService {
     approved_by: string;
     balance_after: { leave_type_id: string; available_days: number | null };
   }> {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const request = await this.requestRepo.lockById(id, manager);
       if (!request || request.organization_id !== user.organizationId) {
         throw new NotFoundException(`REQUEST_NOT_FOUND: ${id}`);
@@ -712,6 +721,17 @@ export class LeaveRequestService {
         },
       };
     });
+
+    // Reflect approved leave onto attendance (ON_LEAVE). Best-effort, post-commit.
+    await this.materialization
+      .syncLeaveToAttendance(id)
+      .catch((err) =>
+        this.logger.error(
+          `Leave→attendance sync failed for ${id}: ${(err as Error).message}`,
+        ),
+      );
+
+    return result;
   }
 
   async reject(
@@ -827,7 +847,10 @@ export class LeaveRequestService {
       );
     }
 
-    return this.dataSource.transaction(async (manager) => {
+    const wasApproved =
+      request.request_status === LeaveRequestStatus.APPROVED;
+
+    const result = await this.dataSource.transaction(async (manager) => {
       const locked = await this.requestRepo.lockById(request.id, manager);
       if (!locked)
         throw new NotFoundException(`REQUEST_NOT_FOUND: ${request.id}`);
@@ -883,6 +906,21 @@ export class LeaveRequestService {
         released_days: releasedDays,
       };
     });
+
+    // Revert ON_LEAVE attendance back to natural status. Best-effort, post-commit.
+    if (wasApproved) {
+      await this.materialization
+        .reverseLeaveSync(request.id)
+        .catch((err) =>
+          this.logger.error(
+            `Leave→attendance reverse failed for ${request.id}: ${
+              (err as Error).message
+            }`,
+          ),
+        );
+    }
+
+    return result;
   }
 
   private async holdBalance(
@@ -1022,15 +1060,39 @@ export class LeaveRequestService {
       );
     }
 
+    const holidayDates = await this.getHolidayDates(
+      user.organizationId,
+      leaveYear,
+    );
+
     const breakdown = this.computeBreakdown(
       fromDate,
       toDate,
       isHalfDay ?? false,
       rules,
+      holidayDates,
     );
     const totalDays = breakdown.billable_days;
 
     return { leaveType, rules, config, breakdown, totalDays, leaveYear };
+  }
+
+  /** Active-calendar public-holiday dates (YYYY-MM-DD) for an org's leave year. */
+  private async getHolidayDates(
+    organizationId: string,
+    year: number,
+  ): Promise<Set<string>> {
+    const rows = await this.holidayRepo
+      .createQueryBuilder('h')
+      .innerJoin('h.calendar', 'c')
+      .where('c.organization_id = :organizationId', { organizationId })
+      .andWhere('c.year = :year', { year })
+      .andWhere('c.status = :active', { active: Status.ACTIVE })
+      .andWhere('c.is_deleted = false')
+      .andWhere('h.is_deleted = false')
+      .select('h.date', 'date')
+      .getRawMany<{ date: string | Date }>();
+    return new Set(rows.map((r) => String(r.date).slice(0, 10)));
   }
 
   private validateBasicShape(
@@ -1161,43 +1223,54 @@ export class LeaveRequestService {
     };
   }
 
-  // ─── Date math (v1: weekend = Sat/Sun; holidays not yet integrated) ────
+  // ─── Date math (weekend = Sat/Sun; public holidays excluded from billable) ──
 
   private computeBreakdown(
     fromDate: string,
     toDate: string,
     isHalfDay: boolean,
     rules: LeaveRules | null,
+    holidayDates: Set<string> = new Set(),
   ): DaysBreakdown {
     if (isHalfDay) {
+      // A half-day on a public holiday is not billable.
+      const onHoliday = holidayDates.has(fromDate.slice(0, 10));
       return {
         calendar_days: 1,
         weekends: 0,
-        holidays: 0,
+        holidays: onHoliday ? 1 : 0,
         sandwich_days_added: 0,
-        billable_days: 0.5,
+        billable_days: onHoliday ? 0 : 0.5,
       };
     }
 
-    const start = new Date(fromDate);
-    const end = new Date(toDate);
+    const start = new Date(`${fromDate.slice(0, 10)}T00:00:00Z`);
+    const end = new Date(`${toDate.slice(0, 10)}T00:00:00Z`);
     let calendar = 0;
     let weekends = 0;
+    let holidaysOnWorkingDays = 0;
     const cursor = new Date(start);
     while (cursor <= end) {
       calendar += 1;
       const dow = cursor.getUTCDay();
-      if (dow === 0 || dow === 6) weekends += 1;
+      const isWeekend = dow === 0 || dow === 6;
+      if (isWeekend) weekends += 1;
+      const dateStr = cursor.toISOString().slice(0, 10);
+      // Holidays falling on weekends are already non-billable; don't double-count.
+      if (holidayDates.has(dateStr) && !isWeekend) holidaysOnWorkingDays += 1;
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     const sandwichOn = !!rules?.sandwich_rule;
-    const billable = sandwichOn ? calendar : calendar - weekends;
+    // Public holidays are never billable, even under the sandwich rule.
+    const billable = sandwichOn
+      ? calendar - holidaysOnWorkingDays
+      : calendar - weekends - holidaysOnWorkingDays;
 
     return {
       calendar_days: calendar,
       weekends,
-      holidays: 0,
+      holidays: holidaysOnWorkingDays,
       sandwich_days_added: sandwichOn ? weekends : 0,
       billable_days: Math.max(0, Math.round(billable * 100) / 100),
     };

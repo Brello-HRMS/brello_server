@@ -163,6 +163,12 @@ export class OrganizationProfileService {
       phone: updateDto.phone,
       domain: updateDto.domain,
       registration_no: updateDto.registration_no,
+      gst_no: updateDto.gst_no,
+      address: updateDto.address,
+      city: updateDto.city,
+      state: updateDto.state,
+      zip_code: updateDto.zip_code,
+      country: updateDto.country,
     };
 
     if (updateDto.organization_id)

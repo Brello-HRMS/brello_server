@@ -16,6 +16,9 @@ import { UpdateReimbursementDto } from '../dto/update-reimbursement.dto';
 import { EmployeeReimbursementQueryDto } from '../dto/employee-query.dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 interface AuthPayload {
   userId: string;
@@ -28,6 +31,7 @@ interface AuthPayload {
 export class ReimbursementController {
   constructor(private readonly reimbursementService: ReimbursementService) {}
 
+  @AuditLog(AuditLogModule.REIMBURSEMENT, AuditAction.CREATE, 'reimbursement')
   @Post()
   async create(
     @CurrentUser() user: AuthPayload,
@@ -54,6 +58,7 @@ export class ReimbursementController {
     );
   }
 
+  @AuditLog(AuditLogModule.REIMBURSEMENT, AuditAction.UPDATE, 'reimbursement')
   @Put(':id')
   async update(
     @CurrentUser() user: AuthPayload,
@@ -63,6 +68,7 @@ export class ReimbursementController {
     return this.reimbursementService.update(user.userId, id, dto);
   }
 
+  @AuditLog(AuditLogModule.REIMBURSEMENT, AuditAction.DELETE, 'reimbursement')
   @Delete(':id')
   @HttpCode(200)
   async remove(@CurrentUser() user: AuthPayload, @Param('id') id: string) {

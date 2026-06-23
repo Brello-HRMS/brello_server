@@ -13,6 +13,8 @@ import { Holiday } from '../entities/holiday.entity';
 import { Status } from '../../../common/enums';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
+import { AttendanceMaterializationService } from '../../attendance/services/attendance-materialization.service';
 
 @Injectable()
 export class HolidayService {
@@ -22,6 +24,8 @@ export class HolidayService {
     private readonly holidayRepo: HolidayRepository,
     private readonly calendarRepo: HolidayCalendarRepository,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly auditContext: AuditContextService,
+    private readonly materialization: AttendanceMaterializationService,
   ) {}
 
   async create(user: LoggedInUser, calendarId: string, dto: CreateHolidayDto): Promise<Holiday> {
@@ -38,6 +42,16 @@ export class HolidayService {
       modified_by: user.userId,
     });
     this.searchIndexingService.indexHoliday(holiday, user.enterpriseId, user.organizationId);
+
+    // Stamp HOLIDAY attendance for the org on this date (best-effort).
+    void this.materialization
+      .syncHolidayToAttendance(holiday.id)
+      .catch((err) =>
+        this.logger.error(
+          `Holiday→attendance sync failed for ${holiday.id}: ${(err as Error).message}`,
+        ),
+      );
+
     return holiday;
   }
 
@@ -65,13 +79,24 @@ export class HolidayService {
       throw new BadRequestException('Cannot change holiday date in an active calendar');
     }
 
+    this.auditContext.setPreValue(holiday as unknown as Record<string, unknown>);
     const updated = (await this.holidayRepo.update(id, { ...dto, modified_by: user.userId }))!;
     this.searchIndexingService.indexHoliday(updated, user.enterpriseId, user.organizationId);
     return updated;
   }
 
   async remove(user: LoggedInUser, id: string): Promise<void> {
+    const holiday = await this.findOne(user, id);
+    this.auditContext.setPreValue(holiday as unknown as Record<string, unknown>);
     await this.findOne(user, id);
+    // Revert AUTO HOLIDAY attendance before the row is gone (best-effort).
+    await this.materialization
+      .reverseHolidaySync(id)
+      .catch((err) =>
+        this.logger.error(
+          `Holiday→attendance reverse failed for ${id}: ${(err as Error).message}`,
+        ),
+      );
     await this.holidayRepo.softDelete(id, user.userId);
     this.searchIndexingService.removeHoliday(id, user.enterpriseId);
   }

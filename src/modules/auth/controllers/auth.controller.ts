@@ -7,6 +7,7 @@ import {
   HttpStatus,
   UseGuards,
   Res,
+  Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import * as express from 'express';
@@ -44,8 +45,10 @@ export class AuthController {
   async loginWithPassword(
     @Body() loginDto: LoginPasswordDto,
     @Res({ passthrough: true }) res: express.Response,
+    @Req() req: express.Request,
   ) {
-    const result = await this.authService.loginWithPassword(loginDto);
+    const context = { ip: req.ip, userAgent: req.headers['user-agent'] as string };
+    const result = await this.authService.loginWithPassword(loginDto, context);
 
     if (result.refresh_token) {
       this.cookieService.setRefreshTokenCookie(res, result.refresh_token);
@@ -66,8 +69,10 @@ export class AuthController {
   async loginWithOtp(
     @Body() dto: VerifyLoginOtpDto,
     @Res({ passthrough: true }) res: express.Response,
+    @Req() req: express.Request,
   ) {
-    const result = await this.authService.loginWithOtp(dto);
+    const context = { ip: req.ip, userAgent: req.headers['user-agent'] as string };
+    const result = await this.authService.loginWithOtp(dto, context);
 
     if (result.refresh_token) {
       this.cookieService.setRefreshTokenCookie(res, result.refresh_token);
@@ -103,8 +108,10 @@ export class AuthController {
   async logout(
     @CurrentUser() user: JwtPayload,
     @Res({ passthrough: true }) res: express.Response,
+    @Req() req: express.Request,
   ) {
-    await this.authService.logout(user.sessionId);
+    const context = { ip: req.ip, userAgent: req.headers['user-agent'] as string };
+    await this.authService.logout(user.sessionId, user.userId, context, user.enterpriseId, user.organizationId);
     this.cookieService.clearRefreshTokenCookie(res);
   }
 

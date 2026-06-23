@@ -19,12 +19,16 @@ import { ListClientsDto } from '../dto/list-clients.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('clients')
 @UseGuards(JwtAuthGuard)
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}
 
+  @AuditLog(AuditLogModule.CLIENT, AuditAction.CREATE, 'client')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(
@@ -49,6 +53,7 @@ export class ClientController {
     return this.clientService.findOne(id);
   }
 
+  @AuditLog(AuditLogModule.CLIENT, AuditAction.UPDATE, 'client')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   update(
@@ -59,6 +64,7 @@ export class ClientController {
     return this.clientService.update(id, updateClientDto, user);
   }
 
+  @AuditLog(AuditLogModule.CLIENT, AuditAction.DELETE, 'client')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDPipe) id: string) {

@@ -21,12 +21,16 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard, AccessGuard)
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
+  @AuditLog(AuditLogModule.ROLE, AuditAction.CREATE, 'role')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('ACCESS_ROLES', 'create')
@@ -68,6 +72,7 @@ export class RoleController {
     return this.roleService.findOne(id, user);
   }
 
+  @AuditLog(AuditLogModule.ROLE, AuditAction.UPDATE, 'role')
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ACCESS_ROLES', 'edit')
@@ -79,6 +84,7 @@ export class RoleController {
     return this.roleService.update(id, updateRoleDto, user);
   }
 
+  @AuditLog(AuditLogModule.ROLE, AuditAction.DELETE, 'role')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission('ACCESS_ROLES', 'delete')

@@ -18,6 +18,9 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('policy-types')
 @UseGuards(JwtAuthGuard, AccessGuard)
@@ -31,6 +34,7 @@ export class CompanyPolicyTypeController {
         return this.typeService.findAll(user);
     }
 
+    @AuditLog(AuditLogModule.COMPANY_POLICY, AuditAction.CREATE, 'policy_type')
     @Post()
     @RequirePermission('ORG_POLICIES', 'create')
     @HttpCode(HttpStatus.CREATED)
@@ -41,6 +45,7 @@ export class CompanyPolicyTypeController {
         return this.typeService.create(user, dto);
     }
 
+    @AuditLog(AuditLogModule.COMPANY_POLICY, AuditAction.UPDATE, 'policy_type')
     @Patch(':id')
     @RequirePermission('ORG_POLICIES', 'edit')
     @HttpCode(HttpStatus.OK)
@@ -52,6 +57,7 @@ export class CompanyPolicyTypeController {
         return this.typeService.update(user, id, dto);
     }
 
+    @AuditLog(AuditLogModule.COMPANY_POLICY, AuditAction.DELETE, 'policy_type')
     @Delete(':id')
     @RequirePermission('ORG_POLICIES', 'delete')
     @HttpCode(HttpStatus.NO_CONTENT)

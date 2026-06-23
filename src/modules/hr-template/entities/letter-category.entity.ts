@@ -3,12 +3,8 @@ import { BaseEntity } from '../../../common/entities/base.entity';
 
 export const DOCUMENT_TYPES = [
   'hr_letter',
-  'payslip',
   'onboarding',
-  'policy',
   'notice',
-  'certificate',
-  'appraisal',
 ] as const;
 
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];

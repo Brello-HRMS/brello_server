@@ -22,12 +22,16 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('attendance/shifts')
 @UseGuards(JwtAuthGuard, AccessGuard)
 export class ShiftController {
   constructor(private readonly shiftService: ShiftService) {}
 
+  @AuditLog(AuditLogModule.SHIFT, AuditAction.CREATE, 'shift')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('ATTENDANCE', 'create')
@@ -48,6 +52,7 @@ export class ShiftController {
     return this.shiftService.findAll(user, pagination);
   }
 
+  @AuditLog(AuditLogModule.SHIFT, AuditAction.UPDATE, 'shift')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'update')
@@ -59,6 +64,7 @@ export class ShiftController {
     return this.shiftService.update(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.SHIFT, AuditAction.ACTIVATE, 'shift')
   @Patch(':id/status')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'activate')
@@ -69,6 +75,8 @@ export class ShiftController {
   ) {
     return this.shiftService.changeStatus(user, id, dto);
   }
+
+  @AuditLog(AuditLogModule.SHIFT, AuditAction.DELETE, 'shift')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission('ATTENDANCE', 'delete')

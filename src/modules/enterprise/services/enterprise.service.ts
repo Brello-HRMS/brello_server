@@ -16,6 +16,7 @@ import { EnterpriseRepository } from '../repositories/enterprise.repository';
 import { EnterpriseAppRepository } from '../repositories/enterprise-app.repository';
 import { AppRepository } from '../../app/repositories/app.repository';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class EnterpriseService {
@@ -25,6 +26,7 @@ export class EnterpriseService {
     @Inject(forwardRef(() => AppRepository))
     private readonly appRepository: AppRepository,
     private readonly dataSource: DataSource,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(dto: CreateEnterpriseDto, user?: LoggedInUser): Promise<Enterprise> {
@@ -113,6 +115,7 @@ export class EnterpriseService {
 
   async update(id: string, dto: UpdateEnterpriseDto, user?: LoggedInUser): Promise<Enterprise> {
     const enterprise = await this.findOneById(id, user);
+    this.auditContext.setPreValue(enterprise as unknown as Record<string, unknown>);
 
     if (dto.domain && dto.domain !== enterprise.domain) {
       await this.validateDomainExists(dto.domain);
@@ -124,7 +127,8 @@ export class EnterpriseService {
   }
 
   async remove(id: string, user?: LoggedInUser): Promise<void> {
-    await this.findOneById(id, user);
+    const enterprise = await this.findOneById(id, user);
+    this.auditContext.setPreValue(enterprise as unknown as Record<string, unknown>);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

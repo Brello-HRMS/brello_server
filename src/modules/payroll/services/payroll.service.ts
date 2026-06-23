@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { PayrollSetting } from '../entities/payroll-setting.entity';
 import { CreatePayrollSettingDto } from '../dto/payroll-setting.dto';
 import { FinancialMonth } from '../enums/payroll.enum';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 const MONTH_ORDER: FinancialMonth[] = [
   FinancialMonth.JAN,
@@ -25,6 +26,7 @@ export class PayrollService {
   constructor(
     @InjectRepository(PayrollSetting)
     private readonly payrollSettingRepository: Repository<PayrollSetting>,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async createOrUpdateSetting(
@@ -38,6 +40,10 @@ export class PayrollService {
     let setting = await this.payrollSettingRepository.findOne({
       where: { enterprise_id: enterpriseId, organization_id: organizationId },
     });
+
+    if (setting) {
+      this.auditContext.setPreValue(setting as unknown as Record<string, unknown>);
+    }
 
     const payload = {
       ...dto,

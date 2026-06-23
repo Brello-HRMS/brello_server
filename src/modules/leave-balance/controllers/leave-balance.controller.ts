@@ -25,6 +25,9 @@ import { UpdateBalanceDto } from '../dto/update-balance.dto';
 import { LedgerQueryDto } from '../dto/ledger-query.dto';
 
 import { GetMyBalanceQueryDto } from '../dto/get-my-balance-query.dto';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('leave-balances')
 export class LeaveBalanceController {
@@ -56,6 +59,7 @@ export class LeaveBalanceController {
     );
   }
 
+  @AuditLog(AuditLogModule.LEAVE_BALANCE, AuditAction.CREATE, 'leave_balance')
   @Post('initialize')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @RequirePermission('LEAVE_BALANCE', 'create')
@@ -67,6 +71,7 @@ export class LeaveBalanceController {
     return this.service.initializeForEmployee(user, dto);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_BALANCE, AuditAction.CREATE, 'leave_balance')
   @Post('initialize/bulk')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @RequirePermission('LEAVE_BALANCE', 'create')
@@ -122,6 +127,7 @@ export class LeaveBalanceController {
     return this.service.getLedger(user, id, query);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_BALANCE, AuditAction.ADJUST, 'leave_balance')
   @Patch(':id/adjust')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @RequirePermission('LEAVE_BALANCE', 'update')
@@ -134,6 +140,7 @@ export class LeaveBalanceController {
     return this.service.adjustBalance(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_BALANCE, AuditAction.UPDATE, 'leave_balance')
   @Post(':id/recompute')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @RequirePermission('LEAVE_BALANCE', 'update')
@@ -145,6 +152,7 @@ export class LeaveBalanceController {
     return this.service.recompute(user, id);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_BALANCE, AuditAction.UPDATE, 'leave_balance')
   @Patch(':id')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @RequirePermission('LEAVE_BALANCE', 'update')
@@ -157,4 +165,3 @@ export class LeaveBalanceController {
     return this.service.updateBalance(user, id, dto);
   }
 }
-

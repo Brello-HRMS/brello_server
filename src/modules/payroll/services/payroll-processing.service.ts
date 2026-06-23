@@ -14,6 +14,7 @@ import { PayrollCalculationEngine } from './payroll-calculation.service';
 import { PayrollRunService } from './payroll-run.service';
 import { PayrollAuditService } from './payroll-audit.service';
 import { PayslipPdfService } from './payslip-pdf.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 import { PayrollRun } from '../entities/payroll-run.entity';
 import { PayrollRunItem } from '../entities/payroll-run-item.entity';
 import {
@@ -47,6 +48,7 @@ export class PayrollProcessingService {
     private readonly runService: PayrollRunService,
     private readonly audit: PayrollAuditService,
     private readonly payslipPdf: PayslipPdfService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async process(user: LoggedInUser, runId: string) {
@@ -105,6 +107,8 @@ export class PayrollProcessingService {
     if (!item) {
       throw new BadRequestException('Payroll item not found.');
     }
+
+    this.auditContext.setPreValue(item as unknown as Record<string, unknown>);
 
     await this.computeItem(user, run, item);
 
@@ -298,6 +302,13 @@ export class PayrollProcessingService {
 
     const adjustments = await this.adjustmentRepo.sumForUser(run.id, item.user_id);
 
+    // Per-employee statutory override (PF applicability / override base), as of
+    // the pay-period end.
+    const statutoryOverride = await this.salaryRepo.findActiveStatutoryOverride(
+      item.user_id,
+      run.pay_period_to,
+    );
+
     const result = await this.calcEngine.calculate(
       user.enterpriseId,
       user.organizationId,
@@ -307,6 +318,12 @@ export class PayrollProcessingService {
         lwp_days: item.lop_days || undefined,
         total_working_days: item.total_working_days || undefined,
       },
+      statutoryOverride
+        ? {
+            pf_applicable: statutoryOverride.pf_applicable,
+            pf_override_salary: statutoryOverride.pf_override_salary ?? null,
+          }
+        : undefined,
     );
 
     // Manual deduction adjustments (applied after the engine, like dry-run).

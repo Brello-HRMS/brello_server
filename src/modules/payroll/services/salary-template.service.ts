@@ -10,6 +10,7 @@ import { SalaryTemplateComponent } from '../entities/salary-template-component.e
 import { PayrollComponent } from '../entities/payroll-component.entity';
 import { CreateSalaryTemplateDto } from '../dto/salary-template.dto';
 import { ComponentMasterService } from './component-master.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 const DEFAULT_COMPONENT_NAMES = ['CTC', 'Basic Salary', 'Special Allowance'];
 
@@ -23,6 +24,7 @@ export class SalaryTemplateEngine {
     @InjectRepository(PayrollComponent)
     private readonly componentRepository: Repository<PayrollComponent>,
     private readonly componentMasterService: ComponentMasterService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async createTemplate(
@@ -116,6 +118,8 @@ export class SalaryTemplateEngine {
     });
     if (!template) throw new NotFoundException('Salary template not found.');
 
+    this.auditContext.setPreValue(template as unknown as Record<string, unknown>);
+
     const requestedIds = dto.components.map((c) => c.component_id);
 
     const dbComponents = await this.componentRepository.find({
@@ -165,6 +169,7 @@ export class SalaryTemplateEngine {
   async deleteTemplate(id: string): Promise<void> {
     const template = await this.templateRepository.findOne({ where: { id } });
     if (!template) throw new NotFoundException('Salary template not found.');
+    this.auditContext.setPreValue(template as unknown as Record<string, unknown>);
     await this.templateRepository.remove(template);
   }
 

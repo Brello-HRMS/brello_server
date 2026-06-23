@@ -11,12 +11,14 @@ import { UpdateReimbursementDto } from '../dto/update-reimbursement.dto';
 import { EmployeeReimbursementQueryDto } from '../dto/employee-query.dto';
 import { ReimbursementStatus } from '../enums/reimbursement.enum';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class ReimbursementService {
   constructor(
     private readonly reimbursementRepository: ReimbursementRepository,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(
@@ -90,6 +92,7 @@ export class ReimbursementService {
     if (reimbursement.version !== dto.version) {
       throw new ConflictException('Version mismatch. Please refresh and try again.');
     }
+    this.auditContext.setPreValue(reimbursement as unknown as Record<string, unknown>);
 
     const changes: any = {};
     if (dto.title) changes.title = dto.title;
@@ -125,6 +128,7 @@ export class ReimbursementService {
       throw new ConflictException('Only pending reimbursements can be deleted.');
     }
 
+    this.auditContext.setPreValue(reimbursement as unknown as Record<string, unknown>);
     await this.reimbursementRepository.softDelete(reimbursement, userId);
     this.searchIndexingService.removeReimbursement(id, reimbursement.enterprise_id);
     return { success: true };

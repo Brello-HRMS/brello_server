@@ -26,6 +26,9 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @UseGuards(JwtAuthGuard, AccessGuard)
 @Controller('payroll/runs')
@@ -37,6 +40,7 @@ export class PayrollRunController {
     private readonly adjustmentService: PayrollAdjustmentService,
   ) {}
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.CREATE, 'payroll_run')
   @Post()
   @RequirePermission('PAY_PROCESS', 'create')
   create(@CurrentUser() user: LoggedInUser, @Body() dto: CreatePayrollRunDto) {
@@ -61,6 +65,7 @@ export class PayrollRunController {
     return this.payrollRunService.getRun(user, id);
   }
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.DELETE, 'payroll_run')
   @Delete(':id')
   @HttpCode(204)
   @RequirePermission('PAY_PROCESS', 'delete')
@@ -73,6 +78,7 @@ export class PayrollRunController {
 
   // ─── Preparation & validation ────────────────────────────────────────────────
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.UPDATE, 'payroll_run')
   @Post(':id/prepare')
   @HttpCode(200)
   @RequirePermission('PAY_PROCESS', 'update')
@@ -116,6 +122,7 @@ export class PayrollRunController {
 
   // ─── Processing ──────────────────────────────────────────────────────────────
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.PROCESS, 'payroll_run')
   @Post(':id/process')
   @HttpCode(200)
   @RequirePermission('PAY_PROCESS', 'update')
@@ -126,6 +133,7 @@ export class PayrollRunController {
     return this.processingService.process(user, id);
   }
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.UPDATE, 'payroll_run_item')
   @Post(':id/items/:itemId/reprocess')
   @HttpCode(200)
   @RequirePermission('PAY_PROCESS', 'update')
@@ -137,6 +145,7 @@ export class PayrollRunController {
     return this.processingService.reprocessItem(user, id, itemId);
   }
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.LOCK, 'payroll_run')
   @Post(':id/lock')
   @HttpCode(200)
   @RequirePermission('PAY_PROCESS', 'approve')
@@ -147,6 +156,7 @@ export class PayrollRunController {
     return this.processingService.lock(user, id);
   }
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.DISBURSE, 'payroll_run')
   @Post(':id/disburse')
   @HttpCode(200)
   @RequirePermission('PAY_PROCESS', 'approve')
@@ -171,6 +181,7 @@ export class PayrollRunController {
 
   // ─── Adjustments (bonus / deduction) ─────────────────────────────────────────
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.ADJUST, 'payroll_run_item')
   @Post(':id/items/:itemId/adjustments')
   @RequirePermission('PAY_PROCESS', 'update')
   addAdjustment(
@@ -192,6 +203,7 @@ export class PayrollRunController {
     return this.adjustmentService.listAdjustments(user, id, itemId);
   }
 
+  @AuditLog(AuditLogModule.PAYROLL, AuditAction.DELETE, 'payroll_adjustment', { entityIdParam: 'adjId' })
   @Delete(':id/adjustments/:adjId')
   @HttpCode(204)
   @RequirePermission('PAY_PROCESS', 'update')

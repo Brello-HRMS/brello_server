@@ -35,6 +35,8 @@ import { BillingModule } from './modules/billing/billing.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { HrTemplateModule } from './modules/hr-template/hr-template.module';
 import { TimesheetModule } from './modules/timesheet/timesheet.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
+import { AuditCoreModule } from './modules/audit/audit.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -88,6 +90,8 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     PlatformModule,
     HrTemplateModule,
     TimesheetModule,
+    FeedbackModule,
+    AuditCoreModule,
   ],
   providers: [
     {

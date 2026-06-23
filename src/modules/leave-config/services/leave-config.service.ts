@@ -10,12 +10,16 @@ import { UpdateLeaveConfigDto } from '../dto/update-leave-config.dto';
 import { LeaveConfig } from '../entities/leave-config.entity';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { Status } from '../../../common/enums';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class LeaveConfigService {
   private readonly logger = new Logger(LeaveConfigService.name);
 
-  constructor(private readonly configRepo: LeaveConfigRepository) {}
+  constructor(
+    private readonly configRepo: LeaveConfigRepository,
+    private readonly auditContext: AuditContextService,
+  ) {}
 
   /**
    * Creates a draft leave configuration.
@@ -48,6 +52,7 @@ export class LeaveConfigService {
     dto: UpdateLeaveConfigDto,
   ): Promise<LeaveConfig> {
     const existingConfig = await this.findOne(user, id);
+    this.auditContext.setPreValue(existingConfig as unknown as Record<string, unknown>);
 
     const configData: Partial<LeaveConfig> = {
       modified_by: user.userId,

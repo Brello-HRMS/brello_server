@@ -62,6 +62,12 @@ import { Document } from '../../document/entities/document.entity';
 import { NotificationService } from '../../notification/services/notification.service';
 import { NotificationType } from '../../../common/enums/notification-type.enum';
 import { ConfigService } from '@nestjs/config';
+import { Inject } from '@nestjs/common';
+import { AUDIT_SERVICE_TOKEN } from '../../audit/interfaces/audit-service.interface';
+import type { IAuditService } from '../../audit/interfaces/audit-service.interface';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class EmployeeService {
@@ -84,6 +90,9 @@ export class EmployeeService {
     private readonly documentService: DocumentService,
     private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
+    @Inject(AUDIT_SERVICE_TOKEN)
+    private readonly auditService: IAuditService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   // Convert blank strings on a unique-constrained payload to null so empty values
@@ -123,6 +132,7 @@ export class EmployeeService {
     dto: CreateEmployeeDto,
     enterpriseId?: string,
     organizationId?: string,
+    actorId?: string,
   ): Promise<any> {
     this.logger.log(`Creating employee aggregate for: ${dto.email}`);
 
@@ -231,6 +241,21 @@ export class EmployeeService {
           resolvedEnterpriseId,
           resolvedOrganizationId,
         );
+      }
+
+      if (actorId && resolvedEnterpriseId) {
+        void this.auditService.log({
+          actor_id: actorId,
+          enterprise_id: resolvedEnterpriseId,
+          organization_id: resolvedOrganizationId,
+          is_platform_admin: false,
+          module: AuditLogModule.EMPLOYEE,
+          action: AuditAction.CREATE,
+          entity_type: 'user',
+          entity_id: savedUser.id,
+          entity_display_name: `${dto.firstName ?? ''} ${dto.lastName ?? ''}`.trim() || dto.email,
+          new_value: { email: dto.email, department_id: dto.departmentId, designation_id: dto.designationId },
+        });
       }
 
       return {
@@ -477,6 +502,7 @@ export class EmployeeService {
 
     const profile = await this.profileRepository.findByUserId(id);
     const oldValue = JSON.parse(JSON.stringify(profile));
+    this.auditContext.setPreValue(profile as unknown as Record<string, unknown>);
 
     const updateData: Partial<UserProfile> = {};
     if (dto.dob) updateData.dob = new Date(dto.dob);
@@ -705,6 +731,10 @@ export class EmployeeService {
     dto: AddEducationDto,
   ): Promise<any> {
     await this.validateProfileAccess(id);
+    const existingEdu = await this.educationRepository.findById(educationId);
+    if (existingEdu) {
+      this.auditContext.setPreValue(existingEdu as unknown as Record<string, unknown>);
+    }
     await this.educationRepository.update(educationId, {
       school_name: dto.schoolName,
       degree: dto.degree,
@@ -717,6 +747,10 @@ export class EmployeeService {
 
   async deleteEducation(id: string, educationId: string): Promise<any> {
     await this.validateProfileAccess(id); // Ensures user exists
+    const education = await this.educationRepository.findById(educationId);
+    if (education) {
+      this.auditContext.setPreValue(education as unknown as Record<string, unknown>);
+    }
     await this.educationRepository.softDelete(educationId);
     return { success: true };
   }
@@ -745,6 +779,10 @@ export class EmployeeService {
     dto: AddExperienceDto,
   ): Promise<any> {
     await this.validateProfileAccess(id);
+    const existingExp = await this.experienceRepository.findById(experienceId);
+    if (existingExp) {
+      this.auditContext.setPreValue(existingExp as unknown as Record<string, unknown>);
+    }
     await this.experienceRepository.update(experienceId, {
       designation: dto.designation,
       company: dto.company,
@@ -758,6 +796,10 @@ export class EmployeeService {
 
   async deleteExperience(id: string, experienceId: string): Promise<any> {
     await this.validateProfileAccess(id);
+    const experience = await this.experienceRepository.findById(experienceId);
+    if (experience) {
+      this.auditContext.setPreValue(experience as unknown as Record<string, unknown>);
+    }
     await this.experienceRepository.softDelete(experienceId);
     return { success: true };
   }

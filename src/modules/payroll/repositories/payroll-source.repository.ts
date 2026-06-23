@@ -6,6 +6,7 @@ import { AttendanceRecord } from '../../attendance/entities/attendance-record.en
 import { AttendanceStatus } from '../../attendance/enums/attendance-status.enum';
 import { LeaveRequest } from '../../leave-request/entities/leave-request.entity';
 import { LeaveRequestStatus } from '../../leave-request/enums';
+import { CorrectionStatus } from '../../attendance/enums/correction-status.enum';
 
 export interface EligibleEmployee {
   user_id: string;
@@ -97,6 +98,28 @@ export class PayrollSourceRepository {
       .andWhere('r.is_deleted = false')
       .andWhere('r.attendance_status = :status', {
         status: AttendanceStatus.PENDING_APPROVAL,
+      })
+      .andWhere('r.date BETWEEN :fromDate AND :toDate', { fromDate, toDate })
+      .getRawMany<{ employee_id: string }>();
+    return rows.map((r) => r.employee_id);
+  }
+
+  /**
+   * Distinct employees with a PENDING auto-checkout correction in the period.
+   * Payroll blocks on these so HR resolves them before the run is processed.
+   */
+  async findEmployeesWithPendingCorrections(
+    organizationId: string,
+    fromDate: string,
+    toDate: string,
+  ): Promise<string[]> {
+    const rows = await this.attendanceRepo
+      .createQueryBuilder('r')
+      .select('DISTINCT r.employee_id', 'employee_id')
+      .where('r.organization_id = :organizationId', { organizationId })
+      .andWhere('r.is_deleted = false')
+      .andWhere('r.correction_status = :status', {
+        status: CorrectionStatus.PENDING,
       })
       .andWhere('r.date BETWEEN :fromDate AND :toDate', { fromDate, toDate })
       .getRawMany<{ employee_id: string }>();

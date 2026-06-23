@@ -16,6 +16,7 @@ import {
 } from '../enums/announcement.enum';
 import { User } from '../../user/entities/user.entity';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 const EDITABLE_STATUSES: AnnouncementStatus[] = [
   AnnouncementStatus.DRAFT,
@@ -29,6 +30,7 @@ export class AnnouncementService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(
@@ -156,6 +158,8 @@ export class AnnouncementService {
     const a = await this.announcementRepository.findById(id);
     if (!a) throw new NotFoundException('Announcement not found');
 
+    this.auditContext.setPreValue(a as unknown as Record<string, unknown>);
+
     if (!EDITABLE_STATUSES.includes(a.ann_status)) {
       throw new ForbiddenException(
         `Announcement in status "${a.ann_status}" cannot be edited`,
@@ -235,6 +239,7 @@ export class AnnouncementService {
       throw new ForbiddenException('Only draft announcements can be deleted');
     }
 
+    this.auditContext.setPreValue(a as unknown as Record<string, unknown>);
     await this.announcementRepository.softDelete(a, userId);
     return { success: true };
   }

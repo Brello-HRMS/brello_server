@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EmployeeSalary } from '../entities/employee-salary.entity';
 import { EmployeeSalaryComponent } from '../entities/employee-salary-component.entity';
+import { EmployeeStatutoryOverride } from '../entities/employee-statutory-override.entity';
 import { User } from '../../user/entities/user.entity';
 import { EmployeeQueryDto } from '../dto/employee-listing.dto';
 import { ComponentType, CalculationType } from '../enums/payroll.enum';
@@ -35,12 +36,30 @@ export class EmployeeSalaryRepository {
     private readonly componentRepo: Repository<EmployeeSalaryComponent>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(EmployeeStatutoryOverride)
+    private readonly statutoryOverrideRepo: Repository<EmployeeStatutoryOverride>,
   ) {}
 
   async findActiveSalary(userId: string): Promise<EmployeeSalary | null> {
     return this.salaryRepo.findOne({
       where: { user_id: userId, is_active: true },
     });
+  }
+
+  /**
+   * Most recent statutory override effective on or before `asOf`, if any.
+   * Drives per-employee PF applicability / override base in the calc engine.
+   */
+  async findActiveStatutoryOverride(
+    userId: string,
+    asOf: Date | string,
+  ): Promise<EmployeeStatutoryOverride | null> {
+    return this.statutoryOverrideRepo
+      .createQueryBuilder('o')
+      .where('o.employee_id = :userId', { userId })
+      .andWhere('o.effective_from <= :asOf', { asOf })
+      .orderBy('o.effective_from', 'DESC')
+      .getOne();
   }
 
   async findSalaryHistory(userId: string): Promise<EmployeeSalary[]> {

@@ -21,12 +21,16 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('holidays')
 @UseGuards(JwtAuthGuard, AccessGuard)
 export class HolidayController {
   constructor(private readonly holidayService: HolidayService) {}
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.CREATE, 'holiday', { entityIdParam: 'calendarId' })
   @Post('calendars/:calendarId/holidays')
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('LEAVE_HOLIDAYS', 'create')
@@ -59,6 +63,7 @@ export class HolidayController {
     return this.holidayService.findOne(user, id);
   }
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.UPDATE, 'holiday')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('LEAVE_HOLIDAYS', 'update')
@@ -70,6 +75,7 @@ export class HolidayController {
     return this.holidayService.update(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.HOLIDAY, AuditAction.DELETE, 'holiday')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission('LEAVE_HOLIDAYS', 'delete')

@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { PfConfig } from '../entities/pf-config.entity';
 import { UpsertPfConfigDto } from '../dto/pf-config.dto';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class PfConfigService {
   constructor(
     @InjectRepository(PfConfig)
     private readonly pfConfigRepository: Repository<PfConfig>,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async upsertConfig(
@@ -27,6 +29,7 @@ export class PfConfigService {
     });
 
     if (current) {
+      this.auditContext.setPreValue(current as unknown as Record<string, unknown>);
       const currentFrom = new Date(current.effective_from);
       if (newEffectiveFrom <= currentFrom) {
         throw new BadRequestException(
@@ -43,6 +46,7 @@ export class PfConfigService {
       employee_contribution: dto.employee_contribution,
       employer_contribution: dto.employer_contribution,
       minimum_salary_threshold: dto.minimum_salary_threshold,
+      restrict_to_ceiling: dto.restrict_to_ceiling ?? true,
       is_enabled: dto.is_enabled ?? true,
       effective_from: newEffectiveFrom,
       enterprise_id: enterpriseId,

@@ -11,6 +11,7 @@ import { CompanyPolicyType } from '../entities/company-policy-type.entity';
 import { CreateCompanyPolicyTypeDto, UpdateCompanyPolicyTypeDto } from '../dto/policy-type.dto';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { Status } from '../../../common/enums';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class CompanyPolicyTypeService {
@@ -19,6 +20,7 @@ export class CompanyPolicyTypeService {
     constructor(
         private readonly typeRepository: CompanyPolicyTypeRepository,
         private readonly policyRepository: CompanyPolicyRepository,
+        private readonly auditContext: AuditContextService,
     ) { }
 
     async findAll(user: LoggedInUser): Promise<CompanyPolicyType[]> {
@@ -46,6 +48,7 @@ export class CompanyPolicyTypeService {
 
     async update(user: LoggedInUser, id: string, dto: UpdateCompanyPolicyTypeDto): Promise<CompanyPolicyType> {
         const type = await this.findOne(user, id);
+        this.auditContext.setPreValue(type as unknown as Record<string, unknown>);
 
         if (type.is_system) {
             throw new BadRequestException('System policy types cannot be modified');
@@ -73,6 +76,7 @@ export class CompanyPolicyTypeService {
 
     async remove(user: LoggedInUser, id: string): Promise<void> {
         const type = await this.findOne(user, id);
+        this.auditContext.setPreValue(type as unknown as Record<string, unknown>);
 
         if (type.is_system) {
             throw new BadRequestException('System policy types cannot be deleted');

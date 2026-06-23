@@ -18,12 +18,16 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('leave-configs')
 @UseGuards(JwtAuthGuard, AccessGuard)
 export class LeaveConfigController {
   constructor(private readonly leaveConfigService: LeaveConfigService) {}
 
+  @AuditLog(AuditLogModule.LEAVE_CONFIG, AuditAction.CREATE, 'leave_config')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('LEAVE_SETUP', 'create')
@@ -51,6 +55,7 @@ export class LeaveConfigController {
     return this.leaveConfigService.findOne(user, id);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_CONFIG, AuditAction.UPDATE, 'leave_config')
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('LEAVE_SETUP', 'update')
@@ -62,6 +67,7 @@ export class LeaveConfigController {
     return this.leaveConfigService.updateConfig(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_CONFIG, AuditAction.ACTIVATE, 'leave_config')
   @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('LEAVE_SETUP', 'activate')

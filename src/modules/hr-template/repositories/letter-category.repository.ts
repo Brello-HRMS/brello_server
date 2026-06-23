@@ -11,18 +11,36 @@ export class LetterCategoryRepository {
     private readonly repo: Repository<LetterCategory>,
   ) {}
 
-  async findAll(documentType?: DocumentType): Promise<LetterCategory[]> {
-    return this.repo.find({
-      where: {
-        is_deleted: false,
-        ...(documentType ? { document_type: documentType } : {}),
-      },
-      order: { name: 'ASC' },
-    });
+  async findAll(orgId: string, documentType?: DocumentType): Promise<LetterCategory[]> {
+    const qb = this.repo
+      .createQueryBuilder('cat')
+      .where('cat.is_deleted = :del', { del: false })
+      .andWhere('(cat.organization_id = :orgId OR cat.is_system = true)', { orgId });
+
+    if (documentType) {
+      qb.andWhere('cat.document_type = :documentType', { documentType });
+    }
+
+    return qb.orderBy('cat.is_system', 'DESC').addOrderBy('cat.name', 'ASC').getMany();
   }
 
   async findById(id: string): Promise<LetterCategory | null> {
     return this.repo.findOne({ where: { id, is_deleted: false } });
+  }
+
+  /** Find a category visible to the org (own OR system). */
+  async findOrgAccessible(id: string, orgId: string): Promise<LetterCategory | null> {
+    return this.repo
+      .createQueryBuilder('cat')
+      .where('cat.id = :id AND cat.is_deleted = false', { id })
+      .andWhere('(cat.organization_id = :orgId OR cat.is_system = true)', { orgId })
+      .getOne();
+  }
+
+  async findOneByOrg(id: string, orgId: string): Promise<LetterCategory | null> {
+    return this.repo.findOne({
+      where: { id, organization_id: orgId, is_deleted: false },
+    });
   }
 
   async create(data: Partial<LetterCategory>): Promise<LetterCategory> {

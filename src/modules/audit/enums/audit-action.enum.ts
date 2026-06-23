@@ -1,0 +1,42 @@
+export enum AuditAction {
+  // CRUD
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+  RESTORE = 'RESTORE',
+
+  // State transitions
+  ACTIVATE = 'ACTIVATE',
+  DEACTIVATE = 'DEACTIVATE',
+  PUBLISH = 'PUBLISH',
+  ARCHIVE = 'ARCHIVE',
+
+  // Workflow
+  SUBMIT = 'SUBMIT',
+  APPROVE = 'APPROVE',
+  REJECT = 'REJECT',
+  CANCEL = 'CANCEL',
+  WITHDRAW = 'WITHDRAW',
+
+  // Payroll lifecycle
+  PROCESS = 'PROCESS',
+  LOCK = 'LOCK',
+  DISBURSE = 'DISBURSE',
+  REGENERATE = 'REGENERATE',
+
+  // Auth & access
+  LOGIN = 'LOGIN',
+  LOGOUT = 'LOGOUT',
+  LOGIN_FAILED = 'LOGIN_FAILED',
+  GRANT = 'GRANT',
+  REVOKE = 'REVOKE',
+  ASSIGN = 'ASSIGN',
+  UNASSIGN = 'UNASSIGN',
+
+  // Data ops
+  EXPORT = 'EXPORT',
+  IMPORT = 'IMPORT',
+  ADJUST = 'ADJUST',
+  ACCRUE = 'ACCRUE',
+  PAY = 'PAY',
+}
