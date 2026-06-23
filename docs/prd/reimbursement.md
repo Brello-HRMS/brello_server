@@ -1,4 +1,4 @@
-# Tech PRD — Reimbursement Management System (Server)
+# Tech PRD — Reimbursement Management System (Webapp)
 
 ## Module: Payroll → Reimbursements
 
@@ -6,127 +6,100 @@
 
 ## Overview
 
-Server-side implementation for the reimbursement management system. Enables employees to submit expense requests and admins to approve, reject, and mark reimbursements as paid.
+Frontend implementation for reimbursement management. Two views:
+- **Admin View**: All company reimbursements, approve/reject/mark-paid via right drawer
+- **Employee View**: Own reimbursements, add/edit/delete pending requests
 
 ---
 
 ## Tech Stack
 
-- **Framework**: NestJS 11 (TypeORM 0.3, PostgreSQL)
-- **Auth**: JWT via JwtAuthGuard + @CurrentUser() decorator
-- **File Uploads**: Existing Document module (S3 presigned URLs)
-- **Pattern**: Repository → Service → Controller (matches existing payroll module)
+- React 19 + Vite, TanStack React Table, React Query, React Hook Form + Zod
+- Existing: DataTable, Dialog (position=right), Input, Select, DatePicker, Button, PageHeader
+- Styling: SCSS modules using variables from `_variables.scss`
 
 ---
 
-## Database Schema
+## Pages
 
-### reimbursements
+### Admin: /payroll/reimbursements
+- PageHeader: "All Reimbursements" + Export button
+- ListControls with search (employee name/ID) + date range filter
+- DataTable with columns: Employee, Title, Date Range, Deductions, Status, Paid (toggle), Action (edit icon)
+- Clicking edit opens right-side Dialog: "Edit Reimbursement Request"
+  - Shows employee info at top
+  - Title (read-only display), Description (read-only)
+  - Expense Date + Amount
+  - Attachments list (PDF/image preview + download)
+  - Status Management: Request Status dropdown (Approved/Rejected/Pending)
+  - Rejection Reason (textarea, shown only if Rejected)
+  - Mark as Paid toggle
+  - Cancel / Save buttons
 
-| Column                  | Type          | Notes                               |
-|-------------------------|---------------|-------------------------------------|
-| id                      | UUID PK       | Inherited from BaseEntity           |
-| enterprise_id           | UUID          | Multi-tenant (BaseEntity)           |
-| organization_id         | UUID          | Multi-tenant (BaseEntity)           |
-| employee_id             | UUID NOT NULL | FK users.id                         |
-| title                   | VARCHAR(255)  | Required                            |
-| description             | TEXT          | Nullable                            |
-| expense_date            | DATE          | Required, no future dates           |
-| amount                  | DECIMAL(12,2) | Required, > 0                       |
-| currency                | VARCHAR(10)   | DEFAULT 'INR'                       |
-| reimb_status            | ENUM          | Pending/Approved/Rejected           |
-| rejection_reason        | TEXT          | Nullable                            |
-| approved_by             | UUID          | FK users.id, nullable               |
-| approved_at             | TIMESTAMP     | Nullable                            |
-| is_paid                 | BOOLEAN       | DEFAULT false                       |
-| paid_at                 | TIMESTAMP     | Nullable                            |
-| processed_in_payroll_id | UUID          | FK payroll_runs, nullable           |
-| version                 | INTEGER       | DEFAULT 1, optimistic locking       |
-| created_by              | UUID          | Who submitted                       |
-| created_at              | TIMESTAMP     | BaseEntity                          |
-| updated_at              | TIMESTAMP     | BaseEntity                          |
-| deleted_at              | TIMESTAMP     | Soft delete (BaseEntity)            |
-| deleted_by              | UUID          | Soft delete actor (BaseEntity)      |
-
-### reimbursement_attachments
-
-| Column           | Type      | Notes                  |
-|------------------|-----------|------------------------|
-| id               | UUID PK   |                        |
-| reimbursement_id | UUID      | FK reimbursements.id   |
-| document_id      | UUID      | FK documents.id        |
-| created_at       | TIMESTAMP |                        |
-
-### reimbursement_audit_logs
-
-| Column           | Type      | Notes                                          |
-|------------------|-----------|------------------------------------------------|
-| id               | UUID PK   |                                                |
-| reimbursement_id | UUID      | FK reimbursements.id                           |
-| action           | ENUM      | Created/Updated/Approved/Rejected/Paid/Deleted |
-| old_data         | JSONB     | Snapshot before change                         |
-| new_data         | JSONB     | Snapshot after change                          |
-| performed_by     | UUID      | User who performed action                      |
-| created_at       | TIMESTAMP |                                                |
+### Employee: /payroll/reimbursements/me
+- Two states:
+  1. Empty state: illustration + "No Reimbursements Added Yet" + Add button
+  2. List state: DataTable with columns: Title, Amount, Date, Attachments, Status, Action (3-dot menu)
+- Add Reimbursement button (top right)
+- Add/Edit Modal: Title*, Description, Date*, Amount*, Attachments* (upload)
 
 ---
 
-## API Endpoints
-
-### Employee Routes (prefix: /reimbursements)
-
-| Method | Path            | Description                   |
-|--------|-----------------|-------------------------------|
-| POST   | /               | Create reimbursement          |
-| GET    | /me             | Get my reimbursements (paged) |
-| PUT    | /:id            | Edit pending reimbursement    |
-| DELETE | /:id            | Soft delete pending           |
-
-### Admin Routes (prefix: /admin/reimbursements)
-
-| Method | Path            | Description                   |
-|--------|-----------------|-------------------------------|
-| GET    | /               | Get all reimbursements        |
-| PATCH  | /:id/status     | Approve or Reject             |
-| PATCH  | /:id/mark-paid  | Mark as paid                  |
-
----
-
-## Business Rules
-
-- Only `Pending` reimbursements can be edited or deleted by employee
-- Approval/Rejection is irreversible (no status revert)
-- `mark-paid` requires status=Approved
-- Every state change is audit logged
-- Minimum 1 attachment required on create
-- Idempotency via Idempotency-Key header on POST
-- Optimistic locking via `version` column on PUT
-
----
-
-## Module Structure
+## Feature Structure
 
 ```
-src/modules/reimbursement/
-├── controllers/
-│   ├── reimbursement.controller.ts       # Employee routes
-│   └── admin-reimbursement.controller.ts # Admin routes
-├── services/
-│   ├── reimbursement.service.ts          # Employee logic
-│   └── admin-reimbursement.service.ts    # Admin logic
-├── repositories/
-│   └── reimbursement.repository.ts
-├── entities/
-│   ├── reimbursement.entity.ts
-│   ├── reimbursement-attachment.entity.ts
-│   └── reimbursement-audit-log.entity.ts
-├── dto/
-│   ├── create-reimbursement.dto.ts
-│   ├── update-reimbursement.dto.ts
-│   ├── employee-query.dto.ts
-│   ├── admin-query.dto.ts
-│   └── update-status.dto.ts
-├── enums/
-│   └── reimbursement.enum.ts
-└── reimbursement.module.ts
+src/features/reimbursement/
+├── api/
+│   └── reimbursementApi.ts
+├── types/
+│   └── reimbursementTypes.ts
+├── hooks/
+│   ├── useReimbursement.ts        # Employee hooks
+│   └── useAdminReimbursement.ts   # Admin hooks
+├── columns/
+│   ├── adminReimbursementColumns.tsx
+│   └── employeeReimbursementColumns.tsx
+├── components/
+│   ├── AddReimbursementModal/
+│   │   ├── AddReimbursementModal.tsx
+│   │   └── AddReimbursementModal.module.scss
+│   └── EditReimbursementDrawer/
+│       ├── EditReimbursementDrawer.tsx
+│       └── EditReimbursementDrawer.module.scss
+└── validation/
+    └── reimbursementSchema.ts
 ```
+
+---
+
+## Component Patterns
+
+- All API calls use `apiClient` from `lib/axios` (auto-injects Bearer token)
+- Hooks use `useQuery` + `useMutation` from `@tanstack/react-query`
+- Forms use `react-hook-form` + `zodResolver`
+- Toast notifications via `react-toastify`
+- Table columns follow `ColumnDef<T>[]` pattern (TanStack Table)
+- Dialog position="right" for drawers (Admin edit panel)
+- Dialog position="center" for modals (Add/Edit reimbursement)
+- Status badges use inline styles with color variables
+- Amount formatted with ₹ prefix using `formatINR` from numberUtils
+- File upload uses existing document upload flow (uploadDocumentUrl → uploadDocumentData)
+
+---
+
+## Status Display
+
+| Status   | Style                        |
+|----------|------------------------------|
+| Approved | green text + green bg badge  |
+| Pending  | orange text + orange bg      |
+| Rejected | red text + red bg            |
+
+---
+
+## Routes
+
+| Path                            | Component                    | Role     |
+|---------------------------------|------------------------------|----------|
+| /payroll/reimbursements         | ReimbursementPage            | Admin    |
+| /payroll/reimbursements/me      | EmployeeReimbursementPage    | Employee |

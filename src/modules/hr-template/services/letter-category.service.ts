@@ -10,7 +10,6 @@ import { LetterTemplateRepository } from '../repositories/letter-template.reposi
 import { CreateLetterCategoryDto, UpdateLetterCategoryDto } from '../dto/letter-category.dto';
 import { LetterCategory } from '../entities/letter-category.entity';
 import type { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
-import type { DocumentType } from '../entities/letter-category.entity';
 import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
@@ -29,9 +28,9 @@ export class LetterCategoryService {
     }
   }
 
-  async findAll(user: LoggedInUser, documentType?: DocumentType): Promise<LetterCategory[]> {
+  async findAll(user: LoggedInUser): Promise<LetterCategory[]> {
     this.assertOrgContext(user);
-    return this.repository.findAll(user.organizationId, documentType);
+    return this.repository.findAll(user.organizationId);
   }
 
   /** GET /:id — returns the category only if visible to the caller's org. */
@@ -50,7 +49,6 @@ export class LetterCategoryService {
     return this.repository.create({
       name: dto.name,
       description: dto.description,
-      document_type: dto.document_type,
       organization_id: user.organizationId,
       enterprise_id: user.enterpriseId,
       is_system: false,

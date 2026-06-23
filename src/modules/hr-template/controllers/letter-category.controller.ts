@@ -17,7 +17,6 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 import { LetterCategoryService } from '../services/letter-category.service';
 import { CreateLetterCategoryDto, UpdateLetterCategoryDto } from '../dto/letter-category.dto';
-import type { DocumentType } from '../entities/letter-category.entity';
 import { AuditLog } from '../../audit/decorators/audit-log.decorator';
 import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
@@ -31,9 +30,8 @@ export class LetterCategoryController {
   @HttpCode(HttpStatus.OK)
   findAll(
     @LoggedInUser() user: LoggedInUserInterface,
-    @Query('document_type') documentType?: DocumentType,
   ) {
-    return this.service.findAll(user, documentType);
+    return this.service.findAll(user);
   }
 
   @Get(':id')

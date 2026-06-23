@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LetterCategory } from '../entities/letter-category.entity';
-import type { DocumentType } from '../entities/letter-category.entity';
 
 @Injectable()
 export class LetterCategoryRepository {
@@ -11,15 +10,11 @@ export class LetterCategoryRepository {
     private readonly repo: Repository<LetterCategory>,
   ) {}
 
-  async findAll(orgId: string, documentType?: DocumentType): Promise<LetterCategory[]> {
+  async findAll(orgId: string): Promise<LetterCategory[]> {
     const qb = this.repo
       .createQueryBuilder('cat')
       .where('cat.is_deleted = :del', { del: false })
       .andWhere('(cat.organization_id = :orgId OR cat.is_system = true)', { orgId });
-
-    if (documentType) {
-      qb.andWhere('cat.document_type = :documentType', { documentType });
-    }
 
     return qb.orderBy('cat.is_system', 'DESC').addOrderBy('cat.name', 'ASC').getMany();
   }
