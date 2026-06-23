@@ -131,6 +131,13 @@ export class DocumentService {
           );
         return `${enterprise}/${organization}/reimbursements/${params.fileName}`;
 
+      case FolderType.FEEDBACK_ATTACHMENT:
+        if (!organization)
+          throw new BadRequestException(
+            'Organization context required for FEEDBACK_ATTACHMENT',
+          );
+        return `${enterprise}/${organization}/feedback/${params.fileName}`;
+
       default:
         throw new BadRequestException('Invalid folder type');
     }

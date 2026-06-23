@@ -13,6 +13,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 import { LetterCategoryService } from '../services/letter-category.service';
 import { CreateLetterCategoryDto, UpdateLetterCategoryDto } from '../dto/letter-category.dto';
 import type { DocumentType } from '../entities/letter-category.entity';
@@ -24,34 +26,47 @@ export class LetterCategoryController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  findAll(@Query('document_type') documentType?: DocumentType) {
-    return this.service.findAll(documentType);
+  findAll(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Query('document_type') documentType?: DocumentType,
+  ) {
+    return this.service.findAll(user, documentType);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.findOne(id);
+  findOne(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.service.findOne(user, id);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateLetterCategoryDto) {
-    return this.service.create(dto);
+  create(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Body() dto: CreateLetterCategoryDto,
+  ) {
+    return this.service.create(user, dto);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   update(
+    @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateLetterCategoryDto,
   ) {
-    return this.service.update(id, dto);
+    return this.service.update(user, id, dto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.remove(id);
+  remove(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.service.remove(user, id);
   }
 }
