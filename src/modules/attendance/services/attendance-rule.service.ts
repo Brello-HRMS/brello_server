@@ -17,6 +17,7 @@ import { Shift } from '../entities/shift.entity';
 import { GeoFence } from '../entities/geo-fence.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class AttendanceRuleService {
@@ -28,6 +29,7 @@ export class AttendanceRuleService {
     private readonly weeklyOffRepo: WeeklyOffRepository,
     @InjectRepository(GeoFence)
     private readonly geoFenceRepository: Repository<GeoFence>,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(
@@ -117,6 +119,7 @@ export class AttendanceRuleService {
     dto: UpdateAttendanceRuleDto,
   ): Promise<AttendanceRule> {
     const existingRule = await this.findOne(user, id);
+    this.auditContext.setPreValue(existingRule as unknown as Record<string, unknown>);
 
     if (dto.shift_id || dto.weekly_off_id) {
       await this.validateReferences(user, {
@@ -191,6 +194,7 @@ export class AttendanceRuleService {
 
   async delete(user: LoggedInUser, id: string): Promise<void> {
     const rule = await this.findOne(user, id);
+    this.auditContext.setPreValue(rule as unknown as Record<string, unknown>);
 
     const geoFence = await this.geoFenceRepository.findOne({
       where: { rule_id: id, is_deleted: false },

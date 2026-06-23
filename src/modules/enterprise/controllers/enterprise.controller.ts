@@ -18,12 +18,16 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PlatformAdminGuard } from '../../../core/guards/platform-admin.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('enterprises')
 @UseGuards(JwtAuthGuard, PlatformAdminGuard)
 export class EnterpriseController {
   constructor(private readonly enterpriseService: EnterpriseService) {}
 
+  @AuditLog(AuditLogModule.PLATFORM_ENTERPRISE, AuditAction.CREATE, 'enterprise')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(
@@ -48,6 +52,7 @@ export class EnterpriseController {
     return this.enterpriseService.findOneById(id, user);
   }
 
+  @AuditLog(AuditLogModule.PLATFORM_ENTERPRISE, AuditAction.UPDATE, 'enterprise')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   update(
@@ -58,6 +63,7 @@ export class EnterpriseController {
     return this.enterpriseService.update(id, dto, user);
   }
 
+  @AuditLog(AuditLogModule.PLATFORM_ENTERPRISE, AuditAction.DELETE, 'enterprise')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(

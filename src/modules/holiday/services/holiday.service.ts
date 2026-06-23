@@ -13,6 +13,7 @@ import { Holiday } from '../entities/holiday.entity';
 import { Status } from '../../../common/enums';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 import { AttendanceMaterializationService } from '../../attendance/services/attendance-materialization.service';
 
 @Injectable()
@@ -23,6 +24,7 @@ export class HolidayService {
     private readonly holidayRepo: HolidayRepository,
     private readonly calendarRepo: HolidayCalendarRepository,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly auditContext: AuditContextService,
     private readonly materialization: AttendanceMaterializationService,
   ) {}
 
@@ -77,12 +79,15 @@ export class HolidayService {
       throw new BadRequestException('Cannot change holiday date in an active calendar');
     }
 
+    this.auditContext.setPreValue(holiday as unknown as Record<string, unknown>);
     const updated = (await this.holidayRepo.update(id, { ...dto, modified_by: user.userId }))!;
     this.searchIndexingService.indexHoliday(updated, user.enterpriseId, user.organizationId);
     return updated;
   }
 
   async remove(user: LoggedInUser, id: string): Promise<void> {
+    const holiday = await this.findOne(user, id);
+    this.auditContext.setPreValue(holiday as unknown as Record<string, unknown>);
     await this.findOne(user, id);
     // Revert AUTO HOLIDAY attendance before the row is gone (best-effort).
     await this.materialization

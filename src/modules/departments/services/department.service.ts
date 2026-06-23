@@ -17,6 +17,7 @@ import { Department } from '../entities/department.entity';
 import { Status } from '../../../common/enums';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { ListingHelper } from '../../../common/utils/listing.helper';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class DepartmentService {
@@ -28,6 +29,7 @@ export class DepartmentService {
         private readonly userService: UserService,
         private readonly userRepository: UserRepository,
         private readonly searchIndexingService: SearchIndexingService,
+        private readonly auditContext: AuditContextService,
     ) { }
 
     // Simplified: resolveOrgId is no longer needed as organizationId is in LoggedInUser
@@ -126,7 +128,8 @@ export class DepartmentService {
     ): Promise<Department> {
         this.logger.log(`User ${user.userId} is updating department: ${id}`);
 
-        await this.findOne(user, id);
+        const existing = await this.findOne(user, id);
+        this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
         const { ...safeUpdate } = updateDepartmentDto;
 
@@ -152,7 +155,8 @@ export class DepartmentService {
     async remove(user: LoggedInUser, id: string): Promise<void> {
         this.logger.log(`User ${user.userId} is soft-deleting department: ${id}`);
 
-        await this.findOne(user, id);
+        const existing = await this.findOne(user, id);
+        this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
         // TODO (Phase 2): Block deletion if active employees are assigned to this department
         // const activeEmployeeCount = await this.employeeRepository.countByDepartment(id);

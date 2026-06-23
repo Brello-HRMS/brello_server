@@ -19,6 +19,9 @@ import { RequirePermission } from '../../../core/guards/require-permission.decor
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 import { PermissionResolverService } from '../../rbac/services/permission-resolver.service';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('policies')
 @UseGuards(JwtAuthGuard, AccessGuard)
@@ -28,6 +31,7 @@ export class CompanyPolicyController {
         private readonly permissionResolver: PermissionResolverService,
     ) { }
 
+    @AuditLog(AuditLogModule.COMPANY_POLICY, AuditAction.CREATE, 'company_policy')
     @Post()
     @RequirePermission('ORG_POLICIES', 'create')
     @HttpCode(HttpStatus.CREATED)
@@ -57,6 +61,7 @@ export class CompanyPolicyController {
         return this.policyService.findOne(user, id, !canEdit);
     }
 
+    @AuditLog(AuditLogModule.COMPANY_POLICY, AuditAction.UPDATE, 'company_policy')
     @Patch(':id')
     @RequirePermission('ORG_POLICIES', 'edit')
     @HttpCode(HttpStatus.OK)
@@ -68,6 +73,7 @@ export class CompanyPolicyController {
         return this.policyService.update(user, id, dto);
     }
 
+    @AuditLog(AuditLogModule.COMPANY_POLICY, AuditAction.DELETE, 'company_policy')
     @Delete(':id')
     @RequirePermission('ORG_POLICIES', 'delete')
     @HttpCode(HttpStatus.NO_CONTENT)

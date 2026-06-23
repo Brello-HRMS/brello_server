@@ -22,12 +22,16 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('attendance/rules')
 @UseGuards(JwtAuthGuard, AccessGuard)
 export class AttendanceRuleController {
   constructor(private readonly ruleService: AttendanceRuleService) {}
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.CREATE, 'attendance_rule')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('ATTENDANCE', 'create')
@@ -48,6 +52,7 @@ export class AttendanceRuleController {
     return this.ruleService.findAll(user, pagination);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.UPDATE, 'attendance_rule')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'update')
@@ -59,6 +64,7 @@ export class AttendanceRuleController {
     return this.ruleService.update(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.ACTIVATE, 'attendance_rule')
   @Patch(':id/status')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'activate')
@@ -70,6 +76,7 @@ export class AttendanceRuleController {
     return this.ruleService.changeStatus(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.DELETE, 'attendance_rule')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission('ATTENDANCE', 'delete')

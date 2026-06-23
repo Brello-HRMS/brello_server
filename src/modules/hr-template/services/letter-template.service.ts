@@ -13,6 +13,7 @@ import {
 } from '../dto/letter-template.dto';
 import { LetterTemplate } from '../entities/letter-template.entity';
 import type { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class LetterTemplateService {
@@ -21,6 +22,7 @@ export class LetterTemplateService {
   constructor(
     private readonly repository: LetterTemplateRepository,
     private readonly categoryRepository: LetterCategoryRepository,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   private assertOrgContext(user: LoggedInUser): void {
@@ -102,6 +104,8 @@ export class LetterTemplateService {
       throw new ForbiddenException('You do not have permission to update this template');
     }
 
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
+
     // Validate new category belongs to org when provided
     if (dto.category_id) {
       const category = await this.categoryRepository.findOrgAccessible(
@@ -135,6 +139,8 @@ export class LetterTemplateService {
     if (existing.organization_id !== user.organizationId) {
       throw new ForbiddenException('You do not have permission to delete this template');
     }
+
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
     this.logger.log(`Soft-deleting letter template ${id}`);
     await this.repository.softDelete(id);

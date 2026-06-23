@@ -22,6 +22,7 @@ import {
   appendSignatureToPath,
   signDocumentView,
 } from '../utils/document-signature.util';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class DocumentService {
@@ -34,6 +35,7 @@ export class DocumentService {
     private readonly configService: ConfigService,
     @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   private getStorageProvider(): StorageProvider {
@@ -406,6 +408,8 @@ export class DocumentService {
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
     }
+
+    this.auditContext.setPreValue(document as unknown as Record<string, unknown>);
 
     await this.documentRepository.update(id, {
       status: Status.DELETED,

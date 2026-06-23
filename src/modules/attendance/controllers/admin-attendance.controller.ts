@@ -26,6 +26,9 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('attendance/admin')
 @UseGuards(JwtAuthGuard, AccessGuard)
@@ -54,6 +57,7 @@ export class AdminAttendanceController {
     return this.adminService.getEmployeeHistory(user, employeeId, query);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.CREATE, 'attendance')
   @Post('manual-entry')
   @HttpCode(HttpStatus.CREATED)
   @RequirePermission('ATTENDANCE', 'create')
@@ -64,6 +68,7 @@ export class AdminAttendanceController {
     return this.adminService.createManual(user, dto);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.UPDATE, 'attendance')
   @Put(':attendanceId')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'update')
@@ -75,6 +80,7 @@ export class AdminAttendanceController {
     return this.adminService.updateRecord(user, attendanceId, dto);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.DELETE, 'attendance', { entityIdParam: 'attendanceId' })
   @Delete(':attendanceId')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'delete')
@@ -96,6 +102,7 @@ export class AdminAttendanceController {
     return this.approvalService.listPending(user, page, limit);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.APPROVE, 'attendance', { entityIdParam: 'attendanceId' })
   @Post('remote-approvals/:attendanceId/approve')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'approve')
@@ -106,6 +113,7 @@ export class AdminAttendanceController {
     return this.approvalService.approve(user, attendanceId);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.REJECT, 'attendance', { entityIdParam: 'attendanceId' })
   @Post('remote-approvals/:attendanceId/reject')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'approve')

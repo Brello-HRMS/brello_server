@@ -14,6 +14,7 @@ import { AttendanceSessionRepository } from '../repositories/attendance-session.
 import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
 import { RemoteApprovalRepository } from '../repositories/remote-approval.repository';
 import { AttendanceRuleResolverService } from './attendance-rule-resolver.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 import { AttendanceRecord } from '../entities/attendance-record.entity';
 import { AttendanceSession } from '../entities/attendance-session.entity';
 import { AttendanceRule } from '../entities/attendance-rule.entity';
@@ -45,6 +46,7 @@ export class AttendanceService {
     private readonly auditRepo: AttendanceAuditLogRepository,
     private readonly approvalRepo: RemoteApprovalRepository,
     private readonly ruleResolver: AttendanceRuleResolverService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async checkIn(user: LoggedInUser, dto: CheckInDto, ipAddress?: string) {
@@ -336,6 +338,7 @@ export class AttendanceService {
     if (!record) {
       throw new NotFoundException('Attendance record not found');
     }
+    this.auditContext.setPreValue(record as unknown as Record<string, unknown>);
 
     const { rule, shift } = await this.ruleResolver.resolveForEmployee(
       user.organizationId,

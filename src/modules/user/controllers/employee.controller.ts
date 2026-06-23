@@ -39,6 +39,9 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('employees')
 @UseGuards(JwtAuthGuard)
@@ -54,6 +57,7 @@ export class EmployeeController {
       dto,
       user.enterpriseId,
       user.organizationId,
+      user.userId,
     );
   }
 
@@ -96,6 +100,7 @@ export class EmployeeController {
     return this.employeeService.getEmployeeAggregate(id);
   }
 
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee')
   @Patch(':id/personal')
   async updatePersonalDetails(
     @Param('id', ParseUUIDPipe) id: string,
@@ -166,6 +171,7 @@ export class EmployeeController {
     return this.employeeService.uploadDocuments(id, dto, actor.userId);
   }
 
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.CREATE, 'employee_education')
   @Post(':id/education')
   async addEducation(
     @Param('id', ParseUUIDPipe) id: string,
@@ -174,6 +180,7 @@ export class EmployeeController {
     return this.employeeService.addEducation(id, dto);
   }
 
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee_education', { entityIdParam: 'eduId' })
   @Patch(':id/education/:eduId')
   async updateEducation(
     @Param('id', ParseUUIDPipe) id: string,
@@ -183,6 +190,7 @@ export class EmployeeController {
     return this.employeeService.updateEducation(id, eduId, dto);
   }
 
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.DELETE, 'employee_education', { entityIdParam: 'eduId' })
   @Delete(':id/education/:eduId')
   async deleteEducation(
     @Param('id', ParseUUIDPipe) id: string,
@@ -191,6 +199,7 @@ export class EmployeeController {
     return this.employeeService.deleteEducation(id, eduId);
   }
 
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.CREATE, 'employee_experience')
   @Post(':id/experience')
   async addExperience(
     @Param('id', ParseUUIDPipe) id: string,
@@ -199,6 +208,7 @@ export class EmployeeController {
     return this.employeeService.addExperience(id, dto);
   }
 
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee_experience', { entityIdParam: 'expId' })
   @Patch(':id/experience/:expId')
   async updateExperience(
     @Param('id', ParseUUIDPipe) id: string,
@@ -208,6 +218,7 @@ export class EmployeeController {
     return this.employeeService.updateExperience(id, expId, dto);
   }
 
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.DELETE, 'employee_experience', { entityIdParam: 'expId' })
   @Delete(':id/experience/:expId')
   async deleteExperience(
     @Param('id', ParseUUIDPipe) id: string,

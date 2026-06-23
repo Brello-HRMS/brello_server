@@ -5,12 +5,14 @@ import { Designation } from '../../designations/entities/designation.entity';
 import { Status } from '../../../common/enums';
 import { CreatePlatformDesignationDto } from '../dto/create-platform-designation.dto';
 import { UpdatePlatformDesignationDto } from '../dto/update-platform-designation.dto';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class PlatformDesignationService {
   constructor(
     @InjectRepository(Designation)
     private readonly designationRepository: Repository<Designation>,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async findAll(): Promise<Designation[]> {
@@ -56,12 +58,14 @@ export class PlatformDesignationService {
 
   async update(id: string, updateDto: UpdatePlatformDesignationDto): Promise<Designation> {
     const designation = await this.findOne(id);
+    this.auditContext.setPreValue(designation as unknown as Record<string, unknown>);
     Object.assign(designation, updateDto);
     return this.designationRepository.save(designation);
   }
 
   async remove(id: string): Promise<void> {
     const designation = await this.findOne(id);
+    this.auditContext.setPreValue(designation as unknown as Record<string, unknown>);
     designation.is_deleted = true;
     designation.status = Status.DELETED;
     await this.designationRepository.save(designation);

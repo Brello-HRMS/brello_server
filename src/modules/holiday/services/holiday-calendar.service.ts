@@ -12,6 +12,7 @@ import { ListCalendarsDto } from '../dto/list-calendars.dto';
 import { HolidayCalendar } from '../entities/holiday-calendar.entity';
 import { Status } from '../../../common/enums';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class HolidayCalendarService {
@@ -20,6 +21,7 @@ export class HolidayCalendarService {
   constructor(
     private readonly calendarRepo: HolidayCalendarRepository,
     private readonly holidayRepo: HolidayRepository,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(user: LoggedInUser, dto: CreateHolidayCalendarDto): Promise<HolidayCalendar> {
@@ -77,6 +79,7 @@ export class HolidayCalendarService {
 
   async update(user: LoggedInUser, id: string, dto: UpdateHolidayCalendarDto): Promise<HolidayCalendar> {
     const calendar = await this.findOne(user, id);
+    this.auditContext.setPreValue(calendar as unknown as Record<string, unknown>);
     return (await this.calendarRepo.update(id, { ...dto, modified_by: user.userId }))!;
   }
 
@@ -108,6 +111,7 @@ export class HolidayCalendarService {
     if (calendar.status === Status.ACTIVE) {
       throw new BadRequestException('Cannot delete an active calendar');
     }
+    this.auditContext.setPreValue(calendar as unknown as Record<string, unknown>);
     await this.calendarRepo.softDelete(id, user.userId);
     await this.holidayRepo.softDeleteByCalendar(id, user.userId);
   }

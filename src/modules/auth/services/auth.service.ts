@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -48,6 +49,10 @@ import { NotificationService } from '../../notification/services/notification.se
 import { NotificationType } from '../../../common/enums/notification-type.enum';
 import { getUserAvailableApps } from '../utils/app.util';
 import { SwitchAppDto } from '../dto/switch-app.dto';
+import { AUDIT_SERVICE_TOKEN } from '../../audit/interfaces/audit-service.interface';
+import type { IAuditService } from '../../audit/interfaces/audit-service.interface';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 // Auth Service - Implements comprehensive authentication and authorization logic
 @Injectable()
@@ -64,25 +69,60 @@ export class AuthService {
     private readonly userRoleMapRepository: Repository<UserRoleMap>,
     private readonly notificationService: NotificationService,
     private readonly employeeService: EmployeeService,
+    @Inject(AUDIT_SERVICE_TOKEN)
+    private readonly auditService: IAuditService,
   ) {}
+
+  // ---------- Auth Audit Helpers ----------
+
+  private logAuthEvent(
+    userId: string,
+    enterpriseId: string,
+    organizationId: string | null,
+    action: AuditAction,
+    context?: { ip?: string; userAgent?: string },
+    isPlatformAdmin = false,
+  ): void {
+    void this.auditService.log({
+      actor_id: userId,
+      enterprise_id: enterpriseId,
+      organization_id: organizationId,
+      is_platform_admin: isPlatformAdmin,
+      module: AuditLogModule.AUTH,
+      action,
+      entity_type: 'user',
+      entity_id: userId,
+      ip_address: context?.ip,
+      user_agent: context?.userAgent,
+    });
+  }
 
   // ---------- Password Login Flow ----------
 
   async loginWithPassword(
     loginDto: LoginPasswordDto,
+    context?: { ip?: string; userAgent?: string },
   ): Promise<AuthResponseDto> {
     this.logger.log(`Password login attempt for email: ${loginDto.email}`);
 
-    const user = await this.findActiveUserByEmail(loginDto.email);
-    await this.validatePassword(loginDto.password, user.password_hash);
+    let user: any;
+    try {
+      user = await this.findActiveUserByEmail(loginDto.email);
+      await this.validatePassword(loginDto.password, user.password_hash);
+    } catch (err) {
+      // Log failed login attempt when we have enough user context
+      if (user) {
+        this.logAuthEvent(user.id, user.enterprise_id, user.organization_id, AuditAction.LOGIN_FAILED, context, !!user.is_platform_admin);
+      }
+      throw err;
+    }
 
     const isSetupRequired = !user.organization_id && !user.is_platform_admin;
+    const result = await this.buildAuthResponse(user, loginDto.device_fingerprint, isSetupRequired);
 
-    return this.buildAuthResponse(
-      user,
-      loginDto.device_fingerprint,
-      isSetupRequired,
-    );
+    this.logAuthEvent(user.id, user.enterprise_id, user.organization_id, AuditAction.LOGIN, context, !!user.is_platform_admin);
+
+    return result;
   }
 
   // ---------- OTP Login Flow ----------
@@ -120,7 +160,7 @@ export class AuthService {
     this.logger.log(`Login OTP sent to ${dto.email}`);
   }
 
-  async loginWithOtp(dto: VerifyLoginOtpDto): Promise<AuthResponseDto> {
+  async loginWithOtp(dto: VerifyLoginOtpDto, context?: { ip?: string; userAgent?: string }): Promise<AuthResponseDto> {
     this.logger.log(`OTP verification for login: ${dto.email}`);
 
     let user = await this.findActiveUserByEmail(dto.email);
@@ -177,12 +217,11 @@ export class AuthService {
     }
 
     const isSetupRequired = !user.organization_id && !user.is_platform_admin;
+    const result = await this.buildAuthResponse(user, dto.device_fingerprint, isSetupRequired);
 
-    return this.buildAuthResponse(
-      user,
-      dto.device_fingerprint,
-      isSetupRequired,
-    );
+    this.logAuthEvent(user.id, user.enterprise_id, user.organization_id, AuditAction.LOGIN, context, !!user.is_platform_admin);
+
+    return result;
   }
 
   // ---------- Shared Auth Helpers ----------
@@ -346,16 +385,24 @@ export class AuthService {
     };
   }
 
-  async logout(sessionId: string): Promise<void> {
+  async logout(
+    sessionId: string,
+    actorId?: string,
+    context?: { ip?: string; userAgent?: string },
+    enterpriseId?: string,
+    organizationId?: string | null,
+  ): Promise<void> {
     this.logger.log(`Logout for session: ${sessionId}`);
 
     const session = await this.sessionRepository.findById(sessionId);
-    if (!session) {
-      throw new NotFoundException('Session not found');
-    }
+    if (!session) throw new NotFoundException('Session not found');
 
     await this.sessionRepository.logout(sessionId);
     this.logger.log(`User logged out successfully: ${sessionId}`);
+
+    if (actorId) {
+      this.logAuthEvent(actorId, enterpriseId ?? '', organizationId ?? null, AuditAction.LOGOUT, context);
+    }
   }
 
   async refreshToken(payload: JwtPayload): Promise<RefreshTokenResponseDto> {

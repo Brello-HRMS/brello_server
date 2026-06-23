@@ -13,6 +13,7 @@ import { Client } from '../entities/client.entity';
 import { ListingHelper } from '../../../common/utils/listing.helper';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { PaginatedResponse } from '../../../common/dto/pagination.dto';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class ClientService {
@@ -21,6 +22,7 @@ export class ClientService {
   constructor(
     private readonly clientRepository: ClientRepository,
     private readonly searchIndexingService: SearchIndexingService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async create(dto: CreateClientDto, user: LoggedInUser): Promise<Client> {
@@ -92,7 +94,8 @@ export class ClientService {
   ): Promise<Client> {
     this.logger.log(`Updating client: ${id}`);
 
-    await this.findOne(id);
+    const existing = await this.findOne(id);
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
     const updatedClient = await this.clientRepository.update(id, {
       ...dto,
@@ -114,6 +117,7 @@ export class ClientService {
     this.logger.log(`Deleting client: ${id}`);
 
     const client = await this.findOne(id);
+    this.auditContext.setPreValue(client as unknown as Record<string, unknown>);
 
     const success = await this.clientRepository.delete(id);
 

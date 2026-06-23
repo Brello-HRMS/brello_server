@@ -25,11 +25,15 @@ import { RejectRequestDto } from '../dto/reject-request.dto';
 import { CancelRequestDto } from '../dto/cancel-request.dto';
 import { AdminCancelRequestDto } from '../dto/admin-cancel-request.dto';
 import { ListLeaveRequestQueryDto } from '../dto/list-leave-request-query.dto';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('leave-requests')
 export class LeaveRequestController {
   constructor(private readonly service: LeaveRequestService) {}
 
+  @AuditLog(AuditLogModule.LEAVE_REQUEST, AuditAction.CREATE, 'leave_request')
   @Post()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
@@ -102,6 +106,7 @@ export class LeaveRequestController {
     return this.service.getHistory(user, id);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_REQUEST, AuditAction.UPDATE, 'leave_request')
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -113,6 +118,7 @@ export class LeaveRequestController {
     return this.service.updateMine(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_REQUEST, AuditAction.SUBMIT, 'leave_request')
   @Post(':id/submit')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -123,6 +129,7 @@ export class LeaveRequestController {
     return this.service.submitDraft(user, id);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_REQUEST, AuditAction.CANCEL, 'leave_request')
   @Post(':id/cancel')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -134,6 +141,7 @@ export class LeaveRequestController {
     return this.service.cancelMine(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_REQUEST, AuditAction.DELETE, 'leave_request')
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -144,6 +152,7 @@ export class LeaveRequestController {
     return this.service.deleteDraft(user, id);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_REQUEST, AuditAction.APPROVE, 'leave_request')
   @Post(':id/approve')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @RequirePermission('LEAVE_REQUESTS', 'approve')
@@ -156,6 +165,7 @@ export class LeaveRequestController {
     return this.service.approve(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_REQUEST, AuditAction.REJECT, 'leave_request')
   @Post(':id/reject')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @RequirePermission('LEAVE_REQUESTS', 'approve')
@@ -168,6 +178,7 @@ export class LeaveRequestController {
     return this.service.reject(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.LEAVE_REQUEST, AuditAction.CANCEL, 'leave_request')
   @Post(':id/admin-cancel')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @RequirePermission('LEAVE_REQUESTS', 'delete')

@@ -13,6 +13,9 @@ import { AdminReimbursementQueryDto } from '../dto/admin-query.dto';
 import { UpdateStatusDto } from '../dto/update-status.dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 interface AuthPayload {
   userId: string;
@@ -37,6 +40,7 @@ export class AdminReimbursementController {
     );
   }
 
+  @AuditLog(AuditLogModule.REIMBURSEMENT, AuditAction.APPROVE, 'reimbursement')
   @Patch(':id/status')
   @HttpCode(200)
   async updateStatus(
@@ -47,6 +51,7 @@ export class AdminReimbursementController {
     return this.adminReimbursementService.updateStatus(id, dto, user.userId);
   }
 
+  @AuditLog(AuditLogModule.REIMBURSEMENT, AuditAction.PAY, 'reimbursement')
   @Patch(':id/mark-paid')
   @HttpCode(200)
   async markPaid(@CurrentUser() user: AuthPayload, @Param('id') id: string) {

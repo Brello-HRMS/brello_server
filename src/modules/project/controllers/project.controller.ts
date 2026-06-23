@@ -20,6 +20,9 @@ import { UploadContractDto } from '../dto/upload-contract.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard)
@@ -44,6 +47,7 @@ export class ProjectController {
     return this.projectService.findOne(id, user);
   }
 
+  @AuditLog(AuditLogModule.PROJECT, AuditAction.UPDATE, 'project')
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   update(
@@ -54,6 +58,7 @@ export class ProjectController {
     return this.projectService.update(id, updateProjectDto, user);
   }
 
+  @AuditLog(AuditLogModule.PROJECT, AuditAction.DELETE, 'project')
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   remove(
@@ -63,6 +68,7 @@ export class ProjectController {
     return this.projectService.remove(id, user);
   }
 
+  @AuditLog(AuditLogModule.PROJECT, AuditAction.ASSIGN, 'project_team_member')
   @Post(':id/team')
   @HttpCode(HttpStatus.OK)
   assignTeam(
@@ -101,6 +107,7 @@ export class ProjectController {
     return this.projectService.getContracts(id, user);
   }
 
+  @AuditLog(AuditLogModule.PROJECT, AuditAction.UNASSIGN, 'project_team_member', { entityIdParam: 'userId' })
   @Delete(':id/team/:userId')
   @HttpCode(HttpStatus.OK)
   removeTeamMember(

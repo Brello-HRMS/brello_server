@@ -14,12 +14,14 @@ import { SalaryTemplateEngine } from './salary-template.service';
 import { SalaryStructureBuilder } from '../utils/salary-structure-builder.util';
 import { EmployeeSalaryRepository } from '../repositories/employee-salary.repository';
 import { ComponentType } from '../enums/payroll.enum';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class EmployeeSalaryEngine {
   constructor(
     private readonly employeeSalaryRepository: EmployeeSalaryRepository,
     private readonly templateEngine: SalaryTemplateEngine,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async assignSalary(
@@ -202,6 +204,8 @@ export class EmployeeSalaryEngine {
     const existing =
       await this.employeeSalaryRepository.findSalaryWithComponents(salary.id);
     if (!existing) throw new NotFoundException('Salary record not found.');
+
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
     const updatesMap = new Map(
       dto.components.map((u) => [u.component_name, u.value]),

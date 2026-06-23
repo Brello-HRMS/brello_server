@@ -41,6 +41,7 @@ import {
 } from '../../payroll/enums/payroll.enum';
 import { Department } from '../../departments/entities/department.entity';
 import { Designation } from '../../designations/entities/designation.entity';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 @Injectable()
 export class OrganizationService {
@@ -54,6 +55,7 @@ export class OrganizationService {
     private readonly planService: PlanService,
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   async setupCompany(dto: SetupCompanyDto): Promise<AuthResponseDto> {
@@ -346,7 +348,8 @@ export class OrganizationService {
   ): Promise<Organization> {
     this.logger.log(`Updating organization: ${id}`);
 
-    await this.findOne(id, user);
+    const existing = await this.findOne(id, user);
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
     if (updateOrganizationDto.enterprise_id) {
       await this.enterpriseService.findOneById(
@@ -373,7 +376,8 @@ export class OrganizationService {
   async remove(id: string, user?: LoggedInUser): Promise<void> {
     this.logger.log(`Deleting organization: ${id}`);
 
-    await this.findOne(id, user);
+    const existing = await this.findOne(id, user);
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
     const deleted = await this.organizationRepository.delete(id);
 

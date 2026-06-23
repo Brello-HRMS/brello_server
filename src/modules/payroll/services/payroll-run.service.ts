@@ -22,6 +22,7 @@ import {
   FinancialMonth,
   PayrollRunStatus,
 } from '../enums/payroll.enum';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 const MONTH_ORDER: FinancialMonth[] = [
   FinancialMonth.JAN,
@@ -47,6 +48,7 @@ export class PayrollRunService {
     private readonly itemRepo: PayrollRunItemRepository,
     private readonly adjustmentRepo: PayrollAdjustmentRepository,
     private readonly audit: PayrollAuditService,
+    private readonly auditContext: AuditContextService,
   ) {}
 
   /**
@@ -187,6 +189,8 @@ export class PayrollRunService {
         `Only Draft payroll runs can be deleted. This run is ${run.run_status}.`,
       );
     }
+
+    this.auditContext.setPreValue(run as unknown as Record<string, unknown>);
 
     await this.audit.record(user, 'payroll_run', run.id, AuditAction.DELETE, {
       month: run.month,

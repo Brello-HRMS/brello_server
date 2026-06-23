@@ -29,6 +29,7 @@ import { InitializeBalanceDto } from '../dto/initialize-balance.dto';
 import { LedgerQueryDto } from '../dto/ledger-query.dto';
 import { LeaveRequest } from '../../leave-request/entities/leave-request.entity';
 import { LeaveRequestStatus } from '../../leave-request/enums';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 
 const LWP_CODE = 'LWP';
 
@@ -84,6 +85,7 @@ export class LeaveBalanceService {
   private readonly logger = new Logger(LeaveBalanceService.name);
 
   constructor(
+    private readonly auditContext: AuditContextService,
     private readonly dataSource: DataSource,
     private readonly balanceRepo: LeaveBalanceRepository,
     private readonly ledgerRepo: LeaveBalanceLedgerRepository,
@@ -411,6 +413,7 @@ export class LeaveBalanceService {
     if (!balance) {
       throw new NotFoundException(`BALANCE_NOT_FOUND: ${id}`);
     }
+    this.auditContext.setPreValue(balance as unknown as Record<string, unknown>);
 
     const oldAllocated = Number(balance.allocated_days || 0);
     const newAllocated = dto.allocated_days;
@@ -611,6 +614,7 @@ export class LeaveBalanceService {
     if (!balance) {
       throw new NotFoundException(`BALANCE_NOT_FOUND: ${id}`);
     }
+    this.auditContext.setPreValue(balance as unknown as Record<string, unknown>);
 
     const before = {
       available_days: balance.is_unlimited

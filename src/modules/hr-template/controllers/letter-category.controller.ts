@@ -18,6 +18,9 @@ import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interface
 import { LetterCategoryService } from '../services/letter-category.service';
 import { CreateLetterCategoryDto, UpdateLetterCategoryDto } from '../dto/letter-category.dto';
 import type { DocumentType } from '../entities/letter-category.entity';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('letter-categories')
 @UseGuards(JwtAuthGuard)
@@ -42,6 +45,7 @@ export class LetterCategoryController {
     return this.service.findOne(user, id);
   }
 
+  @AuditLog(AuditLogModule.HR_TEMPLATE, AuditAction.CREATE, 'letter_category')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(
@@ -51,6 +55,7 @@ export class LetterCategoryController {
     return this.service.create(user, dto);
   }
 
+  @AuditLog(AuditLogModule.HR_TEMPLATE, AuditAction.UPDATE, 'letter_category')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   update(
@@ -61,6 +66,7 @@ export class LetterCategoryController {
     return this.service.update(user, id, dto);
   }
 
+  @AuditLog(AuditLogModule.HR_TEMPLATE, AuditAction.DELETE, 'letter_category')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(

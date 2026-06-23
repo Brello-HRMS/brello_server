@@ -12,6 +12,7 @@ import { PayrollSourceRepository } from '../repositories/payroll-source.reposito
 import { EmployeeSalaryRepository } from '../repositories/employee-salary.repository';
 import { PayrollRunService } from './payroll-run.service';
 import { PayrollAuditService } from './payroll-audit.service';
+import { AuditContextService } from '../../audit/services/audit-context.service';
 import { PayrollRun } from '../entities/payroll-run.entity';
 import { PayrollRunItem } from '../entities/payroll-run-item.entity';
 import { PayrollSetting } from '../entities/payroll-setting.entity';
@@ -47,12 +48,14 @@ export class PayrollPreparationService {
     private readonly salaryRepo: EmployeeSalaryRepository,
     private readonly runService: PayrollRunService,
     private readonly audit: PayrollAuditService,
+    private readonly auditContext: AuditContextService,
     @InjectRepository(PayrollSetting)
     private readonly settingRepo: Repository<PayrollSetting>,
   ) {}
 
   async prepare(user: LoggedInUser, runId: string): Promise<PrepareSummary> {
     const run = await this.runService.getRun(user, runId);
+    this.auditContext.setPreValue(run as unknown as Record<string, unknown>);
 
     if (run.run_status !== PayrollRunStatus.DRAFT) {
       throw new BadRequestException(
