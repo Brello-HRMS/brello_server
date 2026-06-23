@@ -10,8 +10,10 @@ import { LeaveType } from '../leave-config/entities/leave-type.entity';
 import { LeaveConfig } from '../leave-config/entities/leave-config.entity';
 import { LeaveRules } from '../leave-config/entities/leave-rules.entity';
 import { User } from '../user/entities/user.entity';
+import { Holiday } from '../holiday/entities/holiday.entity';
 import { LeaveBalanceModule } from '../leave-balance/leave-balance.module';
 import { RbacModule } from '../rbac/rbac.module';
+import { AttendanceModule } from '../attendance/attendance.module';
 
 @Module({
   imports: [
@@ -22,9 +24,11 @@ import { RbacModule } from '../rbac/rbac.module';
       LeaveConfig,
       LeaveRules,
       User,
+      Holiday,
     ]),
     LeaveBalanceModule,
     RbacModule,
+    AttendanceModule,
   ],
   controllers: [LeaveRequestController],
   providers: [

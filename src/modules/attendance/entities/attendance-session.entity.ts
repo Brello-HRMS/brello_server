@@ -28,6 +28,14 @@ export class AttendanceSession extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   worked_minutes: number;
 
+  /** True when the auto-checkout engine closed this session (auto-checkout.md). */
+  @Column({ type: 'boolean', default: false })
+  is_auto_checkout: boolean;
+
+  /** Set once a pre-auto-checkout reminder has been sent, to dedupe the 30-min job. */
+  @Column({ type: 'boolean', default: false })
+  reminder_sent: boolean;
+
   @Column({ type: 'enum', enum: AttendanceMode })
   attendance_mode: AttendanceMode;
 

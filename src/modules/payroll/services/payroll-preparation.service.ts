@@ -3,6 +3,8 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { PayrollRunRepository } from '../repositories/payroll-run.repository';
 import { PayrollRunItemRepository } from '../repositories/payroll-run-item.repository';
@@ -13,7 +15,13 @@ import { PayrollAuditService } from './payroll-audit.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
 import { PayrollRun } from '../entities/payroll-run.entity';
 import { PayrollRunItem } from '../entities/payroll-run-item.entity';
-import { AuditAction, PayrollItemStatus, PayrollRunStatus } from '../enums/payroll.enum';
+import { PayrollSetting } from '../entities/payroll-setting.entity';
+import {
+  AttendanceCutoffType,
+  AuditAction,
+  PayrollItemStatus,
+  PayrollRunStatus,
+} from '../enums/payroll.enum';
 
 export interface PrepareSummary {
   run_id: string;
@@ -41,6 +49,8 @@ export class PayrollPreparationService {
     private readonly runService: PayrollRunService,
     private readonly audit: PayrollAuditService,
     private readonly auditContext: AuditContextService,
+    @InjectRepository(PayrollSetting)
+    private readonly settingRepo: Repository<PayrollSetting>,
   ) {}
 
   async prepare(user: LoggedInUser, runId: string): Promise<PrepareSummary> {
@@ -54,7 +64,15 @@ export class PayrollPreparationService {
     }
 
     const fromDate = toDateStr(run.pay_period_from);
-    const toDate = toDateStr(run.pay_period_to);
+    // Attendance/leave are counted only up to the configured cutoff; days after it
+    // roll into the next cycle (PayrollSetting.attendance_cutoff_*).
+    const setting = await this.settingRepo.findOne({
+      where: {
+        enterprise_id: user.enterpriseId,
+        organization_id: user.organizationId,
+      },
+    });
+    const toDate = this.resolveAttendanceWindowEnd(run, setting);
 
     const employees = await this.sourceRepo.findEligibleEmployees(
       user.enterpriseId,
@@ -159,6 +177,34 @@ export class PayrollPreparationService {
   }
 
   /**
+   * The last calendar day of the pay period that attendance/leave is counted for,
+   * honoring PayrollSetting.attendance_cutoff_*. Defaults to the period end when
+   * no setting/cutoff is configured.
+   */
+  private resolveAttendanceWindowEnd(
+    run: PayrollRun,
+    setting: PayrollSetting | null,
+  ): string {
+    const periodTo = toDateStr(run.pay_period_to);
+    if (!setting || setting.attendance_cutoff_value == null) return periodTo;
+
+    const [year, month] = periodTo.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+    let day = lastDay;
+    if (setting.attendance_cutoff_type === AttendanceCutoffType.FIXED_DATE) {
+      day = Math.min(setting.attendance_cutoff_value || lastDay, lastDay);
+    } else if (
+      setting.attendance_cutoff_type ===
+      AttendanceCutoffType.DAYS_BEFORE_MONTH_END
+    ) {
+      day = Math.max(1, lastDay - (setting.attendance_cutoff_value || 0));
+    }
+
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+
+  /**
    * Pre-process validation: lists items that would block a clean run (ERROR
    * status). Returned alongside counts so the UI can gate the Process action.
    */
@@ -185,15 +231,31 @@ export class PayrollPreparationService {
         toDateStr(run.pay_period_to),
       );
 
+    // Auto-checkout correction requests still pending HR review block the run —
+    // the corrected hours could change pay (auto-checkout.md §12.4).
+    const pendingCorrectionEmployees =
+      await this.sourceRepo.findEmployeesWithPendingCorrections(
+        user.organizationId,
+        toDateStr(run.pay_period_from),
+        toDateStr(run.pay_period_to),
+      );
+
     return {
       run_id: runId,
-      can_process: counts[PayrollItemStatus.PENDING] > 0 && blocking.length === 0,
+      can_process:
+        counts[PayrollItemStatus.PENDING] > 0 &&
+        blocking.length === 0 &&
+        pendingCorrectionEmployees.length === 0,
       counts,
       blocking,
       attendance: {
         finalized: pendingAttendanceEmployees.length === 0,
         pending_approval_count: pendingAttendanceEmployees.length,
         pending_approval_employee_ids: pendingAttendanceEmployees,
+      },
+      corrections: {
+        pending_count: pendingCorrectionEmployees.length,
+        pending_employee_ids: pendingCorrectionEmployees,
       },
     };
   }
