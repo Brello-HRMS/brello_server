@@ -4,6 +4,7 @@ import { SendNotificationDto } from '../dto/send-notification.dto';
 import { Notification } from '../entities/notification.entity';
 import { Status } from '../../../common/enums/status.enum';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { RedisService } from '../../../common/redis/redis.service';
 
 @Injectable()
 export class InAppNotificationService {
@@ -11,6 +12,7 @@ export class InAppNotificationService {
 
   constructor(
     private readonly notificationRepository: NotificationRepository,
+    private readonly redisService: RedisService,
   ) {}
 
   /**
@@ -35,6 +37,23 @@ export class InAppNotificationService {
 
       const saved = await this.notificationRepository.save(notification);
       this.logger.log(`In-App notification saved for user ${dto.user_id}`);
+
+      // Publish to Redis so the SSE endpoint delivers it in real time
+      await this.redisService.publish(
+        `notifications:user:${dto.user_id}`,
+        JSON.stringify({
+          id: saved.id,
+          title: saved.title,
+          message: saved.message,
+          type: saved.type,
+          is_read: false,
+          read_at: null,
+          metadata: saved.metadata ?? null,
+          created_at: saved.created_at,
+          status: saved.status,
+        }),
+      );
+
       return saved;
     } catch (error) {
       this.logger.error(
