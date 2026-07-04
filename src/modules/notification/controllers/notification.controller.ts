@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Patch,
@@ -11,7 +12,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 import { InAppNotificationService } from '../services/in-app-notification.service';
+import { NotificationPreferenceRepository } from '../repositories/notification-preference.repository';
 import { NotificationType } from '../../../common/enums/notification-type.enum';
+import { UpdatePreferenceDto } from '../dto/update-preference.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Notifications')
@@ -21,6 +24,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 export class NotificationController {
   constructor(
     private readonly inAppNotificationService: InAppNotificationService,
+    private readonly preferenceRepository: NotificationPreferenceRepository,
   ) {}
 
   @Get()
@@ -68,6 +72,23 @@ export class NotificationController {
   ) {
     await this.inAppNotificationService.markAsRead(id, user);
     return { success: true };
+  }
+
+  @Get('preferences')
+  @ApiOperation({ summary: 'Get all notification preferences for the current user' })
+  @ApiResponse({ status: 200, description: 'List of saved notification preferences' })
+  async getPreferences(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.preferenceRepository.findAll(user.userId);
+  }
+
+  @Patch('preferences')
+  @ApiOperation({ summary: 'Create or update a notification preference' })
+  @ApiResponse({ status: 200, description: 'Preference saved' })
+  async updatePreference(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Body() dto: UpdatePreferenceDto,
+  ) {
+    return this.preferenceRepository.upsert(user.userId, dto.channel, dto.event_type, dto.enabled);
   }
 
   // TODO: remove before production

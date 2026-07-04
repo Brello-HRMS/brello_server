@@ -41,4 +41,9 @@ export class SendNotificationDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'Notification event type for preference gating (e.g. leave.approved)', example: 'leave.approved' })
+  @IsString()
+  @IsOptional()
+  event_type?: string;
 }

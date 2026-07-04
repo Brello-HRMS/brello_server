@@ -3,7 +3,9 @@ import { Queue } from 'bullmq';
 
 import { DEFAULT_JOB_OPTIONS, QUEUE_TOKENS } from '../../queue/queue.constants';
 import { NotificationType } from '../../../common/enums/notification-type.enum';
+import { NotificationEventType } from '../../../common/enums/notification-event-type.enum';
 import { SendNotificationDto } from '../dto/send-notification.dto';
+import { NotificationPreferenceRepository } from '../repositories/notification-preference.repository';
 
 @Injectable()
 export class NotificationService {
@@ -13,14 +15,26 @@ export class NotificationService {
     @Inject(QUEUE_TOKENS.EMAIL) private readonly emailQueue: Queue,
     @Inject(QUEUE_TOKENS.IN_APP) private readonly inAppQueue: Queue,
     @Inject(QUEUE_TOKENS.PUSH) private readonly pushQueue: Queue,
+    private readonly preferenceRepository: NotificationPreferenceRepository,
   ) {}
 
   /**
    * Enqueues a notification job for async processing by the appropriate worker.
-   * Returns immediately — delivery is handled in the background with retries.
+   * Checks user preferences before enqueuing — silently skips disabled channels.
+   * Auth OTPs always bypass the preference gate.
    */
   async send(dto: SendNotificationDto): Promise<void> {
     this.logger.log(`Enqueuing notification type: ${dto.type} for user: ${dto.user_id}`);
+
+    // Preference gate — skip if user has disabled this event/channel combination
+    const eventType = dto.event_type ?? (dto.metadata?.event_type as string | undefined);
+    if (eventType && eventType !== NotificationEventType.AUTH_OTP && dto.user_id) {
+      const pref = await this.preferenceRepository.findPreference(dto.user_id, dto.type, eventType);
+      if (pref && !pref.enabled) {
+        this.logger.debug(`Skipping ${dto.type} for user ${dto.user_id}: event_type=${eventType} is disabled`);
+        return;
+      }
+    }
 
     switch (dto.type) {
       case NotificationType.EMAIL:
