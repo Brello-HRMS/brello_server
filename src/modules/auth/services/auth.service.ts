@@ -536,9 +536,14 @@ export class AuthService {
       attempts_count: 0,
     });
 
-    // TODO: Send OTP via email
-    // For now, log it (REMOVE IN PRODUCTION!)
-    this.logger.warn(`OTP for ${forgotPasswordDto.email}: ${otp}`);
+    // Send OTP via Resend (queued through BullMQ)
+    await this.notificationService.send({
+      target_email: forgotPasswordDto.email,
+      title: 'Reset your Brello password',
+      message: `Your password reset OTP is: ${otp}`,
+      type: NotificationType.EMAIL,
+      metadata: { template: 'otp', otp, purpose: 'password-reset', expiresInMinutes: 10 },
+    });
 
     this.logger.log(`OTP generated for password reset: ${user.id}`);
   }
