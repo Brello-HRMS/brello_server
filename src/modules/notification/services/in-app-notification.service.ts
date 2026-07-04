@@ -16,7 +16,7 @@ export class InAppNotificationService {
   /**
    * Create an in-app notification record in the database.
    */
-  async send(dto: SendNotificationDto, user?: LoggedInUser): Promise<Notification | null> {
+  async send(dto: SendNotificationDto, _user?: LoggedInUser): Promise<Notification | null> {
     if (!dto.user_id) {
       this.logger.error('Cannot create IN_APP notification: missing user_id');
       return null;
@@ -77,5 +77,12 @@ export class InAppNotificationService {
       { user_id: user.userId, is_read: false },
       { is_read: true, read_at: new Date() },
     );
+  }
+
+  /**
+   * Count unread in-app notifications for a user
+   */
+  async getUnreadCount(user: LoggedInUser): Promise<number> {
+    return this.notificationRepository.countUnreadInApp(user.userId);
   }
 }
