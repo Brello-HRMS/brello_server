@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Patch,
   Post,
@@ -13,8 +14,11 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 import { InAppNotificationService } from '../services/in-app-notification.service';
 import { NotificationPreferenceRepository } from '../repositories/notification-preference.repository';
+import { PushNotificationService } from '../services/push-notification.service';
+import { PushSubscriptionRepository } from '../repositories/push-subscription.repository';
 import { NotificationType } from '../../../common/enums/notification-type.enum';
 import { UpdatePreferenceDto } from '../dto/update-preference.dto';
+import { SubscribePushDto, UnsubscribePushDto } from '../dto/subscribe-push.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Notifications')
@@ -25,6 +29,8 @@ export class NotificationController {
   constructor(
     private readonly inAppNotificationService: InAppNotificationService,
     private readonly preferenceRepository: NotificationPreferenceRepository,
+    private readonly pushNotificationService: PushNotificationService,
+    private readonly pushSubRepository: PushSubscriptionRepository,
   ) {}
 
   @Get()
@@ -89,6 +95,41 @@ export class NotificationController {
     @Body() dto: UpdatePreferenceDto,
   ) {
     return this.preferenceRepository.upsert(user.userId, dto.channel, dto.event_type, dto.enabled);
+  }
+
+  @Get('vapid-public-key')
+  @ApiOperation({ summary: 'Get the VAPID public key for web push subscription' })
+  @ApiResponse({ status: 200, description: 'VAPID public key', schema: { example: { publicKey: 'BCtYb8RU...' } } })
+  getVapidPublicKey() {
+    return { publicKey: this.pushNotificationService.getVapidPublicKey() ?? null };
+  }
+
+  @Post('push-subscription')
+  @ApiOperation({ summary: 'Register a browser push subscription for the current user' })
+  @ApiResponse({ status: 201, description: 'Subscription registered' })
+  async subscribePush(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Body() dto: SubscribePushDto,
+  ) {
+    const sub = await this.pushSubRepository.upsert(
+      user.userId,
+      dto.endpoint,
+      dto.p256dh,
+      dto.auth,
+      dto.platform ?? 'web',
+    );
+    return { id: sub.id };
+  }
+
+  @Delete('push-subscription')
+  @ApiOperation({ summary: 'Remove a browser push subscription for the current user' })
+  @ApiResponse({ status: 200, description: 'Subscription removed', schema: { example: { success: true } } })
+  async unsubscribePush(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Body() dto: UnsubscribePushDto,
+  ) {
+    await this.pushSubRepository.deleteByUserAndEndpoint(user.userId, dto.endpoint);
+    return { success: true };
   }
 
   // TODO: remove before production
