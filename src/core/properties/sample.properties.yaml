@@ -42,6 +42,9 @@ db:
     DB_NAME: 'dbname'
     DB_SCHEMA: 'brello'
 
+email:
+  provider: 'resend'  # 'resend' (uses resend.api_key) or 'smtp' (uses smtp.* settings below)
+
 smtp:
   host: 'smtp.gmail.com'
   port: 587
@@ -52,6 +55,23 @@ smtp:
 
 storage:
   provider: 'S3'
+
+redis:
+  host: 'localhost'
+  port: 6379
+  # password: '' # uncomment if Redis requires auth (Upstash, Redis Cloud, etc.)
+
+resend:
+  api_key: 're_xxxxxxxxxxxx'  # https://resend.com
+
+vapid:
+  public_key: ''   # generate with: npx web-push generate-vapid-keys
+  private_key: ''
+  email: 'mailto:admin@brello.io'
+
+firebase:
+  service_account_path: ''  # path to Firebase service account JSON, e.g. './certs/firebase-adminsdk.json'
+  # Download from: Firebase console → Project Settings → Service Accounts → Generate new private key
 
 billing:
   GST_RATE: 18

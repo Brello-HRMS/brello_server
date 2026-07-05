@@ -42,6 +42,9 @@ import { TrialReminderCron } from './crons/trial-reminder.cron';
 
 import { PlanModule } from '../plan/plan.module';
 import { DocumentModule } from '../document/document.module';
+import { NotificationModule } from '../notification/notification.module';
+import { UserRoleMap } from '../rbac/entities/user-role-map.entity';
+import { User } from '../user/entities/user.entity';
 
 @Module({
   imports: [
@@ -54,10 +57,13 @@ import { DocumentModule } from '../document/document.module';
       OrganizationProfile,
       OrganizationSubscription,
       Plan,
+      UserRoleMap,
+      User,
     ]),
     ConfigModule,
     forwardRef(() => PlanModule),
     DocumentModule,
+    NotificationModule,
   ],
   controllers: [
     BillingOverviewController,
