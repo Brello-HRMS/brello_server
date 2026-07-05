@@ -29,4 +29,14 @@ export class NotificationRepository extends Repository<Notification> {
       .orderBy('notification.created_at', 'DESC')
       .getMany();
   }
+
+  // Count unread active in-app notifications for a user
+  async countUnreadInApp(userId: string): Promise<number> {
+    return this.createQueryBuilder('notification')
+      .where('notification.user_id = :userId', { userId })
+      .andWhere('notification.type = :type', { type: 'IN_APP' })
+      .andWhere('notification.is_read = :isRead', { isRead: false })
+      .andWhere('notification.status = :status', { status: Status.ACTIVE })
+      .getCount();
+  }
 }

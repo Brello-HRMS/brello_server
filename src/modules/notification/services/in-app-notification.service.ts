@@ -4,6 +4,7 @@ import { SendNotificationDto } from '../dto/send-notification.dto';
 import { Notification } from '../entities/notification.entity';
 import { Status } from '../../../common/enums/status.enum';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { RedisService } from '../../../common/redis/redis.service';
 
 @Injectable()
 export class InAppNotificationService {
@@ -11,12 +12,13 @@ export class InAppNotificationService {
 
   constructor(
     private readonly notificationRepository: NotificationRepository,
+    private readonly redisService: RedisService,
   ) {}
 
   /**
    * Create an in-app notification record in the database.
    */
-  async send(dto: SendNotificationDto, user?: LoggedInUser): Promise<Notification | null> {
+  async send(dto: SendNotificationDto, _user?: LoggedInUser): Promise<Notification | null> {
     if (!dto.user_id) {
       this.logger.error('Cannot create IN_APP notification: missing user_id');
       return null;
@@ -35,6 +37,23 @@ export class InAppNotificationService {
 
       const saved = await this.notificationRepository.save(notification);
       this.logger.log(`In-App notification saved for user ${dto.user_id}`);
+
+      // Publish to Redis so the SSE endpoint delivers it in real time
+      await this.redisService.publish(
+        `notifications:user:${dto.user_id}`,
+        JSON.stringify({
+          id: saved.id,
+          title: saved.title,
+          message: saved.message,
+          type: saved.type,
+          is_read: false,
+          read_at: null,
+          metadata: saved.metadata ?? null,
+          created_at: saved.created_at,
+          status: saved.status,
+        }),
+      );
+
       return saved;
     } catch (error) {
       this.logger.error(
@@ -77,5 +96,12 @@ export class InAppNotificationService {
       { user_id: user.userId, is_read: false },
       { is_read: true, read_at: new Date() },
     );
+  }
+
+  /**
+   * Count unread in-app notifications for a user
+   */
+  async getUnreadCount(user: LoggedInUser): Promise<number> {
+    return this.notificationRepository.countUnreadInApp(user.userId);
   }
 }
