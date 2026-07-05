@@ -39,4 +39,7 @@ export enum AuditAction {
   ADJUST = 'ADJUST',
   ACCRUE = 'ACCRUE',
   PAY = 'PAY',
+
+  // Letter Management
+  GENERATE = 'GENERATE',
 }

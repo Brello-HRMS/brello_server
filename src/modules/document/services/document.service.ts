@@ -140,6 +140,20 @@ export class DocumentService {
           );
         return `${enterprise}/${organization}/feedback/${params.fileName}`;
 
+      case FolderType.LETTER_SIGNATURE:
+        if (!organization)
+          throw new BadRequestException(
+            'Organization context required for LETTER_SIGNATURE',
+          );
+        return `${enterprise}/${organization}/letters/signatures/${params.fileName}`;
+
+      case FolderType.LETTER_DOCUMENT:
+        if (!organization || !params.employeeId)
+          throw new BadRequestException(
+            'Organization and Employee context required for LETTER_DOCUMENT',
+          );
+        return `${enterprise}/${organization}/employee/${params.employeeId}/letters/${params.fileName}`;
+
       default:
         throw new BadRequestException('Invalid folder type');
     }
