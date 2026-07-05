@@ -66,6 +66,10 @@ vapid:
   private_key: ''
   email: 'mailto:admin@brello.io'
 
+firebase:
+  service_account_path: ''  # path to Firebase service account JSON, e.g. './certs/firebase-adminsdk.json'
+  # Download from: Firebase console → Project Settings → Service Accounts → Generate new private key
+
 billing:
   GST_RATE: 18
   GRACE_PERIOD_DAYS: 7

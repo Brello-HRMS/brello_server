@@ -12,11 +12,11 @@ export class PushSubscription {
   @Column({ type: 'varchar', length: 500 })
   endpoint: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  p256dh: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  p256dh: string | null;
 
-  @Column({ type: 'varchar', length: 255 })
-  auth: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  auth: string | null;
 
   @Column({ type: 'varchar', length: 20, default: 'web' })
   platform: string;

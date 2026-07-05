@@ -2,29 +2,29 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class SubscribePushDto {
-  @ApiProperty({ description: 'Push subscription endpoint URL' })
+  @ApiProperty({ description: 'Push subscription endpoint URL or FCM token' })
   @IsString()
   @IsNotEmpty()
   endpoint: string;
 
-  @ApiProperty({ description: 'p256dh encryption key' })
+  @ApiPropertyOptional({ description: 'p256dh encryption key (Web Push only, omit for FCM)' })
   @IsString()
-  @IsNotEmpty()
-  p256dh: string;
+  @IsOptional()
+  p256dh?: string;
 
-  @ApiProperty({ description: 'Auth secret' })
+  @ApiPropertyOptional({ description: 'Auth secret (Web Push only, omit for FCM)' })
   @IsString()
-  @IsNotEmpty()
-  auth: string;
+  @IsOptional()
+  auth?: string;
 
-  @ApiPropertyOptional({ description: 'Platform identifier', default: 'web' })
+  @ApiPropertyOptional({ description: 'Platform identifier', enum: ['web', 'android', 'ios'], default: 'web' })
   @IsString()
   @IsOptional()
   platform?: string;
 }
 
 export class UnsubscribePushDto {
-  @ApiProperty({ description: 'Push subscription endpoint URL to remove' })
+  @ApiProperty({ description: 'Push subscription endpoint URL or FCM token to remove' })
   @IsString()
   @IsNotEmpty()
   endpoint: string;
