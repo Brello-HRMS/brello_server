@@ -1,10 +1,10 @@
 export const QUEUE_NAMES = {
-  EMAIL: 'brello:notifications:email',
-  EMAIL_DLQ: 'brello:notifications:email-dlq',
-  IN_APP: 'brello:notifications:in-app',
-  IN_APP_DLQ: 'brello:notifications:in-app-dlq',
-  PUSH: 'brello:notifications:push',
-  PUSH_DLQ: 'brello:notifications:push-dlq',
+  EMAIL: 'brello-notifications-email',
+  EMAIL_DLQ: 'brello-notifications-email-dlq',
+  IN_APP: 'brello-notifications-in-app',
+  IN_APP_DLQ: 'brello-notifications-in-app-dlq',
+  PUSH: 'brello-notifications-push',
+  PUSH_DLQ: 'brello-notifications-push-dlq',
 } as const;
 
 export const QUEUE_TOKENS = {
@@ -19,6 +19,6 @@ export const QUEUE_TOKENS = {
 export const DEFAULT_JOB_OPTIONS = {
   attempts: 5,
   backoff: { type: 'exponential', delay: 2000 },
-  removeOnComplete: true,
+  removeOnComplete: { count: 20 },
   removeOnFail: false,
 } as const;

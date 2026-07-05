@@ -18,18 +18,20 @@ export class PushSubscriptionRepository {
   async upsert(
     userId: string,
     endpoint: string,
-    p256dh: string,
-    auth: string,
+    p256dh: string | null | undefined,
+    auth: string | null | undefined,
     platform = 'web',
   ): Promise<PushSubscription> {
     const existing = await this.repo.findOne({ where: { endpoint } });
     if (existing) {
       existing.user_id = userId;
-      existing.p256dh = p256dh;
-      existing.auth = auth;
+      existing.p256dh = p256dh ?? null;
+      existing.auth = auth ?? null;
       return this.repo.save(existing);
     }
-    return this.repo.save(this.repo.create({ user_id: userId, endpoint, p256dh, auth, platform }));
+    return this.repo.save(
+      this.repo.create({ user_id: userId, endpoint, p256dh: p256dh ?? null, auth: auth ?? null, platform }),
+    );
   }
 
   async deleteByEndpoint(endpoint: string): Promise<void> {
