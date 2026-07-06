@@ -94,4 +94,12 @@ export class LetterTemplateController {
   archive(@LoggedInUser() user: LoggedInUserInterface, @Param('id', ParseUUIDPipe) id: string) {
     return this.templateService.archive(user, id);
   }
+
+  @AuditLog(AuditLogModule.LETTER_MANAGEMENT, AuditAction.UPDATE, 'letter_template')
+  @Post(':id/unarchive')
+  @RequirePermission('LETTER_TEMPLATES', 'delete')
+  @HttpCode(HttpStatus.OK)
+  unarchive(@LoggedInUser() user: LoggedInUserInterface, @Param('id', ParseUUIDPipe) id: string) {
+    return this.templateService.unarchive(user, id);
+  }
 }

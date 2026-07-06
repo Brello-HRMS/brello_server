@@ -1,5 +1,6 @@
 import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '../../../../common/entities/base.entity';
+import { IssuedLetterDeliveryStatus } from '../enums/issued-letter-delivery-status.enum';
 import type {
   SalaryTableModel,
   SignatoryModel,
@@ -10,6 +11,11 @@ import type {
  * every field needed to reproduce the exact letter as issued is snapshotted
  * here so later changes to the employee, template, or org profile can never
  * retroactively alter a document that has already been handed to someone.
+ *
+ * The one deliberate exception: `delivery_status`/`viewed_at`/`acknowledged_at`
+ * track the recipient's read/acknowledge lifecycle and are updated in place
+ * (via narrowly-scoped repository methods, not a general update) — the
+ * snapshot fields above remain untouched by this.
  */
 @Entity('issued_letters')
 @Index(['organization_id', 'employee_id'])
@@ -70,4 +76,17 @@ export class IssuedLetter extends BaseEntity {
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   idempotency_key: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: IssuedLetterDeliveryStatus,
+    default: IssuedLetterDeliveryStatus.ISSUED,
+  })
+  delivery_status: IssuedLetterDeliveryStatus;
+
+  @Column({ type: 'timestamp', nullable: true })
+  viewed_at: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  acknowledged_at: Date | null;
 }

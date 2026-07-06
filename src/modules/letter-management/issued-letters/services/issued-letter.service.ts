@@ -1,7 +1,14 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { IssuedLetterRepository } from '../repositories/issued-letter.repository';
 import { IssuedLetter } from '../entities/issued-letter.entity';
+import { IssuedLetterDeliveryStatus } from '../enums/issued-letter-delivery-status.enum';
 import { LetterTemplateRepository } from '../../templates/repositories/letter-template.repository';
 import { VariableResolverService } from '../../shared/services/variable-resolver.service';
 import { RenderModelBuilderService } from '../../shared/services/render-model-builder.service';
@@ -11,6 +18,7 @@ import { DocumentService } from '../../../document/services/document.service';
 import { FolderType } from '../../../document/enums/document.enum';
 import { NotificationService } from '../../../notification/services/notification.service';
 import { NotificationType } from '../../../../common/enums/notification-type.enum';
+import { NotificationEventType } from '../../../../common/enums/notification-event-type.enum';
 import { AUDIT_SERVICE_TOKEN } from '../../../audit/interfaces/audit-service.interface';
 import type { IAuditService } from '../../../audit/interfaces/audit-service.interface';
 import { AuditLogModule } from '../../../audit/enums/audit-log-module.enum';
@@ -219,11 +227,100 @@ export class IssuedLetterService {
       user.userId,
     );
     if (!letter) throw new NotFoundException(`Letter "${id}" not found`);
+
+    if (letter.delivery_status === IssuedLetterDeliveryStatus.ISSUED) {
+      const viewedAt = new Date();
+      await this.issuedLetterRepository.markViewed(letter.id, user.organizationId);
+      letter.delivery_status = IssuedLetterDeliveryStatus.VIEWED;
+      letter.viewed_at = viewedAt;
+      this.fireViewedSideEffects(user, letter);
+    }
+
     return letter;
   }
 
+  private fireViewedSideEffects(user: LoggedInUser, letter: IssuedLetter): void {
+    this.notificationService
+      .send({
+        user_id: letter.generated_by,
+        title: 'Letter Viewed',
+        message: `${letter.title} (${letter.letter_number}) was viewed by the employee.`,
+        type: NotificationType.IN_APP,
+        event_type: NotificationEventType.LETTER_VIEWED,
+      })
+      .catch(() => {});
+
+    void this.auditService.log({
+      actor_id: user.userId,
+      enterprise_id: user.enterpriseId,
+      organization_id: user.organizationId,
+      is_platform_admin: user.isPlatformAdmin,
+      module: AuditLogModule.LETTER_MANAGEMENT,
+      action: AuditAction.VIEW,
+      entity_type: 'issued_letter',
+      entity_id: letter.id,
+      entity_display_name: letter.letter_number,
+      new_value: { delivery_status: IssuedLetterDeliveryStatus.VIEWED, viewed_at: letter.viewed_at },
+    });
+  }
+
   async downloadMine(user: LoggedInUser, id: string): Promise<{ url: string }> {
-    const letter = await this.findMineById(user, id);
+    const letter = await this.findMineById(user, id); // also handles ISSUED→VIEWED promotion
+
+    void this.auditService.log({
+      actor_id: user.userId,
+      enterprise_id: user.enterpriseId,
+      organization_id: user.organizationId,
+      is_platform_admin: user.isPlatformAdmin,
+      module: AuditLogModule.LETTER_MANAGEMENT,
+      action: AuditAction.DOWNLOAD,
+      entity_type: 'issued_letter',
+      entity_id: letter.id,
+      entity_display_name: letter.letter_number,
+    });
+
     return this.documentService.getSignedUrl(letter.pdf_document_id, user);
+  }
+
+  async acknowledgeMine(user: LoggedInUser, id: string): Promise<IssuedLetter> {
+    const letter = await this.findMineById(user, id); // ownership check; may promote to VIEWED first
+
+    if (letter.delivery_status === IssuedLetterDeliveryStatus.ACKNOWLEDGED) {
+      throw new UnprocessableEntityException('INVALID_STATE: letter is already ACKNOWLEDGED');
+    }
+
+    await this.issuedLetterRepository.acknowledge(letter.id, user.organizationId);
+    const acknowledgedAt = new Date();
+    letter.delivery_status = IssuedLetterDeliveryStatus.ACKNOWLEDGED;
+    letter.acknowledged_at = acknowledgedAt;
+    if (!letter.viewed_at) letter.viewed_at = acknowledgedAt;
+
+    this.notificationService
+      .send({
+        user_id: letter.generated_by,
+        title: 'Letter Acknowledged',
+        message: `${letter.title} (${letter.letter_number}) was acknowledged by the employee.`,
+        type: NotificationType.IN_APP,
+        event_type: NotificationEventType.LETTER_ACKNOWLEDGED,
+      })
+      .catch(() => {});
+
+    void this.auditService.log({
+      actor_id: user.userId,
+      enterprise_id: user.enterpriseId,
+      organization_id: user.organizationId,
+      is_platform_admin: user.isPlatformAdmin,
+      module: AuditLogModule.LETTER_MANAGEMENT,
+      action: AuditAction.ACKNOWLEDGE,
+      entity_type: 'issued_letter',
+      entity_id: letter.id,
+      entity_display_name: letter.letter_number,
+      new_value: {
+        delivery_status: IssuedLetterDeliveryStatus.ACKNOWLEDGED,
+        acknowledged_at: acknowledgedAt,
+      },
+    });
+
+    return letter;
   }
 }

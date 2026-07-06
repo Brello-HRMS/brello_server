@@ -42,4 +42,7 @@ export enum AuditAction {
 
   // Letter Management
   GENERATE = 'GENERATE',
+  VIEW = 'VIEW',
+  DOWNLOAD = 'DOWNLOAD',
+  ACKNOWLEDGE = 'ACKNOWLEDGE',
 }

@@ -138,4 +138,25 @@ export class SignatoryService {
 
     return updated;
   }
+
+  async unarchive(user: LoggedInUser, id: string): Promise<Signatory> {
+    this.logger.log(`Unarchiving signatory: ${id} for org: ${user.organizationId}`);
+
+    const existing = await this.findOne(user, id);
+    if (existing.status !== Status.ARCHIVED) {
+      throw new ConflictException('Only archived signatories can be restored');
+    }
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
+
+    const updated = await this.signatoryRepository.update(id, {
+      status: Status.ACTIVE,
+      modified_by: user.userId,
+    });
+
+    if (!updated) {
+      throw new NotFoundException(`Signatory with ID '${id}' not found after restore`);
+    }
+
+    return updated;
+  }
 }

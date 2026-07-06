@@ -1,4 +1,5 @@
-import { IsUUID, IsOptional, IsObject, IsString, IsDateString } from 'class-validator';
+import { IsUUID, IsOptional, IsObject, IsString, IsDateString, IsEnum } from 'class-validator';
+import { IssuedLetterDeliveryStatus } from '../enums/issued-letter-delivery-status.enum';
 
 export class GenerateIssuedLetterDto {
   @IsUUID()
@@ -44,4 +45,8 @@ export class IssuedLetterFiltersDto {
   @IsDateString()
   @IsOptional()
   date_to?: string;
+
+  @IsEnum(IssuedLetterDeliveryStatus)
+  @IsOptional()
+  delivery_status?: IssuedLetterDeliveryStatus;
 }

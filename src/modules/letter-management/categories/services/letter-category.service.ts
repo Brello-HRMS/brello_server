@@ -94,4 +94,23 @@ export class LetterCategoryService {
 
     return updated;
   }
+
+  async unarchive(user: LoggedInUser, id: string): Promise<LetterCategory> {
+    const existing = await this.findOne(user, id);
+    if (existing.status !== Status.ARCHIVED) {
+      throw new ConflictException('Only archived categories can be restored');
+    }
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
+
+    const updated = await this.categoryRepository.update(id, {
+      status: Status.ACTIVE,
+      modified_by: user.userId,
+    });
+
+    if (!updated) {
+      throw new NotFoundException(`Letter category with ID '${id}' not found after restore`);
+    }
+
+    return updated;
+  }
 }

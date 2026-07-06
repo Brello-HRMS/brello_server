@@ -102,4 +102,14 @@ export class IssuedLetterController {
   downloadMine(@LoggedInUser() user: LoggedInUserInterface, @Param('id', ParseUUIDPipe) id: string) {
     return this.issuedLetterService.downloadMine(user, id);
   }
+
+  @Post('me/:id/acknowledge')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  acknowledgeMine(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.issuedLetterService.acknowledgeMine(user, id);
+  }
 }

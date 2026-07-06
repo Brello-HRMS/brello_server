@@ -34,7 +34,7 @@ export class SignatoryController {
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
-  @RequirePermission('LETTER_SIGNATORIES', 'create')
+  @RequirePermission('LETTER_TEMPLATES', 'create')
   @AuditLog(AuditLogModule.LETTER_SIGNATORY, AuditAction.CREATE, 'signatory')
   @HttpCode(HttpStatus.CREATED)
   async create(
@@ -52,7 +52,7 @@ export class SignatoryController {
   }
 
   @Get()
-  @RequirePermission('LETTER_SIGNATORIES', 'view')
+  @RequirePermission('LETTER_TEMPLATES', 'view')
   @HttpCode(HttpStatus.OK)
   async findAll(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -63,7 +63,7 @@ export class SignatoryController {
   }
 
   @Get(':id')
-  @RequirePermission('LETTER_SIGNATORIES', 'view')
+  @RequirePermission('LETTER_TEMPLATES', 'view')
   @HttpCode(HttpStatus.OK)
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -73,7 +73,7 @@ export class SignatoryController {
   }
 
   @Patch(':id')
-  @RequirePermission('LETTER_SIGNATORIES', 'edit')
+  @RequirePermission('LETTER_TEMPLATES', 'edit')
   @HttpCode(HttpStatus.OK)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -84,7 +84,7 @@ export class SignatoryController {
   }
 
   @Post(':id/set-default')
-  @RequirePermission('LETTER_SIGNATORIES', 'edit')
+  @RequirePermission('LETTER_TEMPLATES', 'edit')
   @HttpCode(HttpStatus.OK)
   async setDefault(
     @Param('id', ParseUUIDPipe) id: string,
@@ -94,7 +94,7 @@ export class SignatoryController {
   }
 
   @Delete(':id')
-  @RequirePermission('LETTER_SIGNATORIES', 'delete')
+  @RequirePermission('LETTER_TEMPLATES', 'delete')
   @AuditLog(AuditLogModule.LETTER_SIGNATORY, AuditAction.ARCHIVE, 'signatory')
   @HttpCode(HttpStatus.OK)
   async archive(
@@ -102,5 +102,16 @@ export class SignatoryController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.signatoryService.archive(user, id);
+  }
+
+  @Post(':id/unarchive')
+  @RequirePermission('LETTER_TEMPLATES', 'delete')
+  @AuditLog(AuditLogModule.LETTER_SIGNATORY, AuditAction.UPDATE, 'signatory')
+  @HttpCode(HttpStatus.OK)
+  async unarchive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.signatoryService.unarchive(user, id);
   }
 }

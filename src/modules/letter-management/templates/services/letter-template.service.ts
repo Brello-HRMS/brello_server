@@ -224,6 +224,22 @@ export class LetterTemplateService {
     return updated;
   }
 
+  async unarchive(user: LoggedInUser, id: string): Promise<LetterTemplate> {
+    const existing = await this.findOne(user, id);
+    if (existing.template_status !== TemplateStatus.ARCHIVED) {
+      throw new ConflictException('Only archived templates can be restored');
+    }
+    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
+    const updated = await this.templateRepository.update(id, {
+      template_status: TemplateStatus.DRAFT,
+      modified_by: user.userId,
+    });
+    if (!updated) {
+      throw new NotFoundException(`Letter template "${id}" not found after restore`);
+    }
+    return updated;
+  }
+
   /**
    * Sample-data preview (no employee, no DB writes beyond the read above).
    * NOTE: this uses a local substitution against fixed sample values rather

@@ -30,26 +30,26 @@ export class LetterCategoryController {
 
   @AuditLog(AuditLogModule.LETTER_MANAGEMENT, AuditAction.CREATE, 'letter_category')
   @Post()
-  @RequirePermission('LETTER_CATEGORIES', 'create')
+  @RequirePermission('LETTER_TEMPLATES', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(@LoggedInUser() user: LoggedInUserInterface, @Body() dto: CreateLetterCategoryDto) {
     return this.categoryService.create(user, dto);
   }
 
   @Get()
-  @RequirePermission('LETTER_CATEGORIES', 'view')
+  @RequirePermission('LETTER_TEMPLATES', 'view')
   findAll(@LoggedInUser() user: LoggedInUserInterface, @Query('search') search?: string) {
     return this.categoryService.findAll(user, { search });
   }
 
   @Get(':id')
-  @RequirePermission('LETTER_CATEGORIES', 'view')
+  @RequirePermission('LETTER_TEMPLATES', 'view')
   findOne(@LoggedInUser() user: LoggedInUserInterface, @Param('id', ParseUUIDPipe) id: string) {
     return this.categoryService.findOne(user, id);
   }
 
   @Patch(':id')
-  @RequirePermission('LETTER_CATEGORIES', 'edit')
+  @RequirePermission('LETTER_TEMPLATES', 'edit')
   update(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -60,9 +60,17 @@ export class LetterCategoryController {
 
   @AuditLog(AuditLogModule.LETTER_MANAGEMENT, AuditAction.ARCHIVE, 'letter_category')
   @Delete(':id')
-  @RequirePermission('LETTER_CATEGORIES', 'delete')
+  @RequirePermission('LETTER_TEMPLATES', 'delete')
   @HttpCode(HttpStatus.OK)
   archive(@LoggedInUser() user: LoggedInUserInterface, @Param('id', ParseUUIDPipe) id: string) {
     return this.categoryService.archive(user, id);
+  }
+
+  @AuditLog(AuditLogModule.LETTER_MANAGEMENT, AuditAction.UPDATE, 'letter_category')
+  @Post(':id/unarchive')
+  @RequirePermission('LETTER_TEMPLATES', 'delete')
+  @HttpCode(HttpStatus.OK)
+  unarchive(@LoggedInUser() user: LoggedInUserInterface, @Param('id', ParseUUIDPipe) id: string) {
+    return this.categoryService.unarchive(user, id);
   }
 }

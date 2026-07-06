@@ -13,13 +13,13 @@ export class LetterSettingsController {
   constructor(private readonly settingsService: LetterSettingsService) {}
 
   @Get()
-  @RequirePermission('LETTER_SETTINGS', 'view')
+  @RequirePermission('LETTER_TEMPLATES', 'view')
   get(@LoggedInUser() user: LoggedInUserInterface) {
     return this.settingsService.get(user);
   }
 
   @Patch()
-  @RequirePermission('LETTER_SETTINGS', 'edit')
+  @RequirePermission('LETTER_TEMPLATES', 'edit')
   update(@LoggedInUser() user: LoggedInUserInterface, @Body() dto: UpdateLetterSettingsDto) {
     return this.settingsService.update(user, dto);
   }

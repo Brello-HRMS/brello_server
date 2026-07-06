@@ -3,11 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { IssuedLetter } from '../entities/issued-letter.entity';
 import { IssuedLetterFiltersDto } from '../dto/issued-letter.dto';
+import { IssuedLetterDeliveryStatus } from '../enums/issued-letter-delivery-status.enum';
 
 /**
- * Deliberately exposes no update/delete methods — issued letters are
+ * Deliberately exposes no general update/delete methods — issued letters are
  * immutable legal records. Enforce that invariant at this API surface, not
- * just by convention.
+ * just by convention. `markViewed`/`acknowledge` below are the one narrow,
+ * purpose-built exception for the recipient's delivery lifecycle.
  */
 @Injectable()
 export class IssuedLetterRepository {
@@ -40,7 +42,15 @@ export class IssuedLetterRepository {
     organizationId: string,
     filters: IssuedLetterFiltersDto = {},
   ): Promise<IssuedLetter[]> {
-    const { employee_id, category_id, template_id, letter_number, date_from, date_to } = filters;
+    const {
+      employee_id,
+      category_id,
+      template_id,
+      letter_number,
+      date_from,
+      date_to,
+      delivery_status,
+    } = filters;
 
     const qb = this.repo
       .createQueryBuilder('letter')
@@ -56,6 +66,7 @@ export class IssuedLetterRepository {
     }
     if (date_from) qb.andWhere('letter.generated_at >= :date_from', { date_from });
     if (date_to) qb.andWhere('letter.generated_at <= :date_to', { date_to });
+    if (delivery_status) qb.andWhere('letter.delivery_status = :delivery_status', { delivery_status });
 
     qb.orderBy('letter.generated_at', 'DESC');
 
@@ -77,5 +88,33 @@ export class IssuedLetterRepository {
     return this.repo.findOne({
       where: { id, organization_id: organizationId, employee_id: employeeId },
     });
+  }
+
+  /** No-op if the letter is no longer ISSUED (idempotent, guards races). */
+  async markViewed(id: string, organizationId: string): Promise<void> {
+    await this.repo.update(
+      {
+        id,
+        organization_id: organizationId,
+        delivery_status: IssuedLetterDeliveryStatus.ISSUED,
+      },
+      { delivery_status: IssuedLetterDeliveryStatus.VIEWED, viewed_at: new Date() },
+    );
+  }
+
+  /** Backfills viewed_at if the letter is acknowledged directly from ISSUED. */
+  async acknowledge(id: string, organizationId: string): Promise<void> {
+    const now = new Date();
+    await this.repo
+      .createQueryBuilder()
+      .update(IssuedLetter)
+      .set({
+        delivery_status: IssuedLetterDeliveryStatus.ACKNOWLEDGED,
+        acknowledged_at: now,
+        viewed_at: () => 'COALESCE(viewed_at, :now)',
+      })
+      .setParameter('now', now)
+      .where('id = :id AND organization_id = :organizationId', { id, organizationId })
+      .execute();
   }
 }

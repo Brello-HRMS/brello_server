@@ -30,4 +30,8 @@ export enum NotificationEventType {
 
   // Auth — always enabled, cannot be turned off by users
   AUTH_OTP = 'auth.otp',
+
+  // Letter Management
+  LETTER_VIEWED = 'letter.viewed',
+  LETTER_ACKNOWLEDGED = 'letter.acknowledged',
 }

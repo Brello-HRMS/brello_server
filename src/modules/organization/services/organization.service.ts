@@ -42,6 +42,7 @@ import {
 import { Department } from '../../departments/entities/department.entity';
 import { Designation } from '../../designations/entities/designation.entity';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+import { seedStarterLetterContent } from '../../letter-management/shared/seed/starter-letter-content';
 
 @Injectable()
 export class OrganizationService {
@@ -282,6 +283,12 @@ export class OrganizationService {
         });
         await manager.save(orgDesig);
       }
+
+      // Step 10: Seed starter letter categories & templates
+      await seedStarterLetterContent(manager, {
+        organizationId: savedOrg.id,
+        enterpriseId,
+      });
 
       await queryRunner.commitTransaction();
       this.logger.log(
