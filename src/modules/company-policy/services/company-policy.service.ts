@@ -12,6 +12,8 @@ import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { Status } from '../../../common/enums';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+import { UserRepository } from '../../user/repositories/user.repository';
+import { NotificationService } from '../../notification/services/notification.service';
 
 @Injectable()
 export class CompanyPolicyService {
@@ -22,6 +24,8 @@ export class CompanyPolicyService {
         private readonly typeService: CompanyPolicyTypeService,
         private readonly searchIndexingService: SearchIndexingService,
         private readonly auditContext: AuditContextService,
+        private readonly userRepo: UserRepository,
+        private readonly notificationService: NotificationService,
     ) { }
 
     async create(user: LoggedInUser, dto: CreateCompanyPolicyDto): Promise<CompanyPolicy> {
@@ -38,6 +42,11 @@ export class CompanyPolicyService {
             modified_by: user.userId,
         });
         this.searchIndexingService.indexPolicy(policy, user.enterpriseId, user.organizationId);
+
+        if (policy.status === Status.ACTIVE) {
+            this.notifyUsers(user.organizationId, policy);
+        }
+
         return policy;
     }
 
@@ -100,6 +109,11 @@ export class CompanyPolicyService {
         }
 
         this.searchIndexingService.indexPolicy(updated, user.enterpriseId, user.organizationId);
+
+        if (policy.status !== Status.ACTIVE && updated.status === Status.ACTIVE) {
+            this.notifyUsers(user.organizationId, updated);
+        }
+
         return updated;
     }
 
@@ -109,5 +123,17 @@ export class CompanyPolicyService {
         this.auditContext.setPreValue(policy as unknown as Record<string, unknown>);
         await this.policyRepository.softDelete(id, user.userId);
         this.searchIndexingService.removePolicy(id, user.enterpriseId);
+    }
+
+    private async notifyUsers(organizationId: string, policy: CompanyPolicy) {
+        const users = await this.userRepo.findByOrganizationId(organizationId);
+        for (const u of users) {
+            this.notificationService.broadcastAllChannels({
+                user_id: u.id,
+                title: 'New Company Policy Published',
+                message: `A new company policy "${policy.title}" has been published.`,
+                event_type: 'POLICY_PUBLISHED',
+            }).catch(err => this.logger.error(`Failed to notify ${u.id}: ${err.message}`));
+        }
     }
 }

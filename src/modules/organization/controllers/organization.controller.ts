@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -27,23 +29,26 @@ export class OrganizationController {
 
   @AuditLog(AuditLogModule.ORGANIZATION, AuditAction.CREATE, 'organization')
   @Post('setup')
+  @RequirePermission('ORGANIZATION', 'create')
   @HttpCode(HttpStatus.OK)
   async setupCompany(@Body() dto: SetupCompanyDto) {
     return this.organizationService.setupCompany(dto);
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('ORGANIZATION', 'view')
+  @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AccessGuard)
   findAll(@LoggedInUser() user: LoggedInUserInterface) {
     return this.organizationService.findAll(user);
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('ORGANIZATION', 'view')
+  @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AccessGuard)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -52,9 +57,10 @@ export class OrganizationController {
   }
 
   @Get('enterprise/:enterpriseId')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('ORGANIZATION', 'view')
+  @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AccessGuard)
   findByEnterprise(
     @Param('enterpriseId', ParseUUIDPipe) enterpriseId: string,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -63,7 +69,8 @@ export class OrganizationController {
   }
 
   @Get(':id/stats')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('ORGANIZATION', 'view')
+  @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
   getStats(
     @Param('id', ParseUUIDPipe) id: string,
@@ -74,9 +81,10 @@ export class OrganizationController {
 
   @AuditLog(AuditLogModule.ORGANIZATION, AuditAction.UPDATE, 'organization')
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('ORGANIZATION', 'update')
+  @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AccessGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -87,9 +95,10 @@ export class OrganizationController {
 
   @AuditLog(AuditLogModule.ORGANIZATION, AuditAction.DELETE, 'organization')
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @RequirePermission('ORGANIZATION', 'delete')
+  @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AccessGuard)
   remove(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,

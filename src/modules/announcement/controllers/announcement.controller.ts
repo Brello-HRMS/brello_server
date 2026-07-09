@@ -1,3 +1,4 @@
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
 import {
   Controller,
   Get,
@@ -30,6 +31,7 @@ interface AuthPayload {
 
 @UseGuards(JwtAuthGuard, AccessGuard)
 @Controller('announcements')
+@RestrictedOnExpiry()
 export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
 

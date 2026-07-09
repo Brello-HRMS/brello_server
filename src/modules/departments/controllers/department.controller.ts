@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
     Controller,
     Get,
@@ -25,7 +27,7 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('departments')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class DepartmentController {
 
     constructor(private readonly departmentService: DepartmentService) { }
@@ -33,6 +35,7 @@ export class DepartmentController {
     // POST /departments — create a new department under the authenticated user's org
     @AuditLog(AuditLogModule.DEPARTMENT, AuditAction.CREATE, 'department')
     @Post()
+    @RequirePermission('DEPARTMENTS', 'create')
     @HttpCode(HttpStatus.CREATED)
     create(
         @LoggedInUser() user: LoggedInUserInterface,
@@ -43,6 +46,7 @@ export class DepartmentController {
 
     // GET /departments — list all departments; supports ?status, ?search, ?sort_by, ?sort_order
     @Get()
+    @RequirePermission('DEPARTMENTS', 'view')
     @HttpCode(HttpStatus.OK)
     findAll(
         @LoggedInUser() user: LoggedInUserInterface,
@@ -53,6 +57,7 @@ export class DepartmentController {
 
     // GET /departments/:id — fetch a single department by UUID within the user's org
     @Get(':id')
+    @RequirePermission('DEPARTMENTS', 'view')
     @HttpCode(HttpStatus.OK)
     findOne(
         @LoggedInUser() user: LoggedInUserInterface,
@@ -63,6 +68,7 @@ export class DepartmentController {
 
     @AuditLog(AuditLogModule.DEPARTMENT, AuditAction.UPDATE, 'department')
     @Patch(':id')
+    @RequirePermission('DEPARTMENTS', 'update')
     @HttpCode(HttpStatus.OK)
     update(
         @LoggedInUser() user: LoggedInUserInterface,
@@ -75,6 +81,7 @@ export class DepartmentController {
     // DELETE /departments/:id — soft-delete (sets is_deleted=true, status=INACTIVE)
     @AuditLog(AuditLogModule.DEPARTMENT, AuditAction.DELETE, 'department')
     @Delete(':id')
+    @RequirePermission('DEPARTMENTS', 'delete')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @LoggedInUser() user: LoggedInUserInterface,

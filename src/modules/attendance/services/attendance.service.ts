@@ -11,7 +11,6 @@ import { CheckOutDto } from '../dto/check-out.dto';
 import { MeHistoryQueryDto } from '../dto/me-history-query.dto';
 import { AttendanceRecordRepository } from '../repositories/attendance-record.repository';
 import { AttendanceSessionRepository } from '../repositories/attendance-session.repository';
-import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
 import { RemoteApprovalRepository } from '../repositories/remote-approval.repository';
 import { AttendanceRuleResolverService } from './attendance-rule-resolver.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
@@ -23,7 +22,6 @@ import { AttendanceMode } from '../enums/attendance-mode.enum';
 import { AttendanceSource } from '../enums/attendance-source.enum';
 import { AttendanceStatus } from '../enums/attendance-status.enum';
 import { GeoStatus } from '../enums/geo-status.enum';
-import { AuditEventType } from '../enums/audit-event-type.enum';
 import { ApprovalStatus } from '../enums/approval-status.enum';
 import {
   computeAttendanceStatus,
@@ -43,7 +41,6 @@ export class AttendanceService {
   constructor(
     private readonly recordRepo: AttendanceRecordRepository,
     private readonly sessionRepo: AttendanceSessionRepository,
-    private readonly auditRepo: AttendanceAuditLogRepository,
     private readonly approvalRepo: RemoteApprovalRepository,
     private readonly ruleResolver: AttendanceRuleResolverService,
     private readonly auditContext: AuditContextService,
@@ -108,15 +105,6 @@ export class AttendanceService {
         geoStatus = GeoStatus.VALID;
       } else {
         if (!rule.allow_remote_in) {
-          await this.audit(user, {
-            employee_id: user.userId,
-            event_type: AuditEventType.GEO_REJECTION,
-            ip_address: ipAddress,
-            new_value: {
-              distance_meters: distanceMeters,
-              radius: geoFence.radius_meters,
-            },
-          });
           throw new BadRequestException({
             message:
               'You are outside the allowed office location. Remote attendance is disabled.',
@@ -187,23 +175,6 @@ export class AttendanceService {
       notes: dto.notes ?? null,
       check_in_ip: ipAddress ?? null,
       modified_by: user.userId,
-    });
-
-    await this.audit(user, {
-      attendance_record_id: record.id,
-      attendance_session_id: session.id,
-      employee_id: user.userId,
-      event_type:
-        attendanceMode === AttendanceMode.OFFICE_IN
-          ? AuditEventType.OFFICE_IN
-          : AuditEventType.REMOTE_IN,
-      device: dto.device,
-      ip_address: ipAddress,
-      new_value: {
-        attendance_mode: attendanceMode,
-        attendance_status: initialStatus,
-        distance_meters: distanceMeters,
-      },
     });
 
     if (requiresApproval) {
@@ -357,18 +328,6 @@ export class AttendanceService {
       checkOutLng: dto.longitude ?? null,
       checkOutIp: ipAddress ?? null,
       notes: dto.notes ?? null,
-    });
-
-    await this.audit(user, {
-      attendance_record_id: record.id,
-      attendance_session_id: session.id,
-      employee_id: user.userId,
-      event_type: AuditEventType.CHECK_OUT,
-      ip_address: ipAddress,
-      new_value: {
-        worked_minutes: computed.worked_minutes,
-        attendance_status: computed.attendance_status,
-      },
     });
 
     return {
@@ -659,38 +618,5 @@ export class AttendanceService {
       })),
       pagination: { page, limit, total },
     };
-  }
-
-  private async audit(
-    user: LoggedInUser,
-    payload: {
-      attendance_record_id?: string;
-      attendance_session_id?: string;
-      employee_id: string;
-      event_type: AuditEventType;
-      device?: string;
-      ip_address?: string;
-      old_value?: Record<string, unknown>;
-      new_value?: Record<string, unknown>;
-    },
-  ) {
-    try {
-      await this.auditRepo.create({
-        attendance_record_id: payload.attendance_record_id ?? null,
-        attendance_session_id: payload.attendance_session_id ?? null,
-        employee_id: payload.employee_id,
-        performed_by: user.userId,
-        event_type: payload.event_type,
-        device: payload.device ?? null,
-        ip_address: payload.ip_address ?? null,
-        old_value: payload.old_value ?? null,
-        new_value: payload.new_value ?? null,
-        organization_id: user.organizationId,
-        enterprise_id: user.enterpriseId,
-        modified_by: user.userId,
-      });
-    } catch (err) {
-      this.logger.warn(`Audit log failed: ${(err as Error).message}`);
-    }
   }
 }

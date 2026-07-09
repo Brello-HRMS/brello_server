@@ -1,3 +1,4 @@
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
 import {
   Body,
   Controller,
@@ -30,6 +31,7 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('leave-requests')
+@RestrictedOnExpiry()
 export class LeaveRequestController {
   constructor(private readonly service: LeaveRequestService) {}
 

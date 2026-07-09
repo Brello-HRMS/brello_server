@@ -9,9 +9,10 @@ import { AttendanceSession } from '../entities/attendance-session.entity';
 import { AttendanceRecordRepository } from '../repositories/attendance-record.repository';
 import { ShiftRepository } from '../repositories/shift.repository';
 import { AttendanceRuleRepository } from '../repositories/attendance-rule.repository';
-import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
 import { AttendanceService } from './attendance.service';
-import { AuditEventType } from '../enums/audit-event-type.enum';
+import { AuditService } from '../../audit/services/audit.service';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { resolveAutoCheckoutAt, formatTime12 } from './attendance-calc.util';
 
 export interface AutoCheckoutSummary {
@@ -39,7 +40,7 @@ export class AutoCheckoutService {
     private readonly recordRepo: AttendanceRecordRepository,
     private readonly shiftRepo: ShiftRepository,
     private readonly ruleRepo: AttendanceRuleRepository,
-    private readonly auditRepo: AttendanceAuditLogRepository,
+    private readonly auditService: AuditService,
     private readonly attendanceService: AttendanceService,
     private readonly notificationService: NotificationService,
   ) {}
@@ -113,14 +114,17 @@ export class AutoCheckoutService {
           isAutoCheckout: true,
         });
 
-        await this.auditRepo.create({
-          enterprise_id: session.enterprise_id,
+        await this.auditService.log({
+          actor_id: SYSTEM_USER_ID,
+          is_platform_admin: false,
+          module: AuditLogModule.ATTENDANCE,
+          entity_type: 'attendance_record',
+          entity_id: record.id,
+          action: AuditAction.UPDATE,
           organization_id: orgId,
-          attendance_record_id: record.id,
-          attendance_session_id: session.id,
-          employee_id: session.employee_id,
-          performed_by: SYSTEM_USER_ID,
-          event_type: AuditEventType.AUTO_CHECKOUT,
+          enterprise_id: session.enterprise_id,
+          ip_address: '127.0.0.1',
+          user_agent: 'BrelloCron',
           old_value: before,
           new_value: {
             check_out_at: autoCheckoutAt.toISOString(),

@@ -13,12 +13,22 @@ import { AttendanceRule } from '../entities/attendance-rule.entity';
 import { AttendanceRecordRepository } from '../repositories/attendance-record.repository';
 import { AttendanceRuleRepository } from '../repositories/attendance-rule.repository';
 import { RuleAssignmentRepository } from '../repositories/rule-assignment.repository';
-import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
+import { AuditService } from '../../audit/services/audit.service';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AttendanceStatus } from '../enums/attendance-status.enum';
 import { AttendanceSource } from '../enums/attendance-source.enum';
-import { AuditEventType } from '../enums/audit-event-type.enum';
 import { CorrectionStatus } from '../enums/correction-status.enum';
 import { isWeeklyOffDay } from './attendance-calc.util';
+
+export enum AuditEventType {
+  AUTO_HOLIDAY_SYNC = 'AUTO_HOLIDAY_SYNC',
+  AUTO_LEAVE_SYNC = 'AUTO_LEAVE_SYNC',
+  AUTO_WEEKLY_OFF_MARK = 'AUTO_WEEKLY_OFF_MARK',
+  AUTO_ABSENT_MARK = 'AUTO_ABSENT_MARK',
+  MISSED_CHECK_OUT = 'MISSED_CHECK_OUT',
+  MISSED_CHECK_IN = 'MISSED_CHECK_IN',
+}
 
 export interface MaterializationSummary {
   target_date: string;
@@ -69,7 +79,7 @@ export class AttendanceMaterializationService {
     private readonly recordRepo: AttendanceRecordRepository,
     private readonly ruleRepo: AttendanceRuleRepository,
     private readonly assignmentRepo: RuleAssignmentRepository,
-    private readonly auditRepo: AttendanceAuditLogRepository,
+    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -562,17 +572,22 @@ export class AttendanceMaterializationService {
   private async writeAudit(
     emp: User,
     recordId: string,
-    eventType: AuditEventType,
+    eventType: string,
     newValue: Record<string, unknown>,
   ): Promise<void> {
-    await this.auditRepo.create({
-      enterprise_id: emp.enterprise_id,
+    await this.auditService.log({
+      actor_id: SYSTEM_USER_ID,
+      is_platform_admin: false,
+      module: AuditLogModule.ATTENDANCE,
+      entity_type: 'attendance_record',
+      entity_id: recordId,
+      action: AuditAction.UPDATE,
       organization_id: emp.organization_id,
-      attendance_record_id: recordId,
-      employee_id: emp.id,
-      performed_by: SYSTEM_USER_ID,
-      event_type: eventType,
+      enterprise_id: emp.enterprise_id,
+      ip_address: '127.0.0.1',
+      user_agent: 'BrelloCron',
       new_value: newValue,
+      description: `Event type: ${eventType}`,
     });
   }
 

@@ -183,8 +183,6 @@ export class LeadService {
       message: `Your verification OTP is ${otp}. It will expire in 10 minutes.`,
     });
 
-    // TODO: Remove OTP logging before production
-    this.logger.warn(`[DEV] OTP for ${email}: ${otp}`);
   }
 
   private async validateAndConsumeOtp(

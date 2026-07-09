@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -26,11 +28,12 @@ import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interface
  * create/update/remove are platform-admin-only.
  */
 @Controller('industry-types')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class IndustryTypeController {
   constructor(private readonly industryTypeService: IndustryTypeService) {}
 
   @Post()
+  @RequirePermission('INDUSTRY_TYPE', 'create')
   @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createIndustryTypeDto: CreateIndustryTypeDto) {
@@ -38,6 +41,7 @@ export class IndustryTypeController {
   }
 
   @Get()
+  @RequirePermission('INDUSTRY_TYPE', 'view')
   @Public()
   @HttpCode(HttpStatus.OK)
   findAll() {
@@ -45,6 +49,7 @@ export class IndustryTypeController {
   }
 
   @Get(':id')
+  @RequirePermission('INDUSTRY_TYPE', 'view')
   @Public()
   @HttpCode(HttpStatus.OK)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -52,6 +57,7 @@ export class IndustryTypeController {
   }
 
   @Patch(':id')
+  @RequirePermission('INDUSTRY_TYPE', 'update')
   @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   update(
@@ -63,6 +69,7 @@ export class IndustryTypeController {
   }
 
   @Delete(':id')
+  @RequirePermission('INDUSTRY_TYPE', 'delete')
   @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(

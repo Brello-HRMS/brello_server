@@ -112,6 +112,7 @@ export class GlobalSearchDocumentRepository {
     enterpriseId: string,
     organizationId: string | null,
     query: string,
+    userPermissions: string[],
     limit = 10,
   ): Promise<SearchResult[]> {
     const tableName = this.getTableName();
@@ -144,10 +145,15 @@ export class GlobalSearchDocumentRepository {
           search_vector @@ plainto_tsquery('simple', $3)
           OR similarity(title, $3) > 0.2
         )
+        AND (
+          cardinality(permissions) = 0
+          OR permissions IS NULL
+          OR permissions && $5
+        )
       ORDER BY match_rank DESC, ts_rank_score DESC, trgm_score DESC
       LIMIT $4
       `,
-      [enterpriseId, organizationId, query, limit],
+      [enterpriseId, organizationId, query, limit, userPermissions],
     );
   }
 }

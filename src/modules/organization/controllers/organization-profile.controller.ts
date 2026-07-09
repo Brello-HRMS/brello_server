@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -19,11 +21,12 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('organization-profiles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class OrganizationProfileController {
   constructor(private readonly profileService: OrganizationProfileService) {}
 
   @Post()
+  @RequirePermission('ORGANIZATION', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createDto: CreateOrganizationProfileDto,
@@ -33,6 +36,7 @@ export class OrganizationProfileController {
   }
 
   @Get(':id')
+  @RequirePermission('ORGANIZATION', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -42,6 +46,7 @@ export class OrganizationProfileController {
   }
 
   @Get('organization/:organizationId')
+  @RequirePermission('ORGANIZATION', 'view')
   @HttpCode(HttpStatus.OK)
   findByOrganization(
     @Param('organizationId', ParseUUIDPipe) organizationId: string,
@@ -51,6 +56,7 @@ export class OrganizationProfileController {
   }
 
   @Patch(':id')
+  @RequirePermission('ORGANIZATION', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -61,6 +67,7 @@ export class OrganizationProfileController {
   }
 
   @Delete(':id')
+  @RequirePermission('ORGANIZATION', 'delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,

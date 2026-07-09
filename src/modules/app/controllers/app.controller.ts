@@ -1,3 +1,5 @@
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
+import { AccessGuard } from '../../../core/guards/access.guard';
 import {
   Controller,
   Get,
@@ -20,11 +22,12 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('apps')
-@UseGuards(JwtAuthGuard, PlatformAdminGuard)
+@UseGuards(JwtAuthGuard, AccessGuard, PlatformAdminGuard)
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Post()
+  @RequirePermission('APP', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -34,12 +37,14 @@ export class AppController {
   }
 
   @Get()
+  @RequirePermission('APP', 'view')
   @HttpCode(HttpStatus.OK)
   findAll(@LoggedInUser() user: LoggedInUserInterface) {
     return this.appService.findAllForUser(user);
   }
 
   @Get(':id')
+  @RequirePermission('APP', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -49,6 +54,7 @@ export class AppController {
   }
 
   @Patch(':id')
+  @RequirePermission('APP', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -59,6 +65,7 @@ export class AppController {
   }
 
   @Delete(':id')
+  @RequirePermission('APP', 'delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,

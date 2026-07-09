@@ -14,6 +14,7 @@ import { Holiday } from '../holiday/entities/holiday.entity';
 import { LeaveBalanceModule } from '../leave-balance/leave-balance.module';
 import { RbacModule } from '../rbac/rbac.module';
 import { AttendanceModule } from '../attendance/attendance.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AttendanceModule } from '../attendance/attendance.module';
     LeaveBalanceModule,
     RbacModule,
     AttendanceModule,
+    NotificationModule,
   ],
   controllers: [LeaveRequestController],
   providers: [

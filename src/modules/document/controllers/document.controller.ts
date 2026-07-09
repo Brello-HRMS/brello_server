@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -26,11 +28,12 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('documents')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class DocumentController {
   constructor(private readonly documentService: DocumentService) {}
 
   @Post('upload-url')
+  @RequirePermission('DOCUMENTS', 'create')
   @HttpCode(HttpStatus.CREATED)
   generateUploadUrl(
     @Body() dto: GenerateUploadUrlDto,
@@ -40,6 +43,7 @@ export class DocumentController {
   }
 
   @Post(':id/confirm')
+  @RequirePermission('DOCUMENTS', 'create')
   @HttpCode(HttpStatus.OK)
   confirmUpload(
     @Param('id', ParseUUIDPipe) id: string,
@@ -50,6 +54,7 @@ export class DocumentController {
   }
 
   @Post(':id/upload')
+  @RequirePermission('DOCUMENTS', 'create')
   @UseInterceptors(FileInterceptor('file'))
   @HttpCode(HttpStatus.OK)
   async uploadFile(
@@ -61,6 +66,7 @@ export class DocumentController {
   }
 
   @Get(':id')
+  @RequirePermission('DOCUMENTS', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -70,6 +76,7 @@ export class DocumentController {
   }
 
   @Get(':id/signed-url')
+  @RequirePermission('DOCUMENTS', 'view')
   @HttpCode(HttpStatus.OK)
   getSignedUrl(
     @Param('id', ParseUUIDPipe) id: string,
@@ -79,6 +86,7 @@ export class DocumentController {
   }
 
   @Get(':id/download')
+  @RequirePermission('DOCUMENTS', 'view')
   async download(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() res: Response,
@@ -94,6 +102,7 @@ export class DocumentController {
 
   @AuditLog(AuditLogModule.DOCUMENT, AuditAction.DELETE, 'document')
   @Delete(':id')
+  @RequirePermission('DOCUMENTS', 'delete')
   @HttpCode(HttpStatus.OK)
   remove(
     @Param('id', ParseUUIDPipe) id: string,

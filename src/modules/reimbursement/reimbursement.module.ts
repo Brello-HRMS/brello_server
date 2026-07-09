@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { NotificationModule } from '../notification/notification.module';
 
 import { Reimbursement } from './entities/reimbursement.entity';
 import { ReimbursementAttachment } from './entities/reimbursement-attachment.entity';
-import { ReimbursementAuditLog } from './entities/reimbursement-audit-log.entity';
 import { User } from '../user/entities/user.entity';
 import { UserProfile } from '../user/entities/user-profile.entity';
 import { Document } from '../document/entities/document.entity';
@@ -21,11 +21,11 @@ import { AdminReimbursementController } from './controllers/admin-reimbursement.
     TypeOrmModule.forFeature([
       Reimbursement,
       ReimbursementAttachment,
-      ReimbursementAuditLog,
       User,
       UserProfile,
       Document,
     ]),
+    NotificationModule,
   ],
   controllers: [ReimbursementController, AdminReimbursementController],
   providers: [ReimbursementRepository, ReimbursementService, AdminReimbursementService],

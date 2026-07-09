@@ -15,7 +15,6 @@ import {
 import { AdminAttendanceService } from '../services/admin-attendance.service';
 import { RemoteApprovalService } from '../services/remote-approval.service';
 import { AdminDailyPreviewQueryDto } from '../dto/admin-daily-preview-query.dto';
-import { AuditLogsQueryDto } from '../dto/audit-logs-query.dto';
 import { EmployeeHistoryQueryDto } from '../dto/employee-history-query.dto';
 import { ManualEntryDto } from '../dto/manual-entry.dto';
 import { UpdateAttendanceDto } from '../dto/update-attendance.dto';
@@ -123,14 +122,5 @@ export class AdminAttendanceController {
     @Body() dto: RejectRemoteDto,
   ) {
     return this.approvalService.reject(user, attendanceId, dto);
-  }
-
-  @Get('audit-logs')
-  @RequirePermission('ATTENDANCE', 'view')
-  listAuditLogs(
-    @LoggedInUser() user: LoggedInUserInterface,
-    @Query() query: AuditLogsQueryDto,
-  ) {
-    return this.adminService.listAuditLogs(user, query);
   }
 }

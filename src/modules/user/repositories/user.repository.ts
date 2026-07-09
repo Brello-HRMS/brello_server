@@ -186,6 +186,12 @@ export class UserRepository {
     });
   }
 
+  async countByDepartment(departmentId: string): Promise<number> {
+    return this.repository.count({
+      where: { department_id: departmentId, status: Not(Status.DELETED) },
+    });
+  }
+
   async findNewHiresThisMonth(organizationId: string): Promise<User[]> {
     const now = new Date();
     const oneMonthAgo = new Date();

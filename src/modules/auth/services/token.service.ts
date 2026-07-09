@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { SessionRepository } from '../repositories/session.repository';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { hashValue, calculateSessionExpiration } from '../utils';
+import * as crypto from 'crypto';
 
 export interface CreateSessionParams {
   userId: string;
@@ -54,7 +55,7 @@ export class TokenService {
   async createSessionAndTokens(
     params: CreateSessionParams,
   ): Promise<TokenResult> {
-    const refreshToken = Math.random().toString(36).substring(2);
+    const refreshToken = crypto.randomBytes(32).toString('hex');
     const refreshTokenHash = await hashValue(refreshToken);
 
     const session = await this.sessionRepository.create({

@@ -13,9 +13,7 @@ import { AttendanceCorrectionRequestRepository } from '../repositories/attendanc
 import { AttendanceRecordRepository } from '../repositories/attendance-record.repository';
 import { ShiftRepository } from '../repositories/shift.repository';
 import { AttendanceRuleRepository } from '../repositories/attendance-rule.repository';
-import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
 import { AttendanceService } from './attendance.service';
-import { AuditEventType } from '../enums/audit-event-type.enum';
 import { CorrectionStatus } from '../enums/correction-status.enum';
 import {
   CorrectionListQueryDto,
@@ -37,7 +35,6 @@ export class CorrectionRequestService {
     private readonly recordRepo: AttendanceRecordRepository,
     private readonly shiftRepo: ShiftRepository,
     private readonly ruleRepo: AttendanceRuleRepository,
-    private readonly auditRepo: AttendanceAuditLogRepository,
     private readonly attendanceService: AttendanceService,
   ) {}
 
@@ -110,20 +107,6 @@ export class CorrectionRequestService {
       modified_by: user.userId,
     });
 
-    await this.auditRepo.create({
-      enterprise_id: user.enterpriseId,
-      organization_id: user.organizationId,
-      attendance_record_id: record.id,
-      attendance_session_id: session.id,
-      employee_id: user.userId,
-      performed_by: user.userId,
-      event_type: AuditEventType.CORRECTION_SUBMITTED,
-      new_value: {
-        requested_check_out_at: requested.toISOString(),
-        employee_reason: dto.employee_reason,
-      },
-    });
-
     return request;
   }
 
@@ -182,21 +165,6 @@ export class CorrectionRequestService {
       modified_by: user.userId,
     });
 
-    await this.auditRepo.create({
-      enterprise_id: user.enterpriseId,
-      organization_id: user.organizationId,
-      attendance_record_id: record.id,
-      attendance_session_id: session.id,
-      employee_id: request.employee_id,
-      performed_by: user.userId,
-      event_type: AuditEventType.CORRECTION_APPROVED,
-      new_value: {
-        check_out_at: request.requested_check_out_at,
-        worked_minutes: computed.worked_minutes,
-        attendance_status: computed.attendance_status,
-      },
-    });
-
     return { id: request.id, approval_status: CorrectionStatus.APPROVED, computed };
   }
 
@@ -213,17 +181,6 @@ export class CorrectionRequestService {
     await this.recordRepo.update(request.attendance_record_id, {
       correction_status: CorrectionStatus.REJECTED,
       modified_by: user.userId,
-    });
-
-    await this.auditRepo.create({
-      enterprise_id: user.enterpriseId,
-      organization_id: user.organizationId,
-      attendance_record_id: request.attendance_record_id,
-      attendance_session_id: request.attendance_session_id,
-      employee_id: request.employee_id,
-      performed_by: user.userId,
-      event_type: AuditEventType.CORRECTION_REJECTED,
-      new_value: { reviewer_notes: dto.reviewer_notes ?? null },
     });
 
     return { id: request.id, approval_status: CorrectionStatus.REJECTED };

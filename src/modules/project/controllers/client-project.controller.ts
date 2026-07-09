@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -21,12 +23,13 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('clients/:clientId/projects')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class ClientProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @AuditLog(AuditLogModule.PROJECT, AuditAction.CREATE, 'project', { entityIdParam: 'clientId' })
   @Post()
+  @RequirePermission('PROJECTS', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Param('clientId', ParseUUIDPipe) clientId: string,
@@ -37,6 +40,7 @@ export class ClientProjectController {
   }
 
   @Get()
+  @RequirePermission('PROJECTS', 'view')
   @HttpCode(HttpStatus.OK)
   findAll(
     @Param('clientId', ParseUUIDPipe) clientId: string,

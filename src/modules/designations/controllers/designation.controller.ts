@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
     Controller,
     Get,
@@ -30,13 +32,14 @@ import { AuditAction } from '../../audit/enums/audit-action.enum';
  * Organization ID is extracted from the JWT token.
  */
 @Controller('designations')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class DesignationController {
     constructor(private readonly designationService: DesignationService) { }
 
     // Create a new designation
     @AuditLog(AuditLogModule.DESIGNATION, AuditAction.CREATE, 'designation')
     @Post()
+    @RequirePermission('DESIGNATIONS', 'create')
     @HttpCode(HttpStatus.CREATED)
     create(
         @CurrentUser('organizationId') orgId: string,
@@ -51,6 +54,7 @@ export class DesignationController {
      * Accepts optional query params: search, status, department_id
      */
     @Get()
+    @RequirePermission('DESIGNATIONS', 'view')
     @HttpCode(HttpStatus.OK)
     findAll(
         @CurrentUser('organizationId') orgId: string,
@@ -61,6 +65,7 @@ export class DesignationController {
 
     // Get a single designation by its ID (must belong to user's org)
     @Get(':id')
+    @RequirePermission('DESIGNATIONS', 'view')
     @HttpCode(HttpStatus.OK)
     findOne(
         @CurrentUser('organizationId') orgId: string,
@@ -72,6 +77,7 @@ export class DesignationController {
     // Partially update a designation (code and org_id are immutable)
     @AuditLog(AuditLogModule.DESIGNATION, AuditAction.UPDATE, 'designation')
     @Patch(':id')
+    @RequirePermission('DESIGNATIONS', 'update')
     @HttpCode(HttpStatus.OK)
     update(
         @CurrentUser('organizationId') orgId: string,
@@ -84,6 +90,7 @@ export class DesignationController {
 
     @AuditLog(AuditLogModule.DESIGNATION, AuditAction.DELETE, 'designation')
     @Delete(':id')
+    @RequirePermission('DESIGNATIONS', 'delete')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @CurrentUser('organizationId') orgId: string,

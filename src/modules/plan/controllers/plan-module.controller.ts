@@ -1,3 +1,5 @@
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
+import { AccessGuard } from '../../../core/guards/access.guard';
 import {
   Controller,
   Get,
@@ -22,11 +24,12 @@ import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorato
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('plan-modules')
-@UseGuards(JwtAuthGuard, PlatformAdminGuard)
+@UseGuards(JwtAuthGuard, AccessGuard, PlatformAdminGuard)
 export class PlanModuleController {
   constructor(private readonly planModuleService: PlanModuleService) {}
 
   @Post()
+  @RequirePermission('PLAN', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createPlanModuleDto: CreatePlanModuleDto,
@@ -36,12 +39,14 @@ export class PlanModuleController {
   }
 
   @Get()
+  @RequirePermission('PLAN', 'view')
   @HttpCode(HttpStatus.OK)
   findAll(@LoggedInUser() user: LoggedInUserInterface) {
     return this.planModuleService.findAll(user);
   }
 
   @Get('plan/:planId')
+  @RequirePermission('PLAN', 'view')
   @HttpCode(HttpStatus.OK)
   findByPlan(
     @Param('planId', ParseUUIDPipe) planId: string,
@@ -51,6 +56,7 @@ export class PlanModuleController {
   }
 
   @Get(':id')
+  @RequirePermission('PLAN', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -60,6 +66,7 @@ export class PlanModuleController {
   }
 
   @Patch(':id')
+  @RequirePermission('PLAN', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -70,6 +77,7 @@ export class PlanModuleController {
   }
 
   @Delete(':id')
+  @RequirePermission('PLAN', 'delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,

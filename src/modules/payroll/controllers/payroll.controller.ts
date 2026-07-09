@@ -1,3 +1,4 @@
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
 import {
   Controller,
   Post,
@@ -48,6 +49,7 @@ interface AuthPayload {
 
 @UseGuards(JwtAuthGuard)
 @Controller('payroll')
+@RestrictedOnExpiry()
 export class PayrollController {
   constructor(
     private readonly payrollService: PayrollService,

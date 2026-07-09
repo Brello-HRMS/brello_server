@@ -11,7 +11,6 @@ import { PayrollRunItemRepository } from '../repositories/payroll-run-item.repos
 import { PayrollAdjustmentRepository } from '../repositories/payroll-adjustment.repository';
 import { PayrollRun } from '../entities/payroll-run.entity';
 import { PayrollRunItem } from '../entities/payroll-run-item.entity';
-import { PayrollAuditService } from './payroll-audit.service';
 import {
   CreatePayrollRunDto,
   PayrollRunQueryDto,
@@ -47,7 +46,6 @@ export class PayrollRunService {
     private readonly runRepo: PayrollRunRepository,
     private readonly itemRepo: PayrollRunItemRepository,
     private readonly adjustmentRepo: PayrollAdjustmentRepository,
-    private readonly audit: PayrollAuditService,
     private readonly auditContext: AuditContextService,
   ) {}
 
@@ -86,12 +84,6 @@ export class PayrollRunService {
       // Placeholder: refined during prepare to exclude weekly-offs/holidays.
       total_working_days: daysInMonth,
       modified_by: user.userId,
-    });
-
-    await this.audit.record(user, 'payroll_run', run.id, AuditAction.CREATE, null, {
-      month: run.month,
-      year: run.year,
-      run_status: run.run_status,
     });
 
     this.logger.log(
@@ -158,23 +150,6 @@ export class PayrollRunService {
     return item;
   }
 
-  /**
-   * Full audit trail for a run — every create/prepare/process/lock/disburse and
-   * item/adjustment mutation, oldest first. Gathers the run id plus its item and
-   * adjustment ids so item- and adjustment-scoped entries are included too.
-   */
-  async getAuditTrail(user: LoggedInUser, runId: string) {
-    await this.getRun(user, runId);
-    const items = await this.itemRepo.findAllByRun(runId);
-    const adjustments = await this.adjustmentRepo.listAllByRun(runId);
-
-    const entityIds = [
-      runId,
-      ...items.map((i) => i.id),
-      ...adjustments.map((a) => a.id),
-    ];
-    return this.audit.listForEntities(user.organizationId, entityIds);
-  }
 
   /**
    * Discards a Draft run (and cascades its items/adjustments). Only Draft runs
@@ -191,12 +166,6 @@ export class PayrollRunService {
     }
 
     this.auditContext.setPreValue(run as unknown as Record<string, unknown>);
-
-    await this.audit.record(user, 'payroll_run', run.id, AuditAction.DELETE, {
-      month: run.month,
-      year: run.year,
-      run_status: run.run_status,
-    }, null);
 
     await this.runRepo.remove(run);
     this.logger.log(`Payroll run ${id} deleted by ${user.userId}`);

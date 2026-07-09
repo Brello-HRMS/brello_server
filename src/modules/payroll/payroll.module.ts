@@ -9,7 +9,6 @@ import { SalaryTemplateComponent } from './entities/salary-template-component.en
 import { EmployeeSalary } from './entities/employee-salary.entity';
 import { EmployeeSalaryComponent } from './entities/employee-salary-component.entity';
 import { EmployeeStatutoryOverride } from './entities/employee-statutory-override.entity';
-import { PayrollAuditLog } from './entities/payroll-audit-log.entity';
 import { PayrollRun } from './entities/payroll-run.entity';
 import { PayrollRunItem } from './entities/payroll-run-item.entity';
 import { PayrollRunAdjustment } from './entities/payroll-run-adjustment.entity';
@@ -40,9 +39,9 @@ import { PayrollProcessingService } from './services/payroll-processing.service'
 import { PayrollAdjustmentService } from './services/payroll-adjustment.service';
 import { PayslipService } from './services/payslip.service';
 import { PayslipPdfService } from './services/payslip-pdf.service';
-import { PayrollAuditService } from './services/payroll-audit.service';
 import { RbacModule } from '../rbac/rbac.module';
 import { DocumentModule } from '../document/document.module';
+import { NotificationModule } from '../notification/notification.module';
 
 import { User } from '../user/entities/user.entity';
 import { UserProfile } from '../user/entities/user-profile.entity';
@@ -62,7 +61,6 @@ import { Reimbursement } from '../reimbursement/entities/reimbursement.entity';
       EmployeeSalary,
       EmployeeSalaryComponent,
       EmployeeStatutoryOverride,
-      PayrollAuditLog,
       PayrollRun,
       PayrollRunItem,
       PayrollRunAdjustment,
@@ -75,6 +73,7 @@ import { Reimbursement } from '../reimbursement/entities/reimbursement.entity';
     ]),
     RbacModule,
     DocumentModule,
+    NotificationModule,
   ],
   controllers: [
     PayrollController,
@@ -88,7 +87,6 @@ import { Reimbursement } from '../reimbursement/entities/reimbursement.entity';
     PayrollSourceRepository,
     PayrollAdjustmentRepository,
     PayrollReimbursementRepository,
-    PayrollAuditService,
     PayrollRunService,
     PayrollPreparationService,
     PayrollProcessingService,

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import * as express from 'express';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
 import { CookieService } from '../services/cookie.service';
 import {
@@ -41,6 +42,8 @@ export class AuthController {
   ) { }
 
   @Post('login')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   async loginWithPassword(
     @Body() loginDto: LoginPasswordDto,
@@ -59,12 +62,16 @@ export class AuthController {
   }
 
   @Post('login/send-otp')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.NO_CONTENT)
   loginSendOtp(@Body() dto: LoginOtpDto) {
     return this.authService.loginSendOtp(dto);
   }
 
   @Post('login/verify-otp')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   async loginWithOtp(
     @Body() dto: VerifyLoginOtpDto,

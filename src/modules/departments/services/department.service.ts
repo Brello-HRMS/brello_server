@@ -165,13 +165,12 @@ export class DepartmentService {
         const existing = await this.findOne(user, id);
         this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
-        // TODO (Phase 2): Block deletion if active employees are assigned to this department
-        // const activeEmployeeCount = await this.employeeRepository.countByDepartment(id);
-        // if (activeEmployeeCount > 0) {
-        //   throw new BadRequestException(
-        //     'Cannot delete department with active employees. Reassign them first.',
-        //   );
-        // }
+        const activeEmployeeCount = await this.userRepository.countByDepartment(id);
+        if (activeEmployeeCount > 0) {
+          throw new BadRequestException(
+            'Cannot delete department with active employees. Reassign them first.',
+          );
+        }
 
         await this.departmentRepository.softDelete(id);
         this.searchIndexingService.removeDepartment(id, user.enterpriseId);

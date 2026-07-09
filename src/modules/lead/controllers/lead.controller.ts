@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -26,11 +28,12 @@ import { LeadSource } from '../enums/lead-source.enum';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('leads')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class LeadController {
   constructor(private readonly leadService: LeadService) {}
 
   @Post('register')
+  @RequirePermission('LEAD', 'create')
   @Public()
   @HttpCode(HttpStatus.CREATED)
   registerLead(
@@ -41,6 +44,7 @@ export class LeadController {
   }
 
   @Post('verify-otp')
+  @RequirePermission('LEAD', 'create')
   @Public()
   @HttpCode(HttpStatus.OK)
   verifyLeadOtp(
@@ -51,6 +55,7 @@ export class LeadController {
   }
 
   @Get()
+  @RequirePermission('LEAD', 'view')
   @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   findAll(
@@ -62,6 +67,7 @@ export class LeadController {
   }
 
   @Get(':id')
+  @RequirePermission('LEAD', 'view')
   @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   findOne(
@@ -72,6 +78,7 @@ export class LeadController {
   }
 
   @Patch(':id/status')
+  @RequirePermission('LEAD', 'update')
   @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   updateStatus(
