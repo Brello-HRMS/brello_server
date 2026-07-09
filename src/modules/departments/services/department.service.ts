@@ -77,7 +77,14 @@ export class DepartmentService {
     ) {
         this.logger.log(`User ${user.userId} is listing departments`);
 
-        const qb = this.departmentRepository.getListingQueryBuilder('department');
+        const qb = this.departmentRepository
+            .getListingQueryBuilder('department')
+            // Always org-scoped: this is the ordinary org-facing endpoint, not
+            // the platform-wide `platform-admin/departments` surface — a
+            // platform-admin-flagged token must not see every org's departments here.
+            .andWhere('department.organization_id = :orgId', {
+                orgId: user.organizationId,
+            });
 
         const response = await ListingHelper.apply(
             qb,

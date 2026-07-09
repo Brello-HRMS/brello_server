@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PlatformAdminGuard } from '../../../core/guards/platform-admin.guard';
 import { Public } from '../../../common/decorators/public.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import { LeadService } from '../services/lead.service';
@@ -50,6 +51,7 @@ export class LeadController {
   }
 
   @Get()
+  @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   findAll(
     @Query('status') status?: LeadStatus,
@@ -60,6 +62,7 @@ export class LeadController {
   }
 
   @Get(':id')
+  @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -69,6 +72,7 @@ export class LeadController {
   }
 
   @Patch(':id/status')
+  @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,

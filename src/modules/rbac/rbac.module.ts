@@ -18,6 +18,7 @@ import { RoleAppRepository } from '../role/repositories/role-app.repository';
 import { UserRoleMapRepository } from './repositories/user-role-map.repository';
 import { Role } from '../role/entities/role.entity';
 import { RoleApp } from '../role/entities/role-app.entity';
+import { User } from '../user/entities/user.entity';
 import { GlobalSearchModule } from '../global-search/global-search.module';
 
 /**
@@ -39,6 +40,7 @@ import { GlobalSearchModule } from '../global-search/global-search.module';
       Role,
       RoleApp,
       UserRoleMap,
+      User,
       AppEntity,
       Action,
       ModuleAccess,

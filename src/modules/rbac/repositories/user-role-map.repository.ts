@@ -47,17 +47,17 @@ export class UserRoleMapRepository {
 
 
 
-  async findByUserId(userId: string): Promise<UserRoleMap[]> {
+  async findByUserId(userId: string, orgId: string): Promise<UserRoleMap[]> {
     return this.repository.find({
-      where: { user_id: userId },
+      where: { user_id: userId, organization_id: orgId },
       relations: ['role'],
       order: { created_at: 'DESC' },
     });
   }
 
-  async findOneById(id: string): Promise<UserRoleMap> {
+  async findOneById(id: string, orgId: string): Promise<UserRoleMap> {
     const map = await this.repository.findOne({
-      where: { id },
+      where: { id, organization_id: orgId },
       relations: ['role'],
     });
 

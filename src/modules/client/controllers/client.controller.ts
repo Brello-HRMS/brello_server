@@ -49,8 +49,11 @@ export class ClientController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.clientService.findOne(id, user);
   }
 
   @AuditLog(AuditLogModule.CLIENT, AuditAction.UPDATE, 'client')
@@ -67,7 +70,10 @@ export class ClientController {
   @AuditLog(AuditLogModule.CLIENT, AuditAction.DELETE, 'client')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.clientService.remove(id, user);
   }
 }

@@ -12,12 +12,14 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { ListEmployeesDto } from '../dto/list-employees.dto';
 import { MapDepartmentDesignationDto } from '../dto/map-department-designation.dto';
 import { UnmapDepartmentDesignationDto } from '../dto/unmap-department-designation.dto';
+import { UserResponseDto } from '../dto/user-response.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
@@ -88,22 +90,24 @@ export class UserController {
   // Get user by ID
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  findOne(
+  async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.userService.findOne(id, user);
+    const found = await this.userService.findOne(id, user);
+    return plainToInstance(UserResponseDto, found, { excludeExtraneousValues: true });
   }
 
   // Update a user
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  update(
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
-    return this.userService.update(id, updateUserDto, user);
+    const updated = await this.userService.update(id, updateUserDto, user);
+    return plainToInstance(UserResponseDto, updated, { excludeExtraneousValues: true });
   }
 
   // Delete a user (soft delete)

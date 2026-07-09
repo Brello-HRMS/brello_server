@@ -8,6 +8,7 @@ import { AnnouncementAttachment } from './entities/announcement-attachment.entit
 import { User } from '../user/entities/user.entity';
 
 import { GlobalSearchModule } from '../global-search/global-search.module';
+import { RbacModule } from '../rbac/rbac.module';
 import { AnnouncementRepository } from './repositories/announcement.repository';
 import { AnnouncementService } from './services/announcement.service';
 import { EmployeeAnnouncementService } from './services/employee-announcement.service';
@@ -17,6 +18,7 @@ import { EmployeeAnnouncementController } from './controllers/employee-announcem
 @Module({
   imports: [
     GlobalSearchModule,
+    RbacModule,
     TypeOrmModule.forFeature([
       Announcement,
       AnnouncementTarget,

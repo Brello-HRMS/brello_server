@@ -74,7 +74,7 @@ export class ModuleAccessService implements OnModuleInit {
     }
 
     this.logger.log(`Resolving role for User: ${user.userId} in App: ${user.appId}, Org: ${user.organizationId}`);
-    const userRoles = await this.userRoleMapRepository.findByUserId(user.userId);
+    const userRoles = await this.userRoleMapRepository.findByUserId(user.userId, user.organizationId);
     
     // Filter roles matching the current app and organization
     const activeRoles = userRoles.filter(

@@ -17,11 +17,12 @@ import {
   UpdatePlanModuleDto,
 } from '../dto/plan-module.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PlatformAdminGuard } from '../../../core/guards/platform-admin.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('plan-modules')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PlatformAdminGuard)
 export class PlanModuleController {
   constructor(private readonly planModuleService: PlanModuleService) {}
 
