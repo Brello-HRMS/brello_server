@@ -29,7 +29,7 @@ export class ClientProjectController {
 
   @AuditLog(AuditLogModule.PROJECT, AuditAction.CREATE, 'project', { entityIdParam: 'clientId' })
   @Post()
-  @RequirePermission('PROJECTS', 'create')
+  @RequirePermission('PROJECT_PROJECTS', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Param('clientId', ParseUUIDPipe) clientId: string,
@@ -40,7 +40,7 @@ export class ClientProjectController {
   }
 
   @Get()
-  @RequirePermission('PROJECTS', 'view')
+  @RequirePermission('PROJECT_PROJECTS', 'view')
   @HttpCode(HttpStatus.OK)
   findAll(
     @Param('clientId', ParseUUIDPipe) clientId: string,

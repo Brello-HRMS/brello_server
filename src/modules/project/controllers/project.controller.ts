@@ -32,7 +32,7 @@ export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Get()
-  @RequirePermission('PROJECTS', 'view')
+  @RequirePermission('PROJECT_PROJECTS', 'view')
   @HttpCode(HttpStatus.OK)
   findAll(
     @Query() query: ListProjectsDto,
@@ -42,7 +42,7 @@ export class ProjectController {
   }
 
   @Get(':id')
-  @RequirePermission('PROJECTS', 'view')
+  @RequirePermission('PROJECT_PROJECTS', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -53,7 +53,7 @@ export class ProjectController {
 
   @AuditLog(AuditLogModule.PROJECT, AuditAction.UPDATE, 'project')
   @Put(':id')
-  @RequirePermission('PROJECTS', 'update')
+  @RequirePermission('PROJECT_PROJECTS', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -65,7 +65,7 @@ export class ProjectController {
 
   @AuditLog(AuditLogModule.PROJECT, AuditAction.DELETE, 'project')
   @Delete(':id')
-  @RequirePermission('PROJECTS', 'delete')
+  @RequirePermission('PROJECT_PROJECTS', 'delete')
   @HttpCode(HttpStatus.OK)
   remove(
     @Param('id', ParseUUIDPipe) id: string,
@@ -76,7 +76,7 @@ export class ProjectController {
 
   @AuditLog(AuditLogModule.PROJECT, AuditAction.ASSIGN, 'project_team_member')
   @Post(':id/team')
-  @RequirePermission('PROJECTS', 'create')
+  @RequirePermission('PROJECT_PROJECTS', 'create')
   @HttpCode(HttpStatus.OK)
   assignTeam(
     @Param('id', ParseUUIDPipe) id: string,
@@ -87,7 +87,7 @@ export class ProjectController {
   }
 
   @Post(':id/contract')
-  @RequirePermission('PROJECTS', 'create')
+  @RequirePermission('PROJECT_PROJECTS', 'create')
   @HttpCode(HttpStatus.CREATED)
   uploadContract(
     @Param('id', ParseUUIDPipe) id: string,
@@ -98,7 +98,7 @@ export class ProjectController {
   }
 
   @Get(':id/team')
-  @RequirePermission('PROJECTS', 'view')
+  @RequirePermission('PROJECT_PROJECTS', 'view')
   @HttpCode(HttpStatus.OK)
   getTeam(
     @Param('id', ParseUUIDPipe) id: string,
@@ -108,7 +108,7 @@ export class ProjectController {
   }
 
   @Get(':id/contracts')
-  @RequirePermission('PROJECTS', 'view')
+  @RequirePermission('PROJECT_PROJECTS', 'view')
   @HttpCode(HttpStatus.OK)
   getContracts(
     @Param('id', ParseUUIDPipe) id: string,
@@ -119,7 +119,7 @@ export class ProjectController {
 
   @AuditLog(AuditLogModule.PROJECT, AuditAction.UNASSIGN, 'project_team_member', { entityIdParam: 'userId' })
   @Delete(':id/team/:userId')
-  @RequirePermission('PROJECTS', 'delete')
+  @RequirePermission('PROJECT_PROJECTS', 'delete')
   @HttpCode(HttpStatus.OK)
   removeTeamMember(
     @Param('id', ParseUUIDPipe) id: string,
@@ -130,7 +130,7 @@ export class ProjectController {
   }
 
   @Delete(':id/contracts/:contractId')
-  @RequirePermission('PROJECTS', 'delete')
+  @RequirePermission('PROJECT_PROJECTS', 'delete')
   @HttpCode(HttpStatus.OK)
   removeContract(
     @Param('id', ParseUUIDPipe) id: string,

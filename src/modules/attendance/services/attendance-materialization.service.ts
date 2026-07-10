@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
@@ -13,7 +13,10 @@ import { AttendanceRule } from '../entities/attendance-rule.entity';
 import { AttendanceRecordRepository } from '../repositories/attendance-record.repository';
 import { AttendanceRuleRepository } from '../repositories/attendance-rule.repository';
 import { RuleAssignmentRepository } from '../repositories/rule-assignment.repository';
-import { AuditService } from '../../audit/services/audit.service';
+import {
+  AUDIT_SERVICE_TOKEN,
+} from '../../audit/interfaces/audit-service.interface';
+import type { IAuditService } from '../../audit/interfaces/audit-service.interface';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AttendanceStatus } from '../enums/attendance-status.enum';
@@ -79,7 +82,8 @@ export class AttendanceMaterializationService {
     private readonly recordRepo: AttendanceRecordRepository,
     private readonly ruleRepo: AttendanceRuleRepository,
     private readonly assignmentRepo: RuleAssignmentRepository,
-    private readonly auditService: AuditService,
+    @Inject(AUDIT_SERVICE_TOKEN)
+    private readonly auditService: IAuditService,
   ) {}
 
   /**
@@ -215,9 +219,12 @@ export class AttendanceMaterializationService {
             reason: 'daily-materialization-job',
           });
 
-          if (status === AttendanceStatus.WEEKLY_OFF) summary.weekly_off_created++;
-          else if (status === AttendanceStatus.HOLIDAY) summary.holiday_created++;
-          else if (status === AttendanceStatus.ON_LEAVE) summary.on_leave_created++;
+          if (status === AttendanceStatus.WEEKLY_OFF)
+            summary.weekly_off_created++;
+          else if (status === AttendanceStatus.HOLIDAY)
+            summary.holiday_created++;
+          else if (status === AttendanceStatus.ON_LEAVE)
+            summary.on_leave_created++;
           else summary.absent_created++;
         } catch (err) {
           summary.errors++;
@@ -246,7 +253,10 @@ export class AttendanceMaterializationService {
     const result = await this.recordEntityRepo
       .createQueryBuilder()
       .update(AttendanceRecord)
-      .set({ correction_status: CorrectionStatus.CLOSED, modified_by: SYSTEM_USER_ID })
+      .set({
+        correction_status: CorrectionStatus.CLOSED,
+        modified_by: SYSTEM_USER_ID,
+      })
       .where('has_auto_checkout = true')
       .andWhere('correction_status IS NULL')
       .andWhere('is_deleted = false')
@@ -266,7 +276,9 @@ export class AttendanceMaterializationService {
 
   /** On leave approval: stamp ON_LEAVE across the leave's working days. */
   async syncLeaveToAttendance(leaveRequestId: string): Promise<void> {
-    const leave = await this.leaveRepo.findOne({ where: { id: leaveRequestId } });
+    const leave = await this.leaveRepo.findOne({
+      where: { id: leaveRequestId },
+    });
     if (!leave || leave.request_status !== LeaveRequestStatus.APPROVED) return;
 
     const emp = await this.userRepo.findOne({
@@ -304,10 +316,15 @@ export class AttendanceMaterializationService {
             source: AttendanceSource.AUTO,
             modified_by: SYSTEM_USER_ID,
           });
-          await this.writeAudit(emp, existing.id, AuditEventType.AUTO_LEAVE_SYNC, {
-            from: AttendanceStatus.ABSENT,
-            to: AttendanceStatus.ON_LEAVE,
-          });
+          await this.writeAudit(
+            emp,
+            existing.id,
+            AuditEventType.AUTO_LEAVE_SYNC,
+            {
+              from: AttendanceStatus.ABSENT,
+              to: AttendanceStatus.ON_LEAVE,
+            },
+          );
         } else {
           const created = await this.createAutoRecord(
             emp,
@@ -315,10 +332,15 @@ export class AttendanceMaterializationService {
             rule,
             AttendanceStatus.ON_LEAVE,
           );
-          await this.writeAudit(emp, created.id, AuditEventType.AUTO_LEAVE_SYNC, {
-            attendance_status: AttendanceStatus.ON_LEAVE,
-            date,
-          });
+          await this.writeAudit(
+            emp,
+            created.id,
+            AuditEventType.AUTO_LEAVE_SYNC,
+            {
+              attendance_status: AttendanceStatus.ON_LEAVE,
+              date,
+            },
+          );
         }
       } catch (err) {
         this.logger.error(
@@ -330,7 +352,9 @@ export class AttendanceMaterializationService {
 
   /** On leave cancellation: revert AUTO ON_LEAVE days back to their natural status. */
   async reverseLeaveSync(leaveRequestId: string): Promise<void> {
-    const leave = await this.leaveRepo.findOne({ where: { id: leaveRequestId } });
+    const leave = await this.leaveRepo.findOne({
+      where: { id: leaveRequestId },
+    });
     if (!leave) return;
     const emp = await this.userRepo.findOne({
       where: { id: leave.employee_id },
@@ -434,10 +458,15 @@ export class AttendanceMaterializationService {
             rule,
             AttendanceStatus.HOLIDAY,
           );
-          await this.writeAudit(emp, created.id, AuditEventType.AUTO_HOLIDAY_SYNC, {
-            attendance_status: AttendanceStatus.HOLIDAY,
-            date,
-          });
+          await this.writeAudit(
+            emp,
+            created.id,
+            AuditEventType.AUTO_HOLIDAY_SYNC,
+            {
+              attendance_status: AttendanceStatus.HOLIDAY,
+              date,
+            },
+          );
         }
       } catch (err) {
         this.logger.error(
@@ -470,7 +499,9 @@ export class AttendanceMaterializationService {
     const ruleCache = new Map<string, AttendanceRule | null>();
 
     for (const rec of records) {
-      const emp = await this.userRepo.findOne({ where: { id: rec.employee_id } });
+      const emp = await this.userRepo.findOne({
+        where: { id: rec.employee_id },
+      });
       const rule = await this.resolveRule(
         orgId,
         rec.employee_id,
@@ -497,10 +528,7 @@ export class AttendanceMaterializationService {
 
   // ─── Internals ──────────────────────────────────────────────────────────────
 
-  private async isHolidayForOrg(
-    orgId: string,
-    date: string,
-  ): Promise<boolean> {
+  private async isHolidayForOrg(orgId: string, date: string): Promise<boolean> {
     const count = await this.holidayRepo
       .createQueryBuilder('h')
       .innerJoin('h.calendar', 'c')
@@ -541,7 +569,8 @@ export class AttendanceMaterializationService {
       departmentId,
     );
     if (!assignment) return null;
-    if (cache.has(assignment.rule_id)) return cache.get(assignment.rule_id) ?? null;
+    if (cache.has(assignment.rule_id))
+      return cache.get(assignment.rule_id) ?? null;
     const rule = await this.ruleRepo.findOneByOrg(assignment.rule_id, orgId);
     cache.set(assignment.rule_id, rule);
     return rule;
@@ -605,10 +634,7 @@ function toDateStr(value: Date | string | null | undefined): string | null {
 }
 
 /** Inclusive list of YYYY-MM-DD dates between two date values (UTC-stable). */
-function eachDate(
-  from: Date | string,
-  to: Date | string,
-): string[] {
+function eachDate(from: Date | string, to: Date | string): string[] {
   const fromStr = toDateStr(from);
   const toStr = toDateStr(to);
   const out: string[] = [];

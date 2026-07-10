@@ -7,11 +7,13 @@ import { EnterpriseService } from './services/enterprise.service';
 import { EnterpriseRepository } from './repositories/enterprise.repository';
 import { EnterpriseAppRepository } from './repositories/enterprise-app.repository';
 import { AppManagementModule } from '../app/app-management.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Enterprise, EnterpriseApp]),
     forwardRef(() => AppManagementModule),
+    RbacModule,
   ],
   controllers: [EnterpriseController],
   providers: [EnterpriseService, EnterpriseRepository, EnterpriseAppRepository],

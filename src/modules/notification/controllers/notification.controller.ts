@@ -36,7 +36,6 @@ export class NotificationController {
   ) {}
 
   @Get()
-  @RequirePermission('NOTIFICATION', 'view')
   @ApiOperation({ summary: 'Get all active in-app notifications for the current user' })
   @ApiResponse({ status: 200, description: 'List of in-app notifications' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -45,7 +44,6 @@ export class NotificationController {
   }
 
   @Get('unread-count')
-  @RequirePermission('NOTIFICATION', 'view')
   @ApiOperation({ summary: 'Get unread in-app notification count for the current user' })
   @ApiResponse({ status: 200, description: 'Unread notification count', schema: { example: { count: 3 } } })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -55,7 +53,6 @@ export class NotificationController {
   }
 
   @Get('unread')
-  @RequirePermission('NOTIFICATION', 'view')
   @ApiOperation({ summary: 'Get unread in-app notifications for the current user' })
   @ApiResponse({ status: 200, description: 'List of unread in-app notifications' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -64,7 +61,6 @@ export class NotificationController {
   }
 
   @Patch('read-all')
-  @RequirePermission('NOTIFICATION', 'update')
   @ApiOperation({ summary: 'Mark all notifications as read' })
   @ApiResponse({ status: 200, description: 'All notifications marked as read', schema: { example: { success: true } } })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -74,7 +70,6 @@ export class NotificationController {
   }
 
   @Patch(':id/read')
-  @RequirePermission('NOTIFICATION', 'update')
   @ApiOperation({ summary: 'Mark a specific notification as read' })
   @ApiResponse({ status: 200, description: 'Notification marked as read', schema: { example: { success: true } } })
   @ApiResponse({ status: 400, description: 'Invalid UUID' })
@@ -88,7 +83,6 @@ export class NotificationController {
   }
 
   @Get('preferences')
-  @RequirePermission('NOTIFICATION', 'view')
   @ApiOperation({ summary: 'Get all notification preferences for the current user' })
   @ApiResponse({ status: 200, description: 'List of saved notification preferences' })
   async getPreferences(@LoggedInUser() user: LoggedInUserInterface) {
@@ -96,7 +90,6 @@ export class NotificationController {
   }
 
   @Patch('preferences')
-  @RequirePermission('NOTIFICATION', 'update')
   @ApiOperation({ summary: 'Create or update a notification preference' })
   @ApiResponse({ status: 200, description: 'Preference saved' })
   async updatePreference(
@@ -107,7 +100,6 @@ export class NotificationController {
   }
 
   @Get('vapid-public-key')
-  @RequirePermission('NOTIFICATION', 'view')
   @ApiOperation({ summary: 'Get the VAPID public key for web push subscription' })
   @ApiResponse({ status: 200, description: 'VAPID public key', schema: { example: { publicKey: 'BCtYb8RU...' } } })
   getVapidPublicKey() {
@@ -115,7 +107,6 @@ export class NotificationController {
   }
 
   @Post('push-subscription')
-  @RequirePermission('NOTIFICATION', 'create')
   @ApiOperation({ summary: 'Register a browser push subscription for the current user' })
   @ApiResponse({ status: 201, description: 'Subscription registered' })
   async subscribePush(
@@ -133,7 +124,6 @@ export class NotificationController {
   }
 
   @Delete('push-subscription')
-  @RequirePermission('NOTIFICATION', 'delete')
   @ApiOperation({ summary: 'Remove a browser push subscription for the current user' })
   @ApiResponse({ status: 200, description: 'Subscription removed', schema: { example: { success: true } } })
   async unsubscribePush(
@@ -146,7 +136,6 @@ export class NotificationController {
 
   // TODO: remove before production
   @Post('test')
-  @RequirePermission('NOTIFICATION', 'create')
   @ApiOperation({ summary: '[DEV] Create a test notification for the current user' })
   @ApiResponse({ status: 201, description: 'Test notification created' })
   async createTestNotification(@LoggedInUser() user: LoggedInUserInterface) {

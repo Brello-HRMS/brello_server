@@ -29,14 +29,14 @@ export class OrganizationController {
 
   @AuditLog(AuditLogModule.ORGANIZATION, AuditAction.CREATE, 'organization')
   @Post('setup')
-  @RequirePermission('ORGANIZATION', 'create')
+  @RequirePermission('ORGANISATION', 'create')
   @HttpCode(HttpStatus.OK)
   async setupCompany(@Body() dto: SetupCompanyDto) {
     return this.organizationService.setupCompany(dto);
   }
 
   @Get()
-  @RequirePermission('ORGANIZATION', 'view')
+  @RequirePermission('ORGANISATION', 'view')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, AccessGuard)
@@ -45,7 +45,7 @@ export class OrganizationController {
   }
 
   @Get(':id')
-  @RequirePermission('ORGANIZATION', 'view')
+  @RequirePermission('ORGANISATION', 'view')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, AccessGuard)
@@ -57,7 +57,7 @@ export class OrganizationController {
   }
 
   @Get('enterprise/:enterpriseId')
-  @RequirePermission('ORGANIZATION', 'view')
+  @RequirePermission('ORGANISATION', 'view')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, AccessGuard)
@@ -69,7 +69,7 @@ export class OrganizationController {
   }
 
   @Get(':id/stats')
-  @RequirePermission('ORGANIZATION', 'view')
+  @RequirePermission('ORGANISATION', 'view')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
   getStats(
@@ -81,7 +81,7 @@ export class OrganizationController {
 
   @AuditLog(AuditLogModule.ORGANIZATION, AuditAction.UPDATE, 'organization')
   @Patch(':id')
-  @RequirePermission('ORGANIZATION', 'update')
+  @RequirePermission('ORGANISATION', 'update')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, AccessGuard)
@@ -95,7 +95,7 @@ export class OrganizationController {
 
   @AuditLog(AuditLogModule.ORGANIZATION, AuditAction.DELETE, 'organization')
   @Delete(':id')
-  @RequirePermission('ORGANIZATION', 'delete')
+  @RequirePermission('ORGANISATION', 'delete')
   @UseGuards(JwtAuthGuard, AccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard, AccessGuard)

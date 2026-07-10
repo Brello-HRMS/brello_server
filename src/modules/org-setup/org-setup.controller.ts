@@ -12,7 +12,7 @@ export class OrgSetupController {
   constructor(private readonly orgSetupService: OrgSetupService) {}
 
   @Get('setup-status')
-  @RequirePermission('ORG_SETUP', 'view')
+  @RequirePermission('ORG_PROFILE', 'view')
   async getSetupStatus(@LoggedInUser() user: LoggedInUserInterface) {
     if (!user || !user.organizationId) {
       return null;

@@ -26,7 +26,7 @@ export class OrganizationProfileController {
   constructor(private readonly profileService: OrganizationProfileService) {}
 
   @Post()
-  @RequirePermission('ORGANIZATION', 'create')
+  @RequirePermission('ORG_PROFILE', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createDto: CreateOrganizationProfileDto,
@@ -36,7 +36,7 @@ export class OrganizationProfileController {
   }
 
   @Get(':id')
-  @RequirePermission('ORGANIZATION', 'view')
+  @RequirePermission('ORG_PROFILE', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -46,7 +46,7 @@ export class OrganizationProfileController {
   }
 
   @Get('organization/:organizationId')
-  @RequirePermission('ORGANIZATION', 'view')
+  @RequirePermission('ORG_PROFILE', 'view')
   @HttpCode(HttpStatus.OK)
   findByOrganization(
     @Param('organizationId', ParseUUIDPipe) organizationId: string,
@@ -56,7 +56,7 @@ export class OrganizationProfileController {
   }
 
   @Patch(':id')
-  @RequirePermission('ORGANIZATION', 'update')
+  @RequirePermission('ORG_PROFILE', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -67,7 +67,7 @@ export class OrganizationProfileController {
   }
 
   @Delete(':id')
-  @RequirePermission('ORGANIZATION', 'delete')
+  @RequirePermission('ORG_PROFILE', 'delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,

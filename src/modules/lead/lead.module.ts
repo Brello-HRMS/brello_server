@@ -9,12 +9,14 @@ import { LeadService } from './services/lead.service';
 import { LeadRepository } from './repositories/lead.repository';
 import { OtpRepository } from '../auth/repositories/otp.repository';
 import { NotificationModule } from '../notification/notification.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Lead, Otp, User]),
     ConfigModule,
     NotificationModule,
+    RbacModule,
   ],
   controllers: [LeadController],
   providers: [LeadService, LeadRepository, OtpRepository],

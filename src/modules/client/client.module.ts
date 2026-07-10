@@ -5,9 +5,10 @@ import { Client } from './entities/client.entity';
 import { ClientRepository } from './repositories/client.repository';
 import { ClientService } from './services/client.service';
 import { ClientController } from './controllers/client.controller';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Client]), GlobalSearchModule],
+  imports: [TypeOrmModule.forFeature([Client]), RbacModule, GlobalSearchModule],
   controllers: [ClientController],
   providers: [ClientService, ClientRepository],
   exports: [ClientService, ClientRepository],

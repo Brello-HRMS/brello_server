@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserRoleMap } from './entities/user-role-map.entity';
 import { AppModule as AppEntity } from '../app-module/entities/app-module.entity';
@@ -35,7 +35,7 @@ import { GlobalSearchModule } from '../global-search/global-search.module';
  */
 @Module({
   imports: [
-    GlobalSearchModule,
+    forwardRef(() => GlobalSearchModule),
     TypeOrmModule.forFeature([
       Role,
       RoleApp,

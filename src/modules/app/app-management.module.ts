@@ -6,11 +6,13 @@ import { AppController } from './controllers/app.controller';
 import { EnterpriseModule } from '../enterprise/enterprise.module';
 
 import { AppRepository } from './repositories/app.repository';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([App]),
     forwardRef(() => EnterpriseModule),
+    RbacModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppRepository],

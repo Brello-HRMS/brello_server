@@ -32,7 +32,7 @@ export class TimesheetController {
   // ─── Dashboard ──────────────────────────────────────────────────────────────
 
   @Get('dashboard')
-  @RequirePermission('TIMESHEET', 'view')
+  @RequirePermission('PROJECT_TIMESHEET', 'view')
   getDashboard(@LoggedInUser() user: LoggedInUserInterface) {
     return this.timesheetService.getDashboard(user);
   }
@@ -40,7 +40,7 @@ export class TimesheetController {
   // ─── Assigned Projects Dropdown ─────────────────────────────────────────────
 
   @Get('projects')
-  @RequirePermission('TIMESHEET', 'view')
+  @RequirePermission('PROJECT_TIMESHEET', 'view')
   getAssignedProjects(@LoggedInUser() user: LoggedInUserInterface) {
     return this.timesheetService.getAssignedProjects(user);
   }
@@ -48,7 +48,7 @@ export class TimesheetController {
   // ─── Calendar ───────────────────────────────────────────────────────────────
 
   @Get('calendar')
-  @RequirePermission('TIMESHEET', 'view')
+  @RequirePermission('PROJECT_TIMESHEET', 'view')
   getCalendarEntries(
     @LoggedInUser() user: LoggedInUserInterface,
     @Query() query: TimesheetCalendarQueryDto,
@@ -59,7 +59,7 @@ export class TimesheetController {
   // ─── Create ─────────────────────────────────────────────────────────────────
 
   @Post()
-  @RequirePermission('TIMESHEET', 'create')
+  @RequirePermission('PROJECT_TIMESHEET', 'create')
   @HttpCode(HttpStatus.CREATED)
   createEntry(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -71,7 +71,7 @@ export class TimesheetController {
   // ─── Update ─────────────────────────────────────────────────────────────────
 
   @Patch(':id')
-  @RequirePermission('TIMESHEET', 'update')
+  @RequirePermission('PROJECT_TIMESHEET', 'update')
   updateEntry(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -83,7 +83,7 @@ export class TimesheetController {
   // ─── Delete ─────────────────────────────────────────────────────────────────
 
   @Delete(':id')
-  @RequirePermission('TIMESHEET', 'delete')
+  @RequirePermission('PROJECT_TIMESHEET', 'delete')
   @HttpCode(HttpStatus.OK)
   deleteEntry(
     @LoggedInUser() user: LoggedInUserInterface,

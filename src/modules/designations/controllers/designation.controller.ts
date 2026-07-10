@@ -39,7 +39,7 @@ export class DesignationController {
     // Create a new designation
     @AuditLog(AuditLogModule.DESIGNATION, AuditAction.CREATE, 'designation')
     @Post()
-    @RequirePermission('DESIGNATIONS', 'create')
+    @RequirePermission('ORG_DESIGNATIONS', 'create')
     @HttpCode(HttpStatus.CREATED)
     create(
         @CurrentUser('organizationId') orgId: string,
@@ -54,7 +54,7 @@ export class DesignationController {
      * Accepts optional query params: search, status, department_id
      */
     @Get()
-    @RequirePermission('DESIGNATIONS', 'view')
+    @RequirePermission('ORG_DESIGNATIONS', 'view')
     @HttpCode(HttpStatus.OK)
     findAll(
         @CurrentUser('organizationId') orgId: string,
@@ -65,7 +65,7 @@ export class DesignationController {
 
     // Get a single designation by its ID (must belong to user's org)
     @Get(':id')
-    @RequirePermission('DESIGNATIONS', 'view')
+    @RequirePermission('ORG_DESIGNATIONS', 'view')
     @HttpCode(HttpStatus.OK)
     findOne(
         @CurrentUser('organizationId') orgId: string,
@@ -77,7 +77,7 @@ export class DesignationController {
     // Partially update a designation (code and org_id are immutable)
     @AuditLog(AuditLogModule.DESIGNATION, AuditAction.UPDATE, 'designation')
     @Patch(':id')
-    @RequirePermission('DESIGNATIONS', 'update')
+    @RequirePermission('ORG_DESIGNATIONS', 'update')
     @HttpCode(HttpStatus.OK)
     update(
         @CurrentUser('organizationId') orgId: string,
@@ -90,7 +90,7 @@ export class DesignationController {
 
     @AuditLog(AuditLogModule.DESIGNATION, AuditAction.DELETE, 'designation')
     @Delete(':id')
-    @RequirePermission('DESIGNATIONS', 'delete')
+    @RequirePermission('ORG_DESIGNATIONS', 'delete')
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(
         @CurrentUser('organizationId') orgId: string,

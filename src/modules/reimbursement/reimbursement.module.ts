@@ -14,6 +14,7 @@ import { ReimbursementService } from './services/reimbursement.service';
 import { AdminReimbursementService } from './services/admin-reimbursement.service';
 import { ReimbursementController } from './controllers/reimbursement.controller';
 import { AdminReimbursementController } from './controllers/admin-reimbursement.controller';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
@@ -26,9 +27,14 @@ import { AdminReimbursementController } from './controllers/admin-reimbursement.
       Document,
     ]),
     NotificationModule,
+    RbacModule,
   ],
   controllers: [ReimbursementController, AdminReimbursementController],
-  providers: [ReimbursementRepository, ReimbursementService, AdminReimbursementService],
+  providers: [
+    ReimbursementRepository,
+    ReimbursementService,
+    AdminReimbursementService,
+  ],
   exports: [ReimbursementService, AdminReimbursementService],
 })
 export class ReimbursementModule {}

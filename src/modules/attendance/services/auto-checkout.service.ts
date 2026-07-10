@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
@@ -10,7 +10,10 @@ import { AttendanceRecordRepository } from '../repositories/attendance-record.re
 import { ShiftRepository } from '../repositories/shift.repository';
 import { AttendanceRuleRepository } from '../repositories/attendance-rule.repository';
 import { AttendanceService } from './attendance.service';
-import { AuditService } from '../../audit/services/audit.service';
+import {
+  AUDIT_SERVICE_TOKEN,
+} from '../../audit/interfaces/audit-service.interface';
+import type { IAuditService } from '../../audit/interfaces/audit-service.interface';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { resolveAutoCheckoutAt, formatTime12 } from './attendance-calc.util';
@@ -40,7 +43,8 @@ export class AutoCheckoutService {
     private readonly recordRepo: AttendanceRecordRepository,
     private readonly shiftRepo: ShiftRepository,
     private readonly ruleRepo: AttendanceRuleRepository,
-    private readonly auditService: AuditService,
+    @Inject(AUDIT_SERVICE_TOKEN)
+    private readonly auditService: IAuditService,
     private readonly attendanceService: AttendanceService,
     private readonly notificationService: NotificationService,
   ) {}
@@ -60,7 +64,11 @@ export class AutoCheckoutService {
   }
 
   async processOpenSessions(limit = BATCH_LIMIT): Promise<AutoCheckoutSummary> {
-    const summary: AutoCheckoutSummary = { processed: 0, skipped: 0, errors: 0 };
+    const summary: AutoCheckoutSummary = {
+      processed: 0,
+      skipped: 0,
+      errors: 0,
+    };
     const now = new Date();
 
     const openSessions = await this.sessionRepo.find({
@@ -93,7 +101,10 @@ export class AutoCheckoutService {
           continue;
         }
 
-        const autoCheckoutAt = resolveAutoCheckoutAt(session.check_in_at, shift);
+        const autoCheckoutAt = resolveAutoCheckoutAt(
+          session.check_in_at,
+          shift,
+        );
         if (now < autoCheckoutAt) {
           summary.skipped++;
           continue;
@@ -171,7 +182,10 @@ export class AutoCheckoutService {
         const shift = await this.shiftRepo.findOneByOrg(record.shift_id, orgId);
         if (!shift || !shift.auto_checkout_enabled) continue;
 
-        const autoCheckoutAt = resolveAutoCheckoutAt(session.check_in_at, shift);
+        const autoCheckoutAt = resolveAutoCheckoutAt(
+          session.check_in_at,
+          shift,
+        );
         const warningAt = new Date(autoCheckoutAt.getTime() - 30 * 60_000);
         if (now < warningAt || now >= autoCheckoutAt) continue;
 

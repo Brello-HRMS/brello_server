@@ -10,6 +10,7 @@ import { DocumentController } from './controllers/document.controller';
 import { DocumentViewController } from './controllers/document-view.controller';
 import { EnterpriseModule } from '../enterprise/enterprise.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OrganizationModule } from '../organization/organization.module';
     ConfigModule,
     EnterpriseModule,
     forwardRef(() => OrganizationModule),
+    RbacModule,
   ],
   controllers: [DocumentController, DocumentViewController],
   providers: [DocumentRepository, StorageService, DocumentService],

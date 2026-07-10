@@ -32,7 +32,7 @@ export class ClientController {
 
   @AuditLog(AuditLogModule.CLIENT, AuditAction.CREATE, 'client')
   @Post()
-  @RequirePermission('CLIENT', 'create')
+  @RequirePermission('PROJECT_CLIENTS', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createClientDto: CreateClientDto,
@@ -42,7 +42,7 @@ export class ClientController {
   }
 
   @Get()
-  @RequirePermission('CLIENT', 'view')
+  @RequirePermission('PROJECT_CLIENTS', 'view')
   @HttpCode(HttpStatus.OK)
   findAll(
     @Query() query: ListClientsDto,
@@ -52,7 +52,7 @@ export class ClientController {
   }
 
   @Get(':id')
-  @RequirePermission('CLIENT', 'view')
+  @RequirePermission('PROJECT_CLIENTS', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -63,7 +63,7 @@ export class ClientController {
 
   @AuditLog(AuditLogModule.CLIENT, AuditAction.UPDATE, 'client')
   @Patch(':id')
-  @RequirePermission('CLIENT', 'update')
+  @RequirePermission('PROJECT_CLIENTS', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -75,7 +75,7 @@ export class ClientController {
 
   @AuditLog(AuditLogModule.CLIENT, AuditAction.DELETE, 'client')
   @Delete(':id')
-  @RequirePermission('CLIENT', 'delete')
+  @RequirePermission('PROJECT_CLIENTS', 'delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { RbacModule } from '../rbac/rbac.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrgSetupController } from './org-setup.controller';
 import { OrgSetupService } from './org-setup.service';
@@ -27,6 +28,7 @@ import { OrgSetupCron } from './org-setup.cron';
       Organization,
       User,
     ]),
+    RbacModule,
   ],
   controllers: [OrgSetupController],
   providers: [OrgSetupService, OrgSetupCron],

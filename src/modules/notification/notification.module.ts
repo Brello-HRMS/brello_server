@@ -19,13 +19,19 @@ import { PushWorker } from './workers/push.worker';
 import { Notification } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { PushSubscription } from './entities/push-subscription.entity';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
     ConfigModule,
     RedisModule,
     QueueModule,
-    TypeOrmModule.forFeature([Notification, NotificationPreference, PushSubscription]),
+    RbacModule,
+    TypeOrmModule.forFeature([
+      Notification,
+      NotificationPreference,
+      PushSubscription,
+    ]),
   ],
   controllers: [NotificationController, SseController],
   providers: [
