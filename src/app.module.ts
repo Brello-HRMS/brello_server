@@ -33,7 +33,7 @@ import { GlobalSearchModule } from './modules/global-search/global-search.module
 import { OrgSetupModule } from './modules/org-setup/org-setup.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { PlatformModule } from './modules/platform/platform.module';
-import { HrTemplateModule } from './modules/hr-template/hr-template.module';
+import { LetterManagementModule } from './modules/letter-management/letter-management.module';
 import { TimesheetModule } from './modules/timesheet/timesheet.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { AuditCoreModule } from './modules/audit/audit.module';
@@ -88,7 +88,7 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
     OrgSetupModule,
     BillingModule,
     PlatformModule,
-    HrTemplateModule,
+    LetterManagementModule,
     TimesheetModule,
     FeedbackModule,
     AuditCoreModule,
