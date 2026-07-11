@@ -78,6 +78,8 @@ describe('PayrollProcessingService', () => {
     audit = { record: jest.fn() };
     payslipPdf = { generateForRun: jest.fn() };
 
+    let notificationService: any = { send: jest.fn() };
+
     service = new PayrollProcessingService(
       runRepo,
       itemRepo,
@@ -88,6 +90,7 @@ describe('PayrollProcessingService', () => {
       runService,
       audit,
       payslipPdf,
+      notificationService,
     );
 
     salaryRepo.findActiveSalary.mockResolvedValue({ id: 's1', ctc: 120000 });

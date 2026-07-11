@@ -61,7 +61,7 @@ export class AppModule extends BaseEntity {
 
   /** Parent module id — null for root modules */
   @Column({ type: 'uuid', nullable: true })
-  parent_id: string;
+  parent_id: string | null;
 
   @ManyToOne(() => AppModule, { nullable: true, eager: false })
   @JoinColumn({ name: 'parent_id' })

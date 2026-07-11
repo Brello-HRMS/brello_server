@@ -13,7 +13,11 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AppModuleService } from '../services/app-module.service';
-import { CreateAppModuleDto, UpdateAppModuleDto } from '../dto/app-module.dto';
+import {
+  CreateAppModuleDto,
+  UpdateAppModuleDto,
+  ReorderAppModulesDto,
+} from '../dto/app-module.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
@@ -53,6 +57,16 @@ export class AppModuleController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     return this.appModuleService.findOne(id, user);
+  }
+
+  @Patch('reorder')
+  @HttpCode(HttpStatus.OK)
+  @RequirePermission('ACCESS_PERMISSIONS', 'edit')
+  reorder(
+    @Body() reorderDto: ReorderAppModulesDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.appModuleService.reorder(reorderDto, user);
   }
 
   @Patch(':id')

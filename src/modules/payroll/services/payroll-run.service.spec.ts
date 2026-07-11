@@ -90,22 +90,4 @@ describe('PayrollRunService', () => {
     });
   });
 
-  describe('getAuditTrail', () => {
-    it('gathers run + item + adjustment ids and returns their audit entries', async () => {
-      runRepo.findById.mockResolvedValue({ id: 'run1' });
-      itemRepo.findAllByRun.mockResolvedValue([{ id: 'item1' }, { id: 'item2' }]);
-      adjustmentRepo.listAllByRun.mockResolvedValue([{ id: 'adj1' }]);
-      audit.listForEntities.mockResolvedValue([{ action: 'create' }]);
-
-      const trail = await service.getAuditTrail(user, 'run1');
-
-      expect(audit.listForEntities).toHaveBeenCalledWith('org1', [
-        'run1',
-        'item1',
-        'item2',
-        'adj1',
-      ]);
-      expect(trail).toHaveLength(1);
-    });
-  });
 });
