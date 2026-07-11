@@ -5,10 +5,7 @@ import { Announcement } from '../entities/announcement.entity';
 import { AnnouncementTarget } from '../entities/announcement-target.entity';
 import { AnnouncementRead } from '../entities/announcement-read.entity';
 import { AnnouncementAttachment } from '../entities/announcement-attachment.entity';
-import {
-  AnnouncementStatus,
-  AnnouncementTargetType,
-} from '../enums/announcement.enum';
+import { AnnouncementTargetType } from '../enums/announcement.enum';
 import { AdminAnnouncementQueryDto } from '../dto/admin-query.dto';
 import { AttachmentDto, AudienceDto } from '../dto/create-announcement.dto';
 
@@ -61,7 +58,9 @@ export class AnnouncementRepository {
     return qb.getManyAndCount();
   }
 
-  async getReadCounts(announcementIds: string[]): Promise<Record<string, number>> {
+  async getReadCounts(
+    announcementIds: string[],
+  ): Promise<Record<string, number>> {
     if (announcementIds.length === 0) return {};
 
     const counts = await this.readRepo
@@ -124,12 +123,16 @@ export class AnnouncementRepository {
       await manager.save(Announcement, announcement);
 
       if (audience) {
-        await manager.delete(AnnouncementTarget, { announcement_id: announcement.id });
+        await manager.delete(AnnouncementTarget, {
+          announcement_id: announcement.id,
+        });
         await this.saveTargets(manager, announcement.id, audience);
       }
 
       if (attachments !== undefined) {
-        await manager.delete(AnnouncementAttachment, { announcement_id: announcement.id });
+        await manager.delete(AnnouncementAttachment, {
+          announcement_id: announcement.id,
+        });
         if (attachments.length > 0) {
           const attEntities = attachments.map((att) =>
             manager.create(AnnouncementAttachment, {
@@ -202,7 +205,10 @@ export class AnnouncementRepository {
     if (announcementIds.length === 0) return new Set();
 
     const reads = await this.readRepo.find({
-      where: announcementIds.map((id) => ({ announcement_id: id, employee_id: employeeId })),
+      where: announcementIds.map((id) => ({
+        announcement_id: id,
+        employee_id: employeeId,
+      })),
     });
 
     return new Set(reads.map((r) => r.announcement_id));
@@ -225,10 +231,18 @@ export class AnnouncementRepository {
   async findDueScheduled(): Promise<Announcement[]> {
     return this.repo
       .createQueryBuilder('a')
+      .leftJoinAndSelect('a.targets', 'tgt')
       .where("a.ann_status = 'SCHEDULED'")
       .andWhere('a.scheduled_at <= :now', { now: new Date() })
       .andWhere('a.deleted_at IS NULL')
       .getMany();
+  }
+
+  async getReaders(announcementId: string): Promise<AnnouncementRead[]> {
+    return this.readRepo.find({
+      where: { announcement_id: announcementId },
+      order: { viewed_at: 'DESC' },
+    });
   }
 
   private async saveTargets(
@@ -239,23 +253,42 @@ export class AnnouncementRepository {
     const targets: Partial<AnnouncementTarget>[] = [];
 
     if (audience.type === AnnouncementTargetType.ALL) {
-      targets.push({ announcement_id: announcementId, target_type: AnnouncementTargetType.ALL, target_id: null });
+      targets.push({
+        announcement_id: announcementId,
+        target_type: AnnouncementTargetType.ALL,
+        target_id: null,
+      });
     } else if (audience.type === AnnouncementTargetType.DEPARTMENT) {
       for (const id of audience.department_ids ?? []) {
-        targets.push({ announcement_id: announcementId, target_type: AnnouncementTargetType.DEPARTMENT, target_id: id });
+        targets.push({
+          announcement_id: announcementId,
+          target_type: AnnouncementTargetType.DEPARTMENT,
+          target_id: id,
+        });
       }
     } else if (audience.type === AnnouncementTargetType.LOCATION) {
       for (const id of audience.location_ids ?? []) {
-        targets.push({ announcement_id: announcementId, target_type: AnnouncementTargetType.LOCATION, target_id: id });
+        targets.push({
+          announcement_id: announcementId,
+          target_type: AnnouncementTargetType.LOCATION,
+          target_id: id,
+        });
       }
     } else if (audience.type === AnnouncementTargetType.EMPLOYEE) {
       for (const id of audience.employee_ids ?? []) {
-        targets.push({ announcement_id: announcementId, target_type: AnnouncementTargetType.EMPLOYEE, target_id: id });
+        targets.push({
+          announcement_id: announcementId,
+          target_type: AnnouncementTargetType.EMPLOYEE,
+          target_id: id,
+        });
       }
     }
 
     if (targets.length > 0) {
-      await manager.save(AnnouncementTarget, targets.map((t) => manager.create(AnnouncementTarget, t)));
+      await manager.save(
+        AnnouncementTarget,
+        targets.map((t) => manager.create(AnnouncementTarget, t)),
+      );
     }
   }
 }

@@ -38,7 +38,10 @@ export class AnnouncementController {
   @AuditLog(AuditLogModule.ANNOUNCEMENT, AuditAction.CREATE, 'announcement')
   @RequirePermission('ANNOUNCEMENT', 'create')
   @Post()
-  async create(@CurrentUser() user: AuthPayload, @Body() dto: CreateAnnouncementDto) {
+  async create(
+    @CurrentUser() user: AuthPayload,
+    @Body() dto: CreateAnnouncementDto,
+  ) {
     return this.announcementService.create(
       user.enterpriseId,
       user.organizationId,
@@ -49,14 +52,27 @@ export class AnnouncementController {
 
   @RequirePermission('ANNOUNCEMENT', 'view')
   @Get()
-  async findAll(@CurrentUser() user: AuthPayload, @Query() query: AdminAnnouncementQueryDto) {
-    return this.announcementService.findAll(user.enterpriseId, user.organizationId, query);
+  async findAll(
+    @CurrentUser() user: AuthPayload,
+    @Query() query: AdminAnnouncementQueryDto,
+  ) {
+    return this.announcementService.findAll(
+      user.enterpriseId,
+      user.organizationId,
+      query,
+    );
   }
 
   @RequirePermission('ANNOUNCEMENT', 'view')
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.announcementService.findOne(id);
+  }
+
+  @RequirePermission('ANNOUNCEMENT', 'view')
+  @Get(':id/readers')
+  async getReaders(@Param('id') id: string) {
+    return this.announcementService.getReaders(id);
   }
 
   @AuditLog(AuditLogModule.ANNOUNCEMENT, AuditAction.UPDATE, 'announcement')

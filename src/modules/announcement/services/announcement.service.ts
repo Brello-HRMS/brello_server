@@ -13,10 +13,18 @@ import { AdminAnnouncementQueryDto } from '../dto/admin-query.dto';
 import {
   AnnouncementStatus,
   AnnouncementPublishType,
+  AnnouncementTargetType,
 } from '../enums/announcement.enum';
 import { User } from '../../user/entities/user.entity';
+import { Status } from '../../../common/enums';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+import {
+  AnnouncementNotificationService,
+  AnnouncementRecipient,
+} from './announcement-notification.service';
+import type { Announcement } from '../entities/announcement.entity';
+import type { AnnouncementTarget } from '../entities/announcement-target.entity';
 
 const EDITABLE_STATUSES: AnnouncementStatus[] = [
   AnnouncementStatus.DRAFT,
@@ -31,6 +39,7 @@ export class AnnouncementService {
     private readonly userRepo: Repository<User>,
     private readonly searchIndexingService: SearchIndexingService,
     private readonly auditContext: AuditContextService,
+    private readonly announcementNotificationService: AnnouncementNotificationService,
   ) {}
 
   async create(
@@ -41,7 +50,9 @@ export class AnnouncementService {
   ) {
     if (dto.publish_type === AnnouncementPublishType.SCHEDULED) {
       if (!dto.scheduled_at) {
-        throw new BadRequestException('scheduled_at is required when publish_type is SCHEDULED');
+        throw new BadRequestException(
+          'scheduled_at is required when publish_type is SCHEDULED',
+        );
       }
       if (new Date(dto.scheduled_at) <= new Date()) {
         throw new BadRequestException('scheduled_at must be a future date');
@@ -63,7 +74,8 @@ export class AnnouncementService {
         ann_status: status,
         publish_type: dto.publish_type,
         scheduled_at: dto.scheduled_at ? new Date(dto.scheduled_at) : null,
-        published_at: status === AnnouncementStatus.PUBLISHED ? new Date() : null,
+        published_at:
+          status === AnnouncementStatus.PUBLISHED ? new Date() : null,
         send_push: dto.send_push ?? true,
         send_email: dto.send_email ?? true,
         created_by: userId,
@@ -73,12 +85,21 @@ export class AnnouncementService {
     );
 
     if (announcement.ann_status === AnnouncementStatus.PUBLISHED) {
-      this.searchIndexingService.indexAnnouncement(announcement, enterpriseId, orgId);
+      this.searchIndexingService.indexAnnouncement(
+        announcement,
+        enterpriseId,
+        orgId,
+      );
+      await this.notifyPublishedAudience(announcement);
     }
     return { id: announcement.id, status: announcement.ann_status };
   }
 
-  async findAll(enterpriseId: string, orgId: string, query: AdminAnnouncementQueryDto) {
+  async findAll(
+    enterpriseId: string,
+    orgId: string,
+    query: AdminAnnouncementQueryDto,
+  ) {
     const [announcements, total] = await this.announcementRepository.findAll(
       enterpriseId,
       orgId,
@@ -150,11 +171,7 @@ export class AnnouncementService {
     };
   }
 
-  async update(
-    id: string,
-    userId: string,
-    dto: UpdateAnnouncementDto,
-  ) {
+  async update(id: string, userId: string, dto: UpdateAnnouncementDto) {
     const a = await this.announcementRepository.findById(id);
     if (!a) throw new NotFoundException('Announcement not found');
 
@@ -166,7 +183,10 @@ export class AnnouncementService {
       );
     }
 
-    if (dto.publish_type === AnnouncementPublishType.SCHEDULED && dto.scheduled_at) {
+    if (
+      dto.publish_type === AnnouncementPublishType.SCHEDULED &&
+      dto.scheduled_at
+    ) {
       if (new Date(dto.scheduled_at) <= new Date()) {
         throw new BadRequestException('scheduled_at must be a future date');
       }
@@ -174,10 +194,12 @@ export class AnnouncementService {
 
     const changes: any = {};
     if (dto.title !== undefined) changes.title = dto.title;
-    if (dto.description_html !== undefined) changes.description_html = dto.description_html;
+    if (dto.description_html !== undefined)
+      changes.description_html = dto.description_html;
     if (dto.priority !== undefined) changes.priority = dto.priority;
     if (dto.publish_type !== undefined) changes.publish_type = dto.publish_type;
-    if (dto.scheduled_at !== undefined) changes.scheduled_at = new Date(dto.scheduled_at);
+    if (dto.scheduled_at !== undefined)
+      changes.scheduled_at = new Date(dto.scheduled_at);
     if (dto.send_push !== undefined) changes.send_push = dto.send_push;
     if (dto.send_email !== undefined) changes.send_email = dto.send_email;
 
@@ -197,7 +219,9 @@ export class AnnouncementService {
     if (!a) throw new NotFoundException('Announcement not found');
 
     if (a.ann_status === AnnouncementStatus.ARCHIVED) {
-      throw new ForbiddenException('Archived announcements cannot be published');
+      throw new ForbiddenException(
+        'Archived announcements cannot be published',
+      );
     }
     if (a.ann_status === AnnouncementStatus.PUBLISHED) {
       return { id: a.id, status: a.ann_status };
@@ -209,8 +233,113 @@ export class AnnouncementService {
       updated_by: userId,
     });
 
-    this.searchIndexingService.indexAnnouncement(a, a.enterprise_id, a.organization_id);
+    this.searchIndexingService.indexAnnouncement(
+      a,
+      a.enterprise_id,
+      a.organization_id,
+    );
+    await this.notifyPublishedAudience(a);
     return { id: a.id, status: AnnouncementStatus.PUBLISHED };
+  }
+
+  /** Publishes every SCHEDULED announcement whose scheduled_at has arrived. Returns how many. */
+  async publishDueScheduled(): Promise<number> {
+    const due = await this.announcementRepository.findDueScheduled();
+
+    for (const a of due) {
+      await this.announcementRepository.update(a, {
+        ann_status: AnnouncementStatus.PUBLISHED,
+        published_at: new Date(),
+      });
+      this.searchIndexingService.indexAnnouncement(
+        a,
+        a.enterprise_id,
+        a.organization_id,
+      );
+      await this.notifyPublishedAudience(a);
+    }
+
+    return due.length;
+  }
+
+  async getReaders(id: string) {
+    const announcement = await this.announcementRepository.findById(id);
+    if (!announcement) throw new NotFoundException('Announcement not found');
+
+    const reads = await this.announcementRepository.getReaders(id);
+    const employeeIds = [...new Set(reads.map((r) => r.employee_id))];
+    const employees = employeeIds.length
+      ? await this.userRepo.findByIds(employeeIds)
+      : [];
+    const nameMap = new Map(
+      employees.map((u) => [u.id, `${u.first_name} ${u.last_name}`.trim()]),
+    );
+
+    return reads.map((r) => ({
+      employee_id: r.employee_id,
+      name: nameMap.get(r.employee_id) ?? 'Unknown',
+      viewed_at: r.viewed_at,
+    }));
+  }
+
+  /** Resolves an announcement's audience (ALL / DEPARTMENT / LOCATION / EMPLOYEE) to concrete recipients. */
+  private async resolveAudience(
+    a: Announcement,
+  ): Promise<AnnouncementRecipient[]> {
+    const targets: AnnouncementTarget[] = a.targets ?? [];
+    if (targets.length === 0) return [];
+
+    const hasAll = targets.some(
+      (t) => t.target_type === AnnouncementTargetType.ALL,
+    );
+
+    const qb = this.userRepo
+      .createQueryBuilder('u')
+      .leftJoin('u.user_profile', 'up')
+      .where('u.organization_id = :orgId', { orgId: a.organization_id })
+      .andWhere('u.enterprise_id = :enterpriseId', {
+        enterpriseId: a.enterprise_id,
+      })
+      .andWhere('u.status = :status', { status: Status.ACTIVE })
+      .andWhere('u.deleted_at IS NULL');
+
+    if (!hasAll) {
+      const departmentIds = targets
+        .filter((t) => t.target_type === AnnouncementTargetType.DEPARTMENT)
+        .map((t) => t.target_id!);
+      const locationIds = targets
+        .filter((t) => t.target_type === AnnouncementTargetType.LOCATION)
+        .map((t) => t.target_id!);
+      const employeeIds = targets
+        .filter((t) => t.target_type === AnnouncementTargetType.EMPLOYEE)
+        .map((t) => t.target_id!);
+
+      const clauses: string[] = [];
+      const params: Record<string, unknown> = {};
+      if (departmentIds.length) {
+        clauses.push('u.department_id IN (:...departmentIds)');
+        params.departmentIds = departmentIds;
+      }
+      if (locationIds.length) {
+        clauses.push('up.work_location IN (:...locationIds)');
+        params.locationIds = locationIds;
+      }
+      if (employeeIds.length) {
+        clauses.push('u.id IN (:...employeeIds)');
+        params.employeeIds = employeeIds;
+      }
+      if (clauses.length === 0) return [];
+      qb.andWhere(`(${clauses.join(' OR ')})`, params);
+    }
+
+    const users = await qb.select(['u.id', 'u.email']).getMany();
+    return users.map((u) => ({ id: u.id, email: u.email }));
+  }
+
+  private async notifyPublishedAudience(a: Announcement): Promise<void> {
+    const recipients = await this.resolveAudience(a);
+    if (recipients.length === 0) return;
+    await this.announcementNotificationService.notifyPublished(a, recipients);
   }
 
   async archive(id: string, userId: string) {
@@ -218,7 +347,9 @@ export class AnnouncementService {
     if (!a) throw new NotFoundException('Announcement not found');
 
     if (a.ann_status !== AnnouncementStatus.PUBLISHED) {
-      throw new ForbiddenException('Only published announcements can be archived');
+      throw new ForbiddenException(
+        'Only published announcements can be archived',
+      );
     }
 
     await this.announcementRepository.update(a, {
@@ -250,13 +381,22 @@ export class AnnouncementService {
     const first = targets[0];
     if (first.target_type === 'ALL') return { type: 'ALL' };
     if (first.target_type === 'DEPARTMENT') {
-      return { type: 'DEPARTMENTS', department_ids: targets.map((t) => t.target_id) };
+      return {
+        type: 'DEPARTMENTS',
+        department_ids: targets.map((t) => t.target_id),
+      };
     }
     if (first.target_type === 'LOCATION') {
-      return { type: 'LOCATIONS', location_ids: targets.map((t) => t.target_id) };
+      return {
+        type: 'LOCATIONS',
+        location_ids: targets.map((t) => t.target_id),
+      };
     }
     if (first.target_type === 'EMPLOYEE') {
-      return { type: 'EMPLOYEES', employee_ids: targets.map((t) => t.target_id) };
+      return {
+        type: 'EMPLOYEES',
+        employee_ids: targets.map((t) => t.target_id),
+      };
     }
     return { type: 'ALL' };
   }
