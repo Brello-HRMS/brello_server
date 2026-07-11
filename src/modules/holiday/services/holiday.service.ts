@@ -102,6 +102,11 @@ export class HolidayService {
   }
 
   async getMonthView(user: LoggedInUser, calendarId: string, month: number, year: number): Promise<any> {
+    const calendar = await this.calendarRepo.findOneByOrg(calendarId, user.organizationId);
+    if (!calendar) {
+      throw new NotFoundException(`Calendar ${calendarId} not found`);
+    }
+
     const holidays = await this.holidayRepo.findByCalendar(calendarId, { month });
     
     // Group by date

@@ -6,14 +6,12 @@ import {
 } from '@nestjs/common';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { RejectRemoteDto } from '../dto/reject-remote.dto';
-import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
 import { AttendanceRecordRepository } from '../repositories/attendance-record.repository';
 import { AttendanceSessionRepository } from '../repositories/attendance-session.repository';
 import { RemoteApprovalRepository } from '../repositories/remote-approval.repository';
 import { AttendanceRuleResolverService } from './attendance-rule-resolver.service';
 import { ApprovalStatus } from '../enums/approval-status.enum';
 import { AttendanceStatus } from '../enums/attendance-status.enum';
-import { AuditEventType } from '../enums/audit-event-type.enum';
 import {
   computeAttendanceStatus,
   formatTime12,
@@ -28,7 +26,6 @@ export class RemoteApprovalService {
     private readonly approvalRepo: RemoteApprovalRepository,
     private readonly recordRepo: AttendanceRecordRepository,
     private readonly sessionRepo: AttendanceSessionRepository,
-    private readonly auditRepo: AttendanceAuditLogRepository,
     private readonly ruleResolver: AttendanceRuleResolverService,
   ) {}
 
@@ -108,17 +105,6 @@ export class RemoteApprovalService {
       modified_by: user.userId,
     });
 
-    await this.auditRepo.create({
-      attendance_record_id: record.id,
-      employee_id: record.employee_id,
-      performed_by: user.userId,
-      event_type: AuditEventType.REMOTE_APPROVE,
-      organization_id: user.organizationId,
-      enterprise_id: user.enterpriseId,
-      modified_by: user.userId,
-      new_value: { attendance_status: computed.attendance_status },
-    });
-
     return {
       attendance_status: computed.attendance_status,
       approval_status: ApprovalStatus.APPROVED,
@@ -158,21 +144,6 @@ export class RemoteApprovalService {
     await this.recordRepo.update(record.id, {
       attendance_status: AttendanceStatus.ABSENT,
       modified_by: user.userId,
-    });
-
-    await this.auditRepo.create({
-      attendance_record_id: record.id,
-      employee_id: record.employee_id,
-      performed_by: user.userId,
-      event_type: AuditEventType.REMOTE_REJECT,
-      organization_id: user.organizationId,
-      enterprise_id: user.enterpriseId,
-      modified_by: user.userId,
-      old_value: { attendance_status: record.attendance_status },
-      new_value: {
-        attendance_status: AttendanceStatus.ABSENT,
-        reason: dto.reason,
-      },
     });
 
     return {

@@ -1,3 +1,4 @@
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
 import {
   Controller,
   Get,
@@ -15,6 +16,8 @@ import { CreateAnnouncementDto } from '../dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from '../dto/update-announcement.dto';
 import { AdminAnnouncementQueryDto } from '../dto/admin-query.dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { AuditLog } from '../../audit/decorators/audit-log.decorator';
 import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
@@ -26,12 +29,14 @@ interface AuthPayload {
   organizationId: string;
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 @Controller('announcements')
+@RestrictedOnExpiry()
 export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
 
   @AuditLog(AuditLogModule.ANNOUNCEMENT, AuditAction.CREATE, 'announcement')
+  @RequirePermission('ANNOUNCEMENT', 'create')
   @Post()
   async create(@CurrentUser() user: AuthPayload, @Body() dto: CreateAnnouncementDto) {
     return this.announcementService.create(
@@ -42,17 +47,20 @@ export class AnnouncementController {
     );
   }
 
+  @RequirePermission('ANNOUNCEMENT', 'view')
   @Get()
   async findAll(@CurrentUser() user: AuthPayload, @Query() query: AdminAnnouncementQueryDto) {
     return this.announcementService.findAll(user.enterpriseId, user.organizationId, query);
   }
 
+  @RequirePermission('ANNOUNCEMENT', 'view')
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.announcementService.findOne(id);
   }
 
   @AuditLog(AuditLogModule.ANNOUNCEMENT, AuditAction.UPDATE, 'announcement')
+  @RequirePermission('ANNOUNCEMENT', 'update')
   @Put(':id')
   async update(
     @CurrentUser() user: AuthPayload,
@@ -63,6 +71,7 @@ export class AnnouncementController {
   }
 
   @AuditLog(AuditLogModule.ANNOUNCEMENT, AuditAction.DELETE, 'announcement')
+  @RequirePermission('ANNOUNCEMENT', 'delete')
   @Delete(':id')
   @HttpCode(200)
   async remove(@CurrentUser() user: AuthPayload, @Param('id') id: string) {
@@ -70,6 +79,7 @@ export class AnnouncementController {
   }
 
   @AuditLog(AuditLogModule.ANNOUNCEMENT, AuditAction.PUBLISH, 'announcement')
+  @RequirePermission('ANNOUNCEMENT', 'publish')
   @Post(':id/publish')
   @HttpCode(200)
   async publish(@CurrentUser() user: AuthPayload, @Param('id') id: string) {
@@ -77,6 +87,7 @@ export class AnnouncementController {
   }
 
   @AuditLog(AuditLogModule.ANNOUNCEMENT, AuditAction.ARCHIVE, 'announcement')
+  @RequirePermission('ANNOUNCEMENT', 'archive')
   @Post(':id/archive')
   @HttpCode(200)
   async archive(@CurrentUser() user: AuthPayload, @Param('id') id: string) {

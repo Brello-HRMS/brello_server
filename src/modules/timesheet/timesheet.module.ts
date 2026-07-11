@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { RbacModule } from '../rbac/rbac.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimesheetEntry } from './entities/timesheet-entry.entity';
 import { TimesheetRepository } from './repositories/timesheet.repository';
@@ -10,6 +11,7 @@ import { Project } from '../project/entities/project.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([TimesheetEntry, ProjectTeam, Project]),
+    RbacModule,
   ],
   controllers: [TimesheetController],
   providers: [TimesheetService, TimesheetRepository],

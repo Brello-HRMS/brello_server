@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
-import { SaveRecentSearchDto } from '../dto';
 import { SEARCHABLE_MODULES } from '../config/searchable-modules';
-import { GlobalSearchDocumentRepository, SearchResult } from '../repositories/global-search-document.repository';
+import {
+  GlobalSearchDocumentRepository,
+  SearchResult,
+} from '../repositories/global-search-document.repository';
 import { RecentSearchRepository } from '../repositories/recent-search.repository';
 import type { RecentSearch } from '../entities/recent-search.entity';
+import { PermissionResolverService } from '../../rbac/services/permission-resolver.service';
+import { SaveRecentSearchDto } from '../dto';
 
 export interface ModuleInfo {
   label: string;
@@ -22,6 +26,7 @@ export class SearchQueryService {
   constructor(
     private readonly searchDocumentRepository: GlobalSearchDocumentRepository,
     private readonly recentSearchRepository: RecentSearchRepository,
+    private readonly permissionResolverService: PermissionResolverService,
   ) {}
 
   async search(query: string, user: LoggedInUser): Promise<SearchResponse> {
@@ -30,10 +35,14 @@ export class SearchQueryService {
       return { modules: [], results: [] };
     }
 
+    const resolved = await this.permissionResolverService.resolve(user);
+    const userPermissions = resolved.modules.map((m) => m.code);
+
     const results = await this.searchDocumentRepository.search(
       user.enterpriseId,
       user.organizationId,
       trimmed,
+      userPermissions,
     );
 
     return {
@@ -49,7 +58,10 @@ export class SearchQueryService {
     );
   }
 
-  async saveRecentSearch(dto: SaveRecentSearchDto, user: LoggedInUser): Promise<void> {
+  async saveRecentSearch(
+    dto: SaveRecentSearchDto,
+    user: LoggedInUser,
+  ): Promise<void> {
     await this.recentSearchRepository.save({
       enterprise_id: user.enterpriseId,
       organization_id: user.organizationId,
@@ -69,7 +81,9 @@ export class SearchQueryService {
     for (const result of results) {
       if (seen.has(result.module_key)) continue;
 
-      const config = SEARCHABLE_MODULES.find((m) => m.module_key === result.module_key);
+      const config = SEARCHABLE_MODULES.find(
+        (m) => m.module_key === result.module_key,
+      );
       if (config) {
         modules.push({ label: config.label, route: config.route });
         seen.add(result.module_key);

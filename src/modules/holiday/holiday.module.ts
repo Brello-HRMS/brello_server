@@ -12,6 +12,8 @@ import { EmployeeHolidayController } from './controllers/employee-holiday.contro
 import { RbacModule } from '../rbac/rbac.module';
 import { GlobalSearchModule } from '../global-search/global-search.module';
 import { AttendanceModule } from '../attendance/attendance.module';
+import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { AttendanceModule } from '../attendance/attendance.module';
     RbacModule,
     GlobalSearchModule,
     AttendanceModule,
+    UserModule,
+    NotificationModule,
   ],
   controllers: [
     HolidayCalendarController,

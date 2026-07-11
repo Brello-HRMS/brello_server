@@ -11,6 +11,7 @@ import { AdminReimbursementQueryDto } from '../dto/admin-query.dto';
 import { UpdateStatusDto } from '../dto/update-status.dto';
 import { ReimbursementStatus } from '../enums/reimbursement.enum';
 import { User } from '../../user/entities/user.entity';
+import { NotificationService } from '../../notification/services/notification.service';
 
 @Injectable()
 export class AdminReimbursementService {
@@ -18,6 +19,7 @@ export class AdminReimbursementService {
     private readonly reimbursementRepository: ReimbursementRepository,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async findAll(
@@ -79,12 +81,26 @@ export class AdminReimbursementService {
       throw new BadRequestException('Rejection reason is required when rejecting.');
     }
 
-    return this.reimbursementRepository.updateStatus(
+    const updated = await this.reimbursementRepository.updateStatus(
       reimbursement,
       dto.status,
       dto.rejection_reason,
       adminId,
     );
+
+    const title = dto.status === ReimbursementStatus.APPROVED ? 'Reimbursement Approved' : 'Reimbursement Rejected';
+    const body = dto.status === ReimbursementStatus.APPROVED
+      ? `Your reimbursement for ${reimbursement.title} has been approved.`
+      : `Your reimbursement for ${reimbursement.title} was rejected.`;
+
+    await this.notificationService.broadcastAllChannels({
+      user_id: reimbursement.employee_id,
+      title,
+      message: body,
+      event_type: dto.status === ReimbursementStatus.APPROVED ? 'REIMBURSEMENT_APPROVED' : 'REIMBURSEMENT_REJECTED',
+    }).catch(err => console.error(err));
+
+    return updated;
   }
 
   async markPaid(id: string, adminId: string) {
@@ -99,6 +115,15 @@ export class AdminReimbursementService {
       throw new ConflictException('Reimbursement is already marked as paid.');
     }
 
-    return this.reimbursementRepository.markPaid(reimbursement, adminId);
+    const updated = await this.reimbursementRepository.markPaid(reimbursement, adminId);
+
+    await this.notificationService.broadcastAllChannels({
+      user_id: reimbursement.employee_id,
+      title: 'Reimbursement Paid',
+      message: `Your reimbursement for ${reimbursement.title} has been marked as paid.`,
+      event_type: 'REIMBURSEMENT_PAID',
+    }).catch(err => console.error(err));
+
+    return updated;
   }
 }

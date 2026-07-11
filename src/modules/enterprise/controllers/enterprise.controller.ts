@@ -1,3 +1,5 @@
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
+import { AccessGuard } from '../../../core/guards/access.guard';
 import {
   Controller,
   Get,
@@ -23,12 +25,13 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('enterprises')
-@UseGuards(JwtAuthGuard, PlatformAdminGuard)
+@UseGuards(JwtAuthGuard, AccessGuard, PlatformAdminGuard)
 export class EnterpriseController {
   constructor(private readonly enterpriseService: EnterpriseService) {}
 
   @AuditLog(AuditLogModule.PLATFORM_ENTERPRISE, AuditAction.CREATE, 'enterprise')
   @Post()
+  @RequirePermission('ENTERPRISE', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -38,12 +41,14 @@ export class EnterpriseController {
   }
 
   @Get()
+  @RequirePermission('ENTERPRISE', 'view')
   @HttpCode(HttpStatus.OK)
   findAll(@LoggedInUser() user: LoggedInUserInterface) {
     return this.enterpriseService.findAll(user);
   }
 
   @Get(':id')
+  @RequirePermission('ENTERPRISE', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -54,6 +59,7 @@ export class EnterpriseController {
 
   @AuditLog(AuditLogModule.PLATFORM_ENTERPRISE, AuditAction.UPDATE, 'enterprise')
   @Patch(':id')
+  @RequirePermission('ENTERPRISE', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -65,6 +71,7 @@ export class EnterpriseController {
 
   @AuditLog(AuditLogModule.PLATFORM_ENTERPRISE, AuditAction.DELETE, 'enterprise')
   @Delete(':id')
+  @RequirePermission('ENTERPRISE', 'delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,

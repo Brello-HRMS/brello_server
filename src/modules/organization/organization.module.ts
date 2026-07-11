@@ -16,6 +16,7 @@ import { User } from '../user/entities/user.entity';
 import { AuthModule } from '../auth/auth.module';
 import { PlanModule } from '../plan/plan.module';
 import { PayrollComponent } from '../payroll/entities/payroll-component.entity';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PayrollComponent } from '../payroll/entities/payroll-component.entity';
     IndustryTypeModule,
     forwardRef(() => AuthModule),
     forwardRef(() => PlanModule),
+    RbacModule,
   ],
   controllers: [OrganizationController, OrganizationProfileController],
   providers: [

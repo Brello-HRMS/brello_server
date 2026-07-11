@@ -20,6 +20,10 @@ auth:
 session:
   expirationDays: 7
 
+bullBoard:
+  username: 'admin'
+  password: 'set-a-real-password'
+
 cookie:
   refreshTokenName: 'refresh_token'
   httpOnly: true

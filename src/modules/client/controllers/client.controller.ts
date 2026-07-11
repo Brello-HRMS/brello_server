@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -24,12 +26,13 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('clients')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}
 
   @AuditLog(AuditLogModule.CLIENT, AuditAction.CREATE, 'client')
   @Post()
+  @RequirePermission('PROJECT_CLIENTS', 'create')
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createClientDto: CreateClientDto,
@@ -39,6 +42,7 @@ export class ClientController {
   }
 
   @Get()
+  @RequirePermission('PROJECT_CLIENTS', 'view')
   @HttpCode(HttpStatus.OK)
   findAll(
     @Query() query: ListClientsDto,
@@ -48,13 +52,18 @@ export class ClientController {
   }
 
   @Get(':id')
+  @RequirePermission('PROJECT_CLIENTS', 'view')
   @HttpCode(HttpStatus.OK)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.clientService.findOne(id, user);
   }
 
   @AuditLog(AuditLogModule.CLIENT, AuditAction.UPDATE, 'client')
   @Patch(':id')
+  @RequirePermission('PROJECT_CLIENTS', 'update')
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -66,8 +75,12 @@ export class ClientController {
 
   @AuditLog(AuditLogModule.CLIENT, AuditAction.DELETE, 'client')
   @Delete(':id')
+  @RequirePermission('PROJECT_CLIENTS', 'delete')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.clientService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.clientService.remove(id, user);
   }
 }

@@ -3,14 +3,11 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
-  UseGuards,
 } from '@nestjs/common';
 import { IndustryTypeRepository } from '../repositories/industry-type.repository';
 import { CreateIndustryTypeDto } from '../dto/create-industry-type.dto';
 import { UpdateIndustryTypeDto } from '../dto/update-industry-type.dto';
 import { IndustryType } from '../entities/industry-type.entity';
-import { PlatformAdminGuard } from 'src/core/guards/platform-admin.guard';
-import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 
 @Injectable()
 export class IndustryTypeService {
@@ -20,7 +17,6 @@ export class IndustryTypeService {
     private readonly industryTypeRepository: IndustryTypeRepository,
   ) {}
 
-  @UseGuards(JwtAuthGuard, PlatformAdminGuard)
   async create(
     createIndustryTypeDto: CreateIndustryTypeDto,
   ): Promise<IndustryType> {
@@ -59,7 +55,6 @@ export class IndustryTypeService {
     return industryType;
   }
 
-  @UseGuards(JwtAuthGuard, PlatformAdminGuard)
   async update(
     id: string,
     updateIndustryTypeDto: UpdateIndustryTypeDto,
@@ -93,7 +88,6 @@ export class IndustryTypeService {
     return updatedIndustryType;
   }
 
-  @UseGuards(JwtAuthGuard, PlatformAdminGuard)
   async remove(id: string): Promise<void> {
     this.logger.log(`Soft deleting industry type: ${id}`);
 

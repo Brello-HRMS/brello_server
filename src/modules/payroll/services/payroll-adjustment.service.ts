@@ -7,7 +7,6 @@ import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { PayrollAdjustmentRepository } from '../repositories/payroll-adjustment.repository';
 import { PayrollRunItemRepository } from '../repositories/payroll-run-item.repository';
 import { PayrollRunService } from './payroll-run.service';
-import { PayrollAuditService } from './payroll-audit.service';
 import { CreateAdjustmentDto } from '../dto/payroll-adjustment.dto';
 import { PayrollRunAdjustment } from '../entities/payroll-run-adjustment.entity';
 import { AuditAction, PayrollRunStatus } from '../enums/payroll.enum';
@@ -24,7 +23,6 @@ export class PayrollAdjustmentService {
     private readonly adjustmentRepo: PayrollAdjustmentRepository,
     private readonly itemRepo: PayrollRunItemRepository,
     private readonly runService: PayrollRunService,
-    private readonly audit: PayrollAuditService,
     private readonly auditContext: AuditContextService,
   ) {}
 
@@ -54,20 +52,6 @@ export class PayrollAdjustmentService {
       modified_by: user.userId,
     });
     const saved = await this.adjustmentRepo.save(adjustment);
-
-    await this.audit.record(
-      user,
-      'payroll_run_adjustment',
-      saved.id,
-      AuditAction.CREATE,
-      null,
-      {
-        payroll_run_id: runId,
-        user_id: item.user_id,
-        adjustment_type: dto.adjustment_type,
-        amount: dto.amount,
-      },
-    );
 
     return saved;
   }
@@ -102,19 +86,6 @@ export class PayrollAdjustmentService {
     }
 
     this.auditContext.setPreValue(adjustment as unknown as Record<string, unknown>);
-
-    await this.audit.record(
-      user,
-      'payroll_run_adjustment',
-      adjustment.id,
-      AuditAction.DELETE,
-      {
-        user_id: adjustment.user_id,
-        adjustment_type: adjustment.adjustment_type,
-        amount: adjustment.amount,
-      },
-      null,
-    );
 
     await this.adjustmentRepo.remove(adjustment);
   }

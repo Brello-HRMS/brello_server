@@ -21,6 +21,9 @@ import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
+import { AuditLog } from '../../audit/decorators/audit-log.decorator';
+import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
+import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 /** Employee self-service for auto-checkout corrections. */
 @Controller('attendance/me/correction-requests')
@@ -28,6 +31,7 @@ import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interface
 export class MyCorrectionRequestController {
   constructor(private readonly service: CorrectionRequestService) {}
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.CREATE, 'attendance-correction')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   submit(
@@ -78,6 +82,7 @@ export class AdminCorrectionRequestController {
     return this.service.getOne(user, id);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.APPROVE, 'attendance-correction', { entityIdParam: 'id' })
   @Post(':id/approve')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'approve')
@@ -88,6 +93,7 @@ export class AdminCorrectionRequestController {
     return this.service.approve(user, id);
   }
 
+  @AuditLog(AuditLogModule.ATTENDANCE, AuditAction.REJECT, 'attendance-correction', { entityIdParam: 'id' })
   @Post(':id/reject')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ATTENDANCE', 'approve')

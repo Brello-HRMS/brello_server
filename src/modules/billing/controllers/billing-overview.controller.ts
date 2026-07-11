@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -15,7 +17,7 @@ import { ListPlansDto } from '../dto/list-plans.dto';
 import { BillingCycle } from '../../plan/entities/plan.entity';
 
 @Controller('billing')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class BillingOverviewController {
   constructor(
     private readonly overviewService: BillingOverviewService,
@@ -23,12 +25,14 @@ export class BillingOverviewController {
   ) {}
 
   @Get('overview')
+  @RequirePermission('BILLING', 'view')
   @HttpCode(HttpStatus.OK)
   getOverview(@LoggedInUser() user: LoggedInUserInterface) {
     return this.overviewService.build(user.organizationId);
   }
 
   @Get('plans')
+  @RequirePermission('BILLING', 'view')
   @HttpCode(HttpStatus.OK)
   listPlans(
     @LoggedInUser() user: LoggedInUserInterface,

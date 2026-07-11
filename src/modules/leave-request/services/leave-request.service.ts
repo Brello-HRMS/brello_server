@@ -35,6 +35,7 @@ import { ListLeaveRequestQueryDto } from '../dto/list-leave-request-query.dto';
 import { AuditContextService } from '../../audit/services/audit-context.service';
 import { Holiday } from '../../holiday/entities/holiday.entity';
 import { AttendanceMaterializationService } from '../../attendance/services/attendance-materialization.service';
+import { NotificationService } from '../../notification/services/notification.service';
 
 const LWP_CODE = 'LWP';
 
@@ -76,6 +77,7 @@ export class LeaveRequestService {
     @InjectRepository(Holiday)
     private readonly holidayRepo: Repository<Holiday>,
     private readonly materialization: AttendanceMaterializationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // ─── Public: Create / Submit / Update / Cancel / Delete ────────────────
@@ -384,6 +386,9 @@ export class LeaveRequestService {
         manager,
       );
 
+      // Notify manager/admin (simplification: we might need a specific manager ID here, but for now we can just log or broadcast to a role if supported. We'll skip manager notification if reports_to_id isn't resolved, or we can send it to HR admin)
+      // Since reports_to_id isn't fully integrated, we'll leave a comment for the workflow engine phase.
+      
       return {
         id,
         status: LeaveRequestStatus.PENDING,
@@ -710,6 +715,13 @@ export class LeaveRequestService {
 
       this.logger.log(`Leave request ${id} approved by ${user.userId}`);
 
+      await this.notificationService.broadcastAllChannels({
+        user_id: request.employee_id,
+        title: 'Leave Request Approved',
+        message: `Your leave request from ${request.from_date} to ${request.to_date} has been approved.`,
+        event_type: 'LEAVE_APPROVED',
+      }).catch(err => this.logger.error(`Notification failed: ${err.message}`));
+
       return {
         id,
         status: LeaveRequestStatus.APPROVED,
@@ -787,6 +799,13 @@ export class LeaveRequestService {
       );
 
       this.logger.log(`Leave request ${id} rejected by ${user.userId}`);
+
+      await this.notificationService.broadcastAllChannels({
+        user_id: request.employee_id,
+        title: 'Leave Request Rejected',
+        message: `Your leave request from ${request.from_date} to ${request.to_date} has been rejected.`,
+        event_type: 'LEAVE_REJECTED',
+      }).catch(err => this.logger.error(`Notification failed: ${err.message}`));
 
       return {
         id,

@@ -1,3 +1,4 @@
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -30,6 +31,7 @@ export class DocumentViewController {
   ) {}
 
   @Get(':id/view')
+  @RequirePermission('DOCUMENTS', 'view')
   async view(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('sig') sig: string,

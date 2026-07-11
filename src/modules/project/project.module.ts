@@ -11,6 +11,7 @@ import { ClientModule } from '../client/client.module';
 import { GlobalSearchModule } from '../global-search/global-search.module';
 import { UserModule } from '../user/user.module';
 import { DocumentModule } from '../document/document.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { DocumentModule } from '../document/document.module';
     UserModule,
     DocumentModule,
     GlobalSearchModule,
+    RbacModule,
   ],
   controllers: [ProjectController, ClientProjectController],
   providers: [ProjectService, ProjectRepository],

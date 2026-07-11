@@ -163,6 +163,7 @@ export class AnnouncementRepository {
     orgId: string,
     employeeId: string,
     departmentId: string | null,
+    locationId: string | null,
     page: number,
     limit: number,
   ): Promise<[Announcement[], number]> {
@@ -179,8 +180,13 @@ export class AnnouncementRepository {
           tgt.target_type = 'ALL'
           OR (tgt.target_type = 'EMPLOYEE' AND tgt.target_id = :employeeId)
           ${departmentId ? "OR (tgt.target_type = 'DEPARTMENT' AND tgt.target_id = :departmentId)" : ''}
+          ${locationId ? "OR (tgt.target_type = 'LOCATION' AND tgt.target_id = :locationId)" : ''}
         )`,
-        { employeeId, ...(departmentId ? { departmentId } : {}) },
+        {
+          employeeId,
+          ...(departmentId ? { departmentId } : {}),
+          ...(locationId ? { locationId } : {}),
+        },
       )
       .orderBy('a.published_at', 'DESC')
       .skip((page - 1) * limit)

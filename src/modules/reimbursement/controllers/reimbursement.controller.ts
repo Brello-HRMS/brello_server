@@ -1,3 +1,6 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Post,
@@ -26,13 +29,15 @@ interface AuthPayload {
   organizationId: string;
 }
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 @Controller('reimbursements')
+@RestrictedOnExpiry()
 export class ReimbursementController {
   constructor(private readonly reimbursementService: ReimbursementService) {}
 
   @AuditLog(AuditLogModule.REIMBURSEMENT, AuditAction.CREATE, 'reimbursement')
   @Post()
+  @RequirePermission('REIMBURSEMENT', 'create')
   async create(
     @CurrentUser() user: AuthPayload,
     @Body() dto: CreateReimbursementDto,
@@ -46,6 +51,7 @@ export class ReimbursementController {
   }
 
   @Get('me')
+  @RequirePermission('REIMBURSEMENT', 'view')
   async findMine(
     @CurrentUser() user: AuthPayload,
     @Query() query: EmployeeReimbursementQueryDto,
@@ -60,6 +66,7 @@ export class ReimbursementController {
 
   @AuditLog(AuditLogModule.REIMBURSEMENT, AuditAction.UPDATE, 'reimbursement')
   @Put(':id')
+  @RequirePermission('REIMBURSEMENT', 'update')
   async update(
     @CurrentUser() user: AuthPayload,
     @Param('id') id: string,
@@ -70,6 +77,7 @@ export class ReimbursementController {
 
   @AuditLog(AuditLogModule.REIMBURSEMENT, AuditAction.DELETE, 'reimbursement')
   @Delete(':id')
+  @RequirePermission('REIMBURSEMENT', 'delete')
   @HttpCode(200)
   async remove(@CurrentUser() user: AuthPayload, @Param('id') id: string) {
     return this.reimbursementService.remove(user.userId, id);

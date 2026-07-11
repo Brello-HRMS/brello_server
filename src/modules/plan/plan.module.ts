@@ -26,6 +26,7 @@ import { PlanController } from './controllers/plan.controller';
 import { OrganizationSubscriptionController } from './controllers/organization-subscription.controller';
 import { PlanModuleController } from './controllers/plan-module.controller';
 import { PlanModuleActionController } from './controllers/plan-module-action.controller';
+import { RbacModule } from '../rbac/rbac.module';
 
 /**
  * PlanModule
@@ -46,6 +47,7 @@ import { PlanModuleActionController } from './controllers/plan-module-action.con
     ]),
     EnterpriseModule,
     forwardRef(() => OrganizationModule),
+    RbacModule,
   ],
   controllers: [
     PlanController,

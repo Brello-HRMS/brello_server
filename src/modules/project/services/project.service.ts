@@ -43,12 +43,7 @@ export class ProjectService {
     this.logger.log(`Creating project: ${dto.name} for client: ${clientId}`);
 
     // 1. Validate Client exists and belongs to same org
-    const client = await this.clientService.findOne(clientId);
-    if (client.organization_id !== user.organizationId) {
-      throw new NotFoundException(
-        `Client with ID "${clientId}" not found in your organization`,
-      );
-    }
+    await this.clientService.findOne(clientId, user);
 
     // 2. Validate Uniqueness (client_id, name)
     const existingProject = await this.projectRepository.findOne({
@@ -92,12 +87,7 @@ export class ProjectService {
     this.logger.log(`Fetching projects for client: ${clientId}`);
 
     // Ensure client belongs to org
-    const client = await this.clientService.findOne(clientId);
-    if (client.organization_id !== user.organizationId) {
-      throw new NotFoundException(
-        `Client with ID "${clientId}" not found in your organization`,
-      );
-    }
+    await this.clientService.findOne(clientId, user);
 
     const queryBuilder = this.projectRepository
       .getQueryBuilder('project')

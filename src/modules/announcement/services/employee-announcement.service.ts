@@ -20,8 +20,12 @@ export class EmployeeAnnouncementService {
     orgId: string,
     query: EmployeeAnnouncementQueryDto,
   ) {
-    const user = await this.userRepo.findOne({ where: { id: employeeId } });
+    const user = await this.userRepo.findOne({
+      where: { id: employeeId },
+      relations: ['user_profile'],
+    });
     const departmentId = user?.department_id ?? null;
+    const locationId = user?.user_profile?.work_location ?? null;
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -31,6 +35,7 @@ export class EmployeeAnnouncementService {
       orgId,
       employeeId,
       departmentId,
+      locationId,
       page,
       limit,
     );

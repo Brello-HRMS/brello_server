@@ -12,9 +12,9 @@ import { PayrollReimbursementRepository } from '../repositories/payroll-reimburs
 import { EmployeeSalaryRepository } from '../repositories/employee-salary.repository';
 import { PayrollCalculationEngine } from './payroll-calculation.service';
 import { PayrollRunService } from './payroll-run.service';
-import { PayrollAuditService } from './payroll-audit.service';
 import { PayslipPdfService } from './payslip-pdf.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+import { NotificationService } from '../../notification/services/notification.service';
 import { PayrollRun } from '../entities/payroll-run.entity';
 import { PayrollRunItem } from '../entities/payroll-run-item.entity';
 import {
@@ -46,9 +46,9 @@ export class PayrollProcessingService {
     private readonly salaryRepo: EmployeeSalaryRepository,
     private readonly calcEngine: PayrollCalculationEngine,
     private readonly runService: PayrollRunService,
-    private readonly audit: PayrollAuditService,
     private readonly payslipPdf: PayslipPdfService,
     private readonly auditContext: AuditContextService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async process(user: LoggedInUser, runId: string) {
@@ -86,12 +86,6 @@ export class PayrollProcessingService {
     run.processed_by = user.userId;
     await this.runRepo.save(run);
 
-    await this.audit.record(user, 'payroll_run', run.id, AuditAction.PROCESS, null, {
-      processed,
-      errors,
-      total_net: run.total_net,
-    });
-
     this.logger.log(
       `Processed run ${runId}: ${processed} processed, ${errors} errors, net ${run.total_net}`,
     );
@@ -115,11 +109,6 @@ export class PayrollProcessingService {
     const items = await this.itemRepo.findAllByRun(runId);
     this.applyRollup(run, items);
     await this.runRepo.save(run);
-
-    await this.audit.record(user, 'payroll_run_item', item.id, AuditAction.PROCESS, null, {
-      net: item.net,
-      status: item.item_status,
-    });
 
     return item;
   }
@@ -164,13 +153,21 @@ export class PayrollProcessingService {
     // service so a storage hiccup never leaves the run half-locked.
     await this.payslipPdf.generateForRun(user, run);
 
-    await this.audit.record(user, 'payroll_run', run.id, AuditAction.LOCK, null, {
-      locked_at: lockedAt,
-      total_net: run.total_net,
-      total_employees: run.total_employees,
-    });
-
     this.logger.log(`Payroll run ${runId} locked by ${user.userId}`);
+    
+    // Notify employees
+    const allItems = await this.itemRepo.findAllByRun(runId);
+    for (const item of allItems) {
+      if (item.item_status === PayrollItemStatus.PROCESSED) {
+        this.notificationService.broadcastAllChannels({
+          user_id: item.user_id,
+          title: 'Payslip Available',
+          message: `Your payslip for ${run.month} ${run.year} is now available.`,
+          event_type: 'PAYROLL_LOCKED',
+        }).catch(err => this.logger.error(`Failed to notify user ${item.user_id}: ${err.message}`));
+      }
+    }
+
     return run;
   }
 
@@ -226,19 +223,6 @@ export class PayrollProcessingService {
     run.disbursed_by = user.userId;
     if (dto.reference) run.disbursement_reference = dto.reference;
     await this.runRepo.save(run);
-
-    await this.audit.record(
-      user,
-      'payroll_run',
-      run.id,
-      AuditAction.DISBURSE,
-      null,
-      {
-        marked_paid: markedPaid,
-        is_disbursed: run.is_disbursed,
-        reference: dto.reference ?? null,
-      },
-    );
 
     this.logger.log(
       `Payroll run ${runId} disbursement recorded by ${user.userId} (${markedPaid} paid)`,

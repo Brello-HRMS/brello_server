@@ -6,7 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Status } from 'src/common/enums';
+import { Status } from '../../../common/enums';
 
 @Entity('enterprise')
 @Index(['domain'], { unique: true })

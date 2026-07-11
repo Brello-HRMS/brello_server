@@ -1,3 +1,4 @@
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
 import {
   Body,
   Controller,
@@ -13,49 +14,41 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { AccessGuard } from '../../../core/guards/access.guard';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 import { TimesheetService } from '../services/timesheet.service';
 import { CreateTimesheetDto } from '../dto/create-timesheet.dto';
 import { UpdateTimesheetDto } from '../dto/update-timesheet.dto';
 import { TimesheetCalendarQueryDto } from '../dto/timesheet-calendar-query.dto';
+import { RequirePermission } from 'src/core/guards/require-permission.decorator';
 
 @Controller('timesheet')
-@UseGuards(JwtAuthGuard)
+@RestrictedOnExpiry()
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class TimesheetController {
   constructor(private readonly timesheetService: TimesheetService) {}
 
   // ─── Dashboard ──────────────────────────────────────────────────────────────
 
-  /**
-   * GET /timesheet/dashboard
-   * Returns aggregated stats: project count, weekly hours, monthly hours,
-   * and the list of assigned projects for the logged-in user.
-   */
   @Get('dashboard')
+  @RequirePermission('PROJECT_TIMESHEET', 'view')
   getDashboard(@LoggedInUser() user: LoggedInUserInterface) {
     return this.timesheetService.getDashboard(user);
   }
 
   // ─── Assigned Projects Dropdown ─────────────────────────────────────────────
 
-  /**
-   * GET /timesheet/projects
-   * Returns the list of projects assigned to the logged-in user.
-   * Used to populate the project dropdown in the timesheet form.
-   */
   @Get('projects')
+  @RequirePermission('PROJECT_TIMESHEET', 'view')
   getAssignedProjects(@LoggedInUser() user: LoggedInUserInterface) {
     return this.timesheetService.getAssignedProjects(user);
   }
 
   // ─── Calendar ───────────────────────────────────────────────────────────────
 
-  /**
-   * GET /timesheet/calendar?year=2025&month=6
-   * Returns all entries for the given month grouped by entry_date.
-   */
   @Get('calendar')
+  @RequirePermission('PROJECT_TIMESHEET', 'view')
   getCalendarEntries(
     @LoggedInUser() user: LoggedInUserInterface,
     @Query() query: TimesheetCalendarQueryDto,
@@ -65,12 +58,8 @@ export class TimesheetController {
 
   // ─── Create ─────────────────────────────────────────────────────────────────
 
-  /**
-   * POST /timesheet
-   * Creates a new timesheet entry. Validates project assignment, time range,
-   * and duplicate rules before persisting.
-   */
   @Post()
+  @RequirePermission('PROJECT_TIMESHEET', 'create')
   @HttpCode(HttpStatus.CREATED)
   createEntry(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -81,11 +70,8 @@ export class TimesheetController {
 
   // ─── Update ─────────────────────────────────────────────────────────────────
 
-  /**
-   * PATCH /timesheet/:id
-   * Partially updates a timesheet entry. Ownership is verified before any change.
-   */
   @Patch(':id')
+  @RequirePermission('PROJECT_TIMESHEET', 'update')
   updateEntry(
     @LoggedInUser() user: LoggedInUserInterface,
     @Param('id', ParseUUIDPipe) id: string,
@@ -96,11 +82,8 @@ export class TimesheetController {
 
   // ─── Delete ─────────────────────────────────────────────────────────────────
 
-  /**
-   * DELETE /timesheet/:id
-   * Soft-deletes a timesheet entry. Ownership is verified before deletion.
-   */
   @Delete(':id')
+  @RequirePermission('PROJECT_TIMESHEET', 'delete')
   @HttpCode(HttpStatus.OK)
   deleteEntry(
     @LoggedInUser() user: LoggedInUserInterface,

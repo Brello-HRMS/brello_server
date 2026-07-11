@@ -7,20 +7,16 @@ import {
 } from '@nestjs/common';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { AdminDailyPreviewQueryDto } from '../dto/admin-daily-preview-query.dto';
-import { AuditLogsQueryDto } from '../dto/audit-logs-query.dto';
 import { EmployeeHistoryQueryDto } from '../dto/employee-history-query.dto';
 import { ManualEntryDto } from '../dto/manual-entry.dto';
 import { UpdateAttendanceDto } from '../dto/update-attendance.dto';
-import { AttendanceAuditLog } from '../entities/attendance-audit-log.entity';
 import { AttendanceRecordRepository } from '../repositories/attendance-record.repository';
 import { AttendanceSessionRepository } from '../repositories/attendance-session.repository';
-import { AttendanceAuditLogRepository } from '../repositories/attendance-audit-log.repository';
 import { AttendanceRuleResolverService } from './attendance-rule-resolver.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
 import { AttendanceMode } from '../enums/attendance-mode.enum';
 import { AttendanceSource } from '../enums/attendance-source.enum';
 import { GeoStatus } from '../enums/geo-status.enum';
-import { AuditEventType } from '../enums/audit-event-type.enum';
 import {
   computeAttendanceStatus,
   formatHmm,
@@ -36,7 +32,6 @@ export class AdminAttendanceService {
   constructor(
     private readonly recordRepo: AttendanceRecordRepository,
     private readonly sessionRepo: AttendanceSessionRepository,
-    private readonly auditRepo: AttendanceAuditLogRepository,
     private readonly ruleResolver: AttendanceRuleResolverService,
     private readonly auditContext: AuditContextService,
   ) {}
@@ -170,21 +165,6 @@ export class AdminAttendanceService {
       });
     }
 
-    await this.auditRepo.create({
-      attendance_record_id: record.id,
-      employee_id: dto.employee_id,
-      performed_by: user.userId,
-      event_type: AuditEventType.MANUAL_CREATE,
-      organization_id: user.organizationId,
-      enterprise_id: user.enterpriseId,
-      modified_by: user.userId,
-      new_value: {
-        attendance_status: finalStatus,
-        attendance_mode: dto.attendance_mode ?? AttendanceMode.OFFICE_IN,
-        worked_minutes: workedMinutes,
-      },
-    });
-
     return {
       attendance_id: record.id,
       attendance_mode: record.attendance_mode,
@@ -265,26 +245,6 @@ export class AdminAttendanceService {
       modified_by: user.userId,
     });
 
-    await this.auditRepo.create({
-      attendance_record_id: record.id,
-      employee_id: record.employee_id,
-      performed_by: user.userId,
-      event_type: dto.attendance_status_override
-        ? AuditEventType.STATUS_OVERRIDE
-        : AuditEventType.MANUAL_UPDATE,
-      organization_id: user.organizationId,
-      enterprise_id: user.enterpriseId,
-      modified_by: user.userId,
-      old_value: oldSnapshot,
-      new_value: {
-        check_in: newCheckIn,
-        check_out: newCheckOut,
-        attendance_status: finalStatus,
-        attendance_mode: dto.attendance_mode ?? record.attendance_mode,
-        worked_minutes: workedMinutes,
-      },
-    });
-
     return { success: true };
   }
 
@@ -298,20 +258,6 @@ export class AdminAttendanceService {
     this.auditContext.setPreValue(record as unknown as Record<string, unknown>);
     await this.sessionRepo.deleteByRecord(record.id);
     await this.recordRepo.softDelete(record.id, user.userId);
-
-    await this.auditRepo.create({
-      attendance_record_id: record.id,
-      employee_id: record.employee_id,
-      performed_by: user.userId,
-      event_type: AuditEventType.MANUAL_DELETE,
-      organization_id: user.organizationId,
-      enterprise_id: user.enterpriseId,
-      modified_by: user.userId,
-      old_value: {
-        attendance_status: record.attendance_status,
-        worked_minutes: record.worked_minutes,
-      },
-    });
 
     return { success: true };
   }
@@ -362,40 +308,6 @@ export class AdminAttendanceService {
         remote_reason: r.remote_reason,
       })),
       pagination: { page, limit, total },
-    };
-  }
-
-  async listAuditLogs(user: LoggedInUser, query: AuditLogsQueryDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
-
-    const { data, total } = await this.auditRepo.list({
-      organizationId: user.organizationId,
-      employeeId: query.employee_id,
-      date: query.date,
-      eventType: query.event_type,
-      page,
-      limit,
-    });
-
-    return {
-      items: data.map((log) => this.toAuditLogItem(log)),
-      pagination: { page, limit, total },
-    };
-  }
-
-  private toAuditLogItem(log: AttendanceAuditLog) {
-    return {
-      audit_id: log.id,
-      event_type: log.event_type,
-      attendance_id: log.attendance_record_id,
-      employee_id: log.employee_id,
-      performed_by: log.performed_by,
-      timestamp: log.created_at,
-      device: log.device,
-      ip_address: log.ip_address,
-      old_value: log.old_value,
-      new_value: log.new_value,
     };
   }
 

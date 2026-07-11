@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -17,7 +19,7 @@ import { InvoicePdfService } from '../services/invoice-pdf.service';
 import { ListInvoicesDto } from '../dto/list-invoices.dto';
 
 @Controller('billing/invoices')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class InvoiceController {
   constructor(
     private readonly invoiceService: InvoiceService,
@@ -25,6 +27,7 @@ export class InvoiceController {
   ) {}
 
   @Get('current')
+  @RequirePermission('BILLING', 'view')
   @HttpCode(HttpStatus.OK)
   async getCurrent(@LoggedInUser() user: LoggedInUserInterface) {
     const invoice = await this.invoiceService.findCurrent(user.organizationId);
@@ -33,6 +36,7 @@ export class InvoiceController {
   }
 
   @Get()
+  @RequirePermission('BILLING', 'view')
   @HttpCode(HttpStatus.OK)
   list(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -48,6 +52,7 @@ export class InvoiceController {
   }
 
   @Get(':id')
+  @RequirePermission('BILLING', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -57,6 +62,7 @@ export class InvoiceController {
   }
 
   @Get(':id/pdf')
+  @RequirePermission('BILLING', 'view')
   @HttpCode(HttpStatus.OK)
   async getPdfUrl(
     @LoggedInUser() user: LoggedInUserInterface,

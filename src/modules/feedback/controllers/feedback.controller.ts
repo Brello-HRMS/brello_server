@@ -32,7 +32,7 @@ export class FeedbackController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermission('FEEDBACK_REPORT', 'create')
+  @RequirePermission('SUPPORT_FEEDBACK', 'create')
   create(@CurrentUser() user: AuthPayload, @Body() dto: CreateFeedbackTicketDto) {
     return this.feedbackService.create(
       user.userId,
@@ -43,7 +43,7 @@ export class FeedbackController {
   }
 
   @Get()
-  @RequirePermission('FEEDBACK_REPORT', 'view')
+  @RequirePermission('SUPPORT_FEEDBACK', 'view')
   findAll(@CurrentUser() user: AuthPayload, @Query() query: OrgQueryFeedbackDto) {
     return this.feedbackService.findAll(
       user.organizationId,
@@ -53,14 +53,14 @@ export class FeedbackController {
   }
 
   @Get(':id')
-  @RequirePermission('FEEDBACK_REPORT', 'view')
+  @RequirePermission('SUPPORT_FEEDBACK', 'view')
   findOne(@CurrentUser() user: AuthPayload, @Param('id', ParseUUIDPipe) id: string) {
     return this.feedbackService.findOne(id, user.organizationId);
   }
 
   @Post(':id/comments')
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermission('FEEDBACK_REPORT', 'create')
+  @RequirePermission('SUPPORT_FEEDBACK', 'create')
   addComment(
     @CurrentUser() user: AuthPayload,
     @Param('id', ParseUUIDPipe) id: string,

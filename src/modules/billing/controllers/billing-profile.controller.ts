@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -14,17 +16,19 @@ import { BillingProfileService } from '../services/billing-profile.service';
 import { UpsertBillingProfileDto } from '../dto/billing-profile.dto';
 
 @Controller('billing/profile')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class BillingProfileController {
   constructor(private readonly service: BillingProfileService) {}
 
   @Get()
+  @RequirePermission('BILLING', 'view')
   @HttpCode(HttpStatus.OK)
   get(@LoggedInUser() user: LoggedInUserInterface) {
     return this.service.getOrCreate(user.organizationId);
   }
 
   @Put()
+  @RequirePermission('BILLING', 'update')
   @HttpCode(HttpStatus.OK)
   upsert(
     @LoggedInUser() user: LoggedInUserInterface,

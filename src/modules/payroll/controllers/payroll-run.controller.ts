@@ -168,16 +168,7 @@ export class PayrollRunController {
     return this.processingService.disburse(user, id, dto);
   }
 
-  // ─── Audit trail ─────────────────────────────────────────────────────────────
 
-  @Get(':id/audit')
-  @RequirePermission('PAY_PROCESS', 'view')
-  auditTrail(
-    @CurrentUser() user: LoggedInUser,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.payrollRunService.getAuditTrail(user, id);
-  }
 
   // ─── Adjustments (bonus / deduction) ─────────────────────────────────────────
 

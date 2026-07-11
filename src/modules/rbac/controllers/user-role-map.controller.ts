@@ -49,22 +49,31 @@ export class UserRoleMapController {
   @Get('user/:userId')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ACCESS_USERS', 'view')
-  findByUser(@Param('userId', ParseUUIDPipe) userId: string) {
-    return this.userRoleMapService.findByUserId(userId);
+  findByUser(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.userRoleMapService.findByUserId(userId, user);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermission('ACCESS_USERS', 'view')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userRoleMapService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.userRoleMapService.findOne(id, user);
   }
 
   @AuditLog(AuditLogModule.USER_ROLE, AuditAction.REVOKE, 'user_role')
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermission('ACCESS_USERS', 'delete')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userRoleMapService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.userRoleMapService.remove(id, user);
   }
 }

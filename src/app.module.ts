@@ -41,6 +41,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.interceptor';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -54,6 +55,10 @@ import { LoggedInUserInterceptor } from './common/interceptors/logged-in-user.in
       useFactory: databaseConfigFactory,
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
 
     // Feature modules — loaded in dependency order
     // (EnterpriseModule first because OrganizationModule depends on it)

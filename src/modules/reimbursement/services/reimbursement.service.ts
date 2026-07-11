@@ -5,6 +5,8 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
 import { ReimbursementRepository } from '../repositories/reimbursement.repository';
 import { CreateReimbursementDto } from '../dto/create-reimbursement.dto';
 import { UpdateReimbursementDto } from '../dto/update-reimbursement.dto';
@@ -12,6 +14,7 @@ import { EmployeeReimbursementQueryDto } from '../dto/employee-query.dto';
 import { ReimbursementStatus } from '../enums/reimbursement.enum';
 import { SearchIndexingService } from '../../global-search/services/search-indexing.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+import { Document } from '../../document/entities/document.entity';
 
 @Injectable()
 export class ReimbursementService {
@@ -19,7 +22,36 @@ export class ReimbursementService {
     private readonly reimbursementRepository: ReimbursementRepository,
     private readonly searchIndexingService: SearchIndexingService,
     private readonly auditContext: AuditContextService,
+    @InjectRepository(Document)
+    private readonly documentRepo: Repository<Document>,
   ) {}
+
+  /**
+   * Prevents attaching another tenant's/employee's document to a claim by
+   * guessed/reused document id — every attachment must belong to the
+   * submitting employee, in their own org.
+   */
+  private async assertDocumentsOwnedByEmployee(
+    documentIds: string[],
+    userId: string,
+    orgId: string,
+  ): Promise<void> {
+    if (documentIds.length === 0) return;
+
+    const documents = await this.documentRepo.findBy({ id: In(documentIds) });
+    const foundIds = new Set(documents.map((d) => d.id));
+    const missing = documentIds.filter((id) => !foundIds.has(id));
+    if (missing.length > 0) {
+      throw new BadRequestException(`Document(s) not found: ${missing.join(', ')}`);
+    }
+
+    const unauthorized = documents.some(
+      (d) => d.organization_id !== orgId || d.employee_id !== userId,
+    );
+    if (unauthorized) {
+      throw new ForbiddenException('One or more attachments do not belong to you.');
+    }
+  }
 
   async create(
     userId: string,
@@ -35,6 +67,8 @@ export class ReimbursementService {
     if (expenseDate > new Date()) {
       throw new BadRequestException('Expense date cannot be in the future.');
     }
+
+    await this.assertDocumentsOwnedByEmployee(dto.document_ids, userId, orgId);
 
     const reimbursement = await this.reimbursementRepository.createWithAttachments(
       {
@@ -103,6 +137,12 @@ export class ReimbursementService {
       changes.expense_date = expDate;
     }
     if (dto.amount) changes.amount = dto.amount;
+
+    await this.assertDocumentsOwnedByEmployee(
+      dto.add_document_ids ?? [],
+      userId,
+      reimbursement.organization_id,
+    );
 
     const updated = await this.reimbursementRepository.updateWithAttachments(
       reimbursement,

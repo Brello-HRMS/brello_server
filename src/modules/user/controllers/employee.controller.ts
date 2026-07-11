@@ -1,3 +1,6 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -44,11 +47,13 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('employees')
-@UseGuards(JwtAuthGuard)
+@RestrictedOnExpiry()
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
   @Post()
+  @RequirePermission('ACCESS_USERS', 'create')
   async createEmployee(
     @Body() dto: CreateEmployeeDto,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -62,21 +67,25 @@ export class EmployeeController {
   }
 
   @Get('dropdown')
+  @RequirePermission('ACCESS_USERS', 'view')
   async getDropdown(@LoggedInUser() user: LoggedInUserInterface) {
     return this.employeeService.getDropdown(user);
   }
 
   @Get('stats')
+  @RequirePermission('ACCESS_USERS', 'view')
   getDashboardStats(@LoggedInUser() user: LoggedInUserInterface) {
     return this.employeeService.getDashboardStats(user.organizationId);
   }
 
   @Get('new-hires')
+  @RequirePermission('ACCESS_USERS', 'view')
   getNewHires(@LoggedInUser() user: LoggedInUserInterface) {
     return this.employeeService.getNewHires(user.organizationId);
   }
 
   @Get('birthdays')
+  @RequirePermission('ACCESS_USERS', 'view')
   getBirthdays(
     @LoggedInUser() user: LoggedInUserInterface,
     @Query('month') month?: string,
@@ -88,6 +97,7 @@ export class EmployeeController {
   }
 
   @Get()
+  @RequirePermission('ACCESS_USERS', 'view')
   async listEmployees(
     @LoggedInUser() user: LoggedInUserInterface,
     @Query() query: ListEmployeesDto,
@@ -96,12 +106,14 @@ export class EmployeeController {
   }
 
   @Get(':id')
+  @RequirePermission('ACCESS_USERS', 'view')
   async getEmployeeAggregate(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeeService.getEmployeeAggregate(id);
   }
 
   @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee')
   @Patch(':id/personal')
+  @RequirePermission('ACCESS_USERS', 'update')
   async updatePersonalDetails(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateEmployeeProfileDto,
@@ -111,6 +123,7 @@ export class EmployeeController {
   }
 
   @Post(':id/photo')
+  @RequirePermission('ACCESS_USERS', 'create')
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file'))
   async uploadPhoto(
@@ -128,6 +141,7 @@ export class EmployeeController {
   }
 
   @Patch(':id/employment')
+  @RequirePermission('ACCESS_USERS', 'update')
   async updateEmploymentDetails(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateEmployeeBasicDto & UpdateEmployeeProfileDto,
@@ -137,6 +151,7 @@ export class EmployeeController {
   }
 
   @Patch(':id/payroll')
+  @RequirePermission('ACCESS_USERS', 'update')
   async updatePayrollInformation(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePayrollInfoDto,
@@ -146,6 +161,7 @@ export class EmployeeController {
   }
 
   @Post(':id/onboard')
+  @RequirePermission('ACCESS_USERS', 'create')
   async onboardEmployee(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() actor: LoggedInUserInterface,
@@ -154,6 +170,7 @@ export class EmployeeController {
   }
 
   @Post(':id/activate')
+  @RequirePermission('ACCESS_USERS', 'create')
   @HttpCode(200)
   async activateEmployee(
     @Param('id', ParseUUIDPipe) id: string,
@@ -163,6 +180,7 @@ export class EmployeeController {
   }
 
   @Post(':id/documents')
+  @RequirePermission('ACCESS_USERS', 'create')
   async uploadDocuments(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UploadDocumentsDto,
@@ -173,6 +191,7 @@ export class EmployeeController {
 
   @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.CREATE, 'employee_education')
   @Post(':id/education')
+  @RequirePermission('ACCESS_USERS', 'create')
   async addEducation(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AddEducationDto,
@@ -182,6 +201,7 @@ export class EmployeeController {
 
   @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee_education', { entityIdParam: 'eduId' })
   @Patch(':id/education/:eduId')
+  @RequirePermission('ACCESS_USERS', 'update')
   async updateEducation(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('eduId', ParseUUIDPipe) eduId: string,
@@ -192,6 +212,7 @@ export class EmployeeController {
 
   @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.DELETE, 'employee_education', { entityIdParam: 'eduId' })
   @Delete(':id/education/:eduId')
+  @RequirePermission('ACCESS_USERS', 'delete')
   async deleteEducation(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('eduId', ParseUUIDPipe) eduId: string,
@@ -201,6 +222,7 @@ export class EmployeeController {
 
   @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.CREATE, 'employee_experience')
   @Post(':id/experience')
+  @RequirePermission('ACCESS_USERS', 'create')
   async addExperience(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AddExperienceDto,
@@ -210,6 +232,7 @@ export class EmployeeController {
 
   @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee_experience', { entityIdParam: 'expId' })
   @Patch(':id/experience/:expId')
+  @RequirePermission('ACCESS_USERS', 'update')
   async updateExperience(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('expId', ParseUUIDPipe) expId: string,
@@ -220,6 +243,7 @@ export class EmployeeController {
 
   @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.DELETE, 'employee_experience', { entityIdParam: 'expId' })
   @Delete(':id/experience/:expId')
+  @RequirePermission('ACCESS_USERS', 'delete')
   async deleteExperience(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('expId', ParseUUIDPipe) expId: string,
@@ -228,11 +252,13 @@ export class EmployeeController {
   }
 
   @Get(':id/profile-completion')
+  @RequirePermission('ACCESS_USERS', 'view')
   async getProfileCompletion(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeeService.getProfileCompletion(id);
   }
 
   @Patch(':id/system-access')
+  @RequirePermission('ACCESS_USERS', 'update')
   async updateSystemAccess(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSystemAccessDto,
@@ -242,6 +268,7 @@ export class EmployeeController {
   }
 
   @Post(':id/offboarding/initiate')
+  @RequirePermission('ACCESS_USERS', 'create')
   async initiateOffboarding(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: InitiateOffboardingDto,
@@ -251,6 +278,7 @@ export class EmployeeController {
   }
 
   @Patch(':id/offboarding')
+  @RequirePermission('ACCESS_USERS', 'update')
   async updateOffboarding(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateOffboardingDto,
@@ -260,6 +288,7 @@ export class EmployeeController {
   }
 
   @Delete(':id/offboarding')
+  @RequirePermission('ACCESS_USERS', 'delete')
   async cancelOffboarding(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() actor: LoggedInUserInterface,
@@ -268,11 +297,13 @@ export class EmployeeController {
   }
 
   @Get(':id/offboarding')
+  @RequirePermission('ACCESS_USERS', 'view')
   async getOffboardingDetails(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeeService.getOffboardingDetails(id);
   }
 
   @Delete(':id')
+  @RequirePermission('ACCESS_USERS', 'delete')
   async softDeleteEmployee(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeeService.softDeleteEmployee(id);
   }

@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Post,
@@ -16,12 +18,13 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 
 @Controller('billing/subscriptions')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class SubscriptionController {
   constructor(private readonly subService: SubscriptionBillingService) {}
 
   @AuditLog(AuditLogModule.SUBSCRIPTION, AuditAction.UPDATE, 'subscription')
   @Post('change-plan')
+  @RequirePermission('BILLING', 'create')
   @HttpCode(HttpStatus.OK)
   changePlan(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -37,6 +40,7 @@ export class SubscriptionController {
 
   @AuditLog(AuditLogModule.SUBSCRIPTION, AuditAction.CANCEL, 'subscription')
   @Post('cancel-pending-change')
+  @RequirePermission('BILLING', 'create')
   @HttpCode(HttpStatus.OK)
   cancelPending(@LoggedInUser() user: LoggedInUserInterface) {
     return this.subService.cancelPendingChange(user.organizationId);
@@ -44,6 +48,7 @@ export class SubscriptionController {
 
   @AuditLog(AuditLogModule.SUBSCRIPTION, AuditAction.CANCEL, 'subscription')
   @Post('cancel')
+  @RequirePermission('BILLING', 'create')
   @HttpCode(HttpStatus.OK)
   cancel(@LoggedInUser() user: LoggedInUserInterface) {
     return this.subService.cancelSubscription(user.organizationId);

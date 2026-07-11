@@ -39,6 +39,7 @@ import { GlobalSearchModule } from '../global-search/global-search.module';
 import { NotificationModule } from '../notification/notification.module';
 import { DocumentModule } from '../document/document.module';
 import { AuditCoreModule } from '../audit/audit.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { AuditCoreModule } from '../audit/audit.module';
     DocumentModule,
     NotificationModule,
     AuditCoreModule,
+    RbacModule,
   ],
   controllers: [UserController, EmployeeController],
   providers: [
@@ -82,6 +84,12 @@ import { AuditCoreModule } from '../audit/audit.module';
     EmployeeOffboardingRepository,
     AuditLogRepository,
   ],
-  exports: [UserService, EmployeeService, UserRepository, UserDepartmentRepository, UserDesignationRepository],
+  exports: [
+    UserService,
+    EmployeeService,
+    UserRepository,
+    UserDepartmentRepository,
+    UserDesignationRepository,
+  ],
 })
 export class UserModule {}

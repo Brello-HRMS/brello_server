@@ -45,6 +45,7 @@ import { DocumentModule } from '../document/document.module';
 import { NotificationModule } from '../notification/notification.module';
 import { UserRoleMap } from '../rbac/entities/user-role-map.entity';
 import { User } from '../user/entities/user.entity';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { User } from '../user/entities/user.entity';
     forwardRef(() => PlanModule),
     DocumentModule,
     NotificationModule,
+    RbacModule,
   ],
   controllers: [
     BillingOverviewController,

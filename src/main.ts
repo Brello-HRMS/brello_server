@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import type { Request, Response, NextFunction } from 'express';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -47,7 +48,26 @@ async function bootstrap() {
   const apiPrefix = config.get<string>('http.apiPrefix', 'api/v1');
   app.setGlobalPrefix(apiPrefix);
 
-  // BullBoard dashboard — dev only, no auth guard (add platform-admin gate in prod)
+  // BullBoard dashboard — exposes job payloads (emails, notification content),
+  // gated behind HTTP Basic Auth in every environment.
+  const bullBoardUser = config.get<string>('bullBoard.username');
+  const bullBoardPassword = config.get<string>('bullBoard.password');
+  app.use('/admin/queues', (req: Request, res: Response, next: NextFunction) => {
+    const header = req.headers.authorization;
+    const [scheme, encoded] = header?.split(' ') ?? [];
+    const [user, password] =
+      scheme === 'Basic' && encoded
+        ? Buffer.from(encoded, 'base64').toString('utf8').split(':')
+        : [];
+
+    if (user === bullBoardUser && password === bullBoardPassword) {
+      return next();
+    }
+
+    res.set('WWW-Authenticate', 'Basic realm="BullBoard"');
+    res.status(401).send('Authentication required');
+  });
+
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath('/admin/queues');
   createBullBoard({

@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, IsNull, Repository } from 'typeorm';
 import { Reimbursement } from '../entities/reimbursement.entity';
 import { ReimbursementAttachment } from '../entities/reimbursement-attachment.entity';
-import { ReimbursementAuditLog } from '../entities/reimbursement-audit-log.entity';
 import { ReimbursementStatus, AuditAction } from '../enums/reimbursement.enum';
 import { AdminReimbursementQueryDto } from '../dto/admin-query.dto';
 import { EmployeeReimbursementQueryDto } from '../dto/employee-query.dto';
@@ -103,12 +102,6 @@ export class ReimbursementRepository {
         await manager.save(ReimbursementAttachment, attachments);
       }
 
-      await manager.save(ReimbursementAuditLog, manager.create(ReimbursementAuditLog, {
-        reimbursement_id: saved.id,
-        action: AuditAction.CREATED,
-        new_data: { status: ReimbursementStatus.PENDING, amount: saved.amount },
-        performed_by: saved.created_by,
-      }));
 
       return saved;
     });
@@ -148,13 +141,6 @@ export class ReimbursementRepository {
         await manager.save(ReimbursementAttachment, newAttachments);
       }
 
-      await manager.save(ReimbursementAuditLog, manager.create(ReimbursementAuditLog, {
-        reimbursement_id: saved.id,
-        action: AuditAction.UPDATED,
-        old_data: oldData,
-        new_data: { title: saved.title, amount: saved.amount, expense_date: saved.expense_date },
-        performed_by: actorId,
-      }));
 
       return saved;
     });
@@ -166,13 +152,7 @@ export class ReimbursementRepository {
       reimbursement.deleted_by = actorId;
       await manager.save(Reimbursement, reimbursement);
 
-      await manager.save(ReimbursementAuditLog, manager.create(ReimbursementAuditLog, {
-        reimbursement_id: reimbursement.id,
-        action: AuditAction.DELETED,
-        old_data: { status: reimbursement.reimb_status },
-        new_data: { deleted: true },
-        performed_by: actorId,
-      }));
+
     });
   }
 
@@ -195,13 +175,6 @@ export class ReimbursementRepository {
       const saved = await manager.save(Reimbursement, reimbursement);
 
       const action = status === ReimbursementStatus.APPROVED ? AuditAction.APPROVED : AuditAction.REJECTED;
-      await manager.save(ReimbursementAuditLog, manager.create(ReimbursementAuditLog, {
-        reimbursement_id: saved.id,
-        action,
-        old_data: { status: oldStatus },
-        new_data: { status, rejection_reason: rejectionReason },
-        performed_by: adminId,
-      }));
 
       return saved;
     });
@@ -213,13 +186,6 @@ export class ReimbursementRepository {
       reimbursement.paid_at = new Date();
       const saved = await manager.save(Reimbursement, reimbursement);
 
-      await manager.save(ReimbursementAuditLog, manager.create(ReimbursementAuditLog, {
-        reimbursement_id: saved.id,
-        action: AuditAction.PAID,
-        old_data: { is_paid: false },
-        new_data: { is_paid: true, paid_at: saved.paid_at },
-        performed_by: adminId,
-      }));
 
       return saved;
     });

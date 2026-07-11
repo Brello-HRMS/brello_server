@@ -6,15 +6,17 @@ import { Department } from './entities/department.entity';
 import { DepartmentRepository } from './repositories/department.repository';
 import { UserModule } from '../user/user.module';
 import { GlobalSearchModule } from '../global-search/global-search.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Department]),
-        UserModule,
-        GlobalSearchModule,
-    ],
-    controllers: [DepartmentController],
-    providers: [DepartmentService, DepartmentRepository],
-    exports: [DepartmentService],
+  imports: [
+    TypeOrmModule.forFeature([Department]),
+    UserModule,
+    GlobalSearchModule,
+    RbacModule,
+  ],
+  controllers: [DepartmentController],
+  providers: [DepartmentService, DepartmentRepository],
+  exports: [DepartmentService],
 })
-export class DepartmentModule { }
+export class DepartmentModule {}

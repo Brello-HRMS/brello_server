@@ -71,12 +71,12 @@ export class ClientService {
     });
   }
 
-  async findOne(id: string): Promise<Client> {
+  async findOne(id: string, user: LoggedInUser): Promise<Client> {
     this.logger.log(`Fetching client: ${id}`);
 
     const client = await this.clientRepository.findById(id);
 
-    if (!client) {
+    if (!client || client.organization_id !== user.organizationId) {
       throw new NotFoundException(`Client with ID "${id}" not found`);
     }
 
@@ -94,7 +94,7 @@ export class ClientService {
   ): Promise<Client> {
     this.logger.log(`Updating client: ${id}`);
 
-    const existing = await this.findOne(id);
+    const existing = await this.findOne(id, user);
     this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
 
     const updatedClient = await this.clientRepository.update(id, {
@@ -113,10 +113,10 @@ export class ClientService {
     return updatedClient;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, user: LoggedInUser): Promise<void> {
     this.logger.log(`Deleting client: ${id}`);
 
-    const client = await this.findOne(id);
+    const client = await this.findOne(id, user);
     this.auditContext.setPreValue(client as unknown as Record<string, unknown>);
 
     const success = await this.clientRepository.delete(id);

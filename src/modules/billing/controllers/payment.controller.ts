@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Post,
@@ -19,11 +21,12 @@ import {
 } from '../dto/initiate-payment.dto';
 
 @Controller('billing/payments')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('initiate')
+  @RequirePermission('BILLING', 'create')
   @HttpCode(HttpStatus.CREATED)
   initiate(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -39,6 +42,7 @@ export class PaymentController {
   // Backend-generated hosted payment link. Returns short_url for the frontend
   // to redirect to — completion is confirmed via the payment_link.paid webhook.
   @Post('link')
+  @RequirePermission('BILLING', 'create')
   @HttpCode(HttpStatus.CREATED)
   createLink(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -52,6 +56,7 @@ export class PaymentController {
   }
 
   @Post('verify')
+  @RequirePermission('BILLING', 'create')
   @HttpCode(HttpStatus.OK)
   verify(
     @LoggedInUser() user: LoggedInUserInterface,
@@ -66,6 +71,7 @@ export class PaymentController {
   }
 
   @Get(':id')
+  @RequirePermission('BILLING', 'view')
   @HttpCode(HttpStatus.OK)
   findOne(
     @LoggedInUser() user: LoggedInUserInterface,

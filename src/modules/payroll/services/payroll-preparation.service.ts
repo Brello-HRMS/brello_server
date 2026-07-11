@@ -11,7 +11,6 @@ import { PayrollRunItemRepository } from '../repositories/payroll-run-item.repos
 import { PayrollSourceRepository } from '../repositories/payroll-source.repository';
 import { EmployeeSalaryRepository } from '../repositories/employee-salary.repository';
 import { PayrollRunService } from './payroll-run.service';
-import { PayrollAuditService } from './payroll-audit.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
 import { PayrollRun } from '../entities/payroll-run.entity';
 import { PayrollRunItem } from '../entities/payroll-run-item.entity';
@@ -47,7 +46,6 @@ export class PayrollPreparationService {
     private readonly sourceRepo: PayrollSourceRepository,
     private readonly salaryRepo: EmployeeSalaryRepository,
     private readonly runService: PayrollRunService,
-    private readonly audit: PayrollAuditService,
     private readonly auditContext: AuditContextService,
     @InjectRepository(PayrollSetting)
     private readonly settingRepo: Repository<PayrollSetting>,
@@ -153,15 +151,6 @@ export class PayrollPreparationService {
 
     run.total_employees = employees.length;
     await this.runRepo.save(run);
-
-    await this.audit.record(
-      user,
-      'payroll_run',
-      run.id,
-      AuditAction.UPDATE,
-      null,
-      { event: 'prepare', total_employees: employees.length, pending, errors },
-    );
 
     this.logger.log(
       `Prepared run ${runId}: ${employees.length} employees (${pending} pending, ${errors} errors)`,

@@ -1,6 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+
+import { RbacModule } from '../rbac/rbac.module';
 
 import { GlobalSearchDocument } from './entities/global-search-document.entity';
 import { RecentSearch } from './entities/recent-search.entity';
@@ -16,6 +18,7 @@ import { SearchController } from './controllers/search.controller';
   imports: [
     TypeOrmModule.forFeature([GlobalSearchDocument, RecentSearch]),
     ScheduleModule.forRoot(),
+    forwardRef(() => RbacModule),
   ],
   controllers: [SearchController],
   providers: [

@@ -7,7 +7,6 @@ import { GeoFence } from './entities/geo-fence.entity';
 import { RuleAssignment } from './entities/rule-assignment.entity';
 import { AttendanceRecord } from './entities/attendance-record.entity';
 import { AttendanceSession } from './entities/attendance-session.entity';
-import { AttendanceAuditLog } from './entities/attendance-audit-log.entity';
 import { RemoteApproval } from './entities/remote-approval.entity';
 import { AttendanceCorrectionRequest } from './entities/attendance-correction-request.entity';
 import { User } from '../user/entities/user.entity';
@@ -15,6 +14,7 @@ import { UserProfile } from '../user/entities/user-profile.entity';
 import { Holiday } from '../holiday/entities/holiday.entity';
 import { LeaveRequest } from '../leave-request/entities/leave-request.entity';
 import { NotificationModule } from '../notification/notification.module';
+import { AuditCoreModule } from '../audit/audit.module';
 import { AttendanceMaterializationService } from './services/attendance-materialization.service';
 import { AttendanceCronService } from './services/attendance-cron.service';
 import { AutoCheckoutService } from './services/auto-checkout.service';
@@ -30,7 +30,6 @@ import { AttendanceRuleRepository } from './repositories/attendance-rule.reposit
 import { RuleAssignmentRepository } from './repositories/rule-assignment.repository';
 import { AttendanceRecordRepository } from './repositories/attendance-record.repository';
 import { AttendanceSessionRepository } from './repositories/attendance-session.repository';
-import { AttendanceAuditLogRepository } from './repositories/attendance-audit-log.repository';
 import { RemoteApprovalRepository } from './repositories/remote-approval.repository';
 import { ShiftService } from './services/shift.service';
 import { WeeklyOffService } from './services/weekly-off.service';
@@ -60,7 +59,6 @@ import { RbacModule } from '../rbac/rbac.module';
       RuleAssignment,
       AttendanceRecord,
       AttendanceSession,
-      AttendanceAuditLog,
       RemoteApproval,
       AttendanceCorrectionRequest,
       User,
@@ -70,6 +68,7 @@ import { RbacModule } from '../rbac/rbac.module';
     ]),
     RbacModule,
     NotificationModule,
+    AuditCoreModule,
   ],
   controllers: [
     ShiftController,
@@ -103,7 +102,6 @@ import { RbacModule } from '../rbac/rbac.module';
     RuleAssignmentRepository,
     AttendanceRecordRepository,
     AttendanceSessionRepository,
-    AttendanceAuditLogRepository,
     RemoteApprovalRepository,
   ],
   exports: [

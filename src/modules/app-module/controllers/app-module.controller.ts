@@ -15,16 +15,19 @@ import {
 import { AppModuleService } from '../services/app-module.service';
 import { CreateAppModuleDto, UpdateAppModuleDto } from '../dto/app-module.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('app-modules')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class AppModuleController {
   constructor(private readonly appModuleService: AppModuleService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @RequirePermission('ACCESS_PERMISSIONS', 'create')
   create(
     @Body() createAppModuleDto: CreateAppModuleDto,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -34,6 +37,7 @@ export class AppModuleController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @RequirePermission('ACCESS_PERMISSIONS', 'view')
   findAll(
     @Query('app_id') appId: string | undefined,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -43,6 +47,7 @@ export class AppModuleController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @RequirePermission('ACCESS_PERMISSIONS', 'view')
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,
@@ -52,6 +57,7 @@ export class AppModuleController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
+  @RequirePermission('ACCESS_PERMISSIONS', 'edit')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAppModuleDto: UpdateAppModuleDto,
@@ -62,6 +68,7 @@ export class AppModuleController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermission('ACCESS_PERMISSIONS', 'delete')
   remove(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,

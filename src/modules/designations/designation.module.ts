@@ -6,6 +6,7 @@ import { DesignationService } from './services/designation.service';
 import { DesignationController } from './controllers/designation.controller';
 import { OrganizationModule } from '../organization/organization.module';
 import { GlobalSearchModule } from '../global-search/global-search.module';
+import { RbacModule } from '../rbac/rbac.module';
 
 /**
  * Designation Module
@@ -21,13 +22,14 @@ import { GlobalSearchModule } from '../global-search/global-search.module';
  * - DesignationService: available for injection in other modules (e.g., Employee module).
  */
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Designation]),
-        OrganizationModule,
-        GlobalSearchModule, // Provides OrganizationService for cross-module validation
-    ],
-    controllers: [DesignationController],
-    providers: [DesignationService, DesignationRepository],
-    exports: [DesignationService],
+  imports: [
+    TypeOrmModule.forFeature([Designation]),
+    OrganizationModule,
+    GlobalSearchModule, // Provides OrganizationService for cross-module validation
+    RbacModule,
+  ],
+  controllers: [DesignationController],
+  providers: [DesignationService, DesignationRepository],
+  exports: [DesignationService],
 })
-export class DesignationModule { }
+export class DesignationModule {}

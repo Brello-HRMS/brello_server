@@ -10,6 +10,8 @@ import { CompanyPolicyTypeController } from './controllers/company-policy-type.c
 import { CompanyPolicyController } from './controllers/company-policy.controller';
 import { RbacModule } from '../rbac/rbac.module';
 import { GlobalSearchModule } from '../global-search/global-search.module';
+import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
     imports: [
@@ -19,6 +21,8 @@ import { GlobalSearchModule } from '../global-search/global-search.module';
         ]),
         RbacModule,
         GlobalSearchModule,
+        UserModule,
+        NotificationModule,
     ],
     controllers: [
         CompanyPolicyTypeController,

@@ -1,3 +1,5 @@
+import { AccessGuard } from '../../../core/guards/access.guard';
+import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -13,6 +15,7 @@ import {
 } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PlatformAdminGuard } from '../../../core/guards/platform-admin.guard';
 import { Public } from '../../../common/decorators/public.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
 import { LeadService } from '../services/lead.service';
@@ -25,11 +28,12 @@ import { LeadSource } from '../enums/lead-source.enum';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('leads')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AccessGuard)
 export class LeadController {
   constructor(private readonly leadService: LeadService) {}
 
   @Post('register')
+  @RequirePermission('LEAD', 'create')
   @Public()
   @HttpCode(HttpStatus.CREATED)
   registerLead(
@@ -40,6 +44,7 @@ export class LeadController {
   }
 
   @Post('verify-otp')
+  @RequirePermission('LEAD', 'create')
   @Public()
   @HttpCode(HttpStatus.OK)
   verifyLeadOtp(
@@ -50,6 +55,8 @@ export class LeadController {
   }
 
   @Get()
+  @RequirePermission('LEAD', 'view')
+  @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   findAll(
     @Query('status') status?: LeadStatus,
@@ -60,6 +67,8 @@ export class LeadController {
   }
 
   @Get(':id')
+  @RequirePermission('LEAD', 'view')
+  @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -69,6 +78,8 @@ export class LeadController {
   }
 
   @Patch(':id/status')
+  @RequirePermission('LEAD', 'update')
+  @UseGuards(PlatformAdminGuard)
   @HttpCode(HttpStatus.OK)
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,

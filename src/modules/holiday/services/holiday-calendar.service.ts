@@ -13,6 +13,8 @@ import { HolidayCalendar } from '../entities/holiday-calendar.entity';
 import { Status } from '../../../common/enums';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+import { UserRepository } from '../../user/repositories/user.repository';
+import { NotificationService } from '../../notification/services/notification.service';
 
 @Injectable()
 export class HolidayCalendarService {
@@ -22,6 +24,8 @@ export class HolidayCalendarService {
     private readonly calendarRepo: HolidayCalendarRepository,
     private readonly holidayRepo: HolidayRepository,
     private readonly auditContext: AuditContextService,
+    private readonly userRepo: UserRepository,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(user: LoggedInUser, dto: CreateHolidayCalendarDto): Promise<HolidayCalendar> {
@@ -96,6 +100,17 @@ export class HolidayCalendarService {
     });
     
     this.logger.log(`Calendar ${id} activated for year ${calendar.year} by ${user.userId}`);
+
+    // Notify all active employees
+    const users = await this.userRepo.findByOrganizationId(user.organizationId);
+    for (const u of users) {
+      this.notificationService.broadcastAllChannels({
+        user_id: u.id,
+        title: 'New Holiday Calendar Published',
+        message: `The holiday calendar for ${calendar.year} is now active.`,
+        event_type: 'HOLIDAY_PUBLISHED',
+      }).catch(err => this.logger.error(`Failed to notify ${u.id}: ${err.message}`));
+    }
   }
 
   async deactivate(user: LoggedInUser, id: string): Promise<void> {

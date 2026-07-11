@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserRoleMap } from './entities/user-role-map.entity';
 import { AppModule as AppEntity } from '../app-module/entities/app-module.entity';
@@ -18,6 +18,7 @@ import { RoleAppRepository } from '../role/repositories/role-app.repository';
 import { UserRoleMapRepository } from './repositories/user-role-map.repository';
 import { Role } from '../role/entities/role.entity';
 import { RoleApp } from '../role/entities/role-app.entity';
+import { User } from '../user/entities/user.entity';
 import { GlobalSearchModule } from '../global-search/global-search.module';
 
 /**
@@ -34,11 +35,12 @@ import { GlobalSearchModule } from '../global-search/global-search.module';
  */
 @Module({
   imports: [
-    GlobalSearchModule,
+    forwardRef(() => GlobalSearchModule),
     TypeOrmModule.forFeature([
       Role,
       RoleApp,
       UserRoleMap,
+      User,
       AppEntity,
       Action,
       ModuleAccess,
