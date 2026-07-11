@@ -46,4 +46,13 @@ export class SendNotificationDto {
   @IsString()
   @IsOptional()
   event_type?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Organization the email is sent on behalf of. When this org has an active Gmail integration, EMAIL notifications are sent from that account; otherwise the default provider is used.',
+    format: 'uuid',
+  })
+  @IsUUID()
+  @IsOptional()
+  organization_id?: string;
 }
