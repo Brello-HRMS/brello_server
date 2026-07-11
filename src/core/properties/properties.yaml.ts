@@ -2,10 +2,12 @@ import { readFileSync } from 'fs';
 import * as yaml from 'js-yaml';
 import { join } from 'path';
 
-const YAML_CONFIG = 'dev.properties.yaml';
+const APP_ENV = process.env.APP_ENV || process.env.NODE_ENV || 'dev';
+const YAML_CONFIG = `${APP_ENV}.properties.yaml`;
 
 export default () => {
   const possiblePaths = [
+    ...(process.env.CONFIG_FILE_PATH ? [process.env.CONFIG_FILE_PATH] : []),
     join(__dirname, YAML_CONFIG),
     join(__dirname, '..', '..', '..', 'core', 'properties', YAML_CONFIG),
     join(process.cwd(), 'src', 'core', 'properties', YAML_CONFIG),
