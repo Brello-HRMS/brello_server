@@ -34,4 +34,23 @@ export enum NotificationEventType {
   // Letter Management
   LETTER_VIEWED = 'letter.viewed',
   LETTER_ACKNOWLEDGED = 'letter.acknowledged',
+
+  // Offer Management (HR-facing)
+  OFFER_VIEWED = 'offer.viewed',
+  OFFER_ACCEPTED = 'offer.accepted',
+  OFFER_REJECTED = 'offer.rejected',
+  OFFER_CHANGE_REQUESTED = 'offer.change_requested',
+  OFFER_EXPIRED = 'offer.expired',
+  OFFER_EMPLOYEE_SYNCED = 'offer.employee_synced',
+  OFFER_APPROVAL_PENDING = 'offer.approval_pending',
+  OFFER_APPROVAL_COMPLETED = 'offer.approval_completed',
+
+  // Offer Management (Candidate-facing)
+  OFFER_SENT = 'offer.sent',
+  OFFER_REMINDER = 'offer.reminder',
+  OFFER_UPDATED = 'offer.updated',
+  OFFER_WITHDRAWN = 'offer.withdrawn',
+
+  // Announcements
+  ANNOUNCEMENT_PUBLISHED = 'announcement.published',
 }

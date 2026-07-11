@@ -9,8 +9,11 @@ import { User } from '../user/entities/user.entity';
 
 import { GlobalSearchModule } from '../global-search/global-search.module';
 import { RbacModule } from '../rbac/rbac.module';
+import { NotificationModule } from '../notification/notification.module';
 import { AnnouncementRepository } from './repositories/announcement.repository';
 import { AnnouncementService } from './services/announcement.service';
+import { AnnouncementNotificationService } from './services/announcement-notification.service';
+import { AnnouncementSchedulerService } from './services/announcement-scheduler.service';
 import { EmployeeAnnouncementService } from './services/employee-announcement.service';
 import { AnnouncementController } from './controllers/announcement.controller';
 import { EmployeeAnnouncementController } from './controllers/employee-announcement.controller';
@@ -19,6 +22,7 @@ import { EmployeeAnnouncementController } from './controllers/employee-announcem
   imports: [
     GlobalSearchModule,
     RbacModule,
+    NotificationModule,
     TypeOrmModule.forFeature([
       Announcement,
       AnnouncementTarget,
@@ -28,7 +32,13 @@ import { EmployeeAnnouncementController } from './controllers/employee-announcem
     ]),
   ],
   controllers: [AnnouncementController, EmployeeAnnouncementController],
-  providers: [AnnouncementRepository, AnnouncementService, EmployeeAnnouncementService],
+  providers: [
+    AnnouncementRepository,
+    AnnouncementService,
+    AnnouncementNotificationService,
+    AnnouncementSchedulerService,
+    EmployeeAnnouncementService,
+  ],
   exports: [AnnouncementService, EmployeeAnnouncementService],
 })
 export class AnnouncementModule {}

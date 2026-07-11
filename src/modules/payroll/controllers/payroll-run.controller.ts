@@ -42,13 +42,13 @@ export class PayrollRunController {
 
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.CREATE, 'payroll_run')
   @Post()
-  @RequirePermission('PAY_PROCESS', 'create')
+  @RequirePermission('PAYROLL_OVERVIEW', 'create')
   create(@CurrentUser() user: LoggedInUser, @Body() dto: CreatePayrollRunDto) {
     return this.payrollRunService.createRun(user, dto);
   }
 
   @Get()
-  @RequirePermission('PAY_LISTING', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   list(
     @CurrentUser() user: LoggedInUser,
     @Query() query: PayrollRunQueryDto,
@@ -57,7 +57,7 @@ export class PayrollRunController {
   }
 
   @Get(':id')
-  @RequirePermission('PAY_PROCESS', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   getOne(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -68,7 +68,7 @@ export class PayrollRunController {
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.DELETE, 'payroll_run')
   @Delete(':id')
   @HttpCode(204)
-  @RequirePermission('PAY_PROCESS', 'delete')
+  @RequirePermission('PAYROLL_OVERVIEW', 'delete')
   remove(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -81,7 +81,7 @@ export class PayrollRunController {
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.UPDATE, 'payroll_run')
   @Post(':id/prepare')
   @HttpCode(200)
-  @RequirePermission('PAY_PROCESS', 'update')
+  @RequirePermission('PAYROLL_OVERVIEW', 'update')
   prepare(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -90,7 +90,7 @@ export class PayrollRunController {
   }
 
   @Get(':id/validation')
-  @RequirePermission('PAY_PROCESS', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   validate(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -101,7 +101,7 @@ export class PayrollRunController {
   // ─── Items (employee table & detail) ─────────────────────────────────────────
 
   @Get(':id/items')
-  @RequirePermission('PAY_PROCESS', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   listItems(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -111,7 +111,7 @@ export class PayrollRunController {
   }
 
   @Get(':id/items/:itemId')
-  @RequirePermission('PAY_PROCESS', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   getItem(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -125,7 +125,7 @@ export class PayrollRunController {
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.PROCESS, 'payroll_run')
   @Post(':id/process')
   @HttpCode(200)
-  @RequirePermission('PAY_PROCESS', 'update')
+  @RequirePermission('PAYROLL_OVERVIEW', 'update')
   process(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -136,7 +136,7 @@ export class PayrollRunController {
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.UPDATE, 'payroll_run_item')
   @Post(':id/items/:itemId/reprocess')
   @HttpCode(200)
-  @RequirePermission('PAY_PROCESS', 'update')
+  @RequirePermission('PAYROLL_OVERVIEW', 'update')
   reprocessItem(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -148,7 +148,7 @@ export class PayrollRunController {
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.LOCK, 'payroll_run')
   @Post(':id/lock')
   @HttpCode(200)
-  @RequirePermission('PAY_PROCESS', 'approve')
+  @RequirePermission('PAYROLL_OVERVIEW', 'approve')
   lock(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -159,7 +159,7 @@ export class PayrollRunController {
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.DISBURSE, 'payroll_run')
   @Post(':id/disburse')
   @HttpCode(200)
-  @RequirePermission('PAY_PROCESS', 'approve')
+  @RequirePermission('PAYROLL_OVERVIEW', 'approve')
   disburse(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -174,7 +174,7 @@ export class PayrollRunController {
 
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.ADJUST, 'payroll_run_item')
   @Post(':id/items/:itemId/adjustments')
-  @RequirePermission('PAY_PROCESS', 'update')
+  @RequirePermission('PAYROLL_OVERVIEW', 'update')
   addAdjustment(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -185,7 +185,7 @@ export class PayrollRunController {
   }
 
   @Get(':id/items/:itemId/adjustments')
-  @RequirePermission('PAY_PROCESS', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   listAdjustments(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -197,7 +197,7 @@ export class PayrollRunController {
   @AuditLog(AuditLogModule.PAYROLL, AuditAction.DELETE, 'payroll_adjustment', { entityIdParam: 'adjId' })
   @Delete(':id/adjustments/:adjId')
   @HttpCode(204)
-  @RequirePermission('PAY_PROCESS', 'update')
+  @RequirePermission('PAYROLL_OVERVIEW', 'update')
   removeAdjustment(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,

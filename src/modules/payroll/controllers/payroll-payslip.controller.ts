@@ -24,7 +24,7 @@ export class PayrollPayslipController {
 
   @Get('runs/:id/payslips/:itemId')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('PAY_PAYSLIP', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   getPayslip(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -35,7 +35,7 @@ export class PayrollPayslipController {
 
   @Get('runs/:id/report')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('PAY_PAYSLIP', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   getReport(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -45,7 +45,7 @@ export class PayrollPayslipController {
 
   @Get('runs/:id/payslips/:itemId/pdf')
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @RequirePermission('PAY_PAYSLIP', 'view')
+  @RequirePermission('PAYROLL_OVERVIEW', 'view')
   getPayslipPdf(
     @CurrentUser() user: LoggedInUser,
     @Param('id', ParseUUIDPipe) id: string,
