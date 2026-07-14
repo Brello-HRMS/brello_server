@@ -31,10 +31,12 @@ const PATHS: Record<string, string> = {
   ORG_PAYROLL: '/organisation/payroll',
   ACCESS_USERS: '/access/users',
   ACCESS_ROLES: '/access/roles',
+  COMPANY_STRUCTURE: '/company-structure',
   // Employee App
   EMP_DASHBOARD: '/',
   EMP_REIMBURSEMENT: '/reimbursement/me',
   EMP_ANNOUNCEMENT: '/announcements/me',
+  EMP_COMPANY_STRUCTURE: '/team',
 };
 
 async function run() {

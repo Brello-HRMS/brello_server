@@ -30,6 +30,8 @@ import { AuditLogRepository } from './repositories/audit-log.repository';
 
 import { EmployeeService } from './services/employee.service';
 import { EmployeeController } from './controllers/employee.controller';
+import { HierarchyService } from './services/hierarchy.service';
+import { HierarchyController } from './controllers/hierarchy.controller';
 import { OffboardingCronService } from './services/offboarding-cron.service';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -65,13 +67,14 @@ import { RbacModule } from '../rbac/rbac.module';
     AuditCoreModule,
     RbacModule,
   ],
-  controllers: [UserController, EmployeeController],
+  controllers: [UserController, EmployeeController, HierarchyController],
   providers: [
     UserService,
     UserRepository,
     UserDepartmentRepository,
     UserDesignationRepository,
     EmployeeService,
+    HierarchyService,
     OffboardingCronService,
     UserProfileRepository,
     UserEducationRepository,
