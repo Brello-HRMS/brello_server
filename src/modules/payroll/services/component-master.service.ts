@@ -154,7 +154,8 @@ export class ComponentMasterService {
     }
 
     // 2. Basic Salary (50% of CTC, priority=1)
-    let basicId: string | undefined = existing.find((c) => c.name === 'Basic Salary')?.id;
+    const existingBasic = existing.find((c) => c.name === 'Basic Salary');
+    let basicId: string | undefined = existingBasic?.id;
     if (!basicId) {
       const basic = await this.componentRepository.save(
         this.componentRepository.create({
@@ -173,6 +174,13 @@ export class ComponentMasterService {
         }),
       );
       basicId = basic.id;
+    } else if (!existingBasic!.calculate_from && ctcId) {
+      // Repairs orgs whose "Basic Salary" component predates the CTC virtual
+      // root (e.g. created by an older/duplicate seeding path that never set
+      // calculate_from) — without this, percentage-of-CTC calculation for
+      // Basic Salary silently resolves to 0, and everything derived from it
+      // (HRA, PF) cascades to 0 too.
+      await this.componentRepository.update(basicId, { calculate_from: ctcId });
     }
 
     // 3. PF Employee (12% of Basic, priority=2)

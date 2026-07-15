@@ -15,12 +15,14 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
 import { AuditLog } from '../../audit/decorators/audit-log.decorator';
 import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 import { OfferLifecycleService } from '../services/offer-lifecycle.service';
 import { OfferSyncService } from '../services/offer-sync.service';
 import { OfferTimelineRepository } from '../repositories/offer-timeline.repository';
+import { OfferVersionRepository } from '../repositories/offer-version.repository';
 import {
   CreateOfferDto,
   UpdateOfferDto,
@@ -28,15 +30,18 @@ import {
   WithdrawOfferDto,
   ExtendExpiryDto,
   FilterOffersDto,
+  LinkEmployeeDto,
 } from '../dto/offer.dto';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('offer-management/offers')
 @UseGuards(JwtAuthGuard, AccessGuard)
+@RestrictedOnExpiry()
 export class OfferController {
   constructor(
     private readonly lifecycleService: OfferLifecycleService,
     private readonly timelineRepo: OfferTimelineRepository,
+    private readonly versionRepo: OfferVersionRepository,
     private readonly syncService: OfferSyncService,
   ) {}
 
@@ -73,6 +78,12 @@ export class OfferController {
   @RequirePermission('OFFER_CANDIDATES', 'view')
   getTimeline(@Param('id', ParseUUIDPipe) id: string) {
     return this.timelineRepo.findByOffer(id);
+  }
+
+  @Get(':id/versions')
+  @RequirePermission('OFFER_CANDIDATES', 'view')
+  getVersions(@Param('id', ParseUUIDPipe) id: string) {
+    return this.versionRepo.findAllByOffer(id);
   }
 
   @Patch(':id')
@@ -128,5 +139,22 @@ export class OfferController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.syncService.syncToEmployee(id, user.organizationId, user.userId);
+  }
+
+  /**
+   * Links an employee already created via the full Add Employee wizard (prefilled from this
+   * offer) back to the offer and assigns the offer's salary structure to them. Used by the
+   * "Sync to Employee" flow on the offer detail page, which opens that wizard instead of
+   * syncToEmployee()'s one-click auto-mapped creation, so HR can review/complete every field.
+   */
+  @Post(':id/link-employee')
+  @RequirePermission('OFFER_CANDIDATES', 'edit')
+  @HttpCode(HttpStatus.OK)
+  linkEmployee(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: LinkEmployeeDto,
+  ) {
+    return this.syncService.linkEmployeeAndAssignSalary(id, user.organizationId, dto.employee_id);
   }
 }

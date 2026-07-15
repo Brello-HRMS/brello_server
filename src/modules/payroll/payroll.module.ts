@@ -110,6 +110,7 @@ import { Reimbursement } from '../reimbursement/entities/reimbursement.entity';
     PayrollCalculationEngine,
     EmployeeSalaryRepository,
     ChangePropagationService,
+    SalaryTemplateEngine,
   ],
 })
 export class PayrollModule {}

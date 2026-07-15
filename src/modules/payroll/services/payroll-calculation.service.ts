@@ -120,6 +120,27 @@ export class PayrollCalculationEngine {
       };
     }
 
+    // If the salary structure itself already carries explicit PF components
+    // (e.g. a template with "PF Employee"/"PF Employer" components), computing
+    // PF again here would double-count the deduction. Only auto-compute PF when
+    // the structure doesn't already define it.
+    const hasTemplatePf = calculatedDeductions.some((d) =>
+      d.name?.toLowerCase().includes('pf employee'),
+    );
+    if (hasTemplatePf) {
+      return {
+        gross,
+        deductions_total: totalDeductions,
+        net: gross - totalDeductions,
+        employer_contribution: employerContribution,
+        earnings: calculatedEarnings,
+        deductions: calculatedDeductions,
+        warnings: [
+          'PF already present as an explicit salary component ("PF Employee") — skipped the separate statutory PF calculation to avoid double-counting.',
+        ],
+      };
+    }
+
     const basicComp = calculatedEarnings.find(
       (earningComponent) =>
         earningComponent.name.toLowerCase() === 'basic' ||

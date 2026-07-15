@@ -33,12 +33,6 @@ import { AuthService } from 'src/modules/auth/services/auth.service';
 import { AuthResponseDto } from 'src/modules/auth/dto/auth-response.dto';
 import { PlanService } from 'src/modules/plan/services/plan.service';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
-import { PayrollComponent } from '../../payroll/entities/payroll-component.entity';
-import {
-  ComponentType,
-  ComponentCategory,
-  CalculationType,
-} from '../../payroll/enums/payroll.enum';
 import { Department } from '../../departments/entities/department.entity';
 import { Designation } from '../../designations/entities/designation.entity';
 import { AuditContextService } from '../../audit/services/audit-context.service';
@@ -230,21 +224,16 @@ export class OrganizationService {
       });
       await manager.save(subscription);
 
-      // Step 7: Create Default Payroll Component (Basic Salary)
-      const basicComponent = manager.create(PayrollComponent, {
-        name: 'Basic Salary',
-        component_type: ComponentType.EARNING,
-        category: ComponentCategory.FIXED,
-        calculation_type: CalculationType.PERCENTAGE,
-        value: 50,
-        is_taxable: true,
-        is_default: true,
-        is_editable: false,
-        is_active: true,
-        enterprise_id: enterpriseId,
-        organization_id: savedOrg.id,
-      });
-      await manager.save(basicComponent);
+      // Default payroll components (CTC, Basic Salary, PF Employee/Employer,
+      // Special Allowance) are seeded lazily by
+      // ComponentMasterService.ensureDefaultComponents() the first time the
+      // org touches Payroll, not here — that's the single source of truth for
+      // the full, correctly-linked default set (Basic Salary.calculate_from
+      // -> CTC, etc). A standalone "Basic Salary" used to be created in this
+      // step with no calculate_from and no accompanying CTC component, which
+      // left orgs with a permanently broken percentage-of-CTC calculation
+      // once ensureDefaultComponents() later reused this row by name instead
+      // of creating a properly-linked one.
 
       // Step 8: Copy platform default departments to the new org
       const defaultDepts = await manager.find(Department, {

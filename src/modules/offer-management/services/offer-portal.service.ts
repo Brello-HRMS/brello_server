@@ -47,6 +47,7 @@ export class OfferPortalService {
     await this.offerRepo.update(offer.id, {
       offer_status: OfferStatus.ACCEPTED,
       accepted_at: new Date(),
+      expires_at: null,
     });
 
     await this.versionRepo.update(version.id, {

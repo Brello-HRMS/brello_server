@@ -46,6 +46,10 @@ export class OfferCandidateRepository {
     return this.repo.findOne({ where: { id, organization_id: organizationId } });
   }
 
+  async findById(id: string): Promise<OfferCandidate | null> {
+    return this.repo.findOne({ where: { id } });
+  }
+
   async findByEmailAndOrg(email: string, organizationId: string): Promise<OfferCandidate | null> {
     return this.repo.findOne({ where: { email, organization_id: organizationId } });
   }

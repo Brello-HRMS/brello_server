@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
 import { AuditLog } from '../../audit/decorators/audit-log.decorator';
 import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
@@ -28,6 +29,7 @@ import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interface
 
 @Controller('offer-management/candidates')
 @UseGuards(JwtAuthGuard, AccessGuard)
+@RestrictedOnExpiry()
 export class OfferCandidateController {
   constructor(private readonly candidateService: OfferCandidateService) {}
 

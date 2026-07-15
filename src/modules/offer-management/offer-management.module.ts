@@ -19,6 +19,8 @@ import { OfferRepository } from './repositories/offer.repository';
 import { OfferVersionRepository } from './repositories/offer-version.repository';
 import { OfferTimelineRepository } from './repositories/offer-timeline.repository';
 import { OfferSettingsRepository } from './repositories/offer-settings.repository';
+import { OfferDocumentRepository } from './repositories/offer-document.repository';
+import { OfferMessageRepository } from './repositories/offer-message.repository';
 
 // Services
 import { OfferTemplateService } from './services/offer-template.service';
@@ -32,6 +34,9 @@ import { OfferSettingsService } from './services/offer-settings.service';
 import { OfferSchedulerService } from './services/offer-scheduler.service';
 import { OfferNumberService } from './services/offer-number.service';
 import { OfferSyncService } from './services/offer-sync.service';
+import { OfferPdfService } from './services/offer-pdf.service';
+import { OfferDocumentService } from './services/offer-document.service';
+import { OfferMessageService } from './services/offer-message.service';
 
 // Controllers
 import { OfferTemplateController } from './controllers/offer-template.controller';
@@ -41,12 +46,17 @@ import { OfferPortalController } from './controllers/offer-portal.controller';
 import { OfferApprovalController } from './controllers/offer-approval.controller';
 import { OfferAnalyticsController } from './controllers/offer-analytics.controller';
 import { OfferSettingsController } from './controllers/offer-settings.controller';
+import { OfferDocumentController } from './controllers/offer-document.controller';
+import { OfferMessageController } from './controllers/offer-message.controller';
 
 // External
 import { NotificationModule } from '../notification/notification.module';
 import { RbacModule } from '../rbac/rbac.module';
 import { UserModule } from '../user/user.module';
 import { PayrollModule } from '../payroll/payroll.module';
+import { DocumentModule } from '../document/document.module';
+import { LetterSharedModule } from '../letter-management/shared/letter-shared.module';
+import { SignatoriesModule } from '../letter-management/signatories/signatories.module';
 
 @Module({
   imports: [
@@ -65,6 +75,9 @@ import { PayrollModule } from '../payroll/payroll.module';
     RbacModule,
     UserModule,
     PayrollModule,
+    DocumentModule,
+    LetterSharedModule,
+    SignatoriesModule,
   ],
   controllers: [
     OfferTemplateController,
@@ -74,6 +87,8 @@ import { PayrollModule } from '../payroll/payroll.module';
     OfferApprovalController,
     OfferAnalyticsController,
     OfferSettingsController,
+    OfferDocumentController,
+    OfferMessageController,
   ],
   providers: [
     // Repositories
@@ -83,6 +98,8 @@ import { PayrollModule } from '../payroll/payroll.module';
     OfferVersionRepository,
     OfferTimelineRepository,
     OfferSettingsRepository,
+    OfferDocumentRepository,
+    OfferMessageRepository,
     // Services
     OfferTemplateService,
     OfferCandidateService,
@@ -95,6 +112,9 @@ import { PayrollModule } from '../payroll/payroll.module';
     OfferSchedulerService,
     OfferNumberService,
     OfferSyncService,
+    OfferPdfService,
+    OfferDocumentService,
+    OfferMessageService,
   ],
   exports: [OfferLifecycleService, OfferCandidateService, OfferSyncService],
 })

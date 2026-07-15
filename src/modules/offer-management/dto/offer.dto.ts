@@ -11,10 +11,19 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import { EmploymentType, WorkMode } from '../entities/offer-candidate.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+
+// class-validator's @IsOptional() only skips validation for null/undefined —
+// an empty string still reaches @IsEnum/@IsDateString/@IsUUID and fails them,
+// even though the field is meant to be optional. Wizard-style forms
+// (unfilled <select>/<input type="date">) naturally submit '' rather than
+// omitting the key, so normalize '' -> undefined before validation runs on
+// any optional enum/date/uuid field below.
+const emptyStringToUndefined = () =>
+  Transform(({ value }) => (value === '' ? undefined : value));
 
 class SalaryComponentDto {
   @IsString()
@@ -34,26 +43,32 @@ export class OfferDetailsDto {
   @IsOptional()
   position?: string;
 
+  @emptyStringToUndefined()
   @IsUUID()
   @IsOptional()
   department_id?: string;
 
+  @emptyStringToUndefined()
   @IsUUID()
   @IsOptional()
   designation_id?: string;
 
+  @emptyStringToUndefined()
   @IsEnum(EmploymentType)
   @IsOptional()
   employment_type?: EmploymentType;
 
+  @emptyStringToUndefined()
   @IsDateString()
   @IsOptional()
   joining_date?: string;
 
+  @emptyStringToUndefined()
   @IsUUID()
   @IsOptional()
   reporting_manager_id?: string;
 
+  @emptyStringToUndefined()
   @IsEnum(WorkMode)
   @IsOptional()
   work_mode?: WorkMode;
@@ -79,6 +94,7 @@ export class OfferDetailsDto {
 
 /** Step 3: Compensation */
 export class OfferCompensationDto {
+  @emptyStringToUndefined()
   @IsUUID()
   @IsOptional()
   salary_structure_id?: string;
@@ -114,6 +130,7 @@ export class CreateOfferDto {
   @IsNotEmpty()
   candidate_id: string;
 
+  @emptyStringToUndefined()
   @IsUUID()
   @IsOptional()
   template_id?: string;
@@ -138,6 +155,7 @@ export class CreateOfferDto {
 }
 
 export class UpdateOfferDto {
+  @emptyStringToUndefined()
   @IsUUID()
   @IsOptional()
   template_id?: string;
@@ -189,4 +207,10 @@ export class BulkSendOffersDto {
   @IsArray()
   @IsUUID('4', { each: true })
   offer_ids: string[];
+}
+
+export class LinkEmployeeDto {
+  @IsUUID()
+  @IsNotEmpty()
+  employee_id: string;
 }
