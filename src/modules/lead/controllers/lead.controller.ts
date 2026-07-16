@@ -28,7 +28,7 @@ import { LeadSource } from '../enums/lead-source.enum';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('leads')
-@UseGuards(JwtAuthGuard, AccessGuard)
+@UseGuards(JwtAuthGuard)
 export class LeadController {
   constructor(private readonly leadService: LeadService) {}
 

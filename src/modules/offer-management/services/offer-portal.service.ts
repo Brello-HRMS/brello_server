@@ -4,6 +4,7 @@ import { OfferRepository } from '../repositories/offer.repository';
 import { OfferTimelineRepository } from '../repositories/offer-timeline.repository';
 import { OfferCandidateRepository } from '../repositories/offer-candidate.repository';
 import { OfferNotificationService } from './offer-notification.service';
+import { CompanyPolicyService } from '../../company-policy/services/company-policy.service';
 import { OfferStatus } from '../enums/offer-status.enum';
 import { OfferTimelineEvent } from '../enums/offer-timeline-event.enum';
 import {
@@ -25,6 +26,7 @@ export class OfferPortalService {
     private readonly timelineRepo: OfferTimelineRepository,
     private readonly candidateRepo: OfferCandidateRepository,
     private readonly notificationService: OfferNotificationService,
+    private readonly companyPolicyService: CompanyPolicyService,
   ) {}
 
   async getPortalData(token: string) {
@@ -37,7 +39,12 @@ export class OfferPortalService {
 
     await this.markViewed(version, offer);
 
-    return { offer, version, candidate };
+    const policies = await this.companyPolicyService.findByIdsForOrg(
+      offer.policy_ids,
+      offer.organization_id,
+    );
+
+    return { offer, version, candidate, policies };
   }
 
   async accept(dto: CandidateAcceptDto): Promise<void> {

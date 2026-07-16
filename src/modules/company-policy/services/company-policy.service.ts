@@ -74,6 +74,11 @@ export class CompanyPolicyService {
         }));
     }
 
+    /** Org-scoped lookup for unauthenticated/public contexts (e.g. the candidate offer portal). */
+    async findByIdsForOrg(ids: string[], organizationId: string): Promise<CompanyPolicy[]> {
+        return this.policyRepository.findByIds(ids, organizationId);
+    }
+
     async findOne(user: LoggedInUser, id: string, checkActive: boolean = true): Promise<CompanyPolicy> {
         const policy = await this.policyRepository.findOneById(id, user.organizationId);
         

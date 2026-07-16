@@ -334,7 +334,7 @@ export class OfferLifecycleService {
   }
 
   private buildPortalLink(token: string): string {
-    const baseUrl = process.env.WEBAPP_URL ?? 'https://app.brello.io';
+    const baseUrl = process.env.WEBAPP_URL ?? 'https://brellohrms.netlify.app';
     return `${baseUrl}/offer/portal/${token}`;
   }
 }

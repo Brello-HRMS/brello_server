@@ -57,6 +57,7 @@ import { PayrollModule } from '../payroll/payroll.module';
 import { DocumentModule } from '../document/document.module';
 import { LetterSharedModule } from '../letter-management/shared/letter-shared.module';
 import { SignatoriesModule } from '../letter-management/signatories/signatories.module';
+import { CompanyPolicyModule } from '../company-policy/company-policy.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { SignatoriesModule } from '../letter-management/signatories/signatories.
     DocumentModule,
     LetterSharedModule,
     SignatoriesModule,
+    CompanyPolicyModule,
   ],
   controllers: [
     OfferTemplateController,
