@@ -28,7 +28,7 @@ import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interface
  * create/update/remove are platform-admin-only.
  */
 @Controller('industry-types')
-@UseGuards(JwtAuthGuard, AccessGuard)
+@UseGuards(JwtAuthGuard)
 export class IndustryTypeController {
   constructor(private readonly industryTypeService: IndustryTypeService) {}
 
