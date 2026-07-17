@@ -12,9 +12,19 @@ import {
 import { EmployeeQueryDto } from '../dto/employee-listing.dto';
 import { SalaryTemplateEngine } from './salary-template.service';
 import { SalaryStructureBuilder } from '../utils/salary-structure-builder.util';
-import { EmployeeSalaryRepository } from '../repositories/employee-salary.repository';
+import {
+  EmployeeSalaryRepository,
+  SalaryComponentSnapshot,
+} from '../repositories/employee-salary.repository';
 import { ComponentType } from '../enums/payroll.enum';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+
+export interface AssignAdHocSalaryParams {
+  user_id: string;
+  ctc: number;
+  effective_from: Date;
+  components: SalaryComponentSnapshot[];
+}
 
 @Injectable()
 export class EmployeeSalaryEngine {
@@ -45,6 +55,26 @@ export class EmployeeSalaryEngine {
       enterprise_id: enterpriseId,
       organization_id: organizationId,
       components: snapshot,
+    });
+  }
+
+  /**
+   * Assigns a salary built from an explicit component list rather than a SalaryTemplate —
+   * for callers (e.g. offer-management sync) that have a component snapshot but no template_id.
+   * Keeps EmployeeSalaryRepository access internal to the payroll module.
+   */
+  async assignAdHocSalary(
+    enterpriseId: string,
+    organizationId: string,
+    params: AssignAdHocSalaryParams,
+  ): Promise<EmployeeSalary> {
+    return this.employeeSalaryRepository.createNewVersion({
+      user_id: params.user_id,
+      ctc: params.ctc,
+      effective_from: params.effective_from,
+      enterprise_id: enterpriseId,
+      organization_id: organizationId,
+      components: params.components,
     });
   }
 

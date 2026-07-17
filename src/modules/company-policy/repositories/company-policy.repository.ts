@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CompanyPolicy } from '../entities/company-policy.entity';
 import { Status } from '../../../common/enums';
 
@@ -56,6 +56,19 @@ export class CompanyPolicyRepository {
                 id,
                 organization_id: organizationId,
                 is_deleted: false,
+            },
+            relations: ['type'],
+        });
+    }
+
+    async findByIds(ids: string[], organizationId: string): Promise<CompanyPolicy[]> {
+        if (!ids.length) return [];
+        return this.repository.find({
+            where: {
+                id: In(ids),
+                organization_id: organizationId,
+                is_deleted: false,
+                status: Status.ACTIVE,
             },
             relations: ['type'],
         });

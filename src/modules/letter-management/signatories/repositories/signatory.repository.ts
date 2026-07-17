@@ -48,6 +48,10 @@ export class SignatoryRepository {
     });
   }
 
+  async findById(id: string): Promise<Signatory | null> {
+    return this.repo.findOne({ where: { id } });
+  }
+
   async update(id: string, data: Partial<Signatory>): Promise<Signatory | null> {
     await this.repo.update(id, data);
     return this.repo.findOne({ where: { id } });

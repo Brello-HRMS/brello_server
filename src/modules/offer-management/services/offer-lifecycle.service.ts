@@ -12,6 +12,7 @@ import { OfferCandidateRepository } from '../repositories/offer-candidate.reposi
 import { OfferSettingsRepository } from '../repositories/offer-settings.repository';
 import { OfferNumberService } from './offer-number.service';
 import { OfferNotificationService } from './offer-notification.service';
+import { OfferPdfService } from './offer-pdf.service';
 import { OfferStatus } from '../enums/offer-status.enum';
 import { OfferTimelineEvent } from '../enums/offer-timeline-event.enum';
 import { Offer } from '../entities/offer.entity';
@@ -21,6 +22,24 @@ import type { LoggedInUser } from '../../auth/interfaces/logged-in-user.interfac
 
 /** Terminal states — no further transitions allowed. */
 const TERMINAL_STATUSES = new Set([OfferStatus.ACCEPTED, OfferStatus.SYNCED]);
+
+/**
+ * Statuses where editing offer details/compensation (and, by the same logic,
+ * (re)sending) no longer makes sense. Shared by findEditable()/assertSendable()
+ * so the two stay in lockstep — a status you can revise is a status you should
+ * be able to resend, and vice versa. Notably this does NOT include SENT,
+ * VIEWED, or NEGOTIATING: those are exactly the statuses where HR needs to
+ * revise the offer (e.g. after a candidate requests changes) and send a new
+ * version, per the offer lifecycle (Sent -> Viewed -> Changes Requested ->
+ * New Version -> Sent).
+ */
+const NON_EDITABLE_STATUSES = new Set([
+  ...TERMINAL_STATUSES,
+  OfferStatus.WITHDRAWN,
+  OfferStatus.REJECTED,
+  OfferStatus.EXPIRED,
+  OfferStatus.PENDING_APPROVAL,
+]);
 
 @Injectable()
 export class OfferLifecycleService {
@@ -32,6 +51,7 @@ export class OfferLifecycleService {
     private readonly settingsRepo: OfferSettingsRepository,
     private readonly numberService: OfferNumberService,
     private readonly notificationService: OfferNotificationService,
+    private readonly offerPdfService: OfferPdfService,
   ) {}
 
   async createDraft(user: LoggedInUser, dto: CreateOfferDto): Promise<Offer> {
@@ -73,7 +93,10 @@ export class OfferLifecycleService {
     await this.timelineRepo.record({
       offer_id: id,
       event: OfferTimelineEvent.DRAFT_UPDATED,
-      label: 'Offer draft updated',
+      label:
+        offer.offer_status === OfferStatus.DRAFT
+          ? 'Offer draft updated'
+          : 'Offer revised — ready to resend',
       actor_id: user.userId,
       organization_id: user.organizationId,
       enterprise_id: user.enterpriseId,
@@ -104,6 +127,8 @@ export class OfferLifecycleService {
     const newVersionNumber = (offer.current_version ?? 0) + 1;
     const token = randomUUID();
 
+    const pdfUrl = await this.offerPdfService.generateAndUploadPdf(user, offer, settings, newVersionNumber);
+
     const version = await this.versionRepo.create({
       offer_id: id,
       version_number: newVersionNumber,
@@ -111,6 +136,7 @@ export class OfferLifecycleService {
       access_token: token,
       token_expires_at: expiresAt,
       change_summary: dto.change_summary ?? null,
+      pdf_url: pdfUrl,
       organization_id: user.organizationId,
       enterprise_id: user.enterpriseId,
     });
@@ -242,8 +268,10 @@ export class OfferLifecycleService {
 
   private async findEditable(user: LoggedInUser, id: string): Promise<Offer> {
     const offer = await this.findByOrg(user, id);
-    if (offer.offer_status !== OfferStatus.DRAFT) {
-      throw new ConflictException('Only draft offers can be edited');
+    if (NON_EDITABLE_STATUSES.has(offer.offer_status)) {
+      throw new ConflictException(
+        `Offer cannot be edited from its current status: ${offer.offer_status}`,
+      );
     }
     return offer;
   }
@@ -256,14 +284,7 @@ export class OfferLifecycleService {
   }
 
   private assertSendable(offer: Offer): void {
-    const blockedStatuses = new Set([
-      ...TERMINAL_STATUSES,
-      OfferStatus.WITHDRAWN,
-      OfferStatus.REJECTED,
-      OfferStatus.EXPIRED,
-      OfferStatus.PENDING_APPROVAL,
-    ]);
-    if (blockedStatuses.has(offer.offer_status)) {
+    if (NON_EDITABLE_STATUSES.has(offer.offer_status)) {
       throw new ConflictException(`Cannot send an offer with status: ${offer.offer_status}`);
     }
     if (offer.requires_approval && offer.offer_status !== OfferStatus.APPROVED) {
@@ -313,7 +334,7 @@ export class OfferLifecycleService {
   }
 
   private buildPortalLink(token: string): string {
-    const baseUrl = process.env.WEBAPP_URL ?? 'https://app.brello.io';
+    const baseUrl = process.env.WEBAPP_URL ?? 'https://brellohrms.netlify.app';
     return `${baseUrl}/offer/portal/${token}`;
   }
 }

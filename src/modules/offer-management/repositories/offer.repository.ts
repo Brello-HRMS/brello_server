@@ -60,6 +60,10 @@ export class OfferRepository {
     return this.repo.findOne({ where: { candidate_id: candidateId, organization_id: organizationId } });
   }
 
+  async findById(id: string): Promise<Offer | null> {
+    return this.repo.findOne({ where: { id } });
+  }
+
   async update(id: string, data: Partial<Offer>): Promise<Offer | null> {
     await this.repo.update(id, data);
     return this.repo.findOne({ where: { id } });

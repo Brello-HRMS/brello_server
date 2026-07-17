@@ -43,6 +43,10 @@ export class OfferTemplateRepository {
     return this.repo.findOne({ where: { id, organization_id: organizationId } });
   }
 
+  async findById(id: string): Promise<OfferTemplate | null> {
+    return this.repo.findOne({ where: { id } });
+  }
+
   async findPublishedByOrg(id: string, organizationId: string): Promise<OfferTemplate | null> {
     return this.repo.findOne({
       where: { id, organization_id: organizationId, template_status: OfferTemplateStatus.PUBLISHED },

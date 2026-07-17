@@ -154,6 +154,13 @@ export class DocumentService {
           );
         return `${enterprise}/${organization}/employee/${params.employeeId}/letters/${params.fileName}`;
 
+      case FolderType.OFFER_DOCUMENT:
+        if (!organization)
+          throw new BadRequestException(
+            'Organization context required for OFFER_DOCUMENT',
+          );
+        return `${enterprise}/${organization}/offers/${params.fileName}`;
+
       default:
         throw new BadRequestException('Invalid folder type');
     }

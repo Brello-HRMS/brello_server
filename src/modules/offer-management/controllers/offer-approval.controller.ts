@@ -13,12 +13,14 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { AccessGuard } from '../../../core/guards/access.guard';
 import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import { LoggedInUser } from '../../../common/decorators/logged-in-user.decorator';
+import { RestrictedOnExpiry } from '../../billing/decorators/restricted-on-expiry.decorator';
 import { OfferApprovalService } from '../services/offer-approval.service';
 import { ApproveOfferStepDto, RejectOfferStepDto, AddApprovalStepDto } from '../dto/offer-approval.dto';
 import type { LoggedInUser as LoggedInUserInterface } from '../../auth/interfaces/logged-in-user.interface';
 
 @Controller('offer-management/offers/:offerId/approval')
 @UseGuards(JwtAuthGuard, AccessGuard)
+@RestrictedOnExpiry()
 export class OfferApprovalController {
   constructor(private readonly approvalService: OfferApprovalService) {}
 

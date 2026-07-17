@@ -55,9 +55,23 @@ export class SalaryStructureBuilder {
             break;
 
           case CalculationType.PERCENTAGE: {
-            const baseValue = comp.calculate_from
-              ? (context.get(comp.calculate_from) ?? 0)
-              : 0;
+            if (!comp.calculate_from) {
+              throw new BadRequestException(
+                `Component '${comp.name}' is configured as a percentage but has no base component ('calculate_from') set.`,
+              );
+            }
+            if (!context.has(comp.calculate_from)) {
+              // Falling back to 0 here would silently produce a wrong salary
+              // breakdown (e.g. Basic Salary computing to ₹0) instead of
+              // surfacing a real data problem — most likely the base component
+              // this one depends on isn't part of the template being used, or
+              // there's a duplicate/orphaned component record with a mismatched
+              // id. Fail loudly instead so it's obvious and fixable.
+              throw new BadRequestException(
+                `Cannot calculate '${comp.name}': its base component (id ${comp.calculate_from}) is not present in this template's component set. Check Payroll Setup for a duplicate or orphaned component with that id.`,
+              );
+            }
+            const baseValue = context.get(comp.calculate_from)!;
             value = (baseValue * Number(comp.value ?? 0)) / 100;
             break;
           }
