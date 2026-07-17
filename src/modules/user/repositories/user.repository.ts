@@ -157,6 +157,29 @@ export class UserRepository {
     });
   }
 
+  /**
+   * Fetch every non-deleted user in the org/enterprise with the relations
+   * needed to build the reporting hierarchy in memory (designation, department,
+   * profile photo). The self-referencing `reports_to_id` column carries the
+   * manager link, so no extra join is required for the tree itself.
+   */
+  async findAllForHierarchy(
+    organizationId: string,
+    enterpriseId: string,
+  ): Promise<User[]> {
+    return this.repository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.designation', 'designation')
+      .leftJoinAndSelect('user.department', 'department')
+      .leftJoinAndSelect('user.user_profile', 'profile')
+      .leftJoinAndSelect('profile.photo', 'photo')
+      .where('user.organization_id = :organizationId', { organizationId })
+      .andWhere('user.enterprise_id = :enterpriseId', { enterpriseId })
+      .andWhere('user.status != :deleted', { deleted: Status.DELETED })
+      .orderBy('user.first_name', 'ASC')
+      .getMany();
+  }
+
   async getDropdownList(organizationId: string): Promise<Partial<User>[]> {
     return this.repository.find({
       select: ['id', 'first_name', 'middle_name', 'last_name'],

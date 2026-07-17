@@ -20,6 +20,7 @@ import { Notification } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { PushSubscription } from './entities/push-subscription.entity';
 import { RbacModule } from '../rbac/rbac.module';
+import { EmailIntegrationModule } from '../email-integration/email-integration.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RbacModule } from '../rbac/rbac.module';
     RedisModule,
     QueueModule,
     RbacModule,
+    EmailIntegrationModule, // provides GmailSenderService for per-org sends
     TypeOrmModule.forFeature([
       Notification,
       NotificationPreference,

@@ -8,6 +8,7 @@ import { Resend } from 'resend';
 import { SendNotificationDto } from '../dto/send-notification.dto';
 import { OtpEmail } from '../templates/otp-email';
 import { TrialReminderEmail } from '../templates/trial-reminder';
+import { GmailSenderService } from '../../email-integration/services/gmail-sender.service';
 
 @Injectable()
 export class EmailNotificationService {
@@ -17,7 +18,10 @@ export class EmailNotificationService {
   private readonly resend: Resend | null = null;
   private readonly smtp: nodemailer.Transporter | null = null;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly gmailSender: GmailSenderService,
+  ) {
     const configured = this.configService.get<string>('email.provider', 'resend');
 
     if (configured === 'smtp') {
@@ -57,11 +61,6 @@ export class EmailNotificationService {
   }
 
   async send(dto: SendNotificationDto): Promise<void> {
-    if (this.provider === 'none') {
-      this.logger.warn('No email provider configured — skipping email delivery');
-      return;
-    }
-
     const to = dto.target_email;
     if (!to) {
       this.logger.error('Cannot send email: missing target_email');
@@ -69,6 +68,35 @@ export class EmailNotificationService {
     }
 
     const html = await this.renderTemplate(dto);
+
+    // Per-organization Gmail integration takes precedence: if the org has an
+    // active connected account, send from it. Falls through to the default
+    // provider when there's no active integration.
+    if (dto.organization_id) {
+      try {
+        const sentViaGmail = await this.gmailSender.sendForOrganization(
+          dto.organization_id,
+          { to, subject: dto.title, html },
+        );
+        if (sentViaGmail) {
+          this.logger.log(`Email sent to ${to} via org Gmail: "${dto.title}"`);
+          return;
+        }
+      } catch (error) {
+        // A Gmail failure should not silently drop the mail — log and fall back
+        // to the default provider (if any) so delivery still has a chance.
+        this.logger.error(
+          `Org Gmail send failed for ${to}, falling back to default provider: ${
+            (error as Error).message
+          }`,
+        );
+      }
+    }
+
+    if (this.provider === 'none') {
+      this.logger.warn('No email provider configured — skipping email delivery');
+      return;
+    }
 
     try {
       if (this.provider === 'smtp') {

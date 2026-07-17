@@ -68,6 +68,17 @@ redis:
 resend:
   api_key: 're_xxxxxxxxxxxx'  # https://resend.com
 
+# Per-organization email integration — Gmail OAuth (send-only).
+# Create an OAuth 2.0 "Web application" client in Google Cloud Console,
+# enable the Gmail API, and add the redirectUri below to "Authorized redirect URIs".
+integration:
+  clientID: 'xxxxxxxxxxxx.apps.googleusercontent.com'
+  clientSecret: 'GOCSPX-xxxxxxxxxxxx'
+  # Must EXACTLY match an "Authorized redirect URI" on the Google OAuth client.
+  redirectUri: 'http://localhost:8000/api/v1/email-integrations/google/callback'
+  # Where the browser is sent after the OAuth callback finishes (the webapp page).
+  frontendRedirectUrl: 'http://localhost:5173/integration/email'
+
 vapid:
   public_key: ''   # generate with: npx web-push generate-vapid-keys
   private_key: ''

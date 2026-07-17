@@ -38,6 +38,7 @@ import { OfferManagementModule } from './modules/offer-management/offer-manageme
 import { TimesheetModule } from './modules/timesheet/timesheet.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { AuditCoreModule } from './modules/audit/audit.module';
+import { EmailIntegrationModule } from './modules/email-integration/email-integration.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -99,6 +100,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     TimesheetModule,
     FeedbackModule,
     AuditCoreModule,
+    EmailIntegrationModule,
   ],
   providers: [
     {
