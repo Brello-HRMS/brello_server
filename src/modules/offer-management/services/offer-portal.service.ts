@@ -11,8 +11,6 @@ import {
   CandidateAcceptDto,
   CandidateRejectDto,
   CandidateRequestChangesDto,
-  CandidateSendMessageDto,
-  CandidateUploadDocumentDto,
 } from '../dto/offer-portal.dto';
 import type { OfferVersion } from '../entities/offer-version.entity';
 import type { Offer } from '../entities/offer.entity';

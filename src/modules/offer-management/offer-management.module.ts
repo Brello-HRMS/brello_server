@@ -8,8 +8,6 @@ import { Offer } from './entities/offer.entity';
 import { OfferVersion } from './entities/offer-version.entity';
 import { OfferTimeline } from './entities/offer-timeline.entity';
 import { OfferApprovalStep } from './entities/offer-approval-step.entity';
-import { OfferDocument } from './entities/offer-document.entity';
-import { OfferMessage } from './entities/offer-message.entity';
 import { OfferSettings } from './entities/offer-settings.entity';
 
 // Repositories
@@ -19,8 +17,6 @@ import { OfferRepository } from './repositories/offer.repository';
 import { OfferVersionRepository } from './repositories/offer-version.repository';
 import { OfferTimelineRepository } from './repositories/offer-timeline.repository';
 import { OfferSettingsRepository } from './repositories/offer-settings.repository';
-import { OfferDocumentRepository } from './repositories/offer-document.repository';
-import { OfferMessageRepository } from './repositories/offer-message.repository';
 
 // Services
 import { OfferTemplateService } from './services/offer-template.service';
@@ -35,8 +31,6 @@ import { OfferSchedulerService } from './services/offer-scheduler.service';
 import { OfferNumberService } from './services/offer-number.service';
 import { OfferSyncService } from './services/offer-sync.service';
 import { OfferPdfService } from './services/offer-pdf.service';
-import { OfferDocumentService } from './services/offer-document.service';
-import { OfferMessageService } from './services/offer-message.service';
 
 // Controllers
 import { OfferTemplateController } from './controllers/offer-template.controller';
@@ -46,8 +40,6 @@ import { OfferPortalController } from './controllers/offer-portal.controller';
 import { OfferApprovalController } from './controllers/offer-approval.controller';
 import { OfferAnalyticsController } from './controllers/offer-analytics.controller';
 import { OfferSettingsController } from './controllers/offer-settings.controller';
-import { OfferDocumentController } from './controllers/offer-document.controller';
-import { OfferMessageController } from './controllers/offer-message.controller';
 
 // External
 import { NotificationModule } from '../notification/notification.module';
@@ -68,8 +60,6 @@ import { CompanyPolicyModule } from '../company-policy/company-policy.module';
       OfferVersion,
       OfferTimeline,
       OfferApprovalStep,
-      OfferDocument,
-      OfferMessage,
       OfferSettings,
     ]),
     NotificationModule,
@@ -89,8 +79,6 @@ import { CompanyPolicyModule } from '../company-policy/company-policy.module';
     OfferApprovalController,
     OfferAnalyticsController,
     OfferSettingsController,
-    OfferDocumentController,
-    OfferMessageController,
   ],
   providers: [
     // Repositories
@@ -100,8 +88,6 @@ import { CompanyPolicyModule } from '../company-policy/company-policy.module';
     OfferVersionRepository,
     OfferTimelineRepository,
     OfferSettingsRepository,
-    OfferDocumentRepository,
-    OfferMessageRepository,
     // Services
     OfferTemplateService,
     OfferCandidateService,
@@ -115,8 +101,6 @@ import { CompanyPolicyModule } from '../company-policy/company-policy.module';
     OfferNumberService,
     OfferSyncService,
     OfferPdfService,
-    OfferDocumentService,
-    OfferMessageService,
   ],
   exports: [OfferLifecycleService, OfferCandidateService, OfferSyncService],
 })

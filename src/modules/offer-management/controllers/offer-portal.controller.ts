@@ -12,7 +12,6 @@ import {
   CandidateAcceptDto,
   CandidateRejectDto,
   CandidateRequestChangesDto,
-  CandidateSendMessageDto,
 } from '../dto/offer-portal.dto';
 
 /**
