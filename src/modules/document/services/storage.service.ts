@@ -4,6 +4,9 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  NotFound,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -20,16 +23,7 @@ export class StorageService {
       'brello-uploads-local';
     const region = this.configService.get<string>('aws.region') || 'us-east-1';
 
-    this.s3Client = new S3Client({
-      region,
-      // Only set credentials locally if explicitly provided (otherwise handles IAM roles automatically in prod)
-      /* 
-            credentials: {
-                accessKeyId: this.configService.get<string>('aws.accessKeyId'),
-                secretAccessKey: this.configService.get<string>('aws.secretAccessKey'),
-            },
-            */
-    });
+    this.s3Client = new S3Client({ region });
   }
 
   getBucketName(): string {
@@ -99,6 +93,40 @@ export class StorageService {
       await this.s3Client.send(command);
     } catch (error) {
       this.logger.error(`Failed to upload file to S3: ${objectKey}`, error);
+      throw error;
+    }
+  }
+
+  async headObject(
+    objectKey: string,
+  ): Promise<{ size: number; contentType?: string } | null> {
+    try {
+      const result = await this.s3Client.send(
+        new HeadObjectCommand({ Bucket: this.bucketName, Key: objectKey }),
+      );
+      return {
+        size: result.ContentLength ?? 0,
+        contentType: result.ContentType,
+      };
+    } catch (error) {
+      if (error instanceof NotFound) {
+        return null;
+      }
+      this.logger.error(`Failed to head object in S3: ${objectKey}`, error);
+      throw error;
+    }
+  }
+
+  async deleteFile(objectKey: string): Promise<void> {
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: objectKey,
+      });
+
+      await this.s3Client.send(command);
+    } catch (error) {
+      this.logger.error(`Failed to delete file from S3: ${objectKey}`, error);
       throw error;
     }
   }

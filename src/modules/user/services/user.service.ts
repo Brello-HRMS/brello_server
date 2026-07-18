@@ -54,10 +54,10 @@ export class UserService {
     this.logger.log(`Creating user: ${createUserDto.email}`);
 
     // Validate enterprise exists
-    await this.enterpriseService.findOneById(createUserDto.enterprise_id);
+    await this.enterpriseService.findOneById(createUserDto.enterprise_id, loggedInUser);
 
     // Validate organization exists
-    await this.organizationService.findOne(createUserDto.organization_id);
+    await this.organizationService.findOne(createUserDto.organization_id, loggedInUser);
 
     // Check email uniqueness
     const emailExists = await this.userRepository.emailExists(
@@ -333,12 +333,12 @@ export class UserService {
 
     // Validate enterprise if being updated
     if (updateUserDto.enterprise_id) {
-      await this.enterpriseService.findOneById(updateUserDto.enterprise_id);
+      await this.enterpriseService.findOneById(updateUserDto.enterprise_id, loggedInUser);
     }
 
     // Validate organization if being updated
     if (updateUserDto.organization_id) {
-      await this.organizationService.findOne(updateUserDto.organization_id);
+      await this.organizationService.findOne(updateUserDto.organization_id, loggedInUser);
     }
 
     // Check email uniqueness if being updated

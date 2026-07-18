@@ -27,6 +27,10 @@ export class DocumentRepository {
       where: { id, status: Not(Status.DELETED) },
       select: [
         'id',
+        'enterprise_id',
+        'organization_id',
+        'is_public',
+        'folder_type',
         'file_data',
         'mime_type',
         'original_name',
@@ -41,12 +45,5 @@ export class DocumentRepository {
   ): Promise<Document | null> {
     await this.repository.update(id, updateData);
     return this.findById(id);
-  }
-
-  async softDelete(id: string): Promise<boolean> {
-    const result = await this.repository.update(id, {
-      status: Status.DELETED,
-    });
-    return (result.affected ?? 0) > 0;
   }
 }

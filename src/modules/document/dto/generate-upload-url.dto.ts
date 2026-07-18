@@ -3,10 +3,13 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsPositive,
   IsString,
   IsUUID,
+  Max,
 } from 'class-validator';
 import { FolderType } from '../enums/document.enum';
+import { MAX_UPLOAD_SIZE_BYTES } from '../constants/document.constants';
 
 export class GenerateUploadUrlDto {
   @IsEnum(FolderType)
@@ -34,6 +37,7 @@ export class GenerateUploadUrlDto {
   mimeType: string;
 
   @IsNumber()
-  @IsNotEmpty()
+  @IsPositive()
+  @Max(MAX_UPLOAD_SIZE_BYTES)
   size: number;
 }

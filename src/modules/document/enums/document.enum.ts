@@ -17,3 +17,14 @@ export enum FolderType {
   LETTER_DOCUMENT = 'LETTER_DOCUMENT',
   OFFER_DOCUMENT = 'OFFER_DOCUMENT',
 }
+
+const IMAGE_FOLDER_TYPES: ReadonlySet<FolderType> = new Set([
+  FolderType.ENTERPRISE_LOGO,
+  FolderType.ORGANIZATION_LOGO,
+  FolderType.EMPLOYEE_IMAGE,
+  FolderType.LETTER_SIGNATURE,
+]);
+
+export function isImageFolderType(folderType: FolderType): boolean {
+  return IMAGE_FOLDER_TYPES.has(folderType);
+}

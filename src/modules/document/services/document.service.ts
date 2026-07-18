@@ -13,16 +13,20 @@ import { StorageService } from './storage.service';
 import { EnterpriseService } from '../../enterprise/services/enterprise.service';
 import { OrganizationService } from '../../organization/services/organization.service';
 import { GenerateUploadUrlDto } from '../dto/generate-upload-url.dto';
-import { FolderType, StorageProvider } from '../enums/document.enum';
+import {
+  FolderType,
+  StorageProvider,
+  isImageFolderType,
+} from '../enums/document.enum';
 import { Status } from '../../../common/enums';
 import { Document } from '../entities/document.entity';
 import { Organization } from 'src/modules/organization/entities/organization.entity';
 import { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
-import {
-  appendSignatureToPath,
-  signDocumentView,
-} from '../utils/document-signature.util';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+import { MAX_UPLOAD_SIZE_BYTES } from '../constants/document.constants';
+import { validateFileSignature } from '../utils/file-signature.util';
+import { StorageStrategyFactory } from '../strategies/storage-strategy.factory';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class DocumentService {
@@ -36,50 +40,90 @@ export class DocumentService {
     @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
     private readonly auditContext: AuditContextService,
+    private readonly storageStrategyFactory: StorageStrategyFactory,
   ) {}
 
   private getStorageProvider(): StorageProvider {
-    const provider =
-      this.configService.get<StorageProvider>('storage.provider');
-    if (provider) return provider;
-
-    // Default to DATABASE for development if S3 is not explicitly configured
-    return StorageProvider.DATABASE;
+    return (
+      this.configService.get<StorageProvider>('storage.provider') ??
+      StorageProvider.DATABASE
+    );
   }
 
-  /**
-   * Build a URL the browser can fetch directly. For S3 we return the public
-   * object URL; for DB-backed storage we return the view route signed with a
-   * short-lived HMAC so the route works without an Authorization header
-   * (which `<img>` tags can't send).
-   */
   buildViewUrl(document: Document): string {
-    if (document.storage_provider === StorageProvider.S3) {
-      const region = 'us-east-1';
-      return `https://${document.bucket}.s3.${region}.amazonaws.com/${document.object_key}`;
+    return this.storageStrategyFactory
+      .resolve(document.storage_provider)
+      .buildViewUrl(document);
+  }
+
+  private assertDocumentAccess(
+    document: Document,
+    user: LoggedInUser,
+    options: { allowPublicRead?: boolean } = {},
+  ): void {
+    if (!user) {
+      throw new NotFoundException(`Document ${document.id} not found`);
     }
-    const secret = this.configService.get<string>('auth.JWT_SECRET');
-    if (!secret) {
-      // Without a secret we can't sign — fall back to the unsigned path
-      // (will fail auth but at least produces a deterministic URL).
-      return `/api/v1/documents/${document.id}/view`;
+    if (user.isPlatformAdmin) return;
+    if (options.allowPublicRead && document.is_public) return;
+
+    const sameEnterprise = document.enterprise_id === user.enterpriseId;
+    const sameOrganization =
+      !document.organization_id ||
+      document.organization_id === user.organizationId;
+
+    if (!sameEnterprise || !sameOrganization) {
+      throw new NotFoundException(`Document ${document.id} not found`);
     }
-    const signed = signDocumentView(document.id, secret);
-    return appendSignatureToPath(
-      `/api/v1/documents/${document.id}/view`,
-      signed,
-    );
   }
 
   private slugify(text: string): string {
     return text
       .toString()
       .toLowerCase()
-      .replace(/\s+/g, '-') // Replace spaces with -
-      .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-      .replace(/\-\-+/g, '-') // Replace multiple - with single -
-      .replace(/^-+/, '') // Trim - from start of text
-      .replace(/-+$/, ''); // Trim - from end of text
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
+  private requireOrganization(
+    organization: string | null,
+    folderType: FolderType,
+  ): string {
+    if (!organization) {
+      throw new BadRequestException(
+        `Organization context required for ${folderType}`,
+      );
+    }
+    return organization;
+  }
+
+  private requireEmployeeId(
+    employeeId: string | undefined,
+    folderType: FolderType,
+  ): string {
+    if (!employeeId) {
+      throw new BadRequestException(
+        `Employee context required for ${folderType}`,
+      );
+    }
+    return employeeId;
+  }
+
+  private computeVerifiedChecksum(buffer: Buffer, mimeType: string): string {
+    if (buffer.length > MAX_UPLOAD_SIZE_BYTES) {
+      throw new BadRequestException(
+        `File exceeds the maximum allowed size of ${MAX_UPLOAD_SIZE_BYTES} bytes`,
+      );
+    }
+    if (!validateFileSignature(buffer, mimeType)) {
+      throw new BadRequestException(
+        `File content does not match the declared mime type (${mimeType})`,
+      );
+    }
+    return crypto.createHash('sha256').update(buffer).digest('hex');
   }
 
   async generateObjectKey(params: {
@@ -93,73 +137,38 @@ export class DocumentService {
     const organization = params.organizationCode
       ? this.slugify(params.organizationCode)
       : null;
+    const { folderType, employeeId, fileName } = params;
 
-    switch (params.folderType) {
+    switch (folderType) {
       case FolderType.ENTERPRISE_LOGO:
-        return `${enterprise}/logo/${params.fileName}`;
+        return `${enterprise}/logo/${fileName}`;
 
       case FolderType.ORGANIZATION_LOGO:
-        if (!organization)
-          throw new BadRequestException(
-            'Organization context required for ORGANIZATION_LOGO',
-          );
-        return `${enterprise}/${organization}/logo/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/logo/${fileName}`;
 
       case FolderType.EMPLOYEE_IMAGE:
-        if (!organization || !params.employeeId)
-          throw new BadRequestException(
-            'Organization and Employee context required for EMPLOYEE_IMAGE',
-          );
-        return `${enterprise}/${organization}/employee/${params.employeeId}/images/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/employee/${this.requireEmployeeId(employeeId, folderType)}/images/${fileName}`;
 
       case FolderType.EMPLOYEE_DOCUMENT:
-        if (!organization || !params.employeeId)
-          throw new BadRequestException(
-            'Organization and Employee context required for EMPLOYEE_DOCUMENT',
-          );
-        return `${enterprise}/${organization}/employee/${params.employeeId}/documents/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/employee/${this.requireEmployeeId(employeeId, folderType)}/documents/${fileName}`;
 
       case FolderType.ORGANIZATION_DOCUMENT:
-        if (!organization)
-          throw new BadRequestException(
-            'Organization context required for ORGANIZATION_DOCUMENT',
-          );
-        return `${enterprise}/${organization}/documents/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/documents/${fileName}`;
 
       case FolderType.REIMBURSEMENT_DOCUMENT:
-        if (!organization)
-          throw new BadRequestException(
-            'Organization context required for REIMBURSEMENT_DOCUMENT',
-          );
-        return `${enterprise}/${organization}/reimbursements/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/reimbursements/${fileName}`;
 
       case FolderType.FEEDBACK_ATTACHMENT:
-        if (!organization)
-          throw new BadRequestException(
-            'Organization context required for FEEDBACK_ATTACHMENT',
-          );
-        return `${enterprise}/${organization}/feedback/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/feedback/${fileName}`;
 
       case FolderType.LETTER_SIGNATURE:
-        if (!organization)
-          throw new BadRequestException(
-            'Organization context required for LETTER_SIGNATURE',
-          );
-        return `${enterprise}/${organization}/letters/signatures/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/letters/signatures/${fileName}`;
 
       case FolderType.LETTER_DOCUMENT:
-        if (!organization || !params.employeeId)
-          throw new BadRequestException(
-            'Organization and Employee context required for LETTER_DOCUMENT',
-          );
-        return `${enterprise}/${organization}/employee/${params.employeeId}/letters/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/employee/${this.requireEmployeeId(employeeId, folderType)}/letters/${fileName}`;
 
       case FolderType.OFFER_DOCUMENT:
-        if (!organization)
-          throw new BadRequestException(
-            'Organization context required for OFFER_DOCUMENT',
-          );
-        return `${enterprise}/${organization}/offers/${params.fileName}`;
+        return `${enterprise}/${this.requireOrganization(organization, folderType)}/offers/${fileName}`;
 
       default:
         throw new BadRequestException('Invalid folder type');
@@ -172,17 +181,14 @@ export class DocumentService {
     );
 
     const provider = this.getStorageProvider();
-
     const enterpriseId = dto.enterpriseId ?? user.enterpriseId;
     const organizationId = dto.organizationId ?? user.organizationId;
 
-    // Validate Enterprise (and get code for slug)
     const enterprise = await this.enterpriseService.findOneById(
       enterpriseId,
       user,
     );
 
-    // Validate Organization (if provided)
     let organization: Organization | null = null;
     if (organizationId) {
       organization = await this.organizationService.findOne(
@@ -191,29 +197,26 @@ export class DocumentService {
       );
     }
 
-    // Generate safe file name (uuid + extension)
     const extension = dto.originalName.includes('.')
       ? dto.originalName.split('.').pop()!
       : '';
     const fileName = extension ? `${uuidv4()}.${extension}` : uuidv4();
 
-    // Generate dynamic folder path (object key)
     const objectKey = await this.generateObjectKey({
-      enterpriseCode: enterprise.name, // Using name as code for slugification since base entity code might be optional
+      enterpriseCode: enterprise.name,
       organizationCode: organization?.name,
       employeeId: dto.employeeId,
       folderType: dto.folderType,
-      fileName: fileName,
+      fileName,
     });
 
-    // Create document record in INACTIVE state
     const document = await this.documentRepository.create({
       enterprise_id: enterpriseId,
       organization_id: organizationId,
       employee_id: dto.employeeId,
       original_name: dto.originalName,
       file_name: fileName,
-      extension: extension,
+      extension,
       mime_type: dto.mimeType,
       size: dto.size,
       storage_provider: provider,
@@ -224,17 +227,13 @@ export class DocumentService {
       created_by: user.userId,
     } as Partial<Document>);
 
-    let uploadUrl = '';
-    if (provider === StorageProvider.S3) {
-      // Generate S3 Pre-signed URL
-      uploadUrl = await this.storageService.generatePresignedUploadUrl(
+    const uploadUrl = await this.storageStrategyFactory
+      .resolve(provider)
+      .getUploadTarget({
+        documentId: document.id,
         objectKey,
-        dto.mimeType,
-      );
-    } else {
-      // For local/db, point to our new dedicated upload endpoint
-      uploadUrl = `/api/v1/documents/${document.id}/upload`;
-    }
+        mimeType: dto.mimeType,
+      });
 
     return {
       documentId: document.id,
@@ -249,13 +248,22 @@ export class DocumentService {
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
     }
+    this.assertDocumentAccess(document, user);
 
-    // Update document with binary data and mark as ACTIVE
+    if (document.status !== Status.INACTIVE) {
+      throw new BadRequestException(
+        'Document content can only be uploaded once, while the document is INACTIVE',
+      );
+    }
+
+    const checksum = this.computeVerifiedChecksum(buffer, document.mime_type);
+
     await this.documentRepository.update(id, {
       file_data: buffer,
+      checksum,
       status: Status.ACTIVE,
       modified_by: user.userId,
-    } as any);
+    } as unknown as Partial<Document>);
 
     return {
       success: true,
@@ -273,19 +281,22 @@ export class DocumentService {
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
     }
+    this.assertDocumentAccess(document, user);
 
-    // Mark as ACTIVE
-    const updatedDoc = await this.documentRepository.update(id, {
+    const verifiedFields = await this.storageStrategyFactory
+      .resolve(document.storage_provider)
+      .finalizeUpload(document);
+
+    const updatedDocument = await this.documentRepository.update(id, {
       status: Status.ACTIVE,
       modified_by: user.userId,
+      ...verifiedFields,
     });
 
-    const url = this.buildViewUrl(document);
-
     return {
-      id: updatedDoc!.id,
-      url,
-      status: updatedDoc!.status,
+      id: updatedDocument!.id,
+      url: this.buildViewUrl(document),
+      status: updatedDocument!.status,
     };
   }
 
@@ -294,8 +305,7 @@ export class DocumentService {
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
     }
-
-    const url = this.buildViewUrl(document);
+    this.assertDocumentAccess(document, user, { allowPublicRead: true });
 
     return {
       id: document.id,
@@ -305,7 +315,7 @@ export class DocumentService {
       folderType: document.folder_type,
       isPublic: document.is_public,
       createdAt: document.created_at,
-      url,
+      url: this.buildViewUrl(document),
     };
   }
 
@@ -314,6 +324,7 @@ export class DocumentService {
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
     }
+    this.assertDocumentAccess(document, user, { allowPublicRead: true });
 
     if (document.status !== Status.ACTIVE) {
       throw new BadRequestException(
@@ -321,13 +332,9 @@ export class DocumentService {
       );
     }
 
-    if (document.storage_provider === StorageProvider.DATABASE) {
-      return { url: this.buildViewUrl(document) };
-    }
-
-    const url = await this.storageService.generatePresignedDownloadUrl(
-      document.object_key,
-    );
+    const url = await this.storageStrategyFactory
+      .resolve(document.storage_provider)
+      .getSignedDownloadUrl(document);
 
     return { url };
   }
@@ -345,15 +352,14 @@ export class DocumentService {
   ): Promise<Document> {
     this.logger.log(`Directly uploading ${folderType} for user ${user.userId}`);
 
+    const checksum = this.computeVerifiedChecksum(file.buffer, file.mimetype);
     const provider = this.getStorageProvider();
 
-    // 1. Validate/Get Enterprise context
     const enterprise = await this.enterpriseService.findOneById(
       user.enterpriseId,
       user,
     );
 
-    // 2. Validate/Get Organization context (if required by folder type or token)
     let organization: Organization | null = null;
     if (user.organizationId) {
       organization = await this.organizationService.findOne(
@@ -362,7 +368,6 @@ export class DocumentService {
       );
     }
 
-    // 3. Generate safe file name and object key
     const extension = file.originalname.includes('.')
       ? file.originalname.split('.').pop()!
       : '';
@@ -376,50 +381,45 @@ export class DocumentService {
       fileName,
     });
 
-    // 4. Upload to S3 or DB
-    if (provider === StorageProvider.S3) {
-      await this.storageService.uploadFile(
-        file.buffer,
-        objectKey,
-        file.mimetype,
-      );
-    }
+    const storageFields = await this.storageStrategyFactory
+      .resolve(provider)
+      .store({ objectKey, buffer: file.buffer, mimeType: file.mimetype });
 
-    // 5. Create Document record as ACTIVE
     return this.documentRepository.create({
       enterprise_id: user.enterpriseId,
       organization_id: user.organizationId,
       employee_id: employeeId,
       original_name: file.originalname,
       file_name: fileName,
-      extension: extension,
+      extension,
       mime_type: file.mimetype,
       size: file.size,
+      checksum,
       storage_provider: provider,
       bucket: this.storageService.getBucketName(),
       object_key: objectKey,
       folder_type: folderType,
       status: Status.ACTIVE,
       created_by: user.userId,
-      file_data: provider === StorageProvider.DATABASE ? file.buffer : null,
+      ...storageFields,
     } as Partial<Document>);
   }
 
-  async getFileData(id: string) {
+  async getFileData(id: string, user?: LoggedInUser) {
     const document = await this.documentRepository.findByIdWithContent(id);
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
     }
 
-    if (document.storage_provider !== StorageProvider.DATABASE) {
-      throw new BadRequestException('Document is not stored in the database');
+    if (user) {
+      this.assertDocumentAccess(document, user, { allowPublicRead: true });
+    } else if (!isImageFolderType(document.folder_type)) {
+      throw new NotFoundException(`Document ${id} not found`);
     }
 
-    return {
-      buffer: document.file_data,
-      mimeType: document.mime_type,
-      fileName: document.original_name,
-    };
+    return this.storageStrategyFactory
+      .resolve(document.storage_provider)
+      .retrieve(document);
   }
 
   async remove(id: string, user: LoggedInUser) {
@@ -429,6 +429,7 @@ export class DocumentService {
     if (!document) {
       throw new NotFoundException(`Document ${id} not found`);
     }
+    this.assertDocumentAccess(document, user);
 
     this.auditContext.setPreValue(document as unknown as Record<string, unknown>);
 
@@ -437,6 +438,14 @@ export class DocumentService {
       deleted_by: user.userId,
       deleted_at: new Date(),
     } as unknown as Partial<Document>);
+
+    const purgeFields = await this.storageStrategyFactory
+      .resolve(document.storage_provider)
+      .purge(document);
+
+    if (Object.keys(purgeFields).length > 0) {
+      await this.documentRepository.update(id, purgeFields as Partial<Document>);
+    }
 
     return { success: true };
   }

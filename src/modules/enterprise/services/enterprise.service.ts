@@ -29,7 +29,10 @@ export class EnterpriseService {
     private readonly auditContext: AuditContextService,
   ) {}
 
-  async create(dto: CreateEnterpriseDto, user?: LoggedInUser): Promise<Enterprise> {
+  async create(
+    dto: CreateEnterpriseDto,
+    user?: LoggedInUser,
+  ): Promise<Enterprise> {
     await this.validateDomainExists(dto.domain);
     await this.validateDomainUniqueness(dto.domain);
 
@@ -61,7 +64,9 @@ export class EnterpriseService {
     }
   }
 
-  async findAll(user?: LoggedInUser): Promise<(Enterprise & { apps: App[] })[]> {
+  async findAll(
+    user?: LoggedInUser,
+  ): Promise<(Enterprise & { apps: App[] })[]> {
     const enterprises = await this.enterpriseRepository.findAll();
     if (!enterprises.length) return [];
 
@@ -93,9 +98,16 @@ export class EnterpriseService {
     });
   }
 
-  async findOneById(id: string, user?: LoggedInUser): Promise<Enterprise & { apps: App[] }> {
+  async findOneById(
+    id: string,
+    user?: LoggedInUser,
+  ): Promise<Enterprise & { apps: App[] }> {
     const enterprise = await this.enterpriseRepository.findOneById(id);
     if (!enterprise) {
+      throw new NotFoundException(`Enterprise with ID "${id}" not found`);
+    }
+
+    if (user && !user.isPlatformAdmin && enterprise.id !== user.enterpriseId) {
       throw new NotFoundException(`Enterprise with ID "${id}" not found`);
     }
 
@@ -113,9 +125,15 @@ export class EnterpriseService {
     return this.appRepository.findByIds(appIds);
   }
 
-  async update(id: string, dto: UpdateEnterpriseDto, user?: LoggedInUser): Promise<Enterprise> {
+  async update(
+    id: string,
+    dto: UpdateEnterpriseDto,
+    user?: LoggedInUser,
+  ): Promise<Enterprise> {
     const enterprise = await this.findOneById(id, user);
-    this.auditContext.setPreValue(enterprise as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      enterprise as unknown as Record<string, unknown>,
+    );
 
     if (dto.domain && dto.domain !== enterprise.domain) {
       await this.validateDomainExists(dto.domain);
@@ -128,7 +146,9 @@ export class EnterpriseService {
 
   async remove(id: string, user?: LoggedInUser): Promise<void> {
     const enterprise = await this.findOneById(id, user);
-    this.auditContext.setPreValue(enterprise as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      enterprise as unknown as Record<string, unknown>,
+    );
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

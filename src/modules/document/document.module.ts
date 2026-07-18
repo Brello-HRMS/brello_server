@@ -11,6 +11,10 @@ import { DocumentViewController } from './controllers/document-view.controller';
 import { EnterpriseModule } from '../enterprise/enterprise.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RbacModule } from '../rbac/rbac.module';
+import { StorageStrategyFactory } from './strategies/storage-strategy.factory';
+import { S3StorageStrategy } from './strategies/s3-storage.strategy';
+import { DatabaseStorageStrategy } from './strategies/database-storage.strategy';
+import { UserThrottlerGuard } from '../../common/guards/user-throttler.guard';
 
 @Module({
   imports: [
@@ -21,7 +25,15 @@ import { RbacModule } from '../rbac/rbac.module';
     RbacModule,
   ],
   controllers: [DocumentController, DocumentViewController],
-  providers: [DocumentRepository, StorageService, DocumentService],
+  providers: [
+    DocumentRepository,
+    StorageService,
+    DocumentService,
+    S3StorageStrategy,
+    DatabaseStorageStrategy,
+    StorageStrategyFactory,
+    UserThrottlerGuard,
+  ],
   exports: [DocumentService, StorageService, DocumentRepository],
 })
 export class DocumentModule {}

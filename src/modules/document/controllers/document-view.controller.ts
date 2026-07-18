@@ -1,4 +1,3 @@
-import { RequirePermission } from '../../../core/guards/require-permission.decorator';
 import {
   Controller,
   Get,
@@ -7,11 +6,14 @@ import {
   Query,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { DocumentService } from '../services/document.service';
 import { verifyDocumentView } from '../utils/document-signature.util';
+import { UserThrottlerGuard } from '../../../common/guards/user-throttler.guard';
 
 /**
  * Public, signature-gated view endpoint for documents stored in the database.
@@ -31,7 +33,8 @@ export class DocumentViewController {
   ) {}
 
   @Get(':id/view')
-  @RequirePermission('DOCUMENTS', 'view')
+  @UseGuards(UserThrottlerGuard)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   async view(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('sig') sig: string,

@@ -181,10 +181,12 @@ export class OrganizationService {
             where: { role_id: platformRole.id },
           });
           for (const ra of platformRoleApps) {
-            await manager.save(manager.create(RoleApp, {
-              role_id: savedRole.id,
-              app_id: ra.app_id,
-            }));
+            await manager.save(
+              manager.create(RoleApp, {
+                role_id: savedRole.id,
+                app_id: ra.app_id,
+              }),
+            );
           }
         }
       }
@@ -311,6 +313,14 @@ export class OrganizationService {
       throw new NotFoundException(`Organization with ID '${id}' not found`);
     }
 
+    if (user && !user.isPlatformAdmin) {
+      const isOwnOrg = organization.id === user.organizationId;
+      const isSameEnterprise = organization.enterprise_id === user.enterpriseId;
+      if (!isOwnOrg && !isSameEnterprise) {
+        throw new NotFoundException(`Organization with ID '${id}' not found`);
+      }
+    }
+
     return organization;
   }
 
@@ -345,7 +355,9 @@ export class OrganizationService {
     this.logger.log(`Updating organization: ${id}`);
 
     const existing = await this.findOne(id, user);
-    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      existing as unknown as Record<string, unknown>,
+    );
 
     if (updateOrganizationDto.enterprise_id) {
       await this.enterpriseService.findOneById(
@@ -373,7 +385,9 @@ export class OrganizationService {
     this.logger.log(`Deleting organization: ${id}`);
 
     const existing = await this.findOne(id, user);
-    this.auditContext.setPreValue(existing as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      existing as unknown as Record<string, unknown>,
+    );
 
     const deleted = await this.organizationRepository.delete(id);
 
@@ -385,7 +399,10 @@ export class OrganizationService {
 
     this.logger.log(`Organization deleted successfully: ${id}`);
   }
-  async getStats(id: string, user?: LoggedInUser): Promise<{ employee_count: number }> {
+  async getStats(
+    id: string,
+    user?: LoggedInUser,
+  ): Promise<{ employee_count: number }> {
     await this.findOne(id, user);
     const employee_count = await this.dataSource
       .getRepository(User)
