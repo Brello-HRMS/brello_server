@@ -48,6 +48,7 @@ import { UserModule } from '../user/user.module';
 import { PayrollModule } from '../payroll/payroll.module';
 import { DocumentModule } from '../document/document.module';
 import { LetterSharedModule } from '../letter-management/shared/letter-shared.module';
+import { LetterTemplatesModule } from '../letter-management/templates/letter-templates.module';
 import { SignatoriesModule } from '../letter-management/signatories/signatories.module';
 import { CompanyPolicyModule } from '../company-policy/company-policy.module';
 
@@ -68,6 +69,7 @@ import { CompanyPolicyModule } from '../company-policy/company-policy.module';
     PayrollModule,
     DocumentModule,
     LetterSharedModule,
+    LetterTemplatesModule,
     SignatoriesModule,
     CompanyPolicyModule,
   ],

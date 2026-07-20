@@ -20,6 +20,35 @@ export class PdfBuilderService {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
+      const drawWatermark = () => {
+        if (!model.watermark) return;
+        const cursorX = doc.x;
+        const cursorY = doc.y;
+        const centerX = doc.page.width / 2;
+        const centerY = doc.page.height / 2;
+
+        doc.save();
+        doc.rotate(-45, { origin: [centerX, centerY] });
+        doc
+          .fontSize(64)
+          .fillColor('#16a34a')
+          .fillOpacity(0.12)
+          .text(model.watermark.label, centerX - 250, centerY - 40, {
+            width: 500,
+            align: 'center',
+          });
+        doc.restore();
+
+        doc.fillOpacity(1).fillColor('#000000').fontSize(11);
+        doc.x = cursorX;
+        doc.y = cursorY;
+      };
+
+      if (model.watermark) {
+        doc.on('pageAdded', drawWatermark);
+      }
+      drawWatermark();
+
       if (model.heading) {
         doc.fontSize(16).text(model.heading, { align: 'left' });
         doc.moveDown(1);
@@ -107,6 +136,12 @@ export class PdfBuilderService {
         doc.fontSize(11).text(model.signatory.name);
         doc.fontSize(10).fillColor('#555').text(model.signatory.designation);
         doc.fillColor('#000');
+      }
+
+      if (model.watermark) {
+        doc.moveDown(2);
+        doc.fontSize(9).fillColor('#6b7280').text(model.watermark.note, { align: 'center' });
+        doc.fillColor('#000').fontSize(11);
       }
 
       doc.end();

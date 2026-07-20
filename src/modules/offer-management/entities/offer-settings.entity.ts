@@ -58,4 +58,8 @@ export class OfferSettings extends BaseEntity {
 
   @Column({ type: 'int', default: new Date().getFullYear() })
   sequence_year: number;
+
+  /** Dynamic list of onboarding documents required from the candidate. */
+  @Column({ type: 'jsonb', default: [] })
+  required_onboarding_documents: Array<{ name: string; is_required: boolean; description?: string }>;
 }

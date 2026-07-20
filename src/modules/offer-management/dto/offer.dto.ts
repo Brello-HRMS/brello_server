@@ -174,6 +174,10 @@ export class UpdateOfferDto {
   @IsUUID('4', { each: true })
   @IsOptional()
   policy_ids?: string[];
+
+  @IsString()
+  @IsOptional()
+  custom_letter_html?: string;
 }
 
 export class SendOfferDto {

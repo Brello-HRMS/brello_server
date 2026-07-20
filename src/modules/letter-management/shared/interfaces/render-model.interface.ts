@@ -18,12 +18,21 @@ export interface SignatoryModel {
   designation: string;
 }
 
+export interface WatermarkModel {
+  /** Short diagonal stamp text, e.g. "ACCEPTED". */
+  label: string;
+  /** Footer note printed after the document body, e.g. who accepted it and when. */
+  note: string;
+}
+
 export interface RenderModel {
   heading: string;
   paragraphs: string[];
   bulletList: string[];
   salaryTable: SalaryTableModel | null;
   signatory: SignatoryModel | null;
+  /** Optional — when set, stamps the PDF with a diagonal watermark and a footer note. */
+  watermark?: WatermarkModel;
 }
 
 export interface LetterSnapshots {

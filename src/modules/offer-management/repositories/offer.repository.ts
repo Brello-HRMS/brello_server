@@ -86,7 +86,7 @@ export class OfferRepository {
       .createQueryBuilder('o')
       .where(`DATE(o.expires_at) = DATE(NOW() + INTERVAL '${daysBeforeExpiry} days')`)
       .andWhere('o.offer_status IN (:...statuses)', {
-        statuses: [OfferStatus.SENT, OfferStatus.VIEWED],
+        statuses: [OfferStatus.SENT, OfferStatus.VIEWED, OfferStatus.NEGOTIATING],
       })
       .getMany();
   }

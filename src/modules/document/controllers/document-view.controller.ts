@@ -36,6 +36,7 @@ export class DocumentViewController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query('sig') sig: string,
     @Query('exp') exp: string,
+    @Query('download') download: string,
     @Res() res: Response,
   ) {
     const secret = this.configService.get<string>('auth.JWT_SECRET');
@@ -51,7 +52,11 @@ export class DocumentViewController {
       await this.documentService.getFileData(id);
 
     res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    if (download === '1' || download === 'true') {
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    } else {
+      res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    }
     // Browsers can cache the bytes for the life of the signature.
     res.setHeader('Cache-Control', 'private, max-age=600');
     res.send(buffer);

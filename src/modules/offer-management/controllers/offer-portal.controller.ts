@@ -6,7 +6,11 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { OfferPortalService } from '../services/offer-portal.service';
 import {
   CandidateAcceptDto,
@@ -45,5 +49,18 @@ export class OfferPortalController {
   @HttpCode(HttpStatus.OK)
   requestChanges(@Body() dto: CandidateRequestChangesDto) {
     return this.portalService.requestChanges(dto);
+  }
+
+  @Post(':token/documents')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadOnboardingDocument(
+    @Param('token') token: string,
+    @Body('name') name: string,
+    @UploadedFile() file: any,
+  ) {
+    if (!file) throw new BadRequestException('File is required');
+    if (!name) throw new BadRequestException('Document name is required');
+    
+    return this.portalService.uploadOnboardingDocument(token, name, file);
   }
 }

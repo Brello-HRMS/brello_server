@@ -10,6 +10,7 @@ export interface GmailMessage {
   to: string;
   subject: string;
   html: string;
+  attachments?: { filename: string; content?: Buffer | string; path?: string }[];
 }
 
 /**
@@ -115,6 +116,7 @@ export class GmailSenderService {
     to: string;
     subject: string;
     html: string;
+    attachments?: any[];
   }): Promise<string> {
     const builder = nodemailer.createTransport({
       streamTransport: true,
@@ -127,6 +129,7 @@ export class GmailSenderService {
       to: msg.to,
       subject: msg.subject,
       html: msg.html,
+      attachments: msg.attachments,
     });
 
     const message = (info as unknown as { message: Buffer }).message;

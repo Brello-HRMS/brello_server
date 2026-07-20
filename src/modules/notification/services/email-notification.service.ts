@@ -69,6 +69,32 @@ export class EmailNotificationService {
 
     const html = await this.renderTemplate(dto);
 
+    let mailAttachments: { filename: string; content?: Buffer | string; path?: string }[] = [];
+    if (dto.attachments && dto.attachments.length > 0) {
+      mailAttachments = await Promise.all(
+        dto.attachments.map(async (att) => {
+          if (att.content) {
+            return { filename: att.filename, content: att.content };
+          } else if (att.url) {
+            // Download the file from the URL to a Buffer
+            try {
+              const response = await fetch(att.url);
+              if (!response.ok) {
+                this.logger.error(`Failed to download attachment ${att.filename} from ${att.url}: ${response.statusText}`);
+                return { filename: att.filename, content: '' };
+              }
+              const arrayBuffer = await response.arrayBuffer();
+              return { filename: att.filename, content: Buffer.from(arrayBuffer) };
+            } catch (err) {
+              this.logger.error(`Error downloading attachment ${att.filename}: ${(err as Error).message}`);
+              return { filename: att.filename, content: '' };
+            }
+          }
+          return { filename: att.filename, content: '' };
+        })
+      );
+    }
+
     // Per-organization Gmail integration takes precedence: if the org has an
     // active connected account, send from it. Falls through to the default
     // provider when there's no active integration.
@@ -76,7 +102,7 @@ export class EmailNotificationService {
       try {
         const sentViaGmail = await this.gmailSender.sendForOrganization(
           dto.organization_id,
-          { to, subject: dto.title, html },
+          { to, subject: dto.title, html, attachments: mailAttachments },
         );
         if (sentViaGmail) {
           this.logger.log(`Email sent to ${to} via org Gmail: "${dto.title}"`);
@@ -100,13 +126,14 @@ export class EmailNotificationService {
 
     try {
       if (this.provider === 'smtp') {
-        await this.smtp!.sendMail({ from: this.fromAddress, to, subject: dto.title, html });
+        await this.smtp!.sendMail({ from: this.fromAddress, to, subject: dto.title, html, attachments: mailAttachments });
       } else {
         const { error } = await this.resend!.emails.send({
           from: this.fromAddress,
           to,
           subject: dto.title,
           html,
+          attachments: mailAttachments.length > 0 ? mailAttachments : undefined,
         });
         if (error) throw new Error(error.message);
       }

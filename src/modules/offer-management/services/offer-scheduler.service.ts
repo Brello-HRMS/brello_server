@@ -81,11 +81,21 @@ export class OfferSchedulerService {
         const activeVersion = await this.versionRepo.findActiveByOffer(offer.id);
         if (!activeVersion) continue;
 
-        await this.notificationService.sendReminderEmail({
-          candidate,
-          offer,
-          portalLink: this.buildPortalLink(activeVersion.access_token),
-        });
+        if (offer.offer_status === OfferStatus.NEGOTIATING) {
+          // Candidate already responded — HR is the one who needs to act before this lapses.
+          if (offer.modified_by) {
+            await this.notificationService.notifyHrNegotiationExpiringSoon(
+              { hrUserId: offer.modified_by, offer, candidate },
+              daysBefore,
+            );
+          }
+        } else {
+          await this.notificationService.sendReminderEmail({
+            candidate,
+            offer,
+            portalLink: this.buildPortalLink(activeVersion.access_token),
+          });
+        }
 
         await this.timelineRepo.record({
           offer_id: offer.id,

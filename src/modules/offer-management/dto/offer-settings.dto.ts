@@ -65,4 +65,8 @@ export class UpdateOfferSettingsDto {
   @Type(() => ApprovalChainItemDto)
   @IsOptional()
   approval_chain?: ApprovalChainItemDto[];
+
+  @IsArray()
+  @IsOptional()
+  required_onboarding_documents?: Array<{ name: string; is_required: boolean; description?: string }>;
 }

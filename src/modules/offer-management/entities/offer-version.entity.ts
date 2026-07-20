@@ -52,6 +52,13 @@ export class OfferVersion extends BaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   pdf_generated_at: Date | null;
 
+  /** Watermarked/stamped copy generated at acceptance time — the candidate's proof of acceptance. */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  accepted_pdf_url: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  accepted_pdf_generated_at: Date | null;
+
   // ── Candidate Response ─────────────────────────────────────────────────────
 
   @Column({ type: 'timestamp', nullable: true })

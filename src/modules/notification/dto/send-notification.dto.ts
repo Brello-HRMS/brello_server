@@ -6,9 +6,27 @@ import {
   IsString,
   IsUUID,
   ValidateIf,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { NotificationType } from '../../../common/enums/notification-type.enum';
+
+export class NotificationAttachmentDto {
+  @ApiProperty({ description: 'The name of the file to attach' })
+  @IsString()
+  @IsNotEmpty()
+  filename: string;
+
+  @ApiPropertyOptional({ description: 'URL to download the attachment from' })
+  @IsString()
+  @IsOptional()
+  url?: string;
+
+  @ApiPropertyOptional({ description: 'Base64 encoded content of the attachment' })
+  @IsString()
+  @IsOptional()
+  content?: string;
+}
 
 export class SendNotificationDto {
   @ApiPropertyOptional({ description: 'Target user ID (required for IN_APP and PUSH)', format: 'uuid' })
@@ -55,4 +73,9 @@ export class SendNotificationDto {
   @IsUUID()
   @IsOptional()
   organization_id?: string;
+
+  @ApiPropertyOptional({ description: 'Optional file attachments for EMAIL notifications', type: [NotificationAttachmentDto] })
+  @IsArray()
+  @IsOptional()
+  attachments?: NotificationAttachmentDto[];
 }

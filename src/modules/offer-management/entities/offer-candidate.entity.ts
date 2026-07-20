@@ -66,4 +66,8 @@ export class OfferCandidate extends BaseEntity {
   /** Internal notes visible only to HR/recruiter. */
   @Column({ type: 'text', nullable: true })
   recruiter_notes: string | null;
+
+  /** Pre-onboarding documents uploaded by the candidate after acceptance. */
+  @Column({ type: 'jsonb', nullable: true })
+  onboarding_documents: { name: string; url: string; uploaded_at: string }[] | null;
 }

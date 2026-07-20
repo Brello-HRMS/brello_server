@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { OfferRepository } from '../repositories/offer.repository';
 import { OfferVersionRepository } from '../repositories/offer-version.repository';
@@ -16,6 +17,8 @@ import { OfferPdfService } from './offer-pdf.service';
 import { OfferStatus } from '../enums/offer-status.enum';
 import { OfferTimelineEvent } from '../enums/offer-timeline-event.enum';
 import { Offer } from '../entities/offer.entity';
+import { OfferVersion } from '../entities/offer-version.entity';
+import { OfferTimeline } from '../entities/offer-timeline.entity';
 import { CreateOfferDto, UpdateOfferDto, SendOfferDto, WithdrawOfferDto, ExtendExpiryDto, FilterOffersDto } from '../dto/offer.dto';
 import type { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import type { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
@@ -52,6 +55,7 @@ export class OfferLifecycleService {
     private readonly numberService: OfferNumberService,
     private readonly notificationService: OfferNotificationService,
     private readonly offerPdfService: OfferPdfService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async createDraft(user: LoggedInUser, dto: CreateOfferDto): Promise<Offer> {
@@ -83,25 +87,26 @@ export class OfferLifecycleService {
   async updateDraft(user: LoggedInUser, id: string, dto: UpdateOfferDto): Promise<Offer> {
     const offer = await this.findEditable(user, id);
 
-    const updated = await this.offerRepo.update(id, {
-      template_id: dto.template_id ?? offer.template_id,
-      ...this.flattenDetails(dto),
-      modified_by: user.userId,
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(Offer, id, {
+        template_id: dto.template_id ?? offer.template_id,
+        ...this.flattenDetails(dto),
+        modified_by: user.userId,
+      });
+
+      const timeline = manager.create(OfferTimeline, {
+        offer_id: id,
+        event: OfferTimelineEvent.DRAFT_UPDATED,
+        label: offer.offer_status === OfferStatus.DRAFT ? 'Offer draft updated' : 'Offer revised — ready to resend',
+        actor_id: user.userId,
+        organization_id: user.organizationId,
+        enterprise_id: user.enterpriseId,
+      });
+      await manager.save(timeline);
     });
+
+    const updated = await this.offerRepo.findById(id);
     if (!updated) throw new NotFoundException(`Offer "${id}" not found after update`);
-
-    await this.timelineRepo.record({
-      offer_id: id,
-      event: OfferTimelineEvent.DRAFT_UPDATED,
-      label:
-        offer.offer_status === OfferStatus.DRAFT
-          ? 'Offer draft updated'
-          : 'Offer revised — ready to resend',
-      actor_id: user.userId,
-      organization_id: user.organizationId,
-      enterprise_id: user.enterpriseId,
-    });
-
     return updated;
   }
 
@@ -123,46 +128,53 @@ export class OfferLifecycleService {
 
     // Deactivate existing active version
     await this.versionRepo.deactivateAllByOffer(id);
-
     const newVersionNumber = (offer.current_version ?? 0) + 1;
     const token = randomUUID();
 
     const pdfUrl = await this.offerPdfService.generateAndUploadPdf(user, offer, settings, newVersionNumber);
 
-    const version = await this.versionRepo.create({
-      offer_id: id,
-      version_number: newVersionNumber,
-      is_active: true,
-      access_token: token,
-      token_expires_at: expiresAt,
-      change_summary: dto.change_summary ?? null,
-      pdf_url: pdfUrl,
-      organization_id: user.organizationId,
-      enterprise_id: user.enterpriseId,
+    await this.dataSource.transaction(async (manager) => {
+      await manager.update(OfferVersion, { offer_id: id }, { is_active: false });
+
+      const version = manager.create(OfferVersion, {
+        offer_id: id,
+        version_number: newVersionNumber,
+        is_active: true,
+        access_token: token,
+        token_expires_at: expiresAt,
+        change_summary: dto.change_summary ?? null,
+        pdf_url: pdfUrl,
+        organization_id: user.organizationId,
+        enterprise_id: user.enterpriseId,
+      });
+      await manager.save(version);
+
+      await manager.update(Offer, id, {
+        offer_number: offerNumber,
+        offer_status: OfferStatus.SENT,
+        current_version: newVersionNumber,
+        sent_at: new Date(),
+        expires_at: expiresAt,
+        modified_by: user.userId,
+      });
+
+      const event =
+        newVersionNumber === 1 ? OfferTimelineEvent.OFFER_SENT : OfferTimelineEvent.NEW_VERSION_CREATED;
+
+      const timeline = manager.create(OfferTimeline, {
+        offer_id: id,
+        offer_version_id: version.id,
+        event,
+        label: newVersionNumber === 1 ? `Offer sent (v${newVersionNumber})` : `New version sent (v${newVersionNumber})`,
+        actor_id: user.userId,
+        organization_id: user.organizationId,
+        enterprise_id: user.enterpriseId,
+      });
+      await manager.save(timeline);
     });
 
-    const updatedOffer = await this.offerRepo.update(id, {
-      offer_number: offerNumber,
-      offer_status: OfferStatus.SENT,
-      current_version: newVersionNumber,
-      sent_at: new Date(),
-      expires_at: expiresAt,
-      modified_by: user.userId,
-    });
+    const updatedOffer = await this.offerRepo.findById(id);
     if (!updatedOffer) throw new NotFoundException(`Offer "${id}" not found after send`);
-
-    const event =
-      newVersionNumber === 1 ? OfferTimelineEvent.OFFER_SENT : OfferTimelineEvent.NEW_VERSION_CREATED;
-
-    await this.timelineRepo.record({
-      offer_id: id,
-      offer_version_id: version.id,
-      event,
-      label: newVersionNumber === 1 ? `Offer sent (v${newVersionNumber})` : `New version sent (v${newVersionNumber})`,
-      actor_id: user.userId,
-      organization_id: user.organizationId,
-      enterprise_id: user.enterpriseId,
-    });
 
     // Notify candidate by email
     const candidate = await this.candidateRepo.findOneByOrg(offer.candidate_id, user.organizationId);

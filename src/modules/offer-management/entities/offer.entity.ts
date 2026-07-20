@@ -51,6 +51,9 @@ export class Offer extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   template_id: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  custom_letter_html: string | null;
+
   @Column({ type: 'varchar', length: 150, nullable: true })
   position: string | null;
 
