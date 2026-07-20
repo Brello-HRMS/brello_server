@@ -22,6 +22,7 @@ import { OfferTimeline } from '../entities/offer-timeline.entity';
 import { CreateOfferDto, UpdateOfferDto, SendOfferDto, WithdrawOfferDto, ExtendExpiryDto, FilterOffersDto } from '../dto/offer.dto';
 import type { PaginatedResponse } from '../../../common/dto/pagination.dto';
 import type { LoggedInUser } from '../../auth/interfaces/logged-in-user.interface';
+import { buildPortalLink } from '../utils/offer-portal.util';
 
 /** Terminal states — no further transitions allowed. */
 const TERMINAL_STATUSES = new Set([OfferStatus.ACCEPTED, OfferStatus.SYNCED]);
@@ -179,7 +180,7 @@ export class OfferLifecycleService {
     // Notify candidate by email
     const candidate = await this.candidateRepo.findOneByOrg(offer.candidate_id, user.organizationId);
     if (candidate) {
-      const portalLink = this.buildPortalLink(token);
+      const portalLink = buildPortalLink(token);
       await this.notificationService.sendOfferEmail({ candidate, offer: updatedOffer, portalLink });
     }
 
@@ -343,10 +344,5 @@ export class OfferLifecycleService {
       salary_components: c.salary_components ?? [],
       policy_ids: dto.policy_ids ?? [],
     };
-  }
-
-  private buildPortalLink(token: string): string {
-    const baseUrl = process.env.WEBAPP_URL ?? 'https://brellohrms.netlify.app';
-    return `${baseUrl}/offer/portal/${token}`;
   }
 }

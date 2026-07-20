@@ -81,14 +81,24 @@ export class OfferRepository {
   }
 
   /** Fetch offers where reminders should be sent today. */
-  async findNeedingReminder(daysBeforeExpiry: number): Promise<Offer[]> {
-    return this.repo
+  async findNeedingReminder(daysBeforeExpiry: number): Promise<{ offer: Offer, candidate: any, activeVersion: any }[]> {
+    const rows = await this.repo
       .createQueryBuilder('o')
+      .leftJoinAndMapOne('o.candidate', 'offer_candidates', 'c', 'c.id = o.candidate_id')
+      .leftJoinAndMapOne('o.activeVersion', 'offer_versions', 'v', 'v.offer_id = o.id AND v.is_active = true')
       .where(`DATE(o.expires_at) = DATE(NOW() + INTERVAL '${daysBeforeExpiry} days')`)
       .andWhere('o.offer_status IN (:...statuses)', {
         statuses: [OfferStatus.SENT, OfferStatus.VIEWED, OfferStatus.NEGOTIATING],
       })
       .getMany();
+      
+    // Return mapped objects so consumers have clear typings without needing 'any' if possible,
+    // though getMany() will attach them to o.candidate and o.activeVersion.
+    return rows.map(r => ({
+      offer: r,
+      candidate: (r as any).candidate || null,
+      activeVersion: (r as any).activeVersion || null,
+    }));
   }
 
   async countByStatus(organizationId: string): Promise<Record<OfferStatus, number>> {
@@ -105,5 +115,36 @@ export class OfferRepository {
       result[row.status] = parseInt(row.count, 10);
     }
     return result;
+  }
+
+  async countByWeek(organizationId: string, weeks: number): Promise<{ week: string; count: number }[]> {
+    const rows = await this.repo
+      .createQueryBuilder('o')
+      .select("DATE_TRUNC('week', o.created_at)", 'week')
+      .addSelect('COUNT(*)', 'count')
+      .where('o.organization_id = :organizationId', { organizationId })
+      .andWhere(`o.created_at >= NOW() - INTERVAL '${weeks} weeks'`)
+      .groupBy("DATE_TRUNC('week', o.created_at)")
+      .orderBy("DATE_TRUNC('week', o.created_at)", 'ASC')
+      .getRawMany();
+    
+    return rows.map(r => ({
+      week: new Date(r.week).toISOString(),
+      count: parseInt(r.count, 10),
+    }));
+  }
+
+  async avgAcceptanceDays(organizationId: string): Promise<number | null> {
+    const result = await this.repo
+      .createQueryBuilder('o')
+      .select('AVG(EXTRACT(EPOCH FROM (o.accepted_at - o.sent_at)) / 86400)', 'avg_days')
+      .where('o.organization_id = :organizationId', { organizationId })
+      .andWhere('o.offer_status = :status', { status: OfferStatus.ACCEPTED })
+      .andWhere('o.sent_at IS NOT NULL')
+      .andWhere('o.accepted_at IS NOT NULL')
+      .getRawOne();
+      
+    if (!result || result.avg_days === null) return null;
+    return parseFloat(Number(result.avg_days).toFixed(1));
   }
 }

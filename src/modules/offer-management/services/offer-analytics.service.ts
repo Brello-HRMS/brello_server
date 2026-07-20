@@ -10,6 +10,7 @@ export interface OfferAnalytics {
   acceptance_rate: number;
   negotiation_rate: number;
   avg_acceptance_days: number | null;
+  weekly_counts: { week: string; count: number }[];
   timeline: OfferTimeline[];
 }
 
@@ -45,12 +46,16 @@ export class OfferAnalyticsService {
     const acceptance_rate = Math.round(((accepted + synced) / acceptanceDenominator) * 100);
     const negotiation_rate = Math.round((negotiating / acceptanceDenominator) * 100);
 
+    const weekly_counts = await this.offerRepo.countByWeek(user.organizationId, 7);
+    const avg_acceptance_days = await this.offerRepo.avgAcceptanceDays(user.organizationId);
+
     return {
       total,
       by_status: byStatus,
       acceptance_rate,
       negotiation_rate,
-      avg_acceptance_days: null, // TODO: compute from timeline
+      avg_acceptance_days,
+      weekly_counts,
       timeline: [],
     };
   }

@@ -44,4 +44,11 @@ export class OfferTimelineRepository {
       order: { created_at: 'ASC' },
     });
   }
+
+  async findByOfferAndOrg(offerId: string, organizationId: string): Promise<OfferTimeline[]> {
+    return this.repo.find({
+      where: { offer_id: offerId, organization_id: organizationId },
+      order: { created_at: 'ASC' },
+    });
+  }
 }

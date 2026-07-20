@@ -33,6 +33,19 @@ export class OfferApprovalService {
     });
   }
 
+  async getPendingForApprover(user: LoggedInUser): Promise<{ step: OfferApprovalStep, offer: any }[]> {
+    const steps = await this.stepRepo.find({
+      where: { approver_id: user.userId, approval_status: OfferApprovalStatus.PENDING },
+      relations: ['offer', 'offer.candidate'],
+      order: { created_at: 'DESC' }
+    });
+
+    // Only return steps where the offer is actually pending this specific step
+    return steps
+      .filter((s) => s.offer && s.offer.offer_status === OfferStatus.PENDING_APPROVAL && s.offer.current_approval_step === s.step_order)
+      .map((s) => ({ step: s, offer: s.offer }));
+  }
+
   async addStep(user: LoggedInUser, offerId: string, dto: AddApprovalStepDto): Promise<OfferApprovalStep> {
     const offer = await this.findOffer(user, offerId);
     if (offer.offer_status !== OfferStatus.DRAFT) {

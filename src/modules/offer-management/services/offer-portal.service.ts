@@ -314,13 +314,13 @@ export class OfferPortalService {
     const candidate = await this.candidateRepo.findById(offer.candidate_id);
     if (!candidate) throw new NotFoundException('Candidate not found');
 
-    const systemUser = {
-      userId: offer.candidate_id,
+    const systemUser: LoggedInUser = {
+      userId: offer.modified_by ?? 'system',
       organizationId: offer.organization_id,
       enterpriseId: offer.enterprise_id,
       appId: 'offer-portal',
       isPlatformAdmin: false,
-    } as any;
+    };
 
     const doc = await this.documentService.uploadDocument(systemUser, file, FolderType.OFFER_DOCUMENT);
     const viewUrl = this.documentService.buildViewUrl(doc);

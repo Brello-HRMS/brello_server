@@ -56,7 +56,7 @@ export class OfferSettings extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   last_sequence: number;
 
-  @Column({ type: 'int', default: new Date().getFullYear() })
+  @Column({ type: 'int' })
   sequence_year: number;
 
   /** Dynamic list of onboarding documents required from the candidate. */

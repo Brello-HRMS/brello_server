@@ -9,6 +9,7 @@ import { OfferVersionRepository } from '../repositories/offer-version.repository
 import { OfferNotificationService } from './offer-notification.service';
 import { OfferStatus } from '../enums/offer-status.enum';
 import { OfferTimelineEvent } from '../enums/offer-timeline-event.enum';
+import { buildPortalLink } from '../utils/offer-portal.util';
 
 @Injectable()
 export class OfferSchedulerService {
@@ -63,22 +64,16 @@ export class OfferSchedulerService {
     reminderDaysByOrg: Map<string, number[]>,
   ): Promise<void> {
     for (const daysBefore of days) {
-      const offers = await this.offerRepo.findNeedingReminder(daysBefore);
+      const records = await this.offerRepo.findNeedingReminder(daysBefore);
       this.logger.log(
-        `Found ${offers.length} offers expiring in ${daysBefore} day(s)`,
+        `Found ${records.length} offers expiring in ${daysBefore} day(s)`,
       );
 
-      for (const offer of offers) {
+      for (const { offer, candidate, activeVersion } of records) {
         const orgReminderDays = reminderDaysByOrg.get(offer.organization_id) ?? [3, 1];
         if (!orgReminderDays.includes(daysBefore)) continue;
 
-        const candidate = await this.candidateRepo.findOneByOrg(
-          offer.candidate_id,
-          offer.organization_id,
-        );
         if (!candidate) continue;
-
-        const activeVersion = await this.versionRepo.findActiveByOffer(offer.id);
         if (!activeVersion) continue;
 
         if (offer.offer_status === OfferStatus.NEGOTIATING) {
@@ -93,7 +88,7 @@ export class OfferSchedulerService {
           await this.notificationService.sendReminderEmail({
             candidate,
             offer,
-            portalLink: this.buildPortalLink(activeVersion.access_token),
+            portalLink: buildPortalLink(activeVersion.access_token),
           });
         }
 
@@ -106,10 +101,5 @@ export class OfferSchedulerService {
         });
       }
     }
-  }
-
-  private buildPortalLink(token: string): string {
-    const baseUrl = process.env.WEBAPP_URL ?? 'https://brellohrms.netlify.app';
-    return `${baseUrl}/offer/portal/${token}`;
   }
 }

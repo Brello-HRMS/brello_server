@@ -21,6 +21,7 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 import { OfferLifecycleService } from '../services/offer-lifecycle.service';
 import { OfferSyncService } from '../services/offer-sync.service';
+import { OfferApprovalService } from '../services/offer-approval.service';
 import { OfferTimelineRepository } from '../repositories/offer-timeline.repository';
 import { OfferVersionRepository } from '../repositories/offer-version.repository';
 import {
@@ -43,6 +44,7 @@ export class OfferController {
     private readonly timelineRepo: OfferTimelineRepository,
     private readonly versionRepo: OfferVersionRepository,
     private readonly syncService: OfferSyncService,
+    private readonly approvalService: OfferApprovalService,
   ) {}
 
   @AuditLog(AuditLogModule.OFFER_MANAGEMENT, AuditAction.CREATE, 'offer')
@@ -65,6 +67,12 @@ export class OfferController {
     return this.lifecycleService.findAll(user, filters);
   }
 
+  @Get('approvals/pending')
+  @RequirePermission('OFFER_CANDIDATES', 'view')
+  getPendingApprovals(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.approvalService.getPendingForApprover(user);
+  }
+
   @Get(':id')
   @RequirePermission('OFFER_CANDIDATES', 'view')
   findOne(
@@ -76,14 +84,20 @@ export class OfferController {
 
   @Get(':id/timeline')
   @RequirePermission('OFFER_CANDIDATES', 'view')
-  getTimeline(@Param('id', ParseUUIDPipe) id: string) {
-    return this.timelineRepo.findByOffer(id);
+  getTimeline(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.timelineRepo.findByOfferAndOrg(id, user.organizationId);
   }
 
   @Get(':id/versions')
   @RequirePermission('OFFER_CANDIDATES', 'view')
-  getVersions(@Param('id', ParseUUIDPipe) id: string) {
-    return this.versionRepo.findAllByOffer(id);
+  getVersions(
+    @LoggedInUser() user: LoggedInUserInterface,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.versionRepo.findAllByOfferAndOrg(id, user.organizationId);
   }
 
   @Patch(':id')

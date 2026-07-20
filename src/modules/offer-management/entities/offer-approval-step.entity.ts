@@ -1,6 +1,7 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { OfferApprovalStatus } from '../enums/offer-approval-status.enum';
+import { Offer } from './offer.entity';
 
 /**
  * OfferApprovalStep — A single step in the approval chain for an offer.
@@ -15,6 +16,10 @@ import { OfferApprovalStatus } from '../enums/offer-approval-status.enum';
 export class OfferApprovalStep extends BaseEntity {
   @Column({ type: 'uuid' })
   offer_id: string;
+
+  @ManyToOne(() => Offer)
+  @JoinColumn({ name: 'offer_id' })
+  offer: Offer;
 
   /** Display name of the approver role (e.g., "Manager", "Finance Head"). */
   @Column({ type: 'varchar', length: 100 })

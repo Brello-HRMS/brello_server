@@ -22,9 +22,10 @@ async function q<T = any>(sql: string, params: any[] = []): Promise<T[]> {
 
 const OFFER_MODULES = [
   { wbs: '14', code: 'OFFER_MANAGEMENT', name: 'Offer Management', icon: 'Handshake', path: '/offer-management' },
-  { wbs: '14.1', code: 'OFFER_CANDIDATES', name: 'Candidates', parent_wbs: '14', icon: 'Users', path: '/offer-management' },
-  { wbs: '14.2', code: 'OFFER_ANALYTICS', name: 'Analytics', parent_wbs: '14', icon: 'TrendingUp', path: '/offer-management/analytics' },
-  { wbs: '14.3', code: 'OFFER_SETTINGS', name: 'Settings', parent_wbs: '14', icon: 'Settings', path: '/offer-management/settings' },
+  { wbs: '14.1', code: 'OFFER_CANDIDATES', name: 'Candidates', parent_wbs: '14', icon: 'Users', path: '/offer-management/candidate' },
+  { wbs: '14.2', code: 'OFFER_APPROVALS', name: 'My Approvals', parent_wbs: '14', icon: 'CheckCircle', path: '/offer-management/approvals' },
+  { wbs: '14.3', code: 'OFFER_ANALYTICS', name: 'Analytics', parent_wbs: '14', icon: 'TrendingUp', path: '/offer-management/analytics' },
+  { wbs: '14.4', code: 'OFFER_SETTINGS', name: 'Settings', parent_wbs: '14', icon: 'Settings', path: '/offer-management/settings' },
 ];
 
 async function getAdminAppId(): Promise<string> {

@@ -12,65 +12,18 @@ V2 should optimize **how offers are negotiated, approved, signed, and onboarded*
 
 ---
 
-# 1. Approval Workflow ⭐⭐⭐⭐⭐
+# ✅ 1. Approval Workflow (Implemented)
 
-Today
-
-```text
-HR
-
-↓
-
-Send Offer
-```
-
-V2
+This feature is now fully implemented and active in the system.
 
 ```text
-HR
-
-↓
-
-Manager Approval
-
-↓
-
-HR Head Approval
-
-↓
-
-Finance Approval
-
-↓
-
-Send
+HR -> Send Offer -> Manager Approval -> HR Head Approval -> Finance Approval -> Send
 ```
 
-Configurable approval chains.
-
-Example
-
-```text
-Salary < ₹10L
-
-↓
-
-Manager
-
-Salary > ₹10L
-
-↓
-
-Manager
-
-↓
-
-Director
-
-↓
-
-Finance
-```
+- Configurable approval chains via `OfferApprovalService`.
+- Dedicated `OFFER_APPROVALS` module code and UI (`OfferApprovalsPage`) for secure access.
+- Approvers can Accept or Reject with required comments.
+- Offers cannot be sent until all steps are approved.
 
 ---
 
@@ -92,9 +45,7 @@ Support
 - Zoho Sign
 
 Candidate signs online.
-
 HR signs online.
-
 Legally binding offer.
 
 ---
@@ -110,45 +61,13 @@ Request Changes
 Candidate gets
 
 ```text
-Message
-
-↓
-
-Counter Offer
-
-↓
-
-Attachments
-
-↓
-
-Discussion
-
-↓
-
-Final Offer
+Message -> Counter Offer -> Attachments -> Discussion -> Final Offer
 ```
 
 Timeline
 
 ```text
-HR
-
-↓
-
-Candidate
-
-↓
-
-HR
-
-↓
-
-Candidate
-
-↓
-
-Accepted
+HR -> Candidate -> HR -> Candidate -> Accepted
 ```
 
 No email chains.
@@ -160,19 +79,7 @@ No email chains.
 Campus hiring.
 
 ```text
-50 Candidates
-
-↓
-
-Generate Offers
-
-↓
-
-Send
-
-↓
-
-Track
+50 Candidates -> Generate Offers -> Send -> Track
 ```
 
 Huge time saver.
@@ -181,23 +88,8 @@ Huge time saver.
 
 # 5. Offer Approval Comments ⭐⭐⭐⭐☆
 
-Instead of
-
-Approved.
-
-Allow
-
-```text
-Increase salary
-
-Reduce probation
-
-Change DOJ
-```
-
-Internal discussion.
-
-Candidate never sees it.
+✅ **Implemented as part of the Approval Workflow.**
+Approvers can now provide mandatory rejection reasons and optional approval comments.
 
 ---
 
@@ -213,12 +105,11 @@ Upload
 - Driving License
 
 HR verifies.
-
 Reduces onboarding work.
 
 ---
 
-# 7. Preboarding Document Collection ⭐⭐⭐⭐⭐
+# ✅ 7. Preboarding Document Collection (Implemented)
 
 Instead of waiting for onboarding.
 
@@ -233,27 +124,18 @@ Candidate uploads
 - Experience Letters
 
 Everything collected before Day 1.
+*Implemented via Candidate Portal document upload after offer acceptance.*
 
 ---
 
 # 8. Dynamic Offer Builder ⭐⭐⭐⭐⭐
 
-Instead of
-
-Simple paragraphs.
+Instead of simple paragraphs.
 
 Support
 
 ```text
-IF
-
-Salary > 10L
-
-Show Bonus Clause
-
-ELSE
-
-Hide
+IF Salary > 10L Show Bonus Clause ELSE Hide
 ```
 
 Conditional sections.
@@ -282,57 +164,22 @@ Rich Editor
 Candidate
 
 ```text
-CTC
-
-↓
-
-Monthly Take Home
-
-↓
-
-Tax
-
-↓
-
-Benefits
+CTC -> Monthly Take Home -> Tax -> Benefits
 ```
 
 Interactive breakdown.
-
 Very attractive.
 
 ---
 
 # 11. Candidate Portal Dashboard ⭐⭐⭐⭐⭐
 
-Instead of
-
-Only Offer.
+Instead of Only Offer.
 
 Portal becomes
 
 ```text
-Offer
-
-↓
-
-Documents
-
-↓
-
-Tasks
-
-↓
-
-Messages
-
-↓
-
-Joining
-
-↓
-
-Company Info
+Offer -> Documents -> Tasks -> Messages -> Joining -> Company Info
 ```
 
 Almost a mini onboarding portal.
@@ -344,31 +191,7 @@ Almost a mini onboarding portal.
 Example
 
 ```text
-Accept Offer
-
-↓
-
-Upload PAN
-
-↓
-
-Upload Aadhaar
-
-↓
-
-Sign NDA
-
-↓
-
-Choose Laptop
-
-↓
-
-Submit Bank Details
-
-↓
-
-Done
+Accept Offer -> Upload PAN -> Upload Aadhaar -> Sign NDA -> Choose Laptop -> Submit Bank Details -> Done
 ```
 
 ---
@@ -377,40 +200,12 @@ Done
 
 Today
 
-Manual Sync
-
-↓
-
-Employee
+Manual Sync -> Employee
 
 V2
 
 ```text
-Accepted
-
-↓
-
-Auto Sync
-
-↓
-
-Employee
-
-↓
-
-Send Welcome Email
-
-↓
-
-Assign Policies
-
-↓
-
-Create Attendance
-
-↓
-
-Payroll Setup
+Accepted -> Auto Sync -> Employee -> Send Welcome Email -> Assign Policies -> Create Attendance -> Payroll Setup
 ```
 
 Zero HR work.
@@ -424,15 +219,7 @@ Partner integrations.
 Status
 
 ```text
-Pending
-
-↓
-
-In Progress
-
-↓
-
-Completed
+Pending -> In Progress -> Completed
 ```
 
 ---
@@ -442,19 +229,10 @@ Completed
 Candidate requests
 
 ```text
-Joining Date
-
-↓
-
-15 Aug
-
-↓
-
-Need 1 Sept
+Joining Date -> 15 Aug -> Need 1 Sept
 ```
 
 HR approves.
-
 Offer updated automatically.
 
 ---
@@ -468,65 +246,36 @@ Automatically create
 - Manager Reminder
 
 Google Calendar
-
 Outlook
 
 ---
 
 # 17. Recruiter Dashboard ⭐⭐⭐⭐☆
 
+✅ **Implemented as Offer Analytics.**
+
 KPIs
 
-```text
-Acceptance %
-
-Average Offer Time
-
-Average Negotiation
-
-Rejected Offers
-
-Pending Offers
-
-Joining %
-
-```
+- Acceptance %
+- Average Offer Time
+- Average Negotiation
+- Rejected Offers
+- Pending Offers
+- Joining %
 
 ---
 
 # 18. Offer Expiry Extensions ⭐⭐⭐⭐☆
 
-Instead of
+✅ **Implemented.**
 
-Expired.
-
-HR
-
-```text
-Extend
-
-↓
-
-+3 Days
-
-↓
-
-Notify Candidate
-```
+HR can now extend the expiry of an offer (1-60 days) via the "Extend Expiry" modal.
 
 ---
 
 # 19. QR Code Verification ⭐⭐⭐⭐☆
 
-Offer PDF
-
-↓
-
-QR Code
-
-↓
-
-Verify Authenticity
+Offer PDF -> QR Code -> Verify Authenticity
 
 Useful for fraud prevention.
 
@@ -537,15 +286,8 @@ Useful for fraud prevention.
 Public page
 
 ```text
-Enter Offer Number
-
-↓
-
-Verify
-
-Valid
-
-Issued by XYZ Company
+Enter Offer Number -> Verify
+Valid: Issued by XYZ Company
 ```
 
 ---
@@ -554,23 +296,7 @@ Issued by XYZ Company
 
 Suggest
 
-Salary
-
-↓
-
-Benefits
-
-↓
-
-Market Range
-
-↓
-
-Template
-
-↓
-
-Negotiation Tips
+Salary -> Benefits -> Market Range -> Template -> Negotiation Tips
 
 ---
 
@@ -579,28 +305,18 @@ Negotiation Tips
 Generate
 
 English
-
 Hindi
-
 Arabic
-
 French
 
 Same offer.
-
 Different language.
 
 ---
 
-# 23. Multiple Company Brands ⭐⭐⭐⭐⭐
+# ✅ 23. Multiple Company Brands (Implemented)
 
-For organizations having
-
-Brand A
-
-Brand B
-
-Brand C
+For organizations having multiple brands.
 
 Different
 
@@ -608,6 +324,8 @@ Different
 - Signature
 - Template
 - Policies
+
+*Implemented via `brand_id` on the Offer entity.*
 
 ---
 
@@ -618,19 +336,7 @@ Instead of emails.
 Portal messaging.
 
 ```text
-HR
-
-↓
-
-Message
-
-↓
-
-Candidate
-
-↓
-
-Reply
+HR -> Message -> Candidate -> Reply
 ```
 
 Everything archived.
@@ -644,35 +350,7 @@ Once accepted
 Portal changes
 
 ```text
-Welcome
-
-↓
-
-Tasks
-
-↓
-
-Forms
-
-↓
-
-Documents
-
-↓
-
-Training
-
-↓
-
-Company Policies
-
-↓
-
-IT Assets
-
-↓
-
-Day 1 Schedule
+Welcome -> Tasks -> Forms -> Documents -> Training -> Company Policies -> IT Assets -> Day 1 Schedule
 ```
 
 This becomes an entirely new module integrated with Offer Management.
@@ -702,29 +380,29 @@ I would prioritize these features:
 
 ### Workflow & Governance
 
-- ✅ Configurable approval workflow
-- ✅ Approval comments and history
-- ✅ Offer expiry extension
+- ✅ Configurable approval workflow (Implemented)
+- ✅ Approval comments and history (Implemented)
+- ✅ Offer expiry extension (Implemented)
 
 ### Candidate Experience
 
-- ✅ Real digital signatures
-- ✅ Negotiation workspace
-- ✅ Candidate communication center
-- ✅ Multi-language offers
+- 🔲 Real digital signatures
+- 🔲 Negotiation workspace
+- 🔲 Candidate communication center
+- 🔲 Multi-language offers
 
 ### Preboarding
 
-- ✅ Document collection
-- ✅ Joining checklist
-- ✅ Auto employee creation
-- ✅ Background verification integration
+- ✅ Document collection (Implemented)
+- 🔲 Joining checklist
+- 🔲 Auto employee creation
+- 🔲 Background verification integration
 
 ### Scale & Productivity
 
-- ✅ Bulk offer generation
-- ✅ Multiple company brands
-- ✅ Recruiter dashboard
-- ✅ Calendar integration
+- 🔲 Bulk offer generation
+- ✅ Multiple company brands (Implemented)
+- ✅ Recruiter dashboard (Analytics Implemented)
+- 🔲 Calendar integration
 
 This roadmap keeps V2 focused on making the hiring process smoother and more collaborative while laying the foundation for a full Recruitment and Preboarding suite in future releases.

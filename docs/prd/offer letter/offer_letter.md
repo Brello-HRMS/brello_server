@@ -1,4 +1,4 @@
-Below is how I would structure the **entire Offer Management module** for Brello. This isn't just an Offer Letter module—it's a complete Offer Lifecycle Management system that bridges Recruitment and HRMS.
+Below is how the **entire Offer Management module** is structured for Brello. This isn't just an Offer Letter module—it's a complete Offer Lifecycle Management system that bridges Recruitment and HRMS.
 
 ---
 
@@ -8,7 +8,7 @@ Below is how I would structure the **entire Offer Management module** for Brello
 
 # Offer Management Module
 
-**Version:** V1.0 (Production Ready)
+**Version:** V1.5 (Production Ready)
 
 ---
 
@@ -16,7 +16,7 @@ Below is how I would structure the **entire Offer Management module** for Brello
 
 Offer Management enables HR teams to create, negotiate, send, track, and finalize employment offers for candidates before they become employees.
 
-The module provides a secure external candidate portal, version-controlled offer letters, policy attachments, digital signatures, offer lifecycle tracking, and seamless synchronization into the Employee module.
+The module provides a secure external candidate portal, version-controlled offer letters, policy attachments, digital signatures, offer lifecycle tracking, configurable approval chains, candidate document collection, and seamless synchronization into the Employee module.
 
 It bridges the gap between Recruitment and Employee Management.
 
@@ -29,9 +29,11 @@ The module should enable HR to:
 - Create professional offer letters
 - Send offers directly from organization email
 - Manage multiple offer versions
-- Track candidate responses
+- Route offers through multi-step approval chains
+- Track candidate responses and timeline events
 - Attach company policies
-- Allow secure online acceptance/rejection
+- Allow secure online acceptance, rejection, or negotiation
+- Collect candidate onboarding documents post-acceptance
 - Convert accepted candidates into employees
 - Maintain complete audit history
 - Eliminate manual paperwork
@@ -43,10 +45,9 @@ The module should enable HR to:
 ```text
 Offer Management
 │
-├── Candidates
-├── Offers
-├── Offer Templates
-├── Timeline
+├── Candidates (Dashboard/List)
+├── Offers (Details/Wizard)
+├── Approvals
 ├── Analytics
 └── Settings
 ```
@@ -64,6 +65,10 @@ Offer Draft
 
 ↓
 
+Pending Approval (Optional via Approvals module)
+
+↓
+
 Offer Sent (Version 1)
 
 ↓
@@ -72,17 +77,19 @@ Viewed
 
 ↓
 
-Accepted
-Rejected
-Request Changes
+Accepted / Rejected / Request Changes
 
 ↓
 
-Offer Version 2
+Offer Version 2 (If changes requested)
 
 ↓
 
 Accepted
+
+↓
+
+Candidate Uploads Documents (Post-Acceptance)
 
 ↓
 
@@ -99,7 +106,7 @@ Employee Synced
 
 ---
 
-# 1. Candidates
+# 1. Candidates / Dashboard
 
 Landing screen.
 
@@ -124,6 +131,7 @@ Actions
 - View Offer
 - Resend
 - Withdraw
+- Extend Expiry
 - Sync Employee
 
 ---
@@ -136,6 +144,10 @@ No Offer
 ↓
 
 Draft
+
+↓
+
+Pending Approval
 
 ↓
 
@@ -184,6 +196,8 @@ Offer History
 
 Timeline
 
+Preboarding Documents (Uploaded post-acceptance)
+
 ---
 
 # 2. Offer Templates
@@ -203,15 +217,7 @@ Supports
 
 Lifecycle
 
-Draft
-
-↓
-
-Published
-
-↓
-
-Archived
+Draft -> Published -> Archived
 
 Versioning supported.
 
@@ -249,6 +255,7 @@ Each Offer contains
 - PDF
 - Timeline
 - Status
+- Brand Identity (Multi-brand support)
 
 ---
 
@@ -257,129 +264,44 @@ Each Offer contains
 Five-step wizard.
 
 ```text
-Candidate
-
-↓
-
-Offer Details
-
-↓
-
-Compensation
-
-↓
-
-Policies
-
-↓
-
-Preview & Send
+Candidate -> Offer Details -> Compensation -> Policies -> Preview & Send
 ```
 
 ---
 
-# Step 1
+# Step 1: Candidate
 
-Candidate
-
-Select existing candidate.
-
-Auto-fills
-
-- Name
-- Email
-- Mobile
+Select existing candidate. Auto-fills Name, Email, Mobile.
 
 ---
 
-# Step 2
+# Step 2: Offer Details
 
-Offer Details
-
-Fields
-
-- Position
-- Department
-- Designation
-- Employment Type
-- Joining Date
-- Reporting Manager
-- Work Mode
-- Work Location
-- Shift
-- Office Address
-- Probation
-- Notice Period
+Fields: Position, Department, Designation, Employment Type, Joining Date, Reporting Manager, Work Mode, Work Location, Shift, Office Address, Probation, Notice Period.
 
 ---
 
-# Step 3
-
-Compensation
+# Step 3: Compensation
 
 Integrated with Payroll.
 
-Select
-
-Salary Structure
-
-↓
-
-Components
-
-↓
-
-CTC
-
-↓
-
-Monthly
-
-↓
-
-Annual
+Select Salary Structure -> Components -> CTC -> Monthly -> Annual
 
 Avoids manual calculations.
 
 ---
 
-# Step 4
+# Step 4: Policies
 
-Policies
-
-Dropdown
-
-Select policies already created in Policies module.
-
-Example
-
-✓ Leave Policy
-
-✓ Attendance Policy
-
-✓ Work From Home
-
-✓ IT Security
-
-✓ Code of Conduct
+Dropdown to select policies already created in Policies module.
 
 Selected policy PDFs automatically become email attachments.
 
 ---
 
-# Step 5
+# Step 5: Preview
 
-Preview
-
-Displays
-
-- Offer Letter
-- Salary
-- Benefits
-- Policies
-- Digital Signature
-
-Exactly how candidate will see it.
+Displays exactly how candidate will see it (Offer Letter, Salary, Benefits, Policies).
 
 ---
 
@@ -403,6 +325,18 @@ Version does not change Offer Number.
 
 ---
 
+# 4. Approvals Workflow (New in V1.5)
+
+Before an offer is sent, it can be routed through a configurable approval chain.
+
+- Multiple steps (e.g., Step 1: Manager, Step 2: Finance).
+- Approvers see a dedicated queue in the `OFFER_APPROVALS` module.
+- Approvers can Accept or Reject (with required comments).
+- Offer status remains `PENDING_APPROVAL` until all steps clear.
+- Notifications are automatically dispatched to the next approver in the chain.
+
+---
+
 # Offer Versioning
 
 One of the biggest features.
@@ -410,21 +344,7 @@ One of the biggest features.
 Example
 
 ```text
-Offer OFF-145
-
-V1
-
-↓
-
-Candidate requests changes
-
-↓
-
-V2
-
-↓
-
-Candidate accepts
+Offer OFF-145 (V1) -> Candidate requests changes -> V2 -> Candidate accepts
 ```
 
 Every version stores
@@ -437,49 +357,9 @@ Every version stores
 - PDF Snapshot
 - Candidate Response
 
----
+### One Active Version Rule
 
-# One Active Version Rule
-
-Only one version may remain active.
-
-Example
-
-```text
-V1
-
-↓
-
-Superseded
-
-↓
-
-V2
-
-↓
-
-Active
-```
-
-Candidate always accesses only the latest version.
-
-Previous versions remain visible only to HR.
-
----
-
-# Version Comparison
-
-HR can compare
-
-Salary
-
-Joining Date
-
-Benefits
-
-Policies
-
-Highlight changed values.
+Only one version may remain active. Candidate always accesses only the latest version. Previous versions remain visible only to HR.
 
 ---
 
@@ -487,31 +367,7 @@ Highlight changed values.
 
 One click.
 
-Workflow
-
-Generate PDF
-
-↓
-
-Attach Policies
-
-↓
-
-Generate Secure Token
-
-↓
-
-Send Email
-
-↓
-
-Timeline
-
-↓
-
-Audit
-
----
+Generate PDF -> Attach Policies -> Generate Secure Token -> Send Email -> Timeline -> Audit
 
 Email contains
 
@@ -523,145 +379,33 @@ Email contains
 
 ---
 
-# Digital Signature
-
-Offer PDF includes
-
-Company Signature
-
-↓
-
-Digitally Signed
-
-↓
-
-Timestamp
-
-↓
-
-Organization
-
-Future-ready for
-
-- DSC
-- Adobe Sign
-- DocuSign
-
----
-
 # External Candidate Portal
 
-No login required.
+No login required. Secure token-based access.
 
-Secure token-based access.
+Displays: Company, Offer Summary, Salary, Benefits, Policies, Offer Letter, Attachments, Expiry Countdown.
 
-Displays
+Buttons: Accept, Request Changes, Reject.
 
-Company
+### Post-Acceptance Uploads
 
-Offer Summary
-
-Salary
-
-Benefits
-
-Policies
-
-Offer Letter
-
-Attachments
-
-Expiry Countdown
-
-Buttons
-
-Accept
-
-Request Changes
-
-Reject
+Once a candidate accepts the offer, the portal transforms to allow them to upload critical pre-boarding documents (e.g., PAN, Aadhaar) directly to their candidate profile.
 
 ---
 
 # Portal Security
 
-Secure random token
-
-HTTPS only
-
-Single active token
-
-Previous tokens invalidated
-
-Link expires automatically
-
-No authentication required
-
-Read-only data
+Secure random token. HTTPS only. Single active token. Previous tokens invalidated. Link expires automatically. No authentication required. Read-only data.
 
 ---
 
-# Candidate Decisions
+# Offer Expiry & Extension
 
-Accept
+Organization configurable. Default 7 Days.
 
-↓
+Countdown visible to candidate. Expired offers become read-only. Status changes automatically.
 
-Confirmation
-
-↓
-
-Status Accepted
-
----
-
-Reject
-
-↓
-
-Reason
-
-↓
-
-Optional Comment
-
-↓
-
-Rejected
-
----
-
-Request Changes
-
-↓
-
-Expected Salary
-
-Joining Date
-
-Benefits
-
-Comments
-
-↓
-
-Negotiation Requested
-
----
-
-# Offer Expiry
-
-Organization configurable.
-
-Default
-
-7 Days
-
-Countdown visible to candidate.
-
-Expired offers become read-only.
-
-Status changes automatically.
+HR can manually **Extend Expiry** from 1 to 60 days via the Offer Dashboard, instantly updating the token validity.
 
 ---
 
@@ -669,25 +413,9 @@ Status changes automatically.
 
 Default
 
-Day 3
+Day 3 -> Reminder -> Day 6 -> Final Reminder -> Expired
 
-↓
-
-Reminder
-
-↓
-
-Day 6
-
-↓
-
-Final Reminder
-
-↓
-
-Expired
-
-Stops after acceptance.
+Stops after acceptance. Efficiently batch-processed via the daily Scheduler.
 
 ---
 
@@ -695,105 +423,43 @@ Stops after acceptance.
 
 HR may withdraw offer before acceptance.
 
-Workflow
-
-Withdraw
-
-↓
-
-Reason
-
-↓
-
-Notify Candidate
-
-↓
-
-Portal Disabled
-
-↓
-
-Timeline Updated
-
-Cannot withdraw
-
-Accepted
-
-Rejected
-
-Expired
+Workflow: Withdraw -> Reason -> Notify Candidate -> Portal Disabled -> Timeline Updated
 
 ---
 
 # Resend Offer
 
-Creates
+Creates New Secure Token -> Invalidates Previous Token -> Resends Email
 
-New Secure Token
-
-↓
-
-Invalidates Previous Token
-
-↓
-
-Resends Email
-
-Offer Number remains same.
-
-Version remains same.
+Offer Number remains same. Version remains same.
 
 ---
 
-# Timeline
+# Timeline & Audit
 
 Every activity recorded.
 
 Example
 
-Candidate Created
+Candidate Created -> Offer Draft -> Offer Sent -> Viewed -> Reminder Sent -> Requested Changes -> Offer V2 Sent -> Viewed -> Accepted -> Employee Synced
 
-↓
+---
 
-Offer Draft
+# Analytics Dashboard (New in V1.5)
 
-↓
+Dedicated dashboard for recruiters and HR heads.
 
-Offer Sent
-
-↓
-
-Viewed
-
-↓
-
-Reminder Sent
-
-↓
-
-Requested Changes
-
-↓
-
-Offer V2 Sent
-
-↓
-
-Viewed
-
-↓
-
-Accepted
-
-↓
-
-Employee Synced
+Provides real-time tracking of:
+- Offer Funnel (Draft vs. Sent vs. Accepted vs. Rejected)
+- Acceptance & Negotiation Rates
+- Average Days to Accept
+- Time-series sparklines showing offer volume per week.
 
 ---
 
 # Sync to Employee
 
-After acceptance
+After acceptance.
 
 Button
 
@@ -801,286 +467,4 @@ Button
 Sync to Employee
 ```
 
-Workflow
-
-Validate
-
-↓
-
-Duplicate Check
-
-↓
-
-Preview
-
-↓
-
-Create Employee
-
-↓
-
-Mark Candidate Synced
-
----
-
-# Sync Validation
-
-Must verify
-
-Department
-
-Designation
-
-Reporting Manager
-
-Salary Structure
-
-Shift
-
-Joining Date
-
-Work Location
-
-Employment Type
-
-Company
-
-Missing fields block synchronization.
-
----
-
-# Duplicate Detection
-
-Checks
-
-Email
-
-Phone
-
-Government ID (Future)
-
-If employee exists
-
-Open Existing
-
-Merge (Future)
-
-Cancel
-
-Never duplicate employees.
-
----
-
-# Employee Creation
-
-Auto-create
-
-Employee
-
-↓
-
-Generate Employee Code
-
-↓
-
-Copy Offer Details
-
-↓
-
-Link Candidate
-
-↓
-
-Mark Offer Synced
-
----
-
-# Analytics Dashboard
-
-Displays
-
-Offers Sent
-
-Accepted
-
-Rejected
-
-Expired
-
-Negotiation Rate
-
-Acceptance Rate
-
-Average Acceptance Time
-
-Pending Sync
-
-Recruiter Performance
-
-Top Reject Reasons
-
----
-
-# Settings
-
-Organization-level configuration
-
-Offer Prefix
-
-Offer Expiry
-
-Reminder Schedule
-
-Default Template
-
-Default Policies
-
-Default Signatory
-
-Organization Email
-
-Enable Digital Signature
-
-Allow Download
-
-Enable Request Changes
-
-Auto Welcome Email
-
-Auto Sync (Future)
-
----
-
-# Permissions
-
-- Offers View
-- Offers Create
-- Offers Edit Draft
-- Offers Send
-- Offers Withdraw
-- Offers Resend
-- Offers Sync Employee
-- Manage Templates
-- Manage Settings
-- View Analytics
-
----
-
-# Notifications
-
-HR
-
-- Offer Viewed
-- Offer Accepted
-- Offer Rejected
-- Request Changes
-- Offer Expired
-- Employee Synced
-
-Candidate
-
-- Offer Sent
-- Reminder
-- Offer Updated
-- Offer Withdrawn
-- Offer Expired
-- Acceptance Confirmation
-
----
-
-# Audit Logs
-
-Every action recorded
-
-- Draft Created
-- Offer Updated
-- Offer Sent
-- Reminder Sent
-- Offer Viewed
-- Offer Accepted
-- Offer Rejected
-- Change Requested
-- Offer Withdrawn
-- Offer Expired
-- Employee Synced
-
----
-
-# Integrations
-
-### Recruitment Module
-
-- Candidate Details
-- Job Information
-
-### Payroll Module
-
-- Salary Structure
-- Compensation Components
-
-### Policies Module
-
-- Policy Selection
-- PDF Attachments
-
-### Employee Module
-
-- Employee Creation
-- Employee Linking
-
-### Document Module
-
-- Offer PDF Storage
-- Policy Storage
-
-### Notification Module
-
-- Email Delivery
-- In-App Notifications
-
-### Audit Module
-
-- Event Logging
-
----
-
-# Production Business Rules
-
-- Offer Number generated only on first send.
-- Only one active version exists per offer.
-- Previous versions are automatically superseded.
-- Offer links expire based on organization settings (default 7 days).
-- Every resend generates a new secure token and invalidates previous tokens.
-- Accepted offers cannot be edited or withdrawn.
-- Withdrawn or expired offers cannot be accepted.
-- Every offer version creates an immutable PDF snapshot.
-- Candidate can only access the latest active version.
-- Policies are attached dynamically from the Policies module at send time.
-- Digital signature is embedded during PDF generation.
-- Employee synchronization is only allowed after acceptance.
-- Duplicate employee detection is mandatory before synchronization.
-- All business events generate audit records.
-- All generated documents remain immutable and permanently traceable.
-
----
-
-## Recommended PRD Chapters
-
-I recommend documenting this module with the same production depth as Letter Management:
-
-1. **Introduction & Architecture**
-2. **Offer Lifecycle & Business Rules**
-3. **Offer Templates**
-4. **Candidate Management**
-5. **Offer Creation Wizard**
-6. **Versioning & Negotiation**
-7. **Email Delivery & Notifications**
-8. **External Candidate Portal**
-9. **Employee Synchronization**
-10. **REST API Contracts**
-11. **Database Schema**
-12. **Frontend UX & User Flows**
-13. **Security, Audit & Compliance**
-14. **Testing & Production Readiness**
-
-This structure keeps the specification modular, implementation-ready, and consistent with the engineering standard you've established for the Letter Management module.
+Auto-creates employee record from candidate data. Link established between Employee ID and Offer. Status changes to Synced.

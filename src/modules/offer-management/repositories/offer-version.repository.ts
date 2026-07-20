@@ -22,6 +22,14 @@ export class OfferVersionRepository {
     });
   }
 
+  async findAllByOfferAndOrg(offerId: string, organizationId: string): Promise<OfferVersion[]> {
+    return this.repo.find({
+      where: { offer_id: offerId, offer: { organization_id: organizationId } },
+      relations: ['offer'],
+      order: { version_number: 'DESC' },
+    });
+  }
+
   async findActiveByOffer(offerId: string): Promise<OfferVersion | null> {
     return this.repo.findOne({
       where: { offer_id: offerId, is_active: true },
