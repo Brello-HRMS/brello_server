@@ -146,7 +146,9 @@ export class EmployeeService {
 
     // Phone uniqueness check only if provided
     if (dto.phone) {
-      const phoneExistsInUsers = await this.userRepository.phoneExists(dto.phone);
+      const phoneExistsInUsers = await this.userRepository.phoneExists(
+        dto.phone,
+      );
       if (phoneExistsInUsers) {
         throw new ConflictException(
           `User with phone '${dto.phone}' already exists.`,
@@ -234,7 +236,8 @@ export class EmployeeService {
       );
 
       const resolvedEnterpriseId = enterpriseId ?? dto.enterprise_id ?? '';
-      const resolvedOrganizationId = organizationId ?? dto.organization_id ?? '';
+      const resolvedOrganizationId =
+        organizationId ?? dto.organization_id ?? '';
       if (resolvedEnterpriseId) {
         this.searchIndexingService.indexEmployee(
           savedUser,
@@ -253,8 +256,13 @@ export class EmployeeService {
           action: AuditAction.CREATE,
           entity_type: 'user',
           entity_id: savedUser.id,
-          entity_display_name: `${dto.firstName ?? ''} ${dto.lastName ?? ''}`.trim() || dto.email,
-          new_value: { email: dto.email, department_id: dto.departmentId, designation_id: dto.designationId },
+          entity_display_name:
+            `${dto.firstName ?? ''} ${dto.lastName ?? ''}`.trim() || dto.email,
+          new_value: {
+            email: dto.email,
+            department_id: dto.departmentId,
+            designation_id: dto.designationId,
+          },
         });
       }
 
@@ -390,7 +398,7 @@ export class EmployeeService {
 
     const response = await ListingHelper.apply(qb, query, user, {
       searchFields: ['first_name', 'last_name', 'email'],
-      filterFields: ['status', 'departmentId', 'designationId'],
+      filterFields: ['status'],
       alias: 'user',
     });
 
@@ -502,7 +510,9 @@ export class EmployeeService {
 
     const profile = await this.profileRepository.findByUserId(id);
     const oldValue = JSON.parse(JSON.stringify(profile));
-    this.auditContext.setPreValue(profile as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      profile as unknown as Record<string, unknown>,
+    );
 
     const updateData: Partial<UserProfile> = {};
     if (dto.dob) updateData.dob = new Date(dto.dob);
@@ -510,7 +520,8 @@ export class EmployeeService {
     if (dto.maritalStatus) updateData.marital_status = dto.maritalStatus;
     if (dto.bloodGroup) updateData.blood_group = dto.bloodGroup;
     if (dto.presentAddress) updateData.present_address = dto.presentAddress;
-    if (dto.permanentAddress) updateData.permanent_address = dto.permanentAddress;
+    if (dto.permanentAddress)
+      updateData.permanent_address = dto.permanentAddress;
 
     const updatedProfile = await this.profileRepository.update(
       user.user_profile_id,
@@ -584,7 +595,9 @@ export class EmployeeService {
 
     const oldValue = {
       role_id: user.plan_id, // Assuming role/plan link or similar
-      assets: await this.assetsRepository.findByUserProfileId(user.user_profile_id),
+      assets: await this.assetsRepository.findByUserProfileId(
+        user.user_profile_id,
+      ),
     };
 
     if (dto.roleId) {
@@ -733,7 +746,9 @@ export class EmployeeService {
     await this.validateProfileAccess(id);
     const existingEdu = await this.educationRepository.findById(educationId);
     if (existingEdu) {
-      this.auditContext.setPreValue(existingEdu as unknown as Record<string, unknown>);
+      this.auditContext.setPreValue(
+        existingEdu as unknown as Record<string, unknown>,
+      );
     }
     await this.educationRepository.update(educationId, {
       school_name: dto.schoolName,
@@ -749,7 +764,9 @@ export class EmployeeService {
     await this.validateProfileAccess(id); // Ensures user exists
     const education = await this.educationRepository.findById(educationId);
     if (education) {
-      this.auditContext.setPreValue(education as unknown as Record<string, unknown>);
+      this.auditContext.setPreValue(
+        education as unknown as Record<string, unknown>,
+      );
     }
     await this.educationRepository.softDelete(educationId);
     return { success: true };
@@ -781,7 +798,9 @@ export class EmployeeService {
     await this.validateProfileAccess(id);
     const existingExp = await this.experienceRepository.findById(experienceId);
     if (existingExp) {
-      this.auditContext.setPreValue(existingExp as unknown as Record<string, unknown>);
+      this.auditContext.setPreValue(
+        existingExp as unknown as Record<string, unknown>,
+      );
     }
     await this.experienceRepository.update(experienceId, {
       designation: dto.designation,
@@ -798,7 +817,9 @@ export class EmployeeService {
     await this.validateProfileAccess(id);
     const experience = await this.experienceRepository.findById(experienceId);
     if (experience) {
-      this.auditContext.setPreValue(experience as unknown as Record<string, unknown>);
+      this.auditContext.setPreValue(
+        experience as unknown as Record<string, unknown>,
+      );
     }
     await this.experienceRepository.softDelete(experienceId);
     return { success: true };
@@ -855,7 +876,6 @@ export class EmployeeService {
     });
     return { success: true };
   }
-
 
   // Documents
   async attachDocument(id: string, dto: AddDocumentDto): Promise<any> {
@@ -1149,7 +1169,8 @@ export class EmployeeService {
     }
 
     const publicUrl =
-      this.configService.get<string>('app.publicUrl') ?? 'http://localhost:5173';
+      this.configService.get<string>('app.publicUrl') ??
+      'http://localhost:5173';
     const loginUrl = `${publicUrl.replace(/\/$/, '')}/auth/login`;
     const displayName = user.first_name || 'there';
 
@@ -1196,22 +1217,18 @@ export class EmployeeService {
     await queryRunner.startTransaction();
 
     try {
-      await queryRunner.manager.update(
-        UserProfile,
-        profile.id,
-        { employee_status: EmployeeStatus.ACTIVE },
-      );
+      await queryRunner.manager.update(UserProfile, profile.id, {
+        employee_status: EmployeeStatus.ACTIVE,
+      });
 
-      await queryRunner.manager.update(
-        User,
-        id,
-        { status: Status.ACTIVE },
-      );
+      await queryRunner.manager.update(User, id, { status: Status.ACTIVE });
 
       await queryRunner.commitTransaction();
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      this.logger.error(`Failed to activate employee ${id}: ${(err as Error).message}`);
+      this.logger.error(
+        `Failed to activate employee ${id}: ${(err as Error).message}`,
+      );
       throw err;
     } finally {
       await queryRunner.release();
@@ -1250,8 +1267,10 @@ export class EmployeeService {
     const schema = (this.dataSource.options as any).schema ?? 'public';
 
     // --- Employee stats ---
-    const totalEmployees = await this.userRepository.countActive(organizationId);
-    const newHiresThisMonth = await this.userRepository.findNewHiresThisMonth(organizationId);
+    const totalEmployees =
+      await this.userRepository.countActive(organizationId);
+    const newHiresThisMonth =
+      await this.userRepository.findNewHiresThisMonth(organizationId);
     const previousCount = totalEmployees - newHiresThisMonth.length;
     const employeeTrendNum =
       previousCount > 0 ? (newHiresThisMonth.length / previousCount) * 100 : 0;
@@ -1284,7 +1303,9 @@ export class EmployeeService {
     const lastMonthStart = `${firstOfLastMonth.getFullYear()}-${String(firstOfLastMonth.getMonth() + 1).padStart(2, '0')}-01`;
     const lastMonthEnd = `${lastOfLastMonth.getFullYear()}-${String(lastOfLastMonth.getMonth() + 1).padStart(2, '0')}-${String(lastOfLastMonth.getDate()).padStart(2, '0')}`;
 
-    const [lastMonthRow] = await this.dataSource.query<{ avg_percent: string }[]>(
+    const [lastMonthRow] = await this.dataSource.query<
+      { avg_percent: string }[]
+    >(
       `SELECT AVG(daily_pct) AS avg_percent
        FROM (
          SELECT date,
@@ -1311,7 +1332,8 @@ export class EmployeeService {
   }
 
   async getNewHires(organizationId: string) {
-    const employees = await this.userRepository.findNewHiresThisMonth(organizationId);
+    const employees =
+      await this.userRepository.findNewHiresThisMonth(organizationId);
 
     return employees.map((emp) => {
       const name = [emp.first_name, emp.middle_name, emp.last_name]
@@ -1344,9 +1366,7 @@ export class EmployeeService {
       const name = [emp.first_name, emp.middle_name, emp.last_name]
         .filter(Boolean)
         .join(' ');
-      const dob = emp.user_profile?.dob
-        ? new Date(emp.user_profile.dob)
-        : null;
+      const dob = emp.user_profile?.dob ? new Date(emp.user_profile.dob) : null;
       return {
         id: emp.id,
         name,
