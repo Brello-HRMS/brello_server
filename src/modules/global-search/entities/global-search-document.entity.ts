@@ -5,12 +5,14 @@ import {
   Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity('global_search_documents')
 @Index('idx_search_tenant', ['enterprise_id'])
 @Index('idx_search_entity', ['entity_type'])
 @Index('idx_search_active', ['is_active'])
+@Unique('uq_search_doc_entity', ['enterprise_id', 'entity_id', 'entity_type'])
 export class GlobalSearchDocument {
   @PrimaryGeneratedColumn('uuid')
   id: string;

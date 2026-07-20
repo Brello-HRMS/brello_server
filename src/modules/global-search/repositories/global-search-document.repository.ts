@@ -46,7 +46,7 @@ export class GlobalSearchDocumentRepository {
         (enterprise_id, organization_id, entity_id, entity_type, module_key,
          title, subtitle, keywords, route, permissions, is_active, is_deleted, metadata)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, false, $12)
-      ON CONFLICT ON CONSTRAINT uq_search_doc_entity
+      ON CONFLICT (enterprise_id, entity_id, entity_type)
       DO UPDATE SET
         title       = EXCLUDED.title,
         subtitle    = EXCLUDED.subtitle,

@@ -120,7 +120,7 @@ export class SearchIndexingService {
       subtitle: employee.email,
       keywords: `${fullName} ${employee.email}`,
       route: `/employee/profile/${employee.id}`,
-      permissions: ['employee.read'],
+      permissions: ['EMP_DIRECTORY'],
       is_active: true,
     });
   }
@@ -146,7 +146,7 @@ export class SearchIndexingService {
       subtitle: department.description ?? '',
       keywords: department.name,
       route: `/organisation/departments/${department.id}`,
-      permissions: ['department.read'],
+      permissions: ['ORG_DEPARTMENTS'],
       is_active: true,
     });
   }
@@ -172,7 +172,7 @@ export class SearchIndexingService {
       subtitle: designation.description ?? '',
       keywords: designation.title,
       route: `/organisation/designations/${designation.id}`,
-      permissions: ['designation.read'],
+      permissions: ['ORG_DESIGNATIONS'],
       is_active: true,
     });
   }
@@ -198,7 +198,7 @@ export class SearchIndexingService {
       subtitle: client.poc_name ?? client.poc_email ?? '',
       keywords: [client.name, client.poc_name, client.poc_email].filter(Boolean).join(' '),
       route: `/project/clients/${client.id}`,
-      permissions: ['client.read'],
+      permissions: ['PROJECT_CLIENTS'],
       is_active: true,
     });
   }
@@ -224,7 +224,7 @@ export class SearchIndexingService {
       subtitle: project.project_status ?? '',
       keywords: project.name,
       route: `/project/clients/${project.client_id}/projects/${project.id}`,
-      permissions: ['project.read'],
+      permissions: ['PROJECT_PROJECTS'],
       is_active: true,
     });
   }
@@ -250,7 +250,7 @@ export class SearchIndexingService {
       subtitle: announcement.priority ?? '',
       keywords: announcement.title,
       route: '/announcements/list',
-      permissions: ['announcement.read'],
+      permissions: ['ANNOUNCEMENT'],
       is_active: true,
     });
   }
@@ -276,7 +276,7 @@ export class SearchIndexingService {
       subtitle: policy.description ?? '',
       keywords: policy.title,
       route: '/organisation/policies',
-      permissions: ['policy.read'],
+      permissions: ['ORG_POLICIES'],
       is_active: true,
     });
   }
@@ -302,7 +302,7 @@ export class SearchIndexingService {
       subtitle: role.description ?? '',
       keywords: role.name,
       route: '/access/roles',
-      permissions: ['role.read'],
+      permissions: ['ACCESS_ROLES'],
       is_active: true,
     });
   }
@@ -328,7 +328,7 @@ export class SearchIndexingService {
       subtitle: holiday.type ?? '',
       keywords: holiday.name,
       route: `/attendance/holidays/${holiday.calendar_id}`,
-      permissions: ['holiday.read'],
+      permissions: ['LEAVE_HOLIDAYS'],
       is_active: true,
     });
   }
@@ -359,7 +359,7 @@ export class SearchIndexingService {
       subtitle,
       keywords: reimbursement.title,
       route: '/reimbursement/list',
-      permissions: ['reimbursement.read'],
+      permissions: ['REIMBURSEMENT'],
       is_active: true,
     });
   }
