@@ -72,20 +72,26 @@ export class EmployeeController {
     return this.employeeService.getDropdown(user);
   }
 
+  @Get('me/dashboard-stats')
+  getEmployeeDashboardStats(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.employeeService.getEmployeeDashboardStats(
+      user.enterpriseId,
+      user.organizationId,
+      user.userId,
+    );
+  }
+
   @Get('stats')
-  @RequirePermission('ACCESS_USERS', 'view')
   getDashboardStats(@LoggedInUser() user: LoggedInUserInterface) {
     return this.employeeService.getDashboardStats(user.organizationId);
   }
 
   @Get('new-hires')
-  @RequirePermission('ACCESS_USERS', 'view')
   getNewHires(@LoggedInUser() user: LoggedInUserInterface) {
     return this.employeeService.getNewHires(user.organizationId);
   }
 
   @Get('birthdays')
-  @RequirePermission('ACCESS_USERS', 'view')
   getBirthdays(
     @LoggedInUser() user: LoggedInUserInterface,
     @Query('month') month?: string,

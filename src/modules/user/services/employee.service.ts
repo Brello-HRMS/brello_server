@@ -43,6 +43,9 @@ import { User } from '../entities/user.entity';
 import { UserProfile } from '../entities/user-profile.entity';
 import { UserEmergencyPerson } from '../entities/user-emergency-person.entity';
 import { EmployeeOffboarding } from '../entities/offboarding.entity';
+import { LeaveBalance } from '../../leave-balance/entities/leave-balance.entity';
+import { AttendanceRecord } from '../../attendance/entities/attendance-record.entity';
+import { Holiday } from '../../holiday/entities/holiday.entity';
 import { Status } from '../../../common/enums';
 import {
   EmployeeStatus,
@@ -1328,6 +1331,73 @@ export class EmployeeService {
       employee_trend: employeeTrend,
       attendance_percent: attendancePercent,
       attendance_trend: attendanceTrend,
+    };
+  }
+
+  async getEmployeeDashboardStats(
+    schema: string,
+    organizationId: string,
+    userId: string,
+  ) {
+    if (!schema || !organizationId || !userId) {
+      return {
+        leaves_remaining: 0,
+        days_worked_this_month: 0,
+        total_team_members: 0,
+        upcoming_holidays: 0,
+      };
+    }
+
+    const now = new Date();
+    const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const endOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    // Leaves Left
+    const leavesQb = this.dataSource.manager
+      .createQueryBuilder(LeaveBalance, 'lb')
+      .select(
+        'SUM(CASE WHEN lb.is_unlimited = false THEN (COALESCE(lb.accrued_days, 0) + COALESCE(lb.carry_forward, 0) + COALESCE(lb.adjustment, 0) - COALESCE(lb.used_days, 0) - COALESCE(lb.pending_days, 0)) ELSE 0 END)',
+        'total_balance',
+      )
+      .where('lb.employee_id = :userId', { userId })
+      .andWhere('lb.organization_id = :organizationId', { organizationId });
+
+    const leavesRow = await leavesQb.getRawOne<{ total_balance: string }>();
+
+    // Days Worked This Month
+    const workedCount = await this.dataSource.manager
+      .createQueryBuilder(AttendanceRecord, 'ar')
+      .where('ar.employee_id = :userId', { userId })
+      .andWhere('ar.organization_id = :organizationId', { organizationId })
+      .andWhere('ar.date >= :startOfMonth', { startOfMonth })
+      .andWhere('ar.date <= :endOfMonth', { endOfMonth })
+      .andWhere('ar.attendance_status IN (:...statuses)', {
+        statuses: ['PRESENT', 'HALF_DAY', 'LATE'],
+      })
+      .andWhere('ar.is_deleted = false')
+      .getCount();
+
+    // Total Team Members (active users in the organization)
+    const teamCount = await this.dataSource.manager
+      .createQueryBuilder(User, 'u')
+      .where('u.organization_id = :organizationId', { organizationId })
+      .andWhere('u.status = :status', { status: Status.ACTIVE })
+      .getCount();
+
+    // Holidays Ahead (Upcoming holidays this year)
+    const holidaysCount = await this.dataSource.manager
+      .createQueryBuilder(Holiday, 'h')
+      .where('h.organization_id = :organizationId', { organizationId })
+      .andWhere('h.date >= :todayStr', { todayStr })
+      .andWhere('h.is_deleted = false')
+      .getCount();
+
+    return {
+      leaves_remaining: Number(leavesRow?.total_balance ?? 0),
+      days_worked_this_month: workedCount,
+      total_team_members: teamCount,
+      upcoming_holidays: holidaysCount,
     };
   }
 
