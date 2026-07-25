@@ -33,10 +33,14 @@ export class OfferPdfService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     this.logger.log('Initializing Puppeteer browser instance...');
-    this.browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    try {
+      this.browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+    } catch (error) {
+      this.logger.warn('Failed to initialize Puppeteer on startup. PDF generation will fail until browser is installed (run: npx puppeteer browsers install chrome).');
+    }
   }
 
   async onModuleDestroy() {
