@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 
 import { Department } from '../departments/entities/department.entity';
 import { Designation } from '../designations/entities/designation.entity';
@@ -48,6 +48,21 @@ export class OrgSetupService {
   ) {}
 
   async getSetupStatus(orgId: string): Promise<SetupStatusResponse> {
+    // Platform default departments/designations are copied into every new org on
+    // creation (keeping the template's code). Those seeded copies must NOT count as
+    // the org having set up depts/designations itself — only user-created records do.
+    // The unique (org, code) constraint means a user-created record can't reuse a
+    // seeded code, so excluding the default codes cleanly isolates user-created ones.
+    const [defaultDepartments, defaultDesignations] = await Promise.all([
+      this.departmentRepo.find({ where: { is_default: true, is_deleted: false }, select: ['code'] }),
+      this.designationRepo.find({
+        where: { is_default: true, is_deleted: false },
+        select: ['code'],
+      }),
+    ]);
+    const seededDeptCodes = defaultDepartments.map((d) => d.code).filter(Boolean);
+    const seededDesigCodes = defaultDesignations.map((d) => d.code).filter(Boolean);
+
     const [
       departmentsCount,
       designationsCount,
@@ -58,8 +73,20 @@ export class OrgSetupService {
       attendanceRuleCount,
       employeesCount,
     ] = await Promise.all([
-      this.departmentRepo.count({ where: { organization_id: orgId, is_deleted: false } }),
-      this.designationRepo.count({ where: { org_id: orgId, is_deleted: false } }),
+      this.departmentRepo.count({
+        where: {
+          organization_id: orgId,
+          is_deleted: false,
+          ...(seededDeptCodes.length ? { code: Not(In(seededDeptCodes)) } : {}),
+        },
+      }),
+      this.designationRepo.count({
+        where: {
+          org_id: orgId,
+          is_deleted: false,
+          ...(seededDesigCodes.length ? { code: Not(In(seededDesigCodes)) } : {}),
+        },
+      }),
       this.companyPolicyRepo.count({ where: { organization_id: orgId, is_deleted: false } }),
       this.payrollComponentRepo.count({ where: { organization_id: orgId, is_active: true } }),
       this.salaryTemplateRepo.count({ where: { organization_id: orgId, is_active: true } }),

@@ -33,10 +33,21 @@ export class OfferPdfService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     this.logger.log('Initializing Puppeteer browser instance...');
-    this.browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    // Warm-up only. Never let a missing/broken Chrome crash server boot — the
+    // browser is lazily (re)launched in generateFromHtml when a PDF is actually
+    // requested, so a failure here just means the first PDF pays the launch cost.
+    try {
+      this.browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Puppeteer warm-up failed; PDF generation will launch on demand. ` +
+          `If PDFs fail too, run "npx puppeteer browsers install chrome". ` +
+          `Reason: ${(err as Error).message}`,
+      );
+    }
   }
 
   async onModuleDestroy() {
