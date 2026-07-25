@@ -40,9 +40,10 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/core/properties ./dist/src/core/properties
+COPY --from=builder /app/src/core/properties ./dist/core/properties
 
 # Expose port
 EXPOSE 8000
 
 # Start production server
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]
