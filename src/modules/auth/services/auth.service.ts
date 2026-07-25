@@ -131,7 +131,23 @@ export class AuthService {
   async loginSendOtp(dto: LoginOtpDto): Promise<void> {
     this.logger.log(`OTP login request for email: ${dto.email}`);
 
-    const user = await this.findActiveUserByEmail(dto.email);
+    let user: Awaited<ReturnType<typeof this.findActiveUserByEmail>>;
+    try {
+      user = await this.findActiveUserByEmail(dto.email);
+    } catch (err) {
+      // findActiveUserByEmail reuses the password-login wording ("Invalid
+      // email or password"), which is confusing on a passwordless OTP request.
+      // Surface a clearer "no account" message; keep the "inactive" one as-is.
+      if (
+        err instanceof UnauthorizedException &&
+        err.message === 'Invalid email or password'
+      ) {
+        throw new UnauthorizedException(
+          'No account found with this email. Please check and try again.',
+        );
+      }
+      throw err;
+    }
 
     if (dto.login_source === LoginSource.MOBILE) {
       if (!user.organization_id && !user.is_platform_admin) {

@@ -142,6 +142,13 @@ export class PermissionResolverService {
     organizationId: string,
     appId: string,
   ): Promise<string[]> {
+    // Without a valid org + app context there are no app-scoped roles. Guard here
+    // so an empty-string (or missing) appId/organizationId never reaches a uuid
+    // comparison, which throws Postgres 22P02 ("invalid input syntax for type uuid")
+    // and 400s the whole menu/permission resolution.
+    if (!userId || !organizationId || !appId) {
+      return [];
+    }
     const rows = await this.userRoleMapRepo
       .createQueryBuilder('urm')
       .innerJoin('urm.role', 'role')

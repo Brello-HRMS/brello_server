@@ -82,9 +82,9 @@ const ADMIN_MODULES: Mod[] = [
   { wbs: '10', code: 'ANNOUNCEMENT', name: 'Announcements', icon: 'Megaphone', path: '/admin/announcement' },
 
   { wbs: '11', code: 'ORGANISATION', name: 'Organisation', icon: 'Building2', path: '/admin/organisation' },
-  { wbs: '11.1', code: 'ORG_DEPARTMENTS', name: 'Departments', parent_wbs: '11', icon: 'Network', path: '/admin/organisation/departments' },
-  { wbs: '11.2', code: 'ORG_DESIGNATIONS', name: 'Designations', parent_wbs: '11', icon: 'Award', path: '/admin/organisation/designations' },
-  { wbs: '11.3', code: 'ORG_POLICIES', name: 'Policies', parent_wbs: '11', icon: 'Shield', path: '/admin/organisation/policies' },
+  { wbs: '11.1', code: 'ORG_DEPARTMENTS', name: 'Department', parent_wbs: '11', icon: 'Network', path: '/admin/organisation/department' },
+  { wbs: '11.2', code: 'ORG_DESIGNATIONS', name: 'Designation', parent_wbs: '11', icon: 'Award', path: '/admin/organisation/designation' },
+  { wbs: '11.3', code: 'ORG_POLICIES', name: 'Policy', parent_wbs: '11', icon: 'Shield', path: '/admin/organisation/policy' },
   { wbs: '11.4', code: 'ORG_LEAVE', name: 'Leave', parent_wbs: '11', icon: 'CalendarOff', path: '/admin/organisation/leave' },
   { wbs: '11.5', code: 'ORG_ATTENDANCE', name: 'Attendance', parent_wbs: '11', icon: 'Clock', path: '/admin/organisation/attendance' },
   { wbs: '11.6', code: 'ORG_PAYROLL', name: 'Payroll', parent_wbs: '11', icon: 'DollarSign', path: '/admin/organisation/payroll' },
