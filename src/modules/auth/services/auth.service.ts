@@ -53,6 +53,7 @@ import { AUDIT_SERVICE_TOKEN } from '../../audit/interfaces/audit-service.interf
 import type { IAuditService } from '../../audit/interfaces/audit-service.interface';
 import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
+import { LoginSource } from '../enums/login-source.enum';
 
 // Auth Service - Implements comprehensive authentication and authorization logic
 @Injectable()
@@ -131,6 +132,24 @@ export class AuthService {
     this.logger.log(`OTP login request for email: ${dto.email}`);
 
     const user = await this.findActiveUserByEmail(dto.email);
+
+    if (dto.login_source === LoginSource.MOBILE) {
+      if (!user.organization_id && !user.is_platform_admin) {
+        throw new ForbiddenException('Account setup required. Please use the web portal first.');
+      }
+      if (user.organization_id) {
+        const availableApps = await getUserAvailableApps(
+          user.id,
+          user.organization_id,
+          user.is_platform_admin,
+          this.userRoleMapRepository,
+        );
+        const hasEmployeeApp = availableApps.some(app => app.name === 'EMPLOYEE');
+        if (!hasEmployeeApp && !user.is_platform_admin) {
+          throw new ForbiddenException('You do not have access to the Brello mobile app.');
+        }
+      }
+    }
 
     await this.otpRepository.deleteByIdentifierAndPurpose(
       dto.email,

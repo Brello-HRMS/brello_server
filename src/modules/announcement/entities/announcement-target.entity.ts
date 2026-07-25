@@ -27,7 +27,7 @@ export class AnnouncementTarget {
   @Column({ type: 'enum', enum: AnnouncementTargetType })
   target_type: AnnouncementTargetType;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'varchar', length: 36, nullable: true })
   target_id: string | null;
 
   @CreateDateColumn({ type: 'timestamp' })

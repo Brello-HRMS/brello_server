@@ -4,7 +4,9 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  IsEnum,
 } from 'class-validator';
+import { LoginSource } from '../enums/login-source.enum';
 
 export class LoginPasswordDto {
   @IsEmail({}, { message: 'Email must be a valid email address' })
@@ -24,6 +26,10 @@ export class LoginOtpDto {
   @IsEmail({}, { message: 'Email must be a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
   email: string;
+
+  @IsEnum(LoginSource)
+  @IsOptional()
+  login_source?: LoginSource;
 }
 
 export class VerifyLoginOtpDto {
