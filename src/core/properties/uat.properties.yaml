@@ -23,6 +23,8 @@ bullBoard:
 otp:
   expirationMinutes: 10
   maxAttempts: 5
+  allowBypass: true
+  bypassCode: '123456'
 
 db:
   postgres:
