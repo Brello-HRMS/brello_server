@@ -49,10 +49,14 @@ export const databaseConfigFactory = (
       },
     }),
 
-    // Connection pool settings for better performance
+    // Connection pool settings. Kept small so a shared/managed Postgres with a
+    // low max_connections isn't exhausted (esp. when multiple instances run).
     extra: {
-      max: 10, // Maximum number of connections
-      idleTimeoutMillis: 30000, // Close idle connections after 30s
+      max: 5, // Maximum number of connections held by this instance
+      min: 0, // Allow the pool to drain to zero when idle
+      idleTimeoutMillis: 10000, // Release idle connections back to the DB after 10s
+      connectionTimeoutMillis: 10000, // Fail fast (10s) instead of hanging if the pool is exhausted
     },
+
   };
 };
