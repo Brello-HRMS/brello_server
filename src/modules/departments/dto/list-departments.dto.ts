@@ -11,10 +11,10 @@ export class ListDepartmentsDto extends ListQueryDto {
     @IsString()
     @IsIn(['name', 'created_at'], { message: 'sort_by must be name or created_at' })
     @IsOptional()
-    declare sort_by?: 'name' | 'created_at';
+    sort_by?: 'name' | 'created_at' = undefined;
 
     @IsString()
     @IsIn(['ASC', 'DESC'], { message: 'sort_order must be ASC or DESC' })
     @IsOptional()
-    declare sort_order?: 'ASC' | 'DESC';
+    sort_order?: 'ASC' | 'DESC' = undefined;
 }

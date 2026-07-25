@@ -57,5 +57,6 @@ export const databaseConfigFactory = (
       idleTimeoutMillis: 10000, // Release idle connections back to the DB after 10s
       connectionTimeoutMillis: 10000, // Fail fast (10s) instead of hanging if the pool is exhausted
     },
+
   };
 };

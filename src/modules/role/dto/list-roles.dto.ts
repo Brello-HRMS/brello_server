@@ -13,12 +13,4 @@ export class ListRolesDto extends ListQueryDto {
   @IsOptional()
   @IsString()
   sort?: string;
-
-  @IsOptional()
-  @IsString()
-  declare sort_by?: string;
-
-  @IsOptional()
-  @IsString()
-  declare sort_order?: 'ASC' | 'DESC';
 }

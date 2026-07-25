@@ -138,17 +138,19 @@ export class GlobalSearchDocumentRepository {
         similarity(title, $3) AS trgm_score
       FROM ${tableName}
       WHERE enterprise_id = $1
-        AND ($2::uuid IS NULL OR organization_id = $2)
+        AND ($2::uuid IS NULL OR organization_id = $2 OR organization_id IS NULL)
         AND is_active   = true
         AND is_deleted  = false
         AND (
           search_vector @@ plainto_tsquery('simple', $3)
           OR similarity(title, $3) > 0.2
+          OR title ILIKE '%' || $3 || '%'
+          OR subtitle ILIKE '%' || $3 || '%'
         )
         AND (
           cardinality(permissions) = 0
           OR permissions IS NULL
-          OR permissions && $5
+          OR permissions && $5::varchar[]
         )
       ORDER BY match_rank DESC, ts_rank_score DESC, trgm_score DESC
       LIMIT $4
