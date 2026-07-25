@@ -61,7 +61,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST || '13.205.254.152' }}
-          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          username: ${{ secrets.EC2_USER || 'ec2-user' }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
