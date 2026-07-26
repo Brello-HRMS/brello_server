@@ -1,0 +1,63 @@
+http:
+  port: 8000
+  apiPrefix: 'api/v1'
+
+brello:
+  environment: 'dev' # dev, uat, prod
+
+auth:
+  JWT_SECRET: 1hljdhfjsdhfjdjhsdcfhsdljsdnh
+  JWT_REFRESH_SECRET: 9xhfjdshfjdhf28347sdhjkfhdsj
+  JWT_ACCESS_EXPIRATION: '15m'
+  JWT_REFRESH_EXPIRATION: '7d'
+  ENC_KEY: 7x!A%D*G-JaNdRgUkXp2s5v8y/B?E(H+
+  IV: ABCDEFGHIJKLMNOP
+
+session:
+  expirationDays: 7
+
+bullBoard:
+  username: 'admin'
+  password: 'change-me-dev-only'
+
+otp:
+  expirationMinutes: 10
+  maxAttempts: 5
+  allowBypass: true
+  bypassCode: '123456'
+
+db:
+  postgres:
+    HOST: '13.205.254.152'
+    PORT: 5432
+    DB_USER: 'brello'
+    DB_PASSWORD: 'Brello@1234'
+    DB_NAME: 'brello'
+    DB_SCHEMA: 'brello_v3'
+
+smtp:
+  host: 'smtp.hostinger.com'
+  port: 465
+  secure: true
+  user: 'contact@brello.co.in'
+  password: 'Rezolut@1234'
+  from: 'contact@brello.co.in'
+
+billing:
+  GST_RATE: 18
+  GRACE_PERIOD_DAYS: 7
+  INVOICE_DUE_DAYS: 7
+  RAZORPAY_KEY_ID: 'rzp_test_SwkYSte7iS8JvL'
+  RAZORPAY_KEY_SECRET: '7ntnlIDR5u6qHpS5mPvQi6cI'
+  RAZORPAY_WEBHOOK_SECRET: 'whsec_mockWebhookSecret789'
+  FRONTEND_URL: 'http://localhost:5173'
+
+resend:
+  api_key: 're_YOUR_RESEND_API_KEY'
+
+# redis:
+#   host: ripe-rain-morning-54441.db.redis.io
+#   port: 13069
+#   password: z8zIUpCEHoo842I27J9rS50P1Q40HRGo
+
+# redis-cli -u redis://default:z8zIUpCEHoo842I27J9rS50P1Q40HRGo@ripe-rain-morning-54441.db.redis.io:13069
