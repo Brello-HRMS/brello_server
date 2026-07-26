@@ -124,7 +124,9 @@ export class PermissionResolverService {
     for (const mod of resolved.modules) {
       if (mod.code === moduleCode) {
         // Case-insensitive check
-        return [...mod.actions].some(a => a.toLowerCase() === actionName.toLowerCase());
+        return [...mod.actions].some(
+          (a) => a.toLowerCase() === actionName.toLowerCase(),
+        );
       }
     }
     return false;
@@ -192,8 +194,14 @@ export class PermissionResolverService {
     const now = new Date();
     const sub = await this.subscriptionRepo.findOne({
       where: [
-        { organization_id: organizationId, sub_status: SubscriptionStatus.ACTIVE },
-        { organization_id: organizationId, sub_status: SubscriptionStatus.TRIAL },
+        {
+          organization_id: organizationId,
+          sub_status: SubscriptionStatus.ACTIVE,
+        },
+        {
+          organization_id: organizationId,
+          sub_status: SubscriptionStatus.TRIAL,
+        },
       ],
       order: { start_date: 'DESC' },
     });

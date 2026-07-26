@@ -200,41 +200,52 @@ export class AuthService {
 
     let user = await this.findActiveUserByEmail(dto.email);
 
-    const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
-      dto.email,
-      OtpPurpose.LOGIN,
-    );
+    const allowBypass = this.configService.get<boolean>('otp.allowBypass', false);
+    const bypassCode = this.configService.get<string>('otp.bypassCode', '123456');
 
-    if (!otpRecord) {
-      throw new BadRequestException('No OTP found. Please request a new one.');
-    }
-
-    if (new Date() > otpRecord.expires_at) {
-      await this.otpRepository.delete(otpRecord.id);
-      throw new BadRequestException(
-        'OTP has expired. Please request a new one.',
+    const isBypass = allowBypass && dto.otp === bypassCode;
+    if (isBypass) {
+      this.logger.log(`Bypassing OTP verification for ${dto.email} using configured bypass OTP (${bypassCode})`);
+      const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
+        dto.email,
+        OtpPurpose.LOGIN,
       );
-    }
-
-    const maxAttempts = this.configService.get<number>('otp.maxAttempts', 5);
-    if (otpRecord.attempts_count >= maxAttempts) {
-      await this.otpRepository.delete(otpRecord.id);
-      throw new BadRequestException(
-        'Maximum OTP attempts exceeded. Please request a new one.',
+      if (otpRecord) {
+        await this.otpRepository.delete(otpRecord.id);
+      }
+    } else {
+      const otpRecord = await this.otpRepository.findByIdentifierAndPurpose(
+        dto.email,
+        OtpPurpose.LOGIN,
       );
-    }
 
-    const isDevBypass =
-      this.configService.get<string>('brello.environment') === 'dev' &&
-      dto.otp === '123456';
-    const isOtpValid =
-      isDevBypass || (await verifyHash(dto.otp, otpRecord.otp_hash));
-    if (!isOtpValid) {
-      await this.otpRepository.incrementAttempts(otpRecord.id);
-      throw new BadRequestException('Invalid OTP');
-    }
+      if (!otpRecord) {
+        throw new BadRequestException('No OTP found. Please request a new one.');
+      }
 
-    await this.otpRepository.delete(otpRecord.id);
+      if (new Date() > otpRecord.expires_at) {
+        await this.otpRepository.delete(otpRecord.id);
+        throw new BadRequestException(
+          'OTP has expired. Please request a new one.',
+        );
+      }
+
+      const maxAttempts = this.configService.get<number>('otp.maxAttempts', 5);
+      if (otpRecord.attempts_count >= maxAttempts) {
+        await this.otpRepository.delete(otpRecord.id);
+        throw new BadRequestException(
+          'Maximum OTP attempts exceeded. Please request a new one.',
+        );
+      }
+
+      const isOtpValid = await verifyHash(dto.otp, otpRecord.otp_hash);
+      if (!isOtpValid) {
+        await this.otpRepository.incrementAttempts(otpRecord.id);
+        throw new BadRequestException('Invalid OTP');
+      }
+
+      await this.otpRepository.delete(otpRecord.id);
+    }
 
     // First-login auto-activation: an INVITED employee's user.status is still
     // PENDING. Verifying their OTP proves email ownership, so flip them to

@@ -41,6 +41,15 @@ export class ProjectController {
     return this.projectService.findAll(query, user);
   }
 
+  @Get('my-projects')
+  @HttpCode(HttpStatus.OK)
+  findMyProjects(
+    @Query() query: ListProjectsDto,
+    @LoggedInUser() user: LoggedInUserInterface,
+  ) {
+    return this.projectService.findMyProjects(query, user);
+  }
+
   @Get(':id')
   @RequirePermission('PROJECT_PROJECTS', 'view')
   @HttpCode(HttpStatus.OK)

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/brello-hrms/brello_server:uat
+    container_name: brello_server_uat
+    restart: always
+    environment:
+      APP_ENV: uat
+      NODE_ENV: production
+      PORT: 8000
+    ports:
+      - '8000:8000'
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: brello_redis_uat
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_uat_data:/data
+
+volumes:
+  redis_uat_data:

@@ -74,8 +74,14 @@ export class ProjectService {
       created_by: user.userId,
     };
 
-    const project = await this.projectRepository.create(projectData as DeepPartial<Project>);
-    this.searchIndexingService.indexProject(project, user.enterpriseId, user.organizationId);
+    const project = await this.projectRepository.create(
+      projectData as DeepPartial<Project>,
+    );
+    this.searchIndexingService.indexProject(
+      project,
+      user.enterpriseId,
+      user.organizationId,
+    );
     return project;
   }
 
@@ -110,7 +116,9 @@ export class ProjectService {
 
     const queryBuilder = this.projectRepository
       .getQueryBuilder('project')
-      .leftJoinAndSelect('project.client', 'client');
+      .leftJoinAndSelect('project.client', 'client')
+      .leftJoinAndSelect('project.team', 'team')
+      .leftJoinAndSelect('team.user', 'teamUser');
 
     // Default sort by client name if not provided
     if (!query.sort_by) {
@@ -123,6 +131,37 @@ export class ProjectService {
       filterFields: ['project_status', 'priority', 'client_id'],
       alias: 'project',
     });
+  }
+
+  async findMyProjects(
+    query: ListProjectsDto,
+    user: LoggedInUser,
+  ): Promise<Project[]> {
+    this.logger.log(`Fetching assigned projects for user: ${user.userId}`);
+
+    const qb = this.projectRepository
+      .getQueryBuilder('project')
+      .leftJoinAndSelect('project.client', 'client')
+      .leftJoinAndSelect('project.team', 'team')
+      .leftJoinAndSelect('team.user', 'teamUser')
+      .innerJoin('project.team', 'ptmFilter', 'ptmFilter.user_id = :userId', {
+        userId: user.userId,
+      })
+      .where('project.organization_id = :orgId', { orgId: user.organizationId });
+
+    const status = query?.status || query?.project_status;
+    if (status) {
+      qb.andWhere('project.project_status = :status', { status });
+    }
+
+    if (query?.search) {
+      qb.andWhere(
+        '(project.name ILIKE :search OR project.description ILIKE :search)',
+        { search: `%${query.search}%` },
+      );
+    }
+
+    return qb.orderBy('project.name', 'ASC').getMany();
   }
 
   async findOne(id: string, user: LoggedInUser): Promise<Project> {
@@ -145,7 +184,9 @@ export class ProjectService {
     this.logger.log(`Updating project: ${id}`);
 
     const project = await this.findOne(id, user);
-    this.auditContext.setPreValue(project as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      project as unknown as Record<string, unknown>,
+    );
 
     // 1. Validate Uniqueness if name is changing
     if (dto.name && dto.name !== project.name) {
@@ -180,7 +221,11 @@ export class ProjectService {
       );
     }
 
-    this.searchIndexingService.indexProject(updatedProject, user.enterpriseId, user.organizationId);
+    this.searchIndexingService.indexProject(
+      updatedProject,
+      user.enterpriseId,
+      user.organizationId,
+    );
     return updatedProject;
   }
 
@@ -188,7 +233,9 @@ export class ProjectService {
     this.logger.log(`Deleting project: ${id}`);
 
     const project = await this.findOne(id, user);
-    this.auditContext.setPreValue(project as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      project as unknown as Record<string, unknown>,
+    );
 
     await this.projectRepository.softDelete(id);
     this.searchIndexingService.removeProject(id, user.enterpriseId);
