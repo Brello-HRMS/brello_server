@@ -68,7 +68,6 @@ export interface GroupedBalanceView {
   balances: BalanceView[];
 }
 
-
 export interface ListBalanceResponse {
   data: GroupedBalanceView[];
   pagination: {
@@ -78,9 +77,7 @@ export interface ListBalanceResponse {
   };
 }
 
-
 @Injectable()
-
 export class LeaveBalanceService {
   private readonly logger = new Logger(LeaveBalanceService.name);
 
@@ -315,6 +312,52 @@ export class LeaveBalanceService {
       views.push(this.synthesizeUnlimitedView(lwp, usage));
     }
 
+    const existingTypeIds = new Set(views.map((v) => v.leave_type_id));
+    try {
+      const config = await this.leaveConfigRepo.findOne({
+        where: {
+          organization_id: user.organizationId,
+          status: Status.ACTIVE,
+        },
+      });
+      if (config) {
+        const leaveTypes = await this.fetchAllocatableLeaveTypes(config.id);
+        for (const lt of leaveTypes) {
+          if (existingTypeIds.has(lt.id)) continue;
+          const usage = await this.aggregateRequestsForBalance(
+            employeeId,
+            lt.id,
+            year,
+            user.organizationId,
+          );
+          const allocated = lt.days;
+          const accrued = this.computeAccruedDays(lt, year);
+          const used = usage.used;
+          const pending = usage.pending;
+          const available = Math.max(0, allocated - used - pending);
+          views.push({
+            id: `virtual_${lt.id}`,
+            leave_type_id: lt.id,
+            leave_type_code: lt.code ?? null,
+            leave_type_name: lt.name ?? '',
+            is_unlimited: false,
+            accrual: lt.accrual,
+            allow_half_day: lt.allow_half_day,
+            allocated_days: allocated,
+            accrued_days: accrued,
+            carry_forward: 0,
+            adjustment: 0,
+            used_days: used,
+            pending_days: pending,
+            consumed_days: used + pending,
+            available_days: available,
+          });
+        }
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to synthesize missing balance views: ${err}`);
+    }
+
     const totalAllocated = views
       .filter((v) => !v.is_unlimited && v.allocated_days !== null)
       .reduce((acc, v) => acc + (v.allocated_days ?? 0), 0);
@@ -384,7 +427,6 @@ export class LeaveBalanceService {
         department_name: emp.department_name,
         designation_name: emp.designation_name,
         employee_avatar_url:
-
           emp.avatar_bucket && emp.avatar_key
             ? `https://${emp.avatar_bucket}.s3.us-east-1.amazonaws.com/${emp.avatar_key}`
             : null,
@@ -413,7 +455,9 @@ export class LeaveBalanceService {
     if (!balance) {
       throw new NotFoundException(`BALANCE_NOT_FOUND: ${id}`);
     }
-    this.auditContext.setPreValue(balance as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      balance as unknown as Record<string, unknown>,
+    );
 
     const oldAllocated = Number(balance.allocated_days || 0);
     const newAllocated = dto.allocated_days;
@@ -440,8 +484,6 @@ export class LeaveBalanceService {
     const updated = (await this.balanceRepo.findById(id, user.organizationId))!;
     return this.toBalanceView(updated, updated.leave_type);
   }
-
-
 
   async getBalanceById(user: LoggedInUser, id: string): Promise<BalanceView> {
     const balance = await this.balanceRepo.findById(id, user.organizationId);
@@ -614,7 +656,9 @@ export class LeaveBalanceService {
     if (!balance) {
       throw new NotFoundException(`BALANCE_NOT_FOUND: ${id}`);
     }
-    this.auditContext.setPreValue(balance as unknown as Record<string, unknown>);
+    this.auditContext.setPreValue(
+      balance as unknown as Record<string, unknown>,
+    );
 
     const before = {
       available_days: balance.is_unlimited
@@ -708,12 +752,12 @@ export class LeaveBalanceService {
 
   computeAvailable(balance: LeaveBalance): number | null {
     if (balance.is_unlimited) return null;
-    const accrued = Number(balance.accrued_days ?? 0);
+    const base = Number(balance.allocated_days ?? balance.accrued_days ?? 0);
     const carry = Number(balance.carry_forward ?? 0);
     const adj = Number(balance.adjustment);
     const used = Number(balance.used_days);
     const pending = Number(balance.pending_days);
-    return Math.round((accrued + carry + adj - used - pending) * 100) / 100;
+    return Math.round((base + carry + adj - used - pending) * 100) / 100;
   }
 
   async writeLedger(
@@ -1032,7 +1076,6 @@ export class LeaveBalanceService {
       designation_name: row.designation_name,
       employee_avatar_url:
         row.avatar_bucket && row.avatar_key
-
           ? `https://${row.avatar_bucket}.s3.us-east-1.amazonaws.com/${row.avatar_key}`
           : null,
       leave_type_id: view.leave_type_id,

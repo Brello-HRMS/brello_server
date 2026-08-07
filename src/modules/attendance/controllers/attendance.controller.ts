@@ -66,6 +66,11 @@ export class AttendanceController {
     return this.attendanceService.getToday(user);
   }
 
+  @Get('me/week')
+  getMyWeek(@LoggedInUser() user: LoggedInUserInterface) {
+    return this.attendanceService.getMyWeekSummary(user);
+  }
+
   @Get('me/peers/today')
   getPeersToday(@LoggedInUser() user: LoggedInUserInterface) {
     return this.attendanceService.getPeersToday(user);

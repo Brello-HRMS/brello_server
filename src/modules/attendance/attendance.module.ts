@@ -15,6 +15,7 @@ import { Holiday } from '../holiday/entities/holiday.entity';
 import { LeaveRequest } from '../leave-request/entities/leave-request.entity';
 import { NotificationModule } from '../notification/notification.module';
 import { AuditCoreModule } from '../audit/audit.module';
+import { RedisModule } from '../../common/redis/redis.module';
 import { AttendanceMaterializationService } from './services/attendance-materialization.service';
 import { AttendanceCronService } from './services/attendance-cron.service';
 import { AutoCheckoutService } from './services/auto-checkout.service';
@@ -69,6 +70,7 @@ import { RbacModule } from '../rbac/rbac.module';
     RbacModule,
     NotificationModule,
     AuditCoreModule,
+    RedisModule,
   ],
   controllers: [
     ShiftController,

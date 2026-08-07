@@ -14,6 +14,7 @@ import { AttendanceSessionRepository } from '../repositories/attendance-session.
 import { RemoteApprovalRepository } from '../repositories/remote-approval.repository';
 import { AttendanceRuleResolverService } from './attendance-rule-resolver.service';
 import { AuditContextService } from '../../audit/services/audit-context.service';
+import { RedisService } from '../../../common/redis/redis.service';
 import { AttendanceRecord } from '../entities/attendance-record.entity';
 import { AttendanceSession } from '../entities/attendance-session.entity';
 import { AttendanceRule } from '../entities/attendance-rule.entity';
@@ -31,6 +32,7 @@ import {
   formatTime12,
   haversineDistance,
   isCheckInLate,
+  isWeeklyOffDay,
   todayLocalDate,
 } from './attendance-calc.util';
 
@@ -44,7 +46,27 @@ export class AttendanceService {
     private readonly approvalRepo: RemoteApprovalRepository,
     private readonly ruleResolver: AttendanceRuleResolverService,
     private readonly auditContext: AuditContextService,
+    private readonly redisService: RedisService,
   ) {}
+
+  private async publishAttendanceUpdatedEvent(user: LoggedInUser) {
+    try {
+      const today = await this.getToday(user);
+      const channel = `notifications:user:${user.userId}`;
+      const payload = JSON.stringify({
+        event: 'ATTENDANCE_UPDATED',
+        type: 'ATTENDANCE_UPDATED',
+        user_id: user.userId,
+        today,
+      });
+      await this.redisService.publish(channel, payload);
+      this.logger.log(`Published ATTENDANCE_UPDATED to channel ${channel}`);
+    } catch (err) {
+      this.logger.error(
+        `Failed to publish ATTENDANCE_UPDATED event: ${err.message}`,
+      );
+    }
+  }
 
   async checkIn(user: LoggedInUser, dto: CheckInDto, ipAddress?: string) {
     const { rule, shift, geoFence } =
@@ -68,7 +90,9 @@ export class AttendanceService {
       user.userId,
       date,
     );
-    if (existing && !rule.allow_multiple_checkins) {
+    const allowMultiple =
+      rule.allow_multiple_checkins || shift.allow_multiple_checkins;
+    if (existing && !allowMultiple) {
       throw new ConflictException(
         'Already checked in once today. Multiple check-ins are not allowed for your shift.',
       );
@@ -118,16 +142,25 @@ export class AttendanceService {
     }
 
     const checkInAt = new Date();
-    const { isLate, lateMinutes } = isCheckInLate(checkInAt, shift);
+    const { isLate, lateMinutes } = isCheckInLate(
+      existing?.first_check_in_at ?? checkInAt,
+      shift,
+    );
 
     const requiresApproval =
       attendanceMode === AttendanceMode.REMOTE_IN &&
       rule.remote_approval_required;
     const initialStatus: AttendanceStatus = requiresApproval
       ? AttendanceStatus.PENDING_APPROVAL
-      : isLate
-        ? AttendanceStatus.LATE
-        : AttendanceStatus.PRESENT;
+      : existing
+        ? existing.attendance_status === AttendanceStatus.PENDING_APPROVAL
+          ? AttendanceStatus.PENDING_APPROVAL
+          : existing.is_late
+            ? AttendanceStatus.LATE
+            : AttendanceStatus.PRESENT
+        : isLate
+          ? AttendanceStatus.LATE
+          : AttendanceStatus.PRESENT;
 
     let record = existing;
     if (!record) {
@@ -212,6 +245,8 @@ export class AttendanceService {
       };
     }
 
+    await this.publishAttendanceUpdatedEvent(user);
+
     return {
       attendance_id: record.id,
       attendance_session_id: session.id,
@@ -290,6 +325,8 @@ export class AttendanceService {
       radius_meters: geoFence?.radius_meters ?? null,
       shift_start: shift.start_time,
       current_time: checkInAt.toISOString(),
+      allow_multiple_checkins:
+        rule.allow_multiple_checkins || shift.allow_multiple_checkins || false,
     };
   }
 
@@ -299,6 +336,26 @@ export class AttendanceService {
       user.userId,
     );
     if (!session) {
+      const date = todayLocalDate();
+      const existingRecord = await this.recordRepo.findForEmployeeOnDate(
+        user.organizationId,
+        user.userId,
+        date,
+      );
+      if (existingRecord && existingRecord.last_check_out_at) {
+        return {
+          attendance_id: existingRecord.id,
+          attendance_session_id: null,
+          attendance_mode: existingRecord.attendance_mode,
+          check_out_time: existingRecord.last_check_out_at.toISOString(),
+          worked_hours: formatHmm(existingRecord.worked_minutes),
+          worked_minutes: existingRecord.worked_minutes,
+          attendance_status: existingRecord.attendance_status,
+          is_half_day: existingRecord.is_half_day,
+          is_overtime: existingRecord.is_overtime,
+          overtime_minutes: existingRecord.overtime_minutes,
+        };
+      }
       throw new NotFoundException('No active check-in found');
     }
 
@@ -329,6 +386,8 @@ export class AttendanceService {
       checkOutIp: ipAddress ?? null,
       notes: dto.notes ?? null,
     });
+
+    await this.publishAttendanceUpdatedEvent(user);
 
     return {
       attendance_id: record.id,
@@ -392,16 +451,16 @@ export class AttendanceService {
     await this.sessionRepo.update(session.id, sessionUpdate);
 
     const allSessions = await this.sessionRepo.findByRecord(record.id);
-    const totalWorkedMinutes = allSessions.reduce(
-      (sum, s) =>
-        sum +
-        (s.id === session.id
-          ? sessionMinutes
-          : s.check_out_at
-            ? s.worked_minutes
-            : 0),
-      0,
-    );
+    const totalWorkedMinutes = allSessions.reduce((sum, s) => {
+      if (s.id === session.id) {
+        return sum + sessionMinutes;
+      }
+      if (s.check_out_at) {
+        const mins = diffMinutes(s.check_in_at, s.check_out_at);
+        return sum + Math.max(s.worked_minutes || 0, mins);
+      }
+      return sum;
+    }, 0);
 
     const { isLate } = isCheckInLate(
       record.first_check_in_at ?? session.check_in_at,
@@ -451,11 +510,15 @@ export class AttendanceService {
     } | null = null;
     let officeBlock: { office_name: string } | null = null;
 
+    let allowMultipleCheckins = false;
     try {
-      const { shift, geoFence } = await this.ruleResolver.resolveForEmployee(
-        user.organizationId,
-        user.userId,
-      );
+      const { rule, shift, geoFence } =
+        await this.ruleResolver.resolveForEmployee(
+          user.organizationId,
+          user.userId,
+        );
+      allowMultipleCheckins =
+        rule.allow_multiple_checkins || shift.allow_multiple_checkins || false;
       shiftBlock = {
         shift_name: shift.name,
         start_time: shift.start_time,
@@ -478,7 +541,9 @@ export class AttendanceService {
         check_in_time: null,
         check_out_time: null,
         worked_duration_live: '00:00:00',
+        worked_seconds: 0,
         live_session: false,
+        allow_multiple_checkins: allowMultipleCheckins,
         shift: shiftBlock,
         office: officeBlock,
       };
@@ -489,14 +554,46 @@ export class AttendanceService {
       user.userId,
     );
 
-    let liveDurationStr = formatHmm(record.worked_minutes) + ':00';
+    const allSessions = record
+      ? await this.sessionRepo.findByRecord(record.id)
+      : [];
+    let closedWorkedMinutes = allSessions.reduce((sum, s) => {
+      if (s.check_out_at && s.id !== openSession?.id) {
+        const mins = diffMinutes(s.check_in_at, s.check_out_at);
+        return sum + Math.max(s.worked_minutes || 0, mins);
+      }
+      return sum;
+    }, 0);
+
+    if (
+      closedWorkedMinutes === 0 &&
+      !openSession &&
+      record.first_check_in_at &&
+      record.last_check_out_at
+    ) {
+      closedWorkedMinutes = diffMinutes(
+        record.first_check_in_at,
+        record.last_check_out_at,
+      );
+    }
+
+    const totalWorkedMinutes = Math.max(
+      record.worked_minutes || 0,
+      closedWorkedMinutes,
+    );
+
+    let totalWorkedSeconds = totalWorkedMinutes * 60;
+    let liveDurationStr = formatHmm(totalWorkedMinutes) + ':00';
+
     if (openSession) {
-      const liveMinutes =
-        record.worked_minutes +
-        diffMinutes(openSession.check_in_at, new Date());
-      const seconds =
-        Math.floor((Date.now() - openSession.check_in_at.getTime()) / 1000) %
-        60;
+      const openSessionStart = new Date(openSession.check_in_at);
+      const sessionSeconds = isNaN(openSessionStart.getTime())
+        ? 0
+        : Math.max(0, Math.floor((Date.now() - openSessionStart.getTime()) / 1000));
+      totalWorkedSeconds = closedWorkedMinutes * 60 + sessionSeconds;
+
+      const liveMinutes = Math.floor(totalWorkedSeconds / 60);
+      const seconds = totalWorkedSeconds % 60;
       liveDurationStr = `${formatHmm(liveMinutes)}:${String(seconds).padStart(2, '0')}`;
     }
 
@@ -511,7 +608,9 @@ export class AttendanceService {
         ? null
         : formatTime12(record.last_check_out_at),
       worked_duration_live: liveDurationStr,
+      worked_seconds: totalWorkedSeconds,
       live_session: !!openSession,
+      allow_multiple_checkins: allowMultipleCheckins,
       shift: shiftBlock,
       office: officeBlock,
     };
@@ -537,10 +636,14 @@ export class AttendanceService {
     ];
 
     const peers = rows
-      .filter((r) => activeStatuses.includes(r.record.attendance_status as AttendanceStatus))
+      .filter((r) =>
+        activeStatuses.includes(r.record.attendance_status as AttendanceStatus),
+      )
       .filter((r) => r.record.employee_id !== user.userId)
       .map((r) => {
-        const nameParts = [r.first_name, r.middle_name, r.last_name].filter(Boolean);
+        const nameParts = [r.first_name, r.middle_name, r.last_name].filter(
+          Boolean,
+        );
         return {
           id: r.record.employee_id,
           name: nameParts.join(' '),
@@ -567,7 +670,8 @@ export class AttendanceService {
       overtime_after_hours: rule.overtime_after_hours
         ? Number(rule.overtime_after_hours)
         : null,
-      multiple_sessions_allowed: rule.allow_multiple_checkins,
+      multiple_sessions_allowed:
+        rule.allow_multiple_checkins || shift.allow_multiple_checkins || false,
       geo_fencing_enabled: rule.require_geo_fencing,
       office_radius_meters: geoFence?.radius_meters ?? null,
       allow_remote_in: rule.allow_remote_in,
@@ -617,6 +721,128 @@ export class AttendanceService {
         remote_reason: r.remote_reason,
       })),
       pagination: { page, limit, total },
+    };
+  }
+
+  /**
+   * Returns Mon–Sun of the current calendar week with per-day attendance status.
+   * Resolves the employee's weekly-off config to correctly label weekend days.
+   * Days after today are marked as 'UPCOMING'; today without a record is 'ABSENT'.
+   */
+  async getMyWeekSummary(user: LoggedInUser) {
+    const now = new Date();
+    const todayStr = todayLocalDate(now);
+
+    // Compute Mon–Sun of the current week (ISO: Monday = 1)
+    const dayOfWeek = now.getDay(); // 0 = Sun, 1 = Mon … 6 = Sat
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    // Build array of the 7 days Mon–Sun as YYYY-MM-DD strings
+    const weekDates: string[] = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return todayLocalDate(d);
+    });
+
+    // Fetch all attendance records for this week in one date-range query
+    const weekRecords = await this.recordRepo.findWeekRecords(
+      user.organizationId,
+      user.userId,
+      weekDates[0],
+      weekDates[6],
+    );
+
+    // Build a fast lookup map: date → record
+    const recordMap = new Map<string, (typeof weekRecords)[0]>();
+    for (const r of weekRecords) {
+      recordMap.set(r.date, r);
+    }
+
+    // Resolve the employee's weekly-off config
+    const weeklyOffDays = new Set<string>();
+    try {
+      const { rule } = await this.ruleResolver.resolveForEmployee(
+        user.organizationId,
+        user.userId,
+      );
+
+      // AttendanceRule has a weekly_off_id FK column
+      const weeklyOffId = (rule as any).weekly_off_id as string | null;
+      if (weeklyOffId) {
+        const weeklyOff = await this.recordRepo.findWeeklyOff(weeklyOffId);
+        if (weeklyOff) {
+          for (const dateStr of weekDates) {
+            if (isWeeklyOffDay(dateStr, weeklyOff)) {
+              weeklyOffDays.add(dateStr);
+            }
+          }
+        }
+      }
+    } catch {
+      // No rule assigned — default Sunday as the only off-day
+      weeklyOffDays.add(weekDates[6]);
+    }
+
+    const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    const days = weekDates.map((dateStr, i) => {
+      const isWeekend = weeklyOffDays.has(dateStr);
+      const isFuture = dateStr > todayStr;
+      const isToday = dateStr === todayStr;
+      const record = recordMap.get(dateStr);
+
+      let status: string;
+      let workedHours: string | null = null;
+      let checkIn: string | null = null;
+      let checkOut: string | null = null;
+
+      if (isWeekend) {
+        status = 'WEEKLY_OFF';
+      } else if (isFuture) {
+        status = 'UPCOMING';
+      } else if (!record) {
+        status = isToday ? 'NOT_CHECKED_IN' : AttendanceStatus.ABSENT;
+      } else {
+        status = record.attendance_status;
+        workedHours = formatHmm(record.worked_minutes);
+        checkIn = formatTime12(record.first_check_in_at);
+        checkOut = formatTime12(record.last_check_out_at);
+      }
+
+      return {
+        date: dateStr,
+        day_label: DAY_LABELS[i],
+        status,
+        worked_hours: workedHours,
+        check_in: checkIn,
+        check_out: checkOut,
+        is_today: isToday,
+        is_weekend: isWeekend,
+      };
+    });
+
+    const presentStatuses = new Set([
+      AttendanceStatus.PRESENT,
+      AttendanceStatus.LATE,
+      AttendanceStatus.HALF_DAY,
+      AttendanceStatus.OVERTIME,
+    ]);
+
+    const workedDays = days.filter(
+      (d) => !d.is_weekend && d.status !== 'UPCOMING',
+    );
+    const presentCount = workedDays.filter((d) =>
+      presentStatuses.has(d.status as AttendanceStatus),
+    ).length;
+    const workdayCount = workedDays.length;
+
+    return {
+      days,
+      present_count: presentCount,
+      workday_count: workdayCount,
     };
   }
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { AttendanceRecord } from '../entities/attendance-record.entity';
+import { WeeklyOff } from '../entities/weekly-off.entity';
 import { AttendanceMode } from '../enums/attendance-mode.enum';
 import { AttendanceStatus } from '../enums/attendance-status.enum';
 
@@ -44,6 +45,8 @@ export class AttendanceRecordRepository {
   constructor(
     @InjectRepository(AttendanceRecord)
     private readonly repo: Repository<AttendanceRecord>,
+    @InjectRepository(WeeklyOff)
+    private readonly weeklyOffRepo: Repository<WeeklyOff>,
   ) {}
 
   async create(data: Partial<AttendanceRecord>): Promise<AttendanceRecord> {
@@ -281,5 +284,31 @@ export class AttendanceRecordRepository {
       remote_in: Number(raw?.remote_in ?? 0),
       geo_violations: 0,
     };
+  }
+
+  /**
+   * Fetch all non-deleted records for an employee between two dates (inclusive).
+   * Used by getMyWeekSummary to handle cross-month weeks in a single round-trip.
+   */
+  async findWeekRecords(
+    organizationId: string,
+    employeeId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<AttendanceRecord[]> {
+    return this.repo
+      .createQueryBuilder('r')
+      .where('r.organization_id = :orgId', { orgId: organizationId })
+      .andWhere('r.employee_id = :empId', { empId: employeeId })
+      .andWhere('r.date >= :start', { start: startDate })
+      .andWhere('r.date <= :end', { end: endDate })
+      .andWhere('r.is_deleted = false')
+      .orderBy('r.date', 'ASC')
+      .getMany();
+  }
+
+  /** Load a WeeklyOff entity by id — used by AttendanceService.getMyWeekSummary(). */
+  async findWeeklyOff(id: string): Promise<WeeklyOff | null> {
+    return this.weeklyOffRepo.findOne({ where: { id, is_deleted: false } });
   }
 }

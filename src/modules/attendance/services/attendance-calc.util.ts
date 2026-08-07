@@ -50,8 +50,15 @@ export function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
-export function diffMinutes(start: Date, end: Date): number {
-  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
+export function diffMinutes(
+  start: Date | string | null | undefined,
+  end: Date | string | null | undefined,
+): number {
+  if (!start || !end) return 0;
+  const dStart = new Date(start);
+  const dEnd = new Date(end);
+  if (isNaN(dStart.getTime()) || isNaN(dEnd.getTime())) return 0;
+  return Math.max(0, Math.round((dEnd.getTime() - dStart.getTime()) / 60000));
 }
 
 export function isCheckInLate(
@@ -176,6 +183,10 @@ export function resolveAutoCheckoutAt(
 
   const timeCap = new Date(shiftEnd);
   timeCap.setMinutes(timeCap.getMinutes() + graceMinutes + syncBuffer);
+
+  if (timeCap <= checkInAt) {
+    timeCap.setDate(timeCap.getDate() + 1);
+  }
 
   const durationCap = new Date(checkInAt);
   durationCap.setMinutes(

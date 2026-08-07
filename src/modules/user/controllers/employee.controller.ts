@@ -112,7 +112,6 @@ export class EmployeeController {
   }
 
   @Get(':id')
-  @RequirePermission('ACCESS_USERS', 'view')
   async getEmployeeAggregate(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeeService.getEmployeeAggregate(id);
   }
@@ -205,7 +204,9 @@ export class EmployeeController {
     return this.employeeService.addEducation(id, dto);
   }
 
-  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee_education', { entityIdParam: 'eduId' })
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee_education', {
+    entityIdParam: 'eduId',
+  })
   @Patch(':id/education/:eduId')
   @RequirePermission('ACCESS_USERS', 'update')
   async updateEducation(
@@ -216,7 +217,9 @@ export class EmployeeController {
     return this.employeeService.updateEducation(id, eduId, dto);
   }
 
-  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.DELETE, 'employee_education', { entityIdParam: 'eduId' })
+  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.DELETE, 'employee_education', {
+    entityIdParam: 'eduId',
+  })
   @Delete(':id/education/:eduId')
   @RequirePermission('ACCESS_USERS', 'delete')
   async deleteEducation(
@@ -236,7 +239,12 @@ export class EmployeeController {
     return this.employeeService.addExperience(id, dto);
   }
 
-  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.UPDATE, 'employee_experience', { entityIdParam: 'expId' })
+  @AuditLog(
+    AuditLogModule.EMPLOYEE,
+    AuditAction.UPDATE,
+    'employee_experience',
+    { entityIdParam: 'expId' },
+  )
   @Patch(':id/experience/:expId')
   @RequirePermission('ACCESS_USERS', 'update')
   async updateExperience(
@@ -247,7 +255,12 @@ export class EmployeeController {
     return this.employeeService.updateExperience(id, expId, dto);
   }
 
-  @AuditLog(AuditLogModule.EMPLOYEE, AuditAction.DELETE, 'employee_experience', { entityIdParam: 'expId' })
+  @AuditLog(
+    AuditLogModule.EMPLOYEE,
+    AuditAction.DELETE,
+    'employee_experience',
+    { entityIdParam: 'expId' },
+  )
   @Delete(':id/experience/:expId')
   @RequirePermission('ACCESS_USERS', 'delete')
   async deleteExperience(

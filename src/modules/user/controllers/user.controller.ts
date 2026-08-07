@@ -97,14 +97,15 @@ export class UserController {
 
   // Get user by ID
   @Get(':id')
-  @RequirePermission('ACCESS_USERS', 'view')
   @HttpCode(HttpStatus.OK)
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     const found = await this.userService.findOne(id, user);
-    return plainToInstance(UserResponseDto, found, { excludeExtraneousValues: true });
+    return plainToInstance(UserResponseDto, found, {
+      excludeExtraneousValues: true,
+    });
   }
 
   // Update a user
@@ -117,7 +118,9 @@ export class UserController {
     @LoggedInUser() user: LoggedInUserInterface,
   ) {
     const updated = await this.userService.update(id, updateUserDto, user);
-    return plainToInstance(UserResponseDto, updated, { excludeExtraneousValues: true });
+    return plainToInstance(UserResponseDto, updated, {
+      excludeExtraneousValues: true,
+    });
   }
 
   // Delete a user (soft delete)
