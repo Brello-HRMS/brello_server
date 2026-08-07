@@ -74,6 +74,8 @@ import { AuditLogModule } from '../../audit/enums/audit-log-module.enum';
 import { AuditAction } from '../../audit/enums/audit-action.enum';
 import { AuditContextService } from '../../audit/services/audit-context.service';
 
+import { LeaveBalanceService } from '../../leave-balance/services/leave-balance.service';
+
 @Injectable()
 export class EmployeeService {
   private readonly logger = new Logger(EmployeeService.name);
@@ -98,6 +100,7 @@ export class EmployeeService {
     @Inject(AUDIT_SERVICE_TOKEN)
     private readonly auditService: IAuditService,
     private readonly auditContext: AuditContextService,
+    private readonly leaveBalanceService: LeaveBalanceService,
   ) {}
 
   // Convert blank strings on a unique-constrained payload to null so empty values
@@ -413,12 +416,20 @@ export class EmployeeService {
       return {
         id: userInstance.id,
         firstName: userInstance.first_name,
+        middleName: userInstance.middle_name ?? null,
         lastName: userInstance.last_name,
         email: userInstance.email,
+        phone: userInstance.phone ?? null,
+        department: userInstance.department?.name ?? null,
+        departmentId: userInstance.department_id ?? null,
+        designation: userInstance.designation?.title ?? null,
+        designationId: userInstance.designation_id ?? null,
         status: userInstance.status,
         employeeStatus: userInstance.user_profile?.employee_status ?? null,
+        dob: userInstance.user_profile?.dob ?? null,
+        reportsToId: userInstance.reports_to_id ?? null,
         avatar: avatarUrl,
-        memberAvatars: avatarUrl ? [avatarUrl] : [], // For employees, show their own avatar as first
+        memberAvatars: avatarUrl ? [avatarUrl] : [],
       };
     });
 
@@ -1336,12 +1347,8 @@ export class EmployeeService {
     };
   }
 
-  async getEmployeeDashboardStats(
-    schema: string,
-    organizationId: string,
-    userId: string,
-  ) {
-    if (!schema || !organizationId || !userId) {
+  async getEmployeeDashboardStats(user: LoggedInUser) {
+    if (!user || !user.organizationId || !user.userId) {
       return {
         leaves_remaining: 0,
         days_worked_this_month: 0,
@@ -1350,74 +1357,23 @@ export class EmployeeService {
       };
     }
 
+    const { organizationId, userId } = user;
     const now = new Date();
     const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const endOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    // Leaves Left
-    const persistedBalances = await this.dataSource.manager
-      .createQueryBuilder(LeaveBalance, 'lb')
-      .where('lb.employee_id = :userId', { userId })
-      .andWhere('lb.organization_id = :organizationId', { organizationId })
-      .getMany();
-
-    const existingTypeIds = new Set(
-      persistedBalances.map((b) => b.leave_type_id),
-    );
-
+    // Leaves Left (Using central LeaveBalanceService)
     let leavesRemaining = 0;
-    for (const b of persistedBalances) {
-      if (b.is_unlimited) continue;
-      const allocated = Number(b.allocated_days ?? b.accrued_days ?? 0);
-      const carry = Number(b.carry_forward ?? 0);
-      const adj = Number(b.adjustment ?? 0);
-      const used = Number(b.used_days ?? 0);
-      const pending = Number(b.pending_days ?? 0);
-      const available = Math.max(0, allocated + carry + adj - used - pending);
-      leavesRemaining += available;
-    }
-
     try {
-      const activeConfig = await this.dataSource.manager
-        .createQueryBuilder(LeaveConfig, 'lc')
-        .where('lc.organization_id = :organizationId', { organizationId })
-        .andWhere('lc.status = :status', { status: Status.ACTIVE })
-        .getOne();
-
-      if (activeConfig) {
-        const allocatableTypes = await this.dataSource.manager
-          .createQueryBuilder(LeaveType, 'lt')
-          .where('lt.leave_config_id = :configId', {
-            configId: activeConfig.id,
-          })
-          .andWhere('lt.is_deleted = false')
-          .andWhere('lt.is_unlimited = false')
-          .getMany();
-
-        for (const lt of allocatableTypes) {
-          if (existingTypeIds.has(lt.id)) continue;
-          const reqUsage = await this.dataSource.query<
-            { used: string; pending: string }[]
-          >(
-            `SELECT
-               SUM(CASE WHEN status = 'APPROVED' THEN days ELSE 0 END)::numeric AS used,
-               SUM(CASE WHEN status = 'PENDING' THEN days ELSE 0 END)::numeric AS pending
-             FROM "${schema}".leave_requests
-             WHERE employee_id = $1 AND leave_type_id = $2 AND organization_id = $3 AND status IN ('APPROVED', 'PENDING')`,
-            [userId, lt.id, organizationId],
-          );
-
-          const used = Number(reqUsage[0]?.used ?? 0);
-          const pending = Number(reqUsage[0]?.pending ?? 0);
-          const allocated = lt.days ?? 0;
-          const available = Math.max(0, allocated - used - pending);
-          leavesRemaining += available;
-        }
-      }
+      const balanceRes = await this.leaveBalanceService.getBalanceForEmployee(
+        user,
+        userId,
+      );
+      leavesRemaining = balanceRes.total_available;
     } catch (err) {
       this.logger.warn(
-        `Failed to aggregate virtual leave types for dashboard stats: ${err}`,
+        `Failed to fetch employee leave balance for dashboard: ${err}`,
       );
     }
 

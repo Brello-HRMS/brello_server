@@ -74,11 +74,7 @@ export class EmployeeController {
 
   @Get('me/dashboard-stats')
   getEmployeeDashboardStats(@LoggedInUser() user: LoggedInUserInterface) {
-    return this.employeeService.getEmployeeDashboardStats(
-      user.enterpriseId,
-      user.organizationId,
-      user.userId,
-    );
+    return this.employeeService.getEmployeeDashboardStats(user);
   }
 
   @Get('stats')

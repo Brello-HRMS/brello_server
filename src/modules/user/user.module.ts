@@ -42,6 +42,7 @@ import { NotificationModule } from '../notification/notification.module';
 import { DocumentModule } from '../document/document.module';
 import { AuditCoreModule } from '../audit/audit.module';
 import { RbacModule } from '../rbac/rbac.module';
+import { LeaveBalanceModule } from '../leave-balance/leave-balance.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { RbacModule } from '../rbac/rbac.module';
     NotificationModule,
     AuditCoreModule,
     RbacModule,
+    LeaveBalanceModule,
   ],
   controllers: [UserController, EmployeeController, HierarchyController],
   providers: [

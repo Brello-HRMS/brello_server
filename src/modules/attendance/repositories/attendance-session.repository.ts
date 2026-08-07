@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { AttendanceSession } from '../entities/attendance-session.entity';
 
 @Injectable()
@@ -35,6 +35,14 @@ export class AttendanceSessionRepository {
   async findByRecord(recordId: string): Promise<AttendanceSession[]> {
     return this.repo.find({
       where: { attendance_record_id: recordId },
+      order: { check_in_at: 'ASC' },
+    });
+  }
+
+  async findByRecords(recordIds: string[]): Promise<AttendanceSession[]> {
+    if (!recordIds.length) return [];
+    return this.repo.find({
+      where: { attendance_record_id: In(recordIds) },
       order: { check_in_at: 'ASC' },
     });
   }

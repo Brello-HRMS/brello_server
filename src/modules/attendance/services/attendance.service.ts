@@ -35,6 +35,9 @@ import {
   isWeeklyOffDay,
   todayLocalDate,
 } from './attendance-calc.util';
+import { DataSource } from 'typeorm';
+import { User } from '../../user/entities/user.entity';
+import { Status } from '../../../common/enums';
 
 @Injectable()
 export class AttendanceService {
@@ -47,6 +50,7 @@ export class AttendanceService {
     private readonly ruleResolver: AttendanceRuleResolverService,
     private readonly auditContext: AuditContextService,
     private readonly redisService: RedisService,
+    private readonly dataSource: DataSource,
   ) {}
 
   private async publishAttendanceUpdatedEvent(user: LoggedInUser) {
@@ -655,6 +659,97 @@ export class AttendanceService {
     return peers;
   }
 
+  async getTeamAttendanceToday(user: LoggedInUser) {
+    const date = todayLocalDate();
+
+    // 1. Fetch all active employees in organization with profile, department & designation
+    const activeUsers = await this.dataSource.manager
+      .createQueryBuilder(User, 'u')
+      .leftJoinAndSelect('u.user_profile', 'up')
+      .leftJoinAndSelect('u.department', 'd')
+      .leftJoinAndSelect('u.designation', 'des')
+      .where('u.organization_id = :orgId', { orgId: user.organizationId })
+      .andWhere('u.status = :status', { status: Status.ACTIVE })
+      .getMany();
+
+    // 2. Fetch today's attendance records for the organization
+    const records = await this.dataSource.manager
+      .createQueryBuilder(AttendanceRecord, 'ar')
+      .where('ar.organization_id = :orgId', { orgId: user.organizationId })
+      .andWhere('ar.date = :date', { date })
+      .andWhere('ar.is_deleted = false')
+      .getMany();
+
+    const recordMap = new Map<string, AttendanceRecord>(
+      records.map((r) => [r.employee_id, r]),
+    );
+
+    const loggedIn: Array<{
+      id: string;
+      name: string;
+      department: string | null;
+      designation: string | null;
+      avatar: string | null;
+      time: string | null;
+      status: string;
+    }> = [];
+
+    const notLoggedIn: Array<{
+      id: string;
+      name: string;
+      department: string | null;
+      designation: string | null;
+      avatar: string | null;
+      status: string;
+    }> = [];
+
+    const activeStatuses = [
+      AttendanceStatus.PRESENT,
+      AttendanceStatus.LATE,
+      AttendanceStatus.HALF_DAY,
+      AttendanceStatus.PENDING_APPROVAL,
+    ];
+
+    for (const u of activeUsers) {
+      const nameParts = [u.first_name, u.middle_name, u.last_name].filter(
+        Boolean,
+      );
+      const name = nameParts.join(' ') || 'Employee';
+      const dept = u.department?.name ?? null;
+      const des = u.designation?.title ?? null;
+      const avatar = u.user_profile?.photo_id ?? null;
+      const rec = recordMap.get(u.id);
+
+      if (
+        rec &&
+        activeStatuses.includes(rec.attendance_status as AttendanceStatus)
+      ) {
+        loggedIn.push({
+          id: u.id,
+          name,
+          department: dept,
+          designation: des,
+          avatar,
+          time: rec.first_check_in_at
+            ? formatTime12(rec.first_check_in_at)
+            : null,
+          status: rec.attendance_status,
+        });
+      } else {
+        notLoggedIn.push({
+          id: u.id,
+          name,
+          department: dept,
+          designation: des,
+          avatar,
+          status: rec?.attendance_status ?? 'NOT_CHECKED_IN',
+        });
+      }
+    }
+
+    return { loggedIn, notLoggedIn };
+  }
+
   async getEffectiveRules(user: LoggedInUser) {
     const { rule, shift, geoFence } =
       await this.ruleResolver.resolveForEmployee(
@@ -708,18 +803,68 @@ export class AttendanceService {
       shiftName = null;
     }
 
+    const recordIds = data.map((r) => r.id);
+    const sessions = await this.sessionRepo.findByRecords(recordIds);
+
+    const sessionMap = new Map<string, AttendanceSession[]>();
+    for (const s of sessions) {
+      const list = sessionMap.get(s.attendance_record_id) || [];
+      list.push(s);
+      sessionMap.set(s.attendance_record_id, list);
+    }
+
     return {
-      items: data.map((r) => ({
-        attendance_id: r.id,
-        date: r.date,
-        check_in: formatTime12(r.first_check_in_at),
-        check_out: formatTime12(r.last_check_out_at),
-        worked_hours: formatHmm(r.worked_minutes),
-        attendance_mode: r.attendance_mode,
-        attendance_status: r.attendance_status,
-        shift: shiftName,
-        remote_reason: r.remote_reason,
-      })),
+      items: data.map((r) => {
+        const rSessions = sessionMap.get(r.id) || [];
+        const firstSession = rSessions[0];
+        const lastSession = rSessions[rSessions.length - 1];
+
+        let checkInLoc: string | null = null;
+        if (firstSession?.check_in_latitude && firstSession?.check_in_longitude) {
+          const lat = Number(firstSession.check_in_latitude).toFixed(4);
+          const lng = Number(firstSession.check_in_longitude).toFixed(4);
+          checkInLoc = r.office_name ? `${r.office_name} (${lat}, ${lng})` : `Lat: ${lat}, Lng: ${lng}`;
+        } else if (r.office_name) {
+          checkInLoc = r.office_name;
+        } else if (r.remote_reason || r.attendance_mode === AttendanceMode.REMOTE_IN) {
+          checkInLoc = r.remote_reason ? `Remote (${r.remote_reason})` : 'Remote (WFH)';
+        } else if (firstSession?.check_in_ip) {
+          checkInLoc = `IP: ${firstSession.check_in_ip}`;
+        } else if (r.first_check_in_at) {
+          checkInLoc = 'Office Location';
+        }
+
+        let checkOutLoc: string | null = null;
+        if (lastSession?.check_out_latitude && lastSession?.check_out_longitude) {
+          const lat = Number(lastSession.check_out_latitude).toFixed(4);
+          const lng = Number(lastSession.check_out_longitude).toFixed(4);
+          checkOutLoc = r.office_name ? `${r.office_name} (${lat}, ${lng})` : `Lat: ${lat}, Lng: ${lng}`;
+        } else if (r.office_name) {
+          checkOutLoc = r.office_name;
+        } else if (r.remote_reason || r.attendance_mode === AttendanceMode.REMOTE_IN) {
+          checkOutLoc = 'Remote (WFH)';
+        } else if (lastSession?.check_out_ip) {
+          checkOutLoc = `IP: ${lastSession.check_out_ip}`;
+        } else if (r.last_check_out_at) {
+          checkOutLoc = 'Office Location';
+        }
+
+        return {
+          attendance_id: r.id,
+          date: r.date,
+          check_in: formatTime12(r.first_check_in_at),
+          check_out: formatTime12(r.last_check_out_at),
+          worked_hours: formatHmm(r.worked_minutes),
+          attendance_mode: r.attendance_mode,
+          attendance_status: r.attendance_status,
+          shift: shiftName,
+          remote_reason: r.remote_reason,
+          office_name: r.office_name,
+          check_in_location: checkInLoc,
+          check_out_location: checkOutLoc,
+          notes: r.notes,
+        };
+      }),
       pagination: { page, limit, total },
     };
   }
