@@ -44,6 +44,8 @@ import { UserProfile } from '../entities/user-profile.entity';
 import { UserEmergencyPerson } from '../entities/user-emergency-person.entity';
 import { EmployeeOffboarding } from '../entities/offboarding.entity';
 import { LeaveBalance } from '../../leave-balance/entities/leave-balance.entity';
+import { LeaveConfig } from '../../leave-config/entities/leave-config.entity';
+import { LeaveType } from '../../leave-config/entities/leave-type.entity';
 import { AttendanceRecord } from '../../attendance/entities/attendance-record.entity';
 import { Holiday } from '../../holiday/entities/holiday.entity';
 import { Status } from '../../../common/enums';
@@ -1354,16 +1356,70 @@ export class EmployeeService {
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     // Leaves Left
-    const leavesQb = this.dataSource.manager
+    const persistedBalances = await this.dataSource.manager
       .createQueryBuilder(LeaveBalance, 'lb')
-      .select(
-        'SUM(CASE WHEN lb.is_unlimited = false THEN (COALESCE(lb.accrued_days, 0) + COALESCE(lb.carry_forward, 0) + COALESCE(lb.adjustment, 0) - COALESCE(lb.used_days, 0) - COALESCE(lb.pending_days, 0)) ELSE 0 END)',
-        'total_balance',
-      )
       .where('lb.employee_id = :userId', { userId })
-      .andWhere('lb.organization_id = :organizationId', { organizationId });
+      .andWhere('lb.organization_id = :organizationId', { organizationId })
+      .getMany();
 
-    const leavesRow = await leavesQb.getRawOne<{ total_balance: string }>();
+    const existingTypeIds = new Set(
+      persistedBalances.map((b) => b.leave_type_id),
+    );
+
+    let leavesRemaining = 0;
+    for (const b of persistedBalances) {
+      if (b.is_unlimited) continue;
+      const allocated = Number(b.allocated_days ?? b.accrued_days ?? 0);
+      const carry = Number(b.carry_forward ?? 0);
+      const adj = Number(b.adjustment ?? 0);
+      const used = Number(b.used_days ?? 0);
+      const pending = Number(b.pending_days ?? 0);
+      const available = Math.max(0, allocated + carry + adj - used - pending);
+      leavesRemaining += available;
+    }
+
+    try {
+      const activeConfig = await this.dataSource.manager
+        .createQueryBuilder(LeaveConfig, 'lc')
+        .where('lc.organization_id = :organizationId', { organizationId })
+        .andWhere('lc.status = :status', { status: Status.ACTIVE })
+        .getOne();
+
+      if (activeConfig) {
+        const allocatableTypes = await this.dataSource.manager
+          .createQueryBuilder(LeaveType, 'lt')
+          .where('lt.leave_config_id = :configId', {
+            configId: activeConfig.id,
+          })
+          .andWhere('lt.is_deleted = false')
+          .andWhere('lt.is_unlimited = false')
+          .getMany();
+
+        for (const lt of allocatableTypes) {
+          if (existingTypeIds.has(lt.id)) continue;
+          const reqUsage = await this.dataSource.query<
+            { used: string; pending: string }[]
+          >(
+            `SELECT
+               SUM(CASE WHEN status = 'APPROVED' THEN days ELSE 0 END)::numeric AS used,
+               SUM(CASE WHEN status = 'PENDING' THEN days ELSE 0 END)::numeric AS pending
+             FROM "${schema}".leave_requests
+             WHERE employee_id = $1 AND leave_type_id = $2 AND organization_id = $3 AND status IN ('APPROVED', 'PENDING')`,
+            [userId, lt.id, organizationId],
+          );
+
+          const used = Number(reqUsage[0]?.used ?? 0);
+          const pending = Number(reqUsage[0]?.pending ?? 0);
+          const allocated = lt.days ?? 0;
+          const available = Math.max(0, allocated - used - pending);
+          leavesRemaining += available;
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Failed to aggregate virtual leave types for dashboard stats: ${err}`,
+      );
+    }
 
     // Days Worked This Month
     const workedCount = await this.dataSource.manager
@@ -1394,7 +1450,7 @@ export class EmployeeService {
       .getCount();
 
     return {
-      leaves_remaining: Number(leavesRow?.total_balance ?? 0),
+      leaves_remaining: leavesRemaining,
       days_worked_this_month: workedCount,
       total_team_members: teamCount,
       upcoming_holidays: holidaysCount,
